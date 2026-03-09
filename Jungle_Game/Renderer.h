@@ -12,7 +12,9 @@
 struct FConstantBuffer
 {
     FVector position;
+    float padding1;
     FVector scale;
+    float padding2;
 };
 
 struct FVertex
