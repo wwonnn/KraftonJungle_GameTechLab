@@ -57,7 +57,9 @@ void URenderer::Render()
 {
 	BeginFrame();
 
-	FConstantBuffer constants = { FVector(), FVector(0.5f, 0.5f, 1.0f) };
+    FConstantBuffer constants;
+    constants.position = FVector(0.0f, 0.0f, 0.0f);
+    constants.scale = FVector(0.5f, 0.5f, 1.0f);
 	UpdateConstantBuffer(constants);
 
 	UINT stride = sizeof(FVertex);
@@ -204,7 +206,7 @@ void URenderer::ReleaseRasterzerState()
 void URenderer::CreateConstantBuffer()
 {
 	D3D11_BUFFER_DESC bufferDesc = {};
-	bufferDesc.ByteWidth = sizeof(ConstantBuffer) + 0xf & (~0xf);
+    bufferDesc.ByteWidth = sizeof(FConstantBuffer) + 0xf & ~0xf;
 	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -331,7 +333,7 @@ void URenderer::ReleaseDefaultShader()
 void URenderer::CreateDefaultTexture()
 {
 	int width, height, channels;
-	unsigned char* textureData = stbi_load("default_texture.png", &width, &height, &channels, 4);
+	unsigned char* textureData = stbi_load("player.png", &width, &height, &channels, 4);
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = width;
