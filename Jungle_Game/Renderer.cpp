@@ -60,12 +60,12 @@ void URenderer::BeginFrame()
 
 void URenderer::Render()
 {
-    BeginFrame();
+    //BeginFrame();
 
-    FConstantBuffer constants;
+/*    FConstantBuffer constants;
     constants.position = FVector(0.0f, 0.0f, 0.0f);
     constants.scale = FVector(0.5f, 0.5f, 1.0f);
-    UpdateConstantBuffer(constants);
+    UpdateConstantBuffer(constants);*/
 
     UINT stride = sizeof(FVertex);
     UINT offset = 0;
@@ -80,7 +80,7 @@ void URenderer::Render()
     DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     DeviceContext->DrawIndexed(6, 0, 0);
 
-    EndFrame();
+    //EndFrame();
 }
 
 void URenderer::EndFrame()

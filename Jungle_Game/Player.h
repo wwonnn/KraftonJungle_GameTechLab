@@ -11,6 +11,7 @@ public:
     virtual ~UPlayer();
 
 public:
+    void Initialize();
     virtual void Update(float deltaTime) override;
     virtual void Render(URenderer& renderer) override;
     virtual bool CheckCollision(UGameObject* other) override;
