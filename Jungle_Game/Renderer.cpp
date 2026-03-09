@@ -78,6 +78,10 @@ void URenderer::Render()
 
 void URenderer::EndFrame()
 {
+	
+}
+
+void URenderer::SwapBuffer() {
 	SwapChain->Present(1, 0);
 }
 
@@ -147,6 +151,14 @@ void URenderer::ReleaseDeviceAndSwapChain()
 		DeviceContext->Release();
 		DeviceContext = nullptr;
 	}
+}
+
+ID3D11Device* URenderer::GetDevice() {
+	return Device;
+}
+
+ID3D11DeviceContext* URenderer::GetDeviceContext() {
+	return DeviceContext;
 }
 
 bool URenderer::CreateFrameBuffer()
