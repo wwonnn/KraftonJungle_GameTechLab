@@ -43,7 +43,10 @@ void UProjectile::Update(float DeltaTime)
 
 void UProjectile::Render(URenderer& renderer)
 {
-	renderer.UpdateConstantBuffer({ Location.x, Location.y, Location.z });
+    FConstantBuffer constants;
+    constants.position = Location;
+    constants.scale = FVector(1.0f, 1.0f, 1.0f);
+	renderer.UpdateConstantBuffer(constants);
 }
 
 bool UProjectile::CheckCollision(UGameObject* other)
@@ -56,7 +59,7 @@ bool UProjectile::CheckCollision(UGameObject* other)
 		return false;
 
 	// 두 오브젝트 사이 거리 계산
-	FConstantBuffer diff;
+	FVector diff;
 	diff.x = Location.x - otherP->Location.x;
 	diff.y = Location.y - otherP->Location.y;
 	diff.z = Location.z - otherP->Location.z;

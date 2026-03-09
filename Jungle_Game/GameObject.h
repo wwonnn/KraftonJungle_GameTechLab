@@ -37,8 +37,8 @@ public:
 	virtual void ApplyImpulse(const FConstantBuffer& v) override;
 
 private:
-	FConstantBuffer Location;
-	FConstantBuffer Velocity;
+	FVector Location;
+	FVector Velocity;
 	float Radius;
 	float Mass;
 };

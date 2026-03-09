@@ -1,6 +1,7 @@
 cbuffer ConstantBuffer : register(b0)
 {
     float3 offset;
+    float3 scale;
 }
 
 Texture2D texture0 : register(t0);
@@ -21,8 +22,9 @@ struct PS_INPUT
 PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
-	
-    float3 worldPos = input.position + offset;
+
+    float3 scaledPos = input.position * scale;
+    float3 worldPos = scaledPos + offset;
     output.position = float4(worldPos, 1.0f);
     output.uv = input.uv;
 	
