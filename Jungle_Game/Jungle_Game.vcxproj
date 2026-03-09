@@ -123,7 +123,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="app_main.cpp" />
     <ClCompile Include="AudioSystem.cpp" />
     <ClCompile Include="EnemyObject.cpp" />
     <ClCompile Include="GameApp.cpp" />

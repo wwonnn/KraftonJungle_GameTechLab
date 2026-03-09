@@ -1,6 +1,7 @@
 #pragma once
 #include "Renderer.h"
 #include "AudioSystem.h"
+#include "Timer.h"
 #include <windows.h>
 
 class GameApp
@@ -16,6 +17,7 @@ public:
 
 private:
     void LoadDefaultAssets();
+    void CreateGameObjects();
 
 private:
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -24,5 +26,6 @@ private:
     HWND hWnd = nullptr;
     URenderer* Renderer = nullptr;
     UAudioSystem* AudioSystem = nullptr;
+    UTimer* Timer = nullptr;
 };
 

@@ -1,4 +1,10 @@
 #include "GameApp.h"
+#include "InputManager.h"
+#include "Timer.h"
+#include "ImGuiManager.h"
+#include "GameObject.h"
+#include "Player.h"
+#include "EnemyObject.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -17,12 +23,14 @@ GameApp::GameApp()
 {
     Renderer = new URenderer();
     AudioSystem = new UAudioSystem();
+    Timer = new UTimer();
 }
 
 GameApp::~GameApp()
 {
-    delete Renderer;
+    delete Timer;
     delete AudioSystem;
+    delete Renderer;
 }
 
 bool GameApp::Initialize(HINSTANCE hInstance)
@@ -52,13 +60,18 @@ bool GameApp::Initialize(HINSTANCE hInstance)
         return false;
     }
 
+    UImGuiManager::Get().Create(hWnd, Renderer);
+
     LoadDefaultAssets();
+    CreateGameObjects();
 
     return true;
 }
 
 void GameApp::Run()
 {
+    Timer->Setup();
+
     MSG msg = {};
     while (msg.message != WM_QUIT)
     {
@@ -70,7 +83,31 @@ void GameApp::Run()
         else
         {
             // Game Loop
-            Renderer->Render();
+            UInputManager::Get().Update();
+            Timer->Update();
+
+            Renderer->BeginFrame();
+
+            if (UInputManager::Get().GetKeyDown(VK_SPACE))
+            {
+                OutputDebugString(L"Space key pressed!\n");
+                AudioSystem->Play("shoot");
+            }
+
+            // 오브젝트 Update 및 Render (DeltaTime 사용)
+            float DeltaTime = Timer->GetDeltaTime();
+            for (UGameObject* const& obj : UGameObject::GameObjectList)
+            {
+                obj->Update(DeltaTime);
+                obj->Render(*Renderer);
+            }
+
+            UImGuiManager::Get().beginFrame();
+            ImGui::Text("Total Time: %f", Timer->GetTotalTime());
+            ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
+            UImGuiManager::Get().endFrame();
+
+            Renderer->SwapBuffer();
         }
     }
 }
@@ -84,4 +121,17 @@ void GameApp::Finalize()
 void GameApp::LoadDefaultAssets()
 {
     AudioSystem->LoadFromFile("asset/shoot.wav", "shoot");
+
+    Renderer->CreateTexture("player.png", "player");
+    Renderer->CreateTexture("enemy.png", "enemy");
+}
+
+void GameApp::CreateGameObjects()
+{
+    UGameObject* player = new UPlayer(
+        FTransform(FVector(-0.2f, -0.7f, 0.0f),
+            FVector(0.0f, 0.0f, 0.0f),
+            FVector(0.3f, 0.3f, 1.0f)));
+
+    UGameObject* enemy = new UEnemyObject();
 }

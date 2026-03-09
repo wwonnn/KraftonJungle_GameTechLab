@@ -1,6 +1,7 @@
+#pragma once
 #include <windows.h>
 
-class Timer 
+class UTimer 
 {
 private:
     LARGE_INTEGER frequency;
@@ -13,7 +14,8 @@ private:
     bool bTimerStart;
 
 public:
-    Timer();
+    UTimer();
+    ~UTimer();
     void Setup();
     void Update();
     float GetTotalTime();

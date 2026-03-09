@@ -1,18 +1,21 @@
 #include "Timer.h"
 
-Timer::Timer() {
+UTimer::UTimer() {
 	QueryPerformanceFrequency(&frequency);
 	deltaTime = 0.0f;
 	totalTime = 0.0f;
 	bTimerStart = false;
 }
 
-void Timer::Setup() {
+UTimer::~UTimer() {
+}
+
+void UTimer::Setup() {
 	QueryPerformanceCounter(&prevTime);
 	bTimerStart = true;
 }
 
-void Timer::Update() {
+void UTimer::Update() {
 	if (bTimerStart) {
 		QueryPerformanceCounter(&currTime);
 
@@ -23,10 +26,10 @@ void Timer::Update() {
 	}
 }
 
-float Timer::GetTotalTime() {
+float UTimer::GetTotalTime() {
 	return totalTime;
 }
 
-float Timer::GetDeltaTime() {
+float UTimer::GetDeltaTime() {
     return deltaTime;
 }
