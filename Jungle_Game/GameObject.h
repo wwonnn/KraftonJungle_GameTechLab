@@ -35,11 +35,16 @@ public:
 	// 현재 생성된 게임 오브젝트 리스트
 	static std::vector<UGameObject*> GameObjectList;
 
+    std::string GetTextureName() const { return TextureName; }
+    void SetTextureName(std::string name) { TextureName = name; }
+
 protected:
     FTransform Transform;
 
 private:
 	int ListIndex;
+
+    std::string TextureName = "player";
 };
 
 // Test Object (발사체)

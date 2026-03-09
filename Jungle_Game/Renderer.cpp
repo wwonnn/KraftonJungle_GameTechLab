@@ -74,7 +74,6 @@ void URenderer::Render()
     DeviceContext->IASetInputLayout(InputLayout);
     DeviceContext->VSSetShader(VertexShader, nullptr, 0);
 
-    DeviceContext->PSSetShaderResources(0, 1, &DefaultSRV);
     DeviceContext->PSSetSamplers(0, 1, &DefaultSamplerState);
 
     DeviceContext->PSSetShader(PixelShader, nullptr, 0);
