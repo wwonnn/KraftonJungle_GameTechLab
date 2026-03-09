@@ -66,7 +66,7 @@ private:
 	ID3D11RasterizerState* RasterizerState = nullptr;
 
 	D3D11_VIEWPORT Viewport = {};
-	FLOAT ClearColor[4] = { 0.05f, 0.05f, 0.05f, 1.0f };
+	FLOAT ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	ID3D11Buffer* ConstantBuffer = nullptr;
 
