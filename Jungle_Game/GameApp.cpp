@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "EnemyObject.h"
+#include "CollisionSystem.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -85,12 +86,12 @@ void GameApp::Run()
             // Game Loop
             UInputManager::Get().Update();
             Timer->Update();
+            UCollisionSystem::Get().CheckCollisions();
 
             Renderer->BeginFrame();
 
             if (UInputManager::Get().GetKeyDown(VK_SPACE))
             {
-                OutputDebugString(L"Space key pressed!\n");
                 AudioSystem->Play("shoot");
             }
 
@@ -133,5 +134,8 @@ void GameApp::CreateGameObjects()
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
 
-    UGameObject* enemy = new UEnemyObject();
+    UGameObject* enemy = new UEnemyObject(
+        FTransform(FVector(-0.2f, -0.7f, 0.0f),
+            FVector(0.0f, 0.0f, 0.0f),
+            FVector(0.3f, 0.3f, 1.0f)));
 }

@@ -1,8 +1,14 @@
 #include "EnemyObject.h"
 
 UEnemyObject::UEnemyObject()
+    : UGameObject()
 {
-    Transform.Scale = FVector(0.3f, 0.3f, 0.3f);
+    SetTextureName("enemy");
+}
+
+UEnemyObject::UEnemyObject(FTransform transform)
+    : UGameObject(transform)
+{
     SetTextureName("enemy");
 }
 

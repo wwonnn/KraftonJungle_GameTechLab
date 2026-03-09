@@ -6,6 +6,7 @@ class UEnemyObject : public UGameObject
 {
 public:
     UEnemyObject();
+    UEnemyObject(FTransform transform);
     ~UEnemyObject() override;
 
 public:

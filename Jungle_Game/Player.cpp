@@ -21,6 +21,8 @@ UPlayer::~UPlayer()
 void UPlayer::Initialize()
 {
     Velocity = FVector(0.5f, 0.0f, 0.0f);
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UPlayer::OnCollisionEnter, this));
+    Collider->AddCollisionCallback(ECollisionEvent::Exit, std::bind(&UPlayer::OnCollisionExit, this));
 }
 
 void UPlayer::Update(float DeltaTime)
@@ -66,4 +68,14 @@ bool UPlayer::CheckCollision(UGameObject* other)
 void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 {
 
+}
+
+void UPlayer::OnCollisionEnter()
+{
+    OutputDebugString(L"Player enter\n");
+}
+
+void UPlayer::OnCollisionExit()
+{
+    OutputDebugString(L"Player exit\n");
 }

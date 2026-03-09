@@ -11,6 +11,7 @@ UGameObject::UGameObject()
 	GameObjectList.push_back(this);
 
     Transform = FTransform();
+    Collider = new UCircleCollider(this);
 }
 
 UGameObject::UGameObject(FTransform transform)
@@ -19,6 +20,8 @@ UGameObject::UGameObject(FTransform transform)
     // 오브젝트 리스트에 자신을 등록
     ListIndex = GameObjectList.size();
     GameObjectList.push_back(this);
+
+    Collider = new UCircleCollider(this);
 }
 
 UGameObject::~UGameObject()
