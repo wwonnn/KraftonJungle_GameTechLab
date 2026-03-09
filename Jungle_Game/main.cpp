@@ -6,7 +6,24 @@
 #include "ImGuiManager.h"
 #include "Timer.h"
 
+// 게임 오브젝트
+#include "GameObject.h"
+#include "Player.h"
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+void InitGame()
+{
+    // 게임 초기화(초기 오브젝트 생성 등)
+
+    // 플레이어 생성
+    UGameObject* Player1 = new UPlayer(
+        FTransform(FVector(-0.2f, -0.7f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(0.3f, 0.3f, 0.3f))
+    );
+    UGameObject* Player2 = new UPlayer(
+        FTransform(FVector(0.2f, -0.7f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(0.3f, 0.3f, 0.3f))
+    );
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -61,6 +78,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
     Timer* timer = new Timer();
 
+    InitGame();
+
     MSG msg = {};
     timer->Setup();
     while (msg.message != WM_QUIT)
@@ -73,7 +92,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         else
         {
             UInputManager::Get().Update();
-            renderer->Render();
+            //renderer->Render();
+
+            renderer->BeginFrame();
 
             if (UInputManager::Get().GetKeyDown(VK_SPACE))
             {
@@ -81,16 +102,24 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
                 audioSystem->Play("shoot");
             }
 
+            // 오브젝트 Update 및 Render (DeltaTime 사용)
+            float DeltaTime = timer->GetDeltaTime();
+            for (UGameObject* const& obj : UGameObject::GameObjectList)
+            {
+                obj->Update(DeltaTime);
+                obj->Render(*renderer);
+            }
+
+            // 프레임 타이밍 업데이트
             timer->Update();
             UImGuiManager::Get().beginFrame();
             ImGui::Text("Total Time: %f", timer->GetTotalTime());
             ImGui::Text("Delta Time: %f", timer->GetDeltaTime());
             UImGuiManager::Get().endFrame();
 
+            renderer->EndFrame();
             renderer->SwapBuffer();
         }
-
-
     }
 
 
