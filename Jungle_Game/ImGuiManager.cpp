@@ -25,7 +25,7 @@ void UImGuiManager::beginFrame() {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("timer");
+    ImGui::Begin("Test");
 }
 
 void UImGuiManager::endFrame() {

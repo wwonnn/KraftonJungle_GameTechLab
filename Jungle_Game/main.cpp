@@ -82,8 +82,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
             }
 
             timer->Update();
-            UImGuiManager::Get().DrawMyText("Total: %f  DeltaTime: %f", timer->GetTotalTime(), timer->GetDeltaTime());
-            UImGuiManager::Get().Update();
+            UImGuiManager::Get().beginFrame();
+            ImGui::Text("Total Time: %f", timer->GetTotalTime());
+            ImGui::Text("Delta Time: %f", timer->GetDeltaTime());
+            UImGuiManager::Get().endFrame();
 
             renderer->SwapBuffer();
         }
