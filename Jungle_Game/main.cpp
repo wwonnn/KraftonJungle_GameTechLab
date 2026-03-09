@@ -1,6 +1,8 @@
 #include <windows.h>
 
 #include "Renderer.h"
+#include "AudioSystem.h"
+#include "InputManager.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -38,6 +40,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         return 0;
     }
 
+	AudioSystem* audioSystem = new AudioSystem();
+    if (!audioSystem->Create())
+    {
+        return 0;
+	}
+
+	audioSystem->LoadFromFile("asset/shoot.wav", "shoot");
+
     MSG msg = {};
     while (msg.message != WM_QUIT)
     {
@@ -48,10 +58,18 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         }
         else
         {
+			UInputManager::Get().Update();
             renderer->Render();
+
+            if (UInputManager::Get().GetKeyDown(VK_SPACE))
+            {
+				OutputDebugString(L"Space key pressed!\n");
+                audioSystem->Play("shoot");
+			}
         }
     }
 
+    audioSystem->Release();
     renderer->Release();
 
     return 0;
