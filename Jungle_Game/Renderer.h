@@ -65,6 +65,9 @@ private:
 	void CreateDefaultSamplerState();
 	void ReleaseDefaultSamplerState();
 
+	void CreateBlendState();
+	void ReleaseBlendState();
+
 private:
 	ID3D11Device* Device = nullptr;
 	ID3D11DeviceContext* DeviceContext = nullptr;
@@ -91,5 +94,7 @@ private:
 	ID3D11Texture2D* DefaultTexture = nullptr;
 	ID3D11ShaderResourceView* DefaultSRV = nullptr;
 	ID3D11SamplerState* DefaultSamplerState = nullptr;
+
+	ID3D11BlendState* BlendState = nullptr;
 };
 

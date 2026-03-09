@@ -25,12 +25,14 @@ bool URenderer::Create(HWND hWnd)
 	CreateDefaultShader();
 	CreateDefaultTexture();
 	CreateDefaultSamplerState();
+	CreateBlendState();
 
 	return true;
 }
 
 void URenderer::Release()
 {
+	ReleaseBlendState();
 	ReleaseDefaultSamplerState();
 	ReleaseDefaultTexture();
 	ReleaseDefaultShader();
@@ -51,6 +53,7 @@ void URenderer::BeginFrame()
 	DeviceContext->RSSetState(RasterizerState);
 
 	DeviceContext->OMSetRenderTargets(1, &RenderTargetView, nullptr);
+	DeviceContext->OMSetBlendState(BlendState, NULL, 0xffffffff);
 
 	DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
 }
