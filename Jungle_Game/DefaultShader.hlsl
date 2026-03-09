@@ -4,7 +4,7 @@ cbuffer ConstantBuffer : register(b0)
 }
 
 Texture2D texture0 : register(t0);
-SamplerState Sampler : register(s0);
+SamplerState samplerState : register(s0);
 
 struct VS_INPUT
 {
