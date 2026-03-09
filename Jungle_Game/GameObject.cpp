@@ -49,7 +49,11 @@ void UProjectile::Update(float DeltaTime)
 
 void UProjectile::Render(URenderer& renderer)
 {
-    renderer.UpdateConstantBuffer({ Transform.Location, Radius });
+    FConstantBuffer data;
+    data.position = Transform.Location;
+    data.scale = Transform.Scale;
+
+    renderer.UpdateConstantBuffer(data);
     renderer.Render();
 }
 

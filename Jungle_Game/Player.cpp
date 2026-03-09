@@ -42,7 +42,11 @@ void UPlayer::Update(float DeltaTime)
 
 void UPlayer::Render(URenderer& renderer)
 {
-    renderer.UpdateConstantBuffer({ Transform.Location, Transform.Scale });
+    FConstantBuffer data;
+    data.position = Transform.Location;
+    data.scale = Transform.Scale;
+
+    renderer.UpdateConstantBuffer(data);
     renderer.Render();
 }
 
