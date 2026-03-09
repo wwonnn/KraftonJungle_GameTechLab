@@ -13,8 +13,10 @@ struct FConstantBuffer
 {
     FVector position;
     float padding1;
-    FVector scale;
+    FVector rotation;
     float padding2;
+    FVector scale;
+    float padding3;
 };
 
 struct FVertex

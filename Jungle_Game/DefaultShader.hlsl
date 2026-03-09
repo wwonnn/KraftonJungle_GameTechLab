@@ -1,6 +1,7 @@
 cbuffer ConstantBuffer : register(b0)
 {
     float4 offset;
+    float4 rotation;
     float4 scale;
 }
 

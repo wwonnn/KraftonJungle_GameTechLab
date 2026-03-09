@@ -9,6 +9,7 @@
 // 게임 오브젝트
 #include "GameObject.h"
 #include "Player.h"
+#include "EnemyObject.h"
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -23,6 +24,8 @@ void InitGame()
     UGameObject* Player2 = new UPlayer(
         FTransform(FVector(0.2f, -0.7f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(0.3f, 0.3f, 0.3f))
     );
+
+    UGameObject* Enemy = new UEnemyObject();
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -79,6 +82,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     Timer* timer = new Timer();
 
     InitGame();
+
+    renderer->CreateTexture("player.png", "player");
+    renderer->CreateTexture("enemy.png", "enemy");
 
     MSG msg = {};
     timer->Setup();

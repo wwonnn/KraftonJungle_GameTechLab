@@ -44,9 +44,11 @@ void UPlayer::Render(URenderer& renderer)
 {
     FConstantBuffer data;
     data.position = Transform.Location;
+    data.rotation = Transform.Rotation;
     data.scale = Transform.Scale;
 
     renderer.UpdateConstantBuffer(data);
+    renderer.BindTexture(GetTextureName());
     renderer.Render();
 }
 
