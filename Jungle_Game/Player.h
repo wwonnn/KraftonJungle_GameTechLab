@@ -17,6 +17,9 @@ public:
     virtual bool CheckCollision(UGameObject* other) override;
     virtual void ApplyImpulse(const FConstantBuffer& v) override;
 
+    void OnCollisionEnter();
+    void OnCollisionExit();
+
 private:
     FVector Velocity;
 };

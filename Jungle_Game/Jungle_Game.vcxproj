@@ -124,6 +124,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AudioSystem.cpp" />
+    <ClCompile Include="CircleCollider.cpp" />
+    <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="EnemyObject.cpp" />
     <ClCompile Include="GameApp.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -143,6 +145,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioSystem.h" />
+    <ClInclude Include="CircleCollider.h" />
+    <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="EnemyObject.h" />
     <ClInclude Include="fmod\fmod.h" />
     <ClInclude Include="fmod\fmod.hpp" />

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 struct FVector
 {
     float x, y, z;
@@ -36,5 +38,10 @@ struct FVector
     FVector operator*(float scalar) const
     {
         return FVector(x * scalar, y * scalar, z * scalar);
+    }
+
+    float LengthSquared() const
+    {
+        return x * x + y * y + z * z;
     }
 };

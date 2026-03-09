@@ -2,6 +2,7 @@
 
 #include "Renderer.h"
 #include "Math.h"
+#include "CircleCollider.h"
 
 // STL
 #include <vector>
@@ -38,8 +39,12 @@ public:
     std::string GetTextureName() const { return TextureName; }
     void SetTextureName(std::string name) { TextureName = name; }
 
+    FTransform GetTransform() const { return Transform; }
+    UCircleCollider* GetCollider() const { return Collider; }
+
 protected:
     FTransform Transform;
+    UCircleCollider* Collider = nullptr;
 
 private:
 	int ListIndex;
