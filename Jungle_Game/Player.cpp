@@ -4,11 +4,13 @@
 UPlayer::UPlayer()
     :UGameObject()
 {
+    Initialize();
 }
 
 UPlayer::UPlayer(FTransform transform)
     :UGameObject(transform)
 {
+    Initialize();
 }
 
 UPlayer::~UPlayer()
@@ -16,19 +18,22 @@ UPlayer::~UPlayer()
 
 }
 
+void UPlayer::Initialize()
+{
+    Velocity = FVector(0.5f, 0.0f, 0.0f);
+}
+
 void UPlayer::Update(float DeltaTime)
 {
-    // 이동 입력
-    const float Speed = 0.1f;
     UInputManager& Input = UInputManager::Get();
 
     if (Input.GetKey(VK_LEFT))
     {
-        Transform.Location.x -= Speed * DeltaTime;
+        Transform.Location.x -= Velocity.x * DeltaTime;
     }
     if (Input.GetKey(VK_RIGHT))
     {
-        Transform.Location.x += Speed * DeltaTime;
+        Transform.Location.x += Velocity.x * DeltaTime;
     }
 /*    if (Input.GetKey(VK_UP))
     {
