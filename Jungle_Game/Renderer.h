@@ -39,6 +39,11 @@ public:
 	
 	void SwapBuffer();
 	void UpdateConstantBuffer(const FConstantBuffer& data);
+
+    void CreateTexture(const std::string& filePath, const std::string& name);
+    void ReleaseTexture(const std::string& filePath);
+    void BindTexture(const std::string& name);
+
 	ID3D11Device* GetDevice();
 	ID3D11DeviceContext* GetDeviceContext();
 
@@ -85,6 +90,9 @@ private:
 	FLOAT ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	ID3D11Buffer* ConstantBuffer = nullptr;
+
+    std::unordered_map<std::string, ID3D11Texture2D*> Textures;
+    std::unordered_map<std::string, ID3D11ShaderResourceView*> SRVs;
 
 	ID3D11Buffer* VertexBuffer = nullptr;
 	ID3D11Buffer* IndexBuffer = nullptr;
