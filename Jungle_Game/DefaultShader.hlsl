@@ -32,6 +32,5 @@ PS_INPUT mainVS(VS_INPUT input)
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
     float4 color = texture0.Sample(samplerState, input.uv);
-    //float4 color = float4(input.uv, 0.0f, 1.0f);
     return color;
 }
