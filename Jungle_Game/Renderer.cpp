@@ -25,12 +25,16 @@ bool URenderer::Create(HWND hWnd)
 	CreateDefaultShader();
 	CreateDefaultTexture();
 	CreateDefaultSamplerState();
+	CreateBlendState();
 
 	return true;
 }
 
 void URenderer::Release()
 {
+	ReleaseBlendState();
+	ReleaseDefaultSamplerState();
+	ReleaseDefaultTexture();
 	ReleaseDefaultShader();
 	ReleaseDefaultQuad();
 	ReleaseConstantBuffer();
@@ -49,6 +53,7 @@ void URenderer::BeginFrame()
 	DeviceContext->RSSetState(RasterizerState);
 
 	DeviceContext->OMSetRenderTargets(1, &RenderTargetView, nullptr);
+	DeviceContext->OMSetBlendState(BlendState, NULL, 0xffffffff);
 
 	DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
 }
@@ -352,7 +357,7 @@ void URenderer::CreateDefaultTexture()
 	textureDesc.Height = height;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
 	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -362,7 +367,9 @@ void URenderer::CreateDefaultTexture()
 	textureSRD.SysMemPitch = width * 4;
 
 	Device->CreateTexture2D(&textureDesc, &textureSRD, &DefaultTexture);
-	Device->CreateShaderResourceView(DefaultTexture, nullptr, &DefaultSRV);
+	if (DefaultTexture) {
+		Device->CreateShaderResourceView(DefaultTexture, nullptr, &DefaultSRV);
+	}
 
 	if (textureData) {
 		stbi_image_free(textureData);
