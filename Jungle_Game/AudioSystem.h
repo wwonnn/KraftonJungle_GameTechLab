@@ -6,11 +6,11 @@
 
 #pragma comment(lib, "fmodL_vc.lib")
 
-class AudioSystem
+class UAudioSystem
 {
 public:
-	AudioSystem() = default;
-	~AudioSystem() = default;
+	UAudioSystem() = default;
+	~UAudioSystem() = default;
 
 public:
 	bool Create();
