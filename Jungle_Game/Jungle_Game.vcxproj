@@ -143,6 +143,7 @@
     <ClInclude Include="GameApp.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Math.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

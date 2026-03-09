@@ -4,18 +4,20 @@
 #include <d3dcompiler.h>
 #include <unordered_map>
 #include <string>
+#include "Math.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
 struct FConstantBuffer
 {
-	float x, y, z;
+    FVector position;
+    FVector scale;
 };
 
 struct FVertex
 {
-	float x, y, z;
+    FVector position;
 	float u, v;
 };
 

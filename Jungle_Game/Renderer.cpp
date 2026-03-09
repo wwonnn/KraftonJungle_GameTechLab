@@ -57,7 +57,7 @@ void URenderer::Render()
 {
 	BeginFrame();
 
-	FConstantBuffer constants = { 0.0f, 0.0f, 0.0f };
+	FConstantBuffer constants = { FVector(), FVector(0.5f, 0.5f, 1.0f) };
 	UpdateConstantBuffer(constants);
 
 	UINT stride = sizeof(FVertex);
@@ -224,10 +224,10 @@ void URenderer::CreateDefaultQuad()
 {
 	FVertex quadVertices[] =
 	{
-		{ -0.5f, 0.5f, 0.0f, 0.0f, 0.0f },
-		{ 0.5f, 0.5f, 0.0f, 1.0f, 0.0f },
-		{ 0.5f, -0.5f, 0.0f, 1.0f, 1.0f },
-		{ -0.5f, -0.5f, 0.0f, 0.0f, 1.0f }
+		{ FVector(-0.5f, 0.5f, 0.0f), 0.0f, 0.0f },
+		{ FVector(0.5f, 0.5f, 0.0f), 1.0f, 0.0f },
+		{ FVector(0.5f, -0.5f, 0.0f), 1.0f, 1.0f },
+		{ FVector(-0.5f, -0.5f, 0.0f), 0.0f, 1.0f }
 	};
 	
 	D3D11_BUFFER_DESC vertexBufferDesc = {};
