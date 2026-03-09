@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AudioSystem.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -138,6 +139,7 @@
     <ClInclude Include="fmod\fmod_dsp_effects.h" />
     <ClInclude Include="fmod\fmod_errors.h" />
     <ClInclude Include="fmod\fmod_output.h" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Renderer.h" />
   </ItemGroup>

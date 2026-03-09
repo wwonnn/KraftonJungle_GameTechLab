@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "AudioSystem.h"
 #include "InputManager.h"
+#include "GameObject.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -66,6 +67,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 				OutputDebugString(L"Space key pressed!\n");
                 audioSystem->Play("shoot");
 			}
+
+            // 오브젝트 Update
+            for (UGameObject* const& obj : UGameObject::GameObjectList)
+            {
+                obj->Update(1.0f);
+                obj->Render(*renderer);
+            }
         }
     }
 
