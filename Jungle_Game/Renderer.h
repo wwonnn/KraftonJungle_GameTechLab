@@ -33,7 +33,10 @@ public:
 	void Render();
 	void EndFrame();
 	
+	void SwapBuffer();
 	void UpdateConstantBuffer(const FConstantBuffer& data);
+	ID3D11Device* GetDevice();
+	ID3D11DeviceContext* GetDeviceContext();
 
 private:
 	bool CreateDeviceAndSwapChain(HWND hWnd);
