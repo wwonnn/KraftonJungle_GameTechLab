@@ -41,7 +41,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         return 0;
     }
 
-	AudioSystem* audioSystem = new AudioSystem();
+	UAudioSystem* audioSystem = new UAudioSystem();
     if (!audioSystem->Create())
     {
         return 0;

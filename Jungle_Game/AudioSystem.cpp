@@ -1,6 +1,6 @@
 #include "AudioSystem.h"
 
-bool AudioSystem::Create()
+bool UAudioSystem::Create()
 {
 	FMOD_RESULT result;
 	result = FMOD::System_Create(&System);
@@ -18,7 +18,7 @@ bool AudioSystem::Create()
 	return true;
 }
 
-void AudioSystem::Release()
+void UAudioSystem::Release()
 {
 	if (System)
 	{
@@ -27,7 +27,7 @@ void AudioSystem::Release()
 	}
 }
 
-void AudioSystem::LoadFromFile(const std::string& filePath, const std::string& soundName)
+void UAudioSystem::LoadFromFile(const std::string& filePath, const std::string& soundName)
 {
 	FMOD::Sound* sound;
 	FMOD_RESULT result = System->createSound(filePath.c_str(), FMOD_DEFAULT, nullptr, &sound);
@@ -38,7 +38,7 @@ void AudioSystem::LoadFromFile(const std::string& filePath, const std::string& s
 	SoundMap[soundName] = sound;
 }
 
-void AudioSystem::Play(const std::string& soundName)
+void UAudioSystem::Play(const std::string& soundName)
 {
 	auto iter = SoundMap.find(soundName);
 	if (iter != SoundMap.end())

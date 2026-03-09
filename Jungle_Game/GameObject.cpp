@@ -1,6 +1,8 @@
 #include "GameObject.h"
 #include <cmath>
 
+std::vector<UGameObject*> UGameObject::GameObjectList;
+
 UGameObject::UGameObject()
 {
 	// 오브젝트 리스트에 자신을 등록
