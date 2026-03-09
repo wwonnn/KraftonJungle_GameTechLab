@@ -96,6 +96,67 @@ void URenderer::UpdateConstantBuffer(const FConstantBuffer& data)
 	DeviceContext->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	memcpy(mappedResource.pData, &data, sizeof(FConstantBuffer));
 	DeviceContext->Unmap(ConstantBuffer, 0);
+
+void URenderer::CreateTexture(const std::string& filePath, const std::string& name)
+{
+    int width, height, channels;
+    unsigned char* textureData = stbi_load(filePath.c_str(), &width, &height, &channels, 4);
+
+    D3D11_TEXTURE2D_DESC textureDesc = {};
+    textureDesc.Width = width;
+    textureDesc.Height = height;
+    textureDesc.MipLevels = 1;
+    textureDesc.ArraySize = 1;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA textureSRD = {};
+    textureSRD.pSysMem = textureData;
+    textureSRD.SysMemPitch = width * 4;
+
+    ID3D11Texture2D* newTexture = nullptr;
+    ID3D11ShaderResourceView* newSRV = nullptr;
+
+    Device->CreateTexture2D(&textureDesc, &textureSRD, &newTexture);
+    if (newTexture) {
+        Device->CreateShaderResourceView(newTexture, nullptr, &newSRV);
+    }
+
+    if (textureData) {
+        stbi_image_free(textureData);
+        textureData = nullptr;
+    }
+
+    Textures[name] = newTexture;
+    SRVs[name] = newSRV;
+}
+
+void URenderer::ReleaseTexture(const std::string& name)
+{
+    auto textureIt = Textures.find(name);
+    if (textureIt != Textures.end()) {
+        if (textureIt->second) {
+            textureIt->second->Release();
+        }
+        Textures.erase(textureIt);
+    }
+    auto srvIt = SRVs.find(name);
+    if (srvIt != SRVs.end()) {
+        if (srvIt->second) {
+            srvIt->second->Release();
+        }
+        SRVs.erase(srvIt);
+    }
+}
+
+void URenderer::BindTexture(const std::string& name)
+{
+    auto srvIt = SRVs.find(name);
+    if (srvIt != SRVs.end()) {
+        DeviceContext->PSSetShaderResources(0, 1, &srvIt->second);
+    }
 }
 
 bool URenderer::CreateDeviceAndSwapChain(HWND hWnd)
