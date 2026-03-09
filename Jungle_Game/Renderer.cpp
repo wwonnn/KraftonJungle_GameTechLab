@@ -1,5 +1,8 @@
 #include "Renderer.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 URenderer::URenderer()
 {
 }
@@ -61,6 +64,10 @@ void URenderer::Render()
 	DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	DeviceContext->IASetInputLayout(InputLayout);
 	DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+
+	DeviceContext->PSSetShaderResources(0, 1, &DefaultSRV);
+	DeviceContext->PSSetSamplers(0, 1, &DefaultSamplerState);
+
 	DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 	DeviceContext->DrawIndexed(6, 0, 0);
 
@@ -316,5 +323,68 @@ void URenderer::ReleaseDefaultShader()
 	{
 		VertexShader->Release();
 		VertexShader = nullptr;
+	}
+}
+
+void URenderer::CreateDefaultTexture()
+{
+	int width, height, channels;
+	unsigned char* textureData = stbi_load("default_texture.png", &width, &height, &channels, 4);
+
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+	D3D11_SUBRESOURCE_DATA textureSRD = {};
+	textureSRD.pSysMem = textureData;
+	textureSRD.SysMemPitch = width * 4;
+
+	Device->CreateTexture2D(&textureDesc, &textureSRD, &DefaultTexture);
+	Device->CreateShaderResourceView(DefaultTexture, nullptr, &DefaultSRV);
+
+	if (textureData) {
+		stbi_image_free(textureData);
+		textureData = nullptr;
+	}
+}
+
+void URenderer::ReleaseDefaultTexture()
+{
+	if (DefaultSRV) {
+		DefaultSRV->Release();
+		DefaultSRV = nullptr;
+	}
+	if (DefaultTexture) {
+		DefaultTexture->Release();
+		DefaultTexture = nullptr;
+	}
+}
+
+void URenderer::CreateDefaultSamplerState() 
+{
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	Device->CreateSamplerState(&sampDesc, &DefaultSamplerState);
+}
+
+void URenderer::ReleaseDefaultSamplerState()
+{
+	if (DefaultSamplerState)
+	{
+		DefaultSamplerState->Release();
+		DefaultSamplerState = nullptr;
 	}
 }

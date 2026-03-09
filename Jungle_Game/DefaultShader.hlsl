@@ -3,6 +3,9 @@ cbuffer ConstantBuffer : register(b0)
     float3 offset;
 }
 
+Texture2D texture0 : register(t0);
+SamplerState samplerState : register(s0);
+
 struct VS_INPUT
 {
     float3 position : POSITION;
@@ -28,7 +31,7 @@ PS_INPUT mainVS(VS_INPUT input)
 
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
-    //float4 color = texture0.Sample(samplerState, input.uv);
-    float4 color = float4(input.uv, 0.0f, 1.0f);
+    float4 color = texture0.Sample(samplerState, input.uv);
+    //float4 color = float4(input.uv, 0.0f, 1.0f);
     return color;
 }
