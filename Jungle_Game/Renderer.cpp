@@ -379,3 +379,12 @@ void URenderer::CreateDefaultSamplerState()
 
 	Device->CreateSamplerState(&sampDesc, &DefaultSamplerState);
 }
+
+void URenderer::ReleaseDefaultSamplerState()
+{
+	if (DefaultSamplerState)
+	{
+		DefaultSamplerState->Release();
+		DefaultSamplerState = nullptr;
+	}
+}

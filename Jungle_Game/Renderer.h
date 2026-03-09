@@ -58,6 +58,7 @@ private:
 	void ReleaseDefaultTexture();
 
 	void CreateDefaultSamplerState();
+	void ReleaseDefaultSamplerState();
 
 private:
 	ID3D11Device* Device = nullptr;
