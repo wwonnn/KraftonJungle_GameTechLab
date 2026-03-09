@@ -23,6 +23,8 @@ bool URenderer::Create(HWND hWnd)
 	CreateConstantBuffer();
 	CreateDefaultQuad();
 	CreateDefaultShader();
+	CreateDefaultTexture();
+	CreateDefaultSamplerState();
 
 	return true;
 }
