@@ -25,12 +25,14 @@ bool URenderer::Create(HWND hWnd)
 	CreateDefaultShader();
 	CreateDefaultTexture();
 	CreateDefaultSamplerState();
+	CreateBlendState();
 
 	return true;
 }
 
 void URenderer::Release()
 {
+	ReleaseBlendState();
 	ReleaseDefaultSamplerState();
 	ReleaseDefaultTexture();
 	ReleaseDefaultShader();
@@ -51,6 +53,7 @@ void URenderer::BeginFrame()
 	DeviceContext->RSSetState(RasterizerState);
 
 	DeviceContext->OMSetRenderTargets(1, &RenderTargetView, nullptr);
+	DeviceContext->OMSetBlendState(BlendState, NULL, 0xffffffff);
 
 	DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
 }
@@ -333,7 +336,7 @@ void URenderer::ReleaseDefaultShader()
 void URenderer::CreateDefaultTexture()
 {
 	int width, height, channels;
-	unsigned char* textureData = stbi_load("default_texture.png", &width, &height, &channels, 4);
+	unsigned char* textureData = stbi_load("default_texture_alpha.png", &width, &height, &channels, 4);
 
 	D3D11_TEXTURE2D_DESC textureDesc = {};
 	textureDesc.Width = width;
@@ -392,5 +395,31 @@ void URenderer::ReleaseDefaultSamplerState()
 	{
 		DefaultSamplerState->Release();
 		DefaultSamplerState = nullptr;
+	}
+}
+
+void URenderer::CreateBlendState()
+{
+	D3D11_BLEND_DESC blendDesc = {};
+	blendDesc.AlphaToCoverageEnable = FALSE;
+	blendDesc.IndependentBlendEnable = FALSE;
+	blendDesc.RenderTarget[0].BlendEnable = TRUE; 
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	Device->CreateBlendState(&blendDesc, &BlendState);
+}
+
+void URenderer::ReleaseBlendState()
+{
+	if (BlendState)
+	{
+		BlendState->Release();
+		BlendState = nullptr;
 	}
 }
