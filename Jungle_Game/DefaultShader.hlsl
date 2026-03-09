@@ -1,7 +1,7 @@
 cbuffer ConstantBuffer : register(b0)
 {
-    float3 offset;
-    float3 scale;
+    float4 offset;
+    float4 scale;
 }
 
 Texture2D texture0 : register(t0);
