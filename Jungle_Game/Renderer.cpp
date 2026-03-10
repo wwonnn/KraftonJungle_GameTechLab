@@ -457,7 +457,7 @@ void URenderer::ReleaseDefaultQuad()
 
 void URenderer::CreateDefaultShader()
 {
-    std::wstring shaderPath = L"DefaultShader.hlsl";
+    std::wstring shaderPath = L"asset/shader/DefaultShader.hlsl";
 
     ID3DBlob* vsBlob = nullptr;
     ID3DBlob* psBlob = nullptr;
@@ -631,7 +631,7 @@ static unsigned char* load_file(const char* fileName)
 
 void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
 {
-    unsigned char* fontBuffer = load_file("Pixel-Game.ttf");
+    unsigned char* fontBuffer = load_file("asset/font/Pixel-Game.ttf");
     if (!fontBuffer)
     {
         return;
@@ -709,7 +709,7 @@ void URenderer::ReleaseDefaultFontAtlasAndVertexBuffer()
 
 void URenderer::CreateTextShader()
 {
-    std::wstring shaderPath = L"TextShader.hlsl";
+    std::wstring shaderPath = L"asset/shader/TextShader.hlsl";
 
     ID3DBlob* vsBlob = nullptr;
     ID3DBlob* psBlob = nullptr;
