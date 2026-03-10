@@ -29,8 +29,6 @@ void InGameScene::Initialize()
             FVector(0.1f, 0.1f, 1.0f))));
     Player = dynamic_cast<UPlayer*>(playerObj);
 
-    UImGuiManager::Get().SettingPlayer(Player);
-
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InGameScene::OnEnemyDied, this));
     EventSystem::Get().Subscribe("AllStageCleared", std::bind(&InGameScene::OnAllStageCleared, this));
 

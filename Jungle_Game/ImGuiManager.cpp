@@ -43,7 +43,3 @@ void UImGuiManager::DrawMyText(const char* format, ...)
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 }
-
-void UImGuiManager::SettingPlayer(UPlayer* player) {
-    Player = player;
-}

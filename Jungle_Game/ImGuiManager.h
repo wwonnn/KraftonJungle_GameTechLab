@@ -28,7 +28,6 @@ public:
 	void endFrame();
 	void Release();
 	void DrawMyText(const char* format, ...);
-    void SettingPlayer(UPlayer* player);
 
 private:
 	char buffer[256];
