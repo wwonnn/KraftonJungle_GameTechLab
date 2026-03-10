@@ -7,6 +7,7 @@ void UPlayer::SetAudioSystem(UAudioSystem* sys)
 {
     AudioSystem = sys;
 }
+#include "CollisionSystem.h"
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -58,6 +59,8 @@ void UPlayer::Update(float DeltaTime)
             FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
         );
     }
+
+    CheckWallCollision();
 }
 
 void UPlayer::Render(URenderer& renderer)
@@ -76,6 +79,11 @@ bool UPlayer::CheckCollision(UGameObject* other)
 {
     // 충돌 처리
     return false;
+}
+
+void UPlayer::CheckWallCollision()
+{
+    UCollisionSystem::Get().CheckWallCollision(Transform.Location, Transform.Scale);
 }
 
 void UPlayer::ApplyImpulse(const FConstantBuffer& v)

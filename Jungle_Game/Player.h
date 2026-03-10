@@ -24,6 +24,9 @@ public:
     void SetAudioSystem(UAudioSystem* sys);
 
 private:
+    void CheckWallCollision();
+
+private:
     FVector Velocity;
     UAudioSystem* AudioSystem = nullptr;
 };
