@@ -1,6 +1,7 @@
 #include "SceneManager.h"
 #include "IntroScene.h"
 #include "InGameScene.h"
+#include "OutroScene.h"
 
 void SceneManager::Initialize(FGameContext* gameContext) {
     GameContext = gameContext;
@@ -20,6 +21,7 @@ void SceneManager::ChangeScene(SceneType type) {
         currentScene = new InGameScene(GameContext);
         break;
     case SceneType::Outro:
+        currentScene = new OutroScene(GameContext);
         break;
     }
 

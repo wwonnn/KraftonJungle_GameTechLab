@@ -44,5 +44,6 @@ void InGameScene::Render() {
 }
 
 void InGameScene::Release() {
+    UScene::Release();
     delete WaveController;
 }

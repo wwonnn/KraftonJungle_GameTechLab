@@ -10,9 +10,7 @@ private:
 
 public:
     InGameScene(FGameContext* gameContext);
-    ~InGameScene() {
-        Release();
-    }
+    ~InGameScene() override {}
 
     void Initialize() override;
     void Update(float deltaTime) override;

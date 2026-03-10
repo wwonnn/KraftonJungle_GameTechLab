@@ -82,7 +82,5 @@ void IntroScene::Render() {
 }
 
 void IntroScene::Release() {
-    for (UGameObject* obj : GameObjects) {
-        delete obj;
-    }
+    UScene::Release();
 }

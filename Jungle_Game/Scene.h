@@ -27,7 +27,12 @@ public:
     virtual void Initialize() = 0;
     virtual void Update(float deltaTime) = 0;
     virtual void Render() = 0;
-    virtual void Release() = 0;
+    virtual void Release()
+    {
+        for (UGameObject* obj : GameObjects) {
+            delete obj;
+        }
+    }
 
     virtual void Refresh();
 
