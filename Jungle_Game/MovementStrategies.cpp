@@ -24,11 +24,11 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
         SetDirection(FVector(-Direction.x, -Direction.y));
     }
 
-    // 이동 불가 조건 시 false 반환
+    // 이동 완료 시 true 반환
     if (false)
-        return false;
+        return true;
 
-    return true;
+    return false;
 }
 
 void LinearMovement::Reset()
@@ -38,4 +38,33 @@ void LinearMovement::Reset()
 void LinearMovement::SetDirection(FVector newDir)
 {
     Direction = newDir.Normalize();
+}
+
+FollowPlayerMovement::FollowPlayerMovement(FVector direction, float speed)
+    : Direction(direction.Normalize())
+    , Speed(speed)
+{
+}
+
+bool FollowPlayerMovement::Update(FVector& outPosition, float& outRotation, const FVector& currentPos, const FVector& playerPos, float dt)
+{
+    float moveDist = Speed * dt;
+    Direction = (playerPos - currentPos).Normalize();
+
+    outPosition =
+    {
+        currentPos.x + Direction.x * moveDist,
+        currentPos.y + Direction.y * moveDist
+    };
+    outRotation = std::atan2(Direction.y, Direction.x);
+
+    return false;
+}
+
+void FollowPlayerMovement::Reset()
+{
+}
+
+void FollowPlayerMovement::SetDirection(FVector newDir)
+{
 }

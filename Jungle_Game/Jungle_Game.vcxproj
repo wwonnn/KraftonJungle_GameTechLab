@@ -144,6 +144,7 @@
     <ClCompile Include="IntroBackgroundObject.cpp" />
     <ClCompile Include="IntroScene.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MovementSequence.cpp" />
     <ClCompile Include="MovementStrategies.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Projectile.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="IntroBackgroundObject.h" />
     <ClInclude Include="IntroScene.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="MovementSequence.h" />
     <ClInclude Include="MovementStrategies.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Projectile.h" />

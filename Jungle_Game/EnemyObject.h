@@ -3,6 +3,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "MovementStrategies.h"
+#include "MovementSequence.h"
 #include <memory>
 
 // 상태 패턴

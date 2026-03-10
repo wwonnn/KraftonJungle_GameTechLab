@@ -45,6 +45,10 @@ void UWaveController::SpawnEnemy(float x, float y) {
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f))));
 
+    auto seq = std::make_unique<MovementSequence>();
+    seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 5.0f);
+    seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.2f), 3.0f);
+
     dynamic_cast<UEnemyObject*>(enemy)->SetMovementStrategy(
-        std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f));
+        std::move(seq));
 }
