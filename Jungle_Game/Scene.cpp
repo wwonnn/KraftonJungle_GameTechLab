@@ -8,7 +8,6 @@ void UScene::Refresh()
         UGameObject* obj = *it;
         if (obj->IsPendingDestroy())
         {
-            UCollisionSystem::Get().ClearCollisionPair(obj);
             delete obj;
             it = GameObjects.erase(it);
         }

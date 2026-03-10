@@ -59,7 +59,10 @@ void InGameScene::Update(float deltaTime) {
         obj->Update(deltaTime);
     }
 
-    if (Player->GetHP() <= 0) SceneManager::Get().ChangeScene(SceneType::Outro);
+    if (Player->GetHP() <= 0)
+    {
+        Player->SetDead(true);
+    }
 }
 
 void InGameScene::Render() {
