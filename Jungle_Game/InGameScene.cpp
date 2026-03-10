@@ -41,6 +41,12 @@ void InGameScene::Render() {
     UImGuiManager::Get().Update();
 
     Renderer->SwapBuffer();
+
+    // After all loop logic is done, check it should change the scene or not
+    if (Player->IsDead())
+    {
+        SceneManager::Get().ChangeScene(SceneType::Outro);
+    }
 }
 
 void InGameScene::Release() {

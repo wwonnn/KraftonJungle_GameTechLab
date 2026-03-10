@@ -21,9 +21,13 @@ public:
     void OnCollisionEnter();
     void OnCollisionExit();
 
+    bool IsDead() const { return bIsDead; }
+
 private:
     void CheckWallCollision();
 
 private:
     FVector Velocity;
+
+    bool bIsDead = false;
 };

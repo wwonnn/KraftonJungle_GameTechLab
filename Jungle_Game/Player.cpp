@@ -89,7 +89,7 @@ void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 
 void UPlayer::OnCollisionEnter()
 {
-    SceneManager::Get().ChangeScene(SceneType::Outro);
+    bIsDead = true;
 }
 
 void UPlayer::OnCollisionExit()
