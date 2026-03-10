@@ -12,6 +12,13 @@
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
+enum class ETextAlign
+{
+    Left,
+    Center,
+    Right
+};
+
 struct FConstantBuffer
 {
     FVector position;
@@ -56,7 +63,8 @@ public:
     void ReleaseTexture(const std::string& filePath);
     void BindTexture(const std::string& name);
 
-    void DrawString(const std::string& name, float x, float y, const FVector& color = FVector(1.0f, 1.0f, 1.0f));
+    void GetQuad(wchar_t c, float* x, float* y, stbtt_aligned_quad* q);
+    void DrawString(const std::wstring& name, float x, float y, const FVector& color = FVector(1.0f, 1.0f, 1.0f), ETextAlign align = ETextAlign::Center);
 
 	ID3D11Device* GetDevice();
 	ID3D11DeviceContext* GetDeviceContext();
@@ -127,8 +135,10 @@ private:
 
 	ID3D11BlendState* BlendState = nullptr;
 
-    stbtt_bakedchar FontAtlas[96];
+    stbtt_packedchar FontAtlas[96];
+    stbtt_packedchar FontHangulAtlas[12];
     ID3D11ShaderResourceView* FontAtlasSRV = nullptr;
+    std::unordered_map<wchar_t, int> HangulMap;
 
     ID3D11Buffer* TextVertexBuffer = nullptr;
 

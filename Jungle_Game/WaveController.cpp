@@ -1,5 +1,5 @@
 #include "WaveController.h"
-#include "GameObjectManager.h"
+#include "SceneManager.h"
 #include <fstream>
 
 bool UWaveController::LoadStageData(int stageNumber) {
@@ -40,10 +40,15 @@ void UWaveController::Update(float deltaTime) {
 }
 
 void UWaveController::SpawnEnemy(float x, float y) {
-    UGameObject* enemy = new UEnemyObject(
+    UGameObject* enemy = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyObject(
         FTransform(FVector(x, y, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.3f, 0.3f, 1.0f)));
+            FVector(0.3f, 0.3f, 1.0f))));
 
-    UGameObjectManager::Get().AddGameObject(enemy);
+    auto seq = std::make_unique<MovementSequence>();
+    seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 5.0f);
+    seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.2f), 3.0f);
+
+    dynamic_cast<UEnemyObject*>(enemy)->SetMovementStrategy(
+        std::move(seq));
 }

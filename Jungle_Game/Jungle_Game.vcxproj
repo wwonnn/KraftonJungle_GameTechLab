@@ -102,6 +102,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,6 +128,7 @@
     <ClCompile Include="CircleCollider.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="EnemyObject.cpp" />
+    <ClCompile Include="EventSystem.cpp" />
     <ClCompile Include="GameApp.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectManager.cpp" />
@@ -138,14 +140,21 @@
     <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="InGameScene.cpp" />
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="IntroBackgroundObject.cpp" />
+    <ClCompile Include="IntroScene.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MovementSequence.cpp" />
+    <ClCompile Include="MovementStrategies.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="TextShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WaveController.cpp" />
   </ItemGroup>
@@ -155,6 +164,7 @@
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="dr_mp3.h" />
     <ClInclude Include="EnemyObject.h" />
+    <ClInclude Include="EventSystem.h" />
     <ClInclude Include="fmod\fmod.h" />
     <ClInclude Include="fmod\fmod.hpp" />
     <ClInclude Include="fmod\fmod_codec.h" />
@@ -164,6 +174,7 @@
     <ClInclude Include="fmod\fmod_errors.h" />
     <ClInclude Include="fmod\fmod_output.h" />
     <ClInclude Include="GameApp.h" />
+    <ClInclude Include="GameContext.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectManager.h" />
     <ClInclude Include="ImGuiManager.h" />
@@ -175,11 +186,18 @@
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="InGameScene.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="IntroBackgroundObject.h" />
+    <ClInclude Include="IntroScene.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="MovementSequence.h" />
+    <ClInclude Include="MovementStrategies.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="Timer.h" />

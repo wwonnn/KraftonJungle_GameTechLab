@@ -49,7 +49,7 @@ public:
         }
     }
     void CheckCollisions();
-    void CheckWallCollision(FVector& location, FVector& scale);
+    bool CheckWallCollision(FVector& location, FVector& scale);
 
 private:
     bool CheckCollision(UCircleCollider* colliderA, UCircleCollider* colliderB);

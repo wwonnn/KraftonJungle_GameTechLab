@@ -166,22 +166,57 @@ void URenderer::BindTexture(const std::string& name)
     }
 }
 
-void URenderer::DrawString(const std::string& name, float x, float y, const FVector& color)
+void URenderer::GetQuad(wchar_t c, float* x, float* y, stbtt_aligned_quad* q)
+{
+    if (c >= 32 && c < 128)
+    {
+        stbtt_GetPackedQuad(FontAtlas, 512, 512, c - 32, x, y, q, 1);
+    }
+    else
+    {
+        int index = HangulMap[c];
+
+        stbtt_GetPackedQuad(FontHangulAtlas, 512, 512, index, x, y, q, 1);
+    }
+}
+
+void URenderer::DrawString(const std::wstring& name, float x, float y, const FVector& color, ETextAlign align)
 {
     std::vector<FTextVertex> vertices;
-    float currX = x;
-    float currY = y;
 
-    // 뷰포트 크기를 가져와 픽셀을 NDC로 변환
     float viewportWidth = Viewport.Width;
     float viewportHeight = Viewport.Height;
 
-    for (char c : name)
-    {
-        if (c < 32 || c >= 128) continue;
+    float totalWidth = 0.0f;
+    float tempX = 0.0f;
+    float tempY = 0.0f;
 
+    for (wchar_t c : name)
+    {
         stbtt_aligned_quad q;
-        stbtt_GetBakedQuad(FontAtlas, 512, 512, c - 32, &currX, &currY, &q, 1); // DirectX 좌표계 사용 (1)
+        GetQuad(c, &tempX, &tempY, &q);
+    }
+    totalWidth = tempX;
+
+    float currX = x;
+    float currY = y;
+    switch (align)
+    {
+    case ETextAlign::Center:
+        currX = x - (totalWidth / 2.0f);
+        break;
+    case ETextAlign::Right:
+        currX = x - totalWidth;
+        break;
+    case ETextAlign::Left:
+    default:
+        currX = x;
+    }
+
+    for (wchar_t c : name)
+    {
+        stbtt_aligned_quad q;
+        GetQuad(c, &currX, &currY, &q);
 
         // 픽셀 좌표를 NDC로 변환 (-1 ~ 1)
         float x0 = (q.x0 / viewportWidth) * 2.0f - 1.0f;
@@ -603,8 +638,32 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
     }
 
     unsigned char* alphaPixels = new unsigned char[512 * 512];
+    memset(alphaPixels, 0, 512 * 512);
 
-    stbtt_BakeFontBitmap(fontBuffer, 0, 32.0f, alphaPixels, 512, 512, 32, 96, FontAtlas);
+    stbtt_pack_context pc;
+    stbtt_PackBegin(&pc, alphaPixels, 512, 512, 0, 1, NULL);
+
+    stbtt_pack_range ranges[2];
+
+    ranges[0].font_size = 32.0f;
+    ranges[0].first_unicode_codepoint_in_range = 32;
+    ranges[0].num_chars = 96;
+    ranges[0].chardata_for_range = FontAtlas;
+    ranges[0].array_of_unicode_codepoints = nullptr;
+
+    static const wchar_t* hangulChars = L"성원희김기홍오준혁국동진";
+    ranges[1].font_size = 32.0f;
+    ranges[1].first_unicode_codepoint_in_range = 0;
+    ranges[1].num_chars = 12;
+    ranges[1].chardata_for_range = FontHangulAtlas;
+    ranges[1].array_of_unicode_codepoints = (int*)hangulChars;
+
+    stbtt_PackFontRanges(&pc, fontBuffer, 0, ranges, 2);
+    stbtt_PackEnd(&pc);
+
+    for (int i = 0; i < 12; ++i) {
+        HangulMap[hangulChars[i]] = i;
+    }
 
     D3D11_TEXTURE2D_DESC texDesc = {};
     texDesc.Width = 512;
@@ -626,7 +685,7 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
 
     D3D11_BUFFER_DESC vertexBufferDesc = {};
     vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    vertexBufferDesc.ByteWidth = sizeof(FVertex) * 6 * 100; // Max 100 characters
+    vertexBufferDesc.ByteWidth = sizeof(FTextVertex) * 6 * 100; // Max 100 characters
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
