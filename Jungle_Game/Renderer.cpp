@@ -166,9 +166,9 @@ void URenderer::BindTexture(const std::string& name)
     }
 }
 
-void URenderer::DrawString(const std::string& name, float x, float y)
+void URenderer::DrawString(const std::string& name, float x, float y, const FVector& color)
 {
-    std::vector<FVertex> vertices;
+    std::vector<FTextVertex> vertices;
     float currX = x;
     float currY = y;
 
@@ -189,10 +189,10 @@ void URenderer::DrawString(const std::string& name, float x, float y)
         float x1 = (q.x1 / viewportWidth) * 2.0f - 1.0f;
         float y1 = (q.y1 / viewportHeight) * 2.0f - 1.0f;
 
-        FVertex v0 = { FVector(x0, -y0, 0.0f), q.s0, q.t0 }; // Y축 반전
-        FVertex v1 = { FVector(x1, -y0, 0.0f), q.s1, q.t0 };
-        FVertex v2 = { FVector(x1, -y1, 0.0f), q.s1, q.t1 };
-        FVertex v3 = { FVector(x0, -y1, 0.0f), q.s0, q.t1 };
+        FTextVertex v0 = { FVector(x0, -y0, 0.0f), q.s0, q.t0, color }; // Y축 반전
+        FTextVertex v1 = { FVector(x1, -y0, 0.0f), q.s1, q.t0, color };
+        FTextVertex v2 = { FVector(x1, -y1, 0.0f), q.s1, q.t1, color };
+        FTextVertex v3 = { FVector(x0, -y1, 0.0f), q.s0, q.t1, color };
 
         vertices.push_back(v0);
         vertices.push_back(v1);
@@ -207,14 +207,14 @@ void URenderer::DrawString(const std::string& name, float x, float y)
 
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     DeviceContext->Map(TextVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-    memcpy(mappedResource.pData, vertices.data(), vertices.size() * sizeof(FVertex));
+    memcpy(mappedResource.pData, vertices.data(), vertices.size() * sizeof(FTextVertex));
     DeviceContext->Unmap(TextVertexBuffer, 0);
 
-    UINT stride = sizeof(FVertex);
+    UINT stride = sizeof(FTextVertex);
     UINT offset = 0;
     DeviceContext->IASetVertexBuffers(0, 1, &TextVertexBuffer, &stride, &offset);
     DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    DeviceContext->IASetInputLayout(InputLayout);
+    DeviceContext->IASetInputLayout(TextInputLayout);
 
     DeviceContext->VSSetShader(TextVertexShader, nullptr, 0);
     DeviceContext->PSSetShader(TextPixelShader, nullptr, 0);
@@ -679,10 +679,26 @@ void URenderer::CreateTextShader()
     );
     Device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &TextPixelShader);
 
+    D3D11_INPUT_ELEMENT_DESC inputLayout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+    Device->CreateInputLayout(inputLayout, ARRAYSIZE(inputLayout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &TextInputLayout);
+
+    vsBlob->Release();
+    psBlob->Release();
 }
 
 void URenderer::ReleaseTextShader()
 {
+    if (TextInputLayout)
+    {
+        TextInputLayout->Release();
+        TextInputLayout = nullptr;
+    }
+
     if (TextPixelShader)
     {
         TextPixelShader->Release();
