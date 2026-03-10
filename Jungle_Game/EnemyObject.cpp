@@ -43,12 +43,8 @@ void UEnemyObject::Render(URenderer& renderer)
     constants.scale = Transform.Scale;
 
     FSpriteUVBuffer spriteConstants;
-    if (State != EnemyState::Dead) {
-        spriteConstants.UVOffsetX = 0.0f;
-        spriteConstants.UVOffsetY = 0.0f;
-        spriteConstants.UVScaleX = 1.0f;
-        spriteConstants.UVScaleY = 1.0f;
-    }
+    if (State != EnemyState::Dead)
+        spriteConstants = { 0.0f, 0.0f, 1.0f, 1.0f };
     else
         Animator->GetFrameUV(spriteConstants.UVOffsetX, spriteConstants.UVOffsetY, spriteConstants.UVScaleX, spriteConstants.UVScaleY);
 
@@ -56,6 +52,9 @@ void UEnemyObject::Render(URenderer& renderer)
     renderer.UpdateSpriteUV(spriteConstants);
     renderer.BindTexture(GetTextureName());
     renderer.Render();
+
+    spriteConstants = { 0.0f, 0.0f, 1.0f, 1.0f };
+    renderer.UpdateSpriteUV(spriteConstants);
 }
 
 /// <summary>

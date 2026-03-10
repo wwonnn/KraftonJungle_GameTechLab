@@ -26,7 +26,10 @@ void IntroBackgroundObject::Render(URenderer& renderer)
     constants.position = Transform.Location;
     constants.rotation = Transform.Rotation;
     constants.scale = Transform.Scale;
+
+    FSpriteUVBuffer spriteConstants = { 0.0f, 0.0f, 1.0f, 1.0f };
     renderer.UpdateConstantBuffer(constants);
+    renderer.UpdateSpriteUV(spriteConstants);
     renderer.BindTexture(GetTextureName());
     renderer.Render();
 }
