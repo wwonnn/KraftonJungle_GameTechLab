@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "GameObject.h"
 #include "AudioSystem.h"
+#include <functional>
 
 class UPlayer : public UGameObject
 {
@@ -23,6 +24,11 @@ public:
 
     bool IsDead() const { return bIsDead; }
 
+    int GetHP();
+    void TakeDamage();
+
+    std::function<void(int)> OnHPChanged;
+
 private:
     void CheckWallCollision();
 
@@ -30,6 +36,11 @@ private:
     FVector Velocity;
 
     bool bIsDead = false;
+    UAudioSystem* AudioSystem = nullptr;
+
+    int HP = 3;
+    float delayTime = 3.0f;
+    float HitTime = 3.0f;
 
     const float ShootCooldown = 0.2f;
     float ShootCooldownTimer = 0.0f;

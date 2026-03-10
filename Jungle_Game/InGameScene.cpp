@@ -3,6 +3,9 @@
 #include "CollisionSystem.h"
 #include "EventSystem.h"
 #include "GlobalState.h"
+#include "LifeObject.h"
+
+#include <vector>
 #include "Projectile.h"
 #include "GameBackground.h"
 
@@ -25,10 +28,26 @@ void InGameScene::Initialize()
             FVector(0.1f, 0.1f, 1.0f))));
     Player = dynamic_cast<UPlayer*>(playerObj);
 
+    UImGuiManager::Get().SettingPlayer(Player);
+
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InGameScene::OnEnemyDied, this));
     EventSystem::Get().Subscribe("AllStageCleared", std::bind(&InGameScene::OnAllStageCleared, this));
 
     WaveController->GoNextStage();
+
+    for (int i = 0; i < 2; i++) {
+        float xPos = -0.9f + (i * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        lifeObjects.push_back(life);
+    }
+
+    Player->OnHPChanged = [&](int newHP) {
+        if (newHP > 0) {
+            lifeObjects[newHP - 1]->Destroy();
+        }
+     };
 }
 
 void InGameScene::Update(float deltaTime) {
@@ -38,6 +57,8 @@ void InGameScene::Update(float deltaTime) {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
     }
+
+    if (Player->GetHP() <= 0) SceneManager::Get().ChangeScene(SceneType::Outro);
 }
 
 void InGameScene::Render() {
@@ -55,7 +76,6 @@ void InGameScene::Render() {
 
     UImGuiManager::Get().beginFrame();
     UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
-    UImGuiManager::Get().endFrame();
     UImGuiManager::Get().Update();
 
     Renderer->SwapBuffer();

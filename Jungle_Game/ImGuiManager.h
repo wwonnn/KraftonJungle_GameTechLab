@@ -5,6 +5,9 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
+#include <functional>
+
+#include "Player.h"
 
 class UImGuiManager
 {
@@ -25,7 +28,10 @@ public:
 	void endFrame();
 	void Release();
 	void DrawMyText(const char* format, ...);
+    void SettingPlayer(UPlayer* player);
 
 private:
 	char buffer[256];
+    int HP = 0;
+    UPlayer* Player;
 };

@@ -1,4 +1,5 @@
 #include "ImGuiManager.h"
+#include "Player.h"
 
 void UImGuiManager::Create(HWND hWnd, URenderer* renderer) {
     IMGUI_CHECKVERSION();
@@ -11,6 +12,10 @@ void UImGuiManager::Create(HWND hWnd, URenderer* renderer) {
 void UImGuiManager::Update() {
     beginFrame();
     ImGui::Text(buffer);
+    if (ImGui::Button("good")) {
+        Player->TakeDamage();
+    }
+    ImGui::Text("%d", Player->GetHP());
     endFrame();
 }
 
@@ -41,4 +46,8 @@ void UImGuiManager::DrawMyText(const char* format, ...)
     va_start(args, format);
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
+}
+
+void UImGuiManager::SettingPlayer(UPlayer* player) {
+    Player = player;
 }

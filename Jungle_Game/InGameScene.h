@@ -10,6 +10,8 @@ private:
     UPlayer* Player = nullptr;
     UGameBackground* Background = nullptr;
 
+    std::vector<UGameObject*> lifeObjects;
+
 public:
     int EnemyKillCount = 0;
     bool bStageClearText = false;

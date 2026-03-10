@@ -56,7 +56,6 @@ void UPlayer::Update(float DeltaTime)
         if (ShootCooldownTimer > 0.0f) return;
         ShootCooldownTimer = ShootCooldown;
         UAudioSystem::Get().Play("shoot");
-
         UGameObject* projectile = new UProjectile(
             FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
         );
@@ -65,7 +64,23 @@ void UPlayer::Update(float DeltaTime)
         projectile->Destroy(1.5f);
     }
 
+    if (HitTime < delayTime) HitTime += DeltaTime;
+
     CheckWallCollision();
+}
+
+int UPlayer::GetHP() { return HP; }
+
+void UPlayer::TakeDamage() {
+    if (HitTime >= delayTime) {
+        HP--;
+        OnHPChanged(HP);
+        HitTime = 0.0f;
+        if (HP <= 0) {
+            bIsDead = true;
+            GlobalState::Get().bAllStageCleared = false;
+        }
+    }
 }
 
 void UPlayer::Render(URenderer& renderer)
@@ -98,8 +113,7 @@ void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 
 void UPlayer::OnCollisionEnter()
 {
-    bIsDead = true;
-    GlobalState::Get().bAllStageCleared = false;
+    TakeDamage();
 }
 
 void UPlayer::OnCollisionExit()
