@@ -54,6 +54,7 @@ void UPlayer::Update(float DeltaTime)
         );
 
         SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
+        projectile->Destroy(1.5f);
     }
 
     CheckWallCollision();

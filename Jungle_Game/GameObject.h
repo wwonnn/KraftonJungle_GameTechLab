@@ -33,6 +33,8 @@ public:
 	virtual bool CheckCollision(UGameObject* other) = 0;
 	virtual void ApplyImpulse(const FConstantBuffer& v) = 0;
     virtual void Destroy();
+    virtual void Destroy(float delay);
+    void TickDestroyTimer(float deltaTime);
 
     std::string GetTextureName() const { return TextureName; }
     void SetTextureName(std::string name) { TextureName = name; }
@@ -46,6 +48,7 @@ protected:
     FTransform Transform;
     UCircleCollider* Collider = nullptr;
     bool bIsPendingDestroy = false;
+    float DestroyDelayTimer = -1.0f;
 
 private:
     std::string TextureName = "player";

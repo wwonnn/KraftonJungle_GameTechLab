@@ -20,7 +20,7 @@ UProjectile::~UProjectile()
 
 void UProjectile::Initialize()
 {
-    Velocity = FVector(0.0f, 0.2f, 0.0f);
+    Velocity = FVector(0.0f, 1.0f, 0.0f);
     SetTextureName("projectile");
     Collider->SetLayer(ECollisionLayer::Projectile);
     Collider->AddContactLayer(ECollisionLayer::Enemy);
