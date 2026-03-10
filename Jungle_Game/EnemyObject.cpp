@@ -14,6 +14,16 @@ UEnemyObject::UEnemyObject(FTransform transform)
     Collider->SetLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::Player);
     Collider->AddContactLayer(ECollisionLayer::Projectile);
+
+    // Player 주입
+    for (UGameObject* obj : GameObjectList)
+    {
+        if (UPlayer* player = dynamic_cast<UPlayer*>(obj))
+        {
+            Player = player;
+            break;
+        }
+    }
 }
 
 UEnemyObject::~UEnemyObject()
@@ -76,16 +86,16 @@ void UEnemyObject::Move(float deltaTime)
         float newRot;
         if (MovementStrategy->Update(newPos, newRot, Transform.Location, Player ? Player->GetTransform().Location : FVector(), deltaTime))
         {
-            // 이동 진행 중
-            Transform.Location = newPos;
-            Transform.Rotation.z = newRot;
-        }
-        else
-        {
             // 이동 완료
 
             // TODO: 플레이어 총에 맞아 사망
             TransitionToState(EnemyState::Dead);
+        }
+        else
+        {
+            // 이동 진행 중
+            Transform.Location = newPos;
+            Transform.Rotation.z = newRot;
         }
     }
 }

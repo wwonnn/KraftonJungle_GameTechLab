@@ -1,6 +1,7 @@
 #include "IntroScene.h"
 #include "IntroBackgroundObject.h"
 #include "EventSystem.h"
+#include "SceneManager.h"
 
 void IntroScene::Initialize() {
     // Load resources, initialize variables, etc.
@@ -16,35 +17,37 @@ void IntroScene::Update(float deltaTime) {
 
     if (input.GetKeyDown(VK_UP)) {
         OptionIndex = (OptionIndex - 1 + MaxOptions + 1) % (MaxOptions + 1);
-        AudioSystem->Play("select");
+        UAudioSystem::Get().Play("select");
     }
     else if (input.GetKeyDown(VK_DOWN)) {
         OptionIndex = (OptionIndex + 1) % (MaxOptions + 1);
-        AudioSystem->Play("select");
+        UAudioSystem::Get().Play("select");
     }
      else if (input.GetKeyDown(VK_SPACE)) {
+        UAudioSystem::Get().Play("choose");
+
         if (IsCredit)
         {
             IsCredit = false;
             OptionIndex = 0;
         }
-        switch (OptionIndex) {
-        case 0:
-            // Start the game
-            EventSystem::Get().Trigger("StartGame");
-            EventSystem::Get().UnSubscribe("StartGame");
-            break;
-        case 1:
-            // Show credits
-            IsCredit = true;
-            break;
-        case 2:
-            // Exit the game
-            PostQuitMessage(0);
-            break;
+        else
+        {
+            switch (OptionIndex) {
+            case 0:
+                // Start the game
+                SceneManager::Get().ChangeScene(SceneType::InGame);
+                break;
+            case 1:
+                // Show credits
+                IsCredit = true;
+                break;
+            case 2:
+                // Exit the game
+                PostQuitMessage(0);
+                break;
+            }
         }
-
-        AudioSystem->Play("choose");
     }
 }
 

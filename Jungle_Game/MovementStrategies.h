@@ -13,7 +13,7 @@ public:
      * @param currentPos   현재 위치 (입력)
      * @param playerPos    플레이어 현재 위치 (입력, 필요한 전략만 사용)
      * @param dt           DeltaTime
-     * @return             true = 이동 가능, false = 이동 불가
+     * @return             true = 이동 완료
      */
     virtual bool Update(FVector& outPosition,
         float& outRotation,
@@ -45,5 +45,27 @@ public:
 
 private:
     FVector Direction;       
-    float     Speed;
+    float Speed;
+};
+
+/// <summary>
+/// 플레이어 방향으로 이동 패턴
+/// </summary>
+class FollowPlayerMovement : public IMovementStrategy
+{
+public:
+    explicit FollowPlayerMovement(FVector direction = { 1.0f, 0.0f }, float speed = 1.0f);
+
+    bool Update(FVector& outPosition,
+        float& outRotation,
+        const FVector& currentPos,
+        const FVector& playerPos,
+        float            dt) override;
+
+    void Reset() override;
+    void SetDirection(FVector newDir);
+
+private:
+    FVector Direction;
+    float Speed;
 };

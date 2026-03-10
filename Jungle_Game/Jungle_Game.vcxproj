@@ -140,11 +140,11 @@
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="InGameScene.cpp" />
-    <ClCompile Include="InitScene.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="IntroBackgroundObject.cpp" />
     <ClCompile Include="IntroScene.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MovementSequence.cpp" />
     <ClCompile Include="MovementStrategies.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Projectile.cpp" />
@@ -185,11 +185,11 @@
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="InGameScene.h" />
-    <ClInclude Include="InitScene.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="IntroBackgroundObject.h" />
     <ClInclude Include="IntroScene.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="MovementSequence.h" />
     <ClInclude Include="MovementStrategies.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Projectile.h" />
