@@ -37,6 +37,12 @@ struct FSpriteUVBuffer
     float UVScaleY;
 };
 
+struct FEffectConstantBuffer
+{
+    float time;
+    float padding[3];
+};
+
 struct FVertex
 {
     FVector position;
@@ -67,6 +73,7 @@ public:
 	void SwapBuffer();
 	void UpdateConstantBuffer(const FConstantBuffer& data);
     void UpdateSpriteUV(FSpriteUVBuffer& data);
+    void UpdateEffectConstantBuffer(const FEffectConstantBuffer& data);
 
     void CreateTexture(const std::string& filePath, const std::string& name);
     void ReleaseTexture(const std::string& filePath);
@@ -89,7 +96,9 @@ private:
 	void ReleaseRasterzerState();
 
 	void CreateConstantBuffer();
-	void ReleaseConstantBuffer();
+    void CreateEffectConstantBuffer();  
+    void ReleaseConstantBuffer();
+    void ReleaseEffectConstantBuffer();
 
     void CreateSpriteConstantBuffer();
     void ReleaseSpriteConstantBuffer();
@@ -129,7 +138,8 @@ private:
 	D3D11_VIEWPORT Viewport = {};
 	FLOAT ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	ID3D11Buffer* ConstantBuffer = nullptr;
+    ID3D11Buffer* ConstantBuffer = nullptr;
+    ID3D11Buffer* EffectConstantBuffer = nullptr;
     ID3D11Buffer* SpriteConstantBuffer = nullptr;
 
     std::unordered_map<std::string, ID3D11Texture2D*> Textures;
