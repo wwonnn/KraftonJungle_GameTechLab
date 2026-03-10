@@ -129,7 +129,7 @@ void GameApp::Finalize()
 
 void GameApp::LoadDefaultAssets()
 {
-    AudioSystem->LoadFromFile("asset/shoot.wav", "shoot");
+    AudioSystem->LoadFromFile("asset/shoot.mp3", "shoot");
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
