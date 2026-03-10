@@ -20,6 +20,7 @@ void UTimer::Update() {
 		QueryPerformanceCounter(&currTime);
 
 		deltaTime = (double)(currTime.QuadPart - prevTime.QuadPart) / frequency.QuadPart;
+        if (deltaTime > 0.2) deltaTime = 0.2;
 
 		prevTime = currTime;
 		totalTime += deltaTime;
