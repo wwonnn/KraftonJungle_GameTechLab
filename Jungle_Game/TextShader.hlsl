@@ -12,12 +12,14 @@ struct VS_INPUT
 {
     float3 position : POSITION;
     float2 uv : TEXCOORD;
+    float3 color : COLOR;
 };
 
 struct PS_INPUT
 {
     float4 position : SV_POSITION;
     float2 uv : TEXCOORD;
+    float3 color : COLOR;
 };
 
 PS_INPUT mainVS(VS_INPUT input)
@@ -28,6 +30,7 @@ PS_INPUT mainVS(VS_INPUT input)
     float3 worldPos = scaledPos + offset;
     output.position = float4(worldPos, 1.0f);
     output.uv = input.uv;
+    output.color = input.color;
     
     return output;
 }
@@ -35,11 +38,13 @@ PS_INPUT mainVS(VS_INPUT input)
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
     float4 color = texture0.Sample(samplerState, input.uv);
+    float alpha = color.r;
     
-    if (color.r > 0.0f && color.g == 0.0f && color.b == 0.0f)
+    if (color.r < 0.01f)
     {
-        return float4(1.0f, 1.0f, 1.0f, color.r);
+        discard;
     }
     
-    return color;
+    return float4(input.color, alpha);
+
 }

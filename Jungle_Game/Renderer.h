@@ -28,6 +28,13 @@ struct FVertex
 	float u, v;
 };
 
+struct FTextVertex
+{
+    FVector position;
+    float u, v;
+    FVector color;
+};
+
 class URenderer
 {
 public:
@@ -49,7 +56,7 @@ public:
     void ReleaseTexture(const std::string& filePath);
     void BindTexture(const std::string& name);
 
-    void DrawString(const std::string& name, float x, float y);
+    void DrawString(const std::string& name, float x, float y, const FVector& color = FVector(1.0f, 1.0f, 1.0f));
 
 	ID3D11Device* GetDevice();
 	ID3D11DeviceContext* GetDeviceContext();
@@ -127,5 +134,6 @@ private:
 
     ID3D11VertexShader* TextVertexShader = nullptr;
     ID3D11PixelShader* TextPixelShader = nullptr;
+    ID3D11InputLayout* TextInputLayout = nullptr;
 };
 
