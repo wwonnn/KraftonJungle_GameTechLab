@@ -4,7 +4,7 @@
 #include <fstream>
 
 bool UWaveController::LoadStageData(int stageNumber) {
-    std::ifstream file("enemies.json");
+    std::ifstream file("asset/data/enemies.json");
     if (!file.is_open()) return false;
 
     nlohmann::json j;

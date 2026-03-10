@@ -121,20 +121,20 @@ void GameApp::Finalize()
 
 void GameApp::LoadDefaultAssets()
 {
-    UAudioSystem::Get().LoadFromFile("asset/shoot.mp3", "shoot");
-    UAudioSystem::Get().LoadFromFile("asset/select.mp3", "select");
-    UAudioSystem::Get().LoadFromFile("asset/choose.mp3", "choose");
-    UAudioSystem::Get().LoadFromFile("asset/pop.mp3", "pop");
-    UAudioSystem::Get().LoadFromFile("asset/clear.mp3", "clear");
-    UAudioSystem::Get().LoadFromFile("asset/win.mp3", "win");
-    UAudioSystem::Get().LoadFromFile("asset/gameover.mp3", "gameover");
-    UAudioSystem::Get().LoadFromFile("asset/whoosh.mp3", "whoosh");
-    UAudioSystem::Get().LoadFromFile("asset/bgm.mp3", "bgm");
+    UAudioSystem::Get().LoadFromFile("asset/audio/shoot.mp3", "shoot");
+    UAudioSystem::Get().LoadFromFile("asset/audio/select.mp3", "select");
+    UAudioSystem::Get().LoadFromFile("asset/audio/choose.mp3", "choose");
+    UAudioSystem::Get().LoadFromFile("asset/audio/pop.mp3", "pop");
+    UAudioSystem::Get().LoadFromFile("asset/audio/clear.mp3", "clear");
+    UAudioSystem::Get().LoadFromFile("asset/audio/win.mp3", "win");
+    UAudioSystem::Get().LoadFromFile("asset/audio/gameover.mp3", "gameover");
+    UAudioSystem::Get().LoadFromFile("asset/audio/whoosh.mp3", "whoosh");
+    UAudioSystem::Get().LoadFromFile("asset/audio/bgm.mp3", "bgm");
 
-    Renderer->CreateTexture("player.png", "player");
-    Renderer->CreateTexture("enemy.png", "enemy");
-    Renderer->CreateTexture("background.png", "background");
-    Renderer->CreateTexture("title.png", "title");
-    Renderer->CreateTexture("projectile.png", "projectile");
-    Renderer->CreateTexture("game_bg.png", "game_bg");
+    Renderer->CreateTexture("asset/texture/player.png", "player");
+    Renderer->CreateTexture("asset/texture/enemy.png", "enemy");
+    Renderer->CreateTexture("asset/texture/background.png", "background");
+    Renderer->CreateTexture("asset/texture/title.png", "title");
+    Renderer->CreateTexture("asset/texture/projectile.png", "projectile");
+    Renderer->CreateTexture("asset/texture/game_bg.png", "game_bg");
 }
