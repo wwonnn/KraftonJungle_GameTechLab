@@ -23,6 +23,7 @@ void InGameScene::Update(float deltaTime) {
     WaveController->Update(deltaTime, Player);
     for (UGameObject* const& obj : GameObjects)
     {
+        obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
     }
 }
