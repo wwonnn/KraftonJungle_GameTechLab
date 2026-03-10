@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "EnemyObject.h"
+#include "Projectile.h"
 #include "CollisionSystem.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -94,18 +95,24 @@ void GameApp::Run()
 
             Renderer->BeginFrame();
 
-            if (UInputManager::Get().GetKeyDown(VK_SPACE))
-            {
-                AudioSystem->Play("shoot");
-            }
-
             // 오브젝트 Update 및 Render (DeltaTime 사용)
             float DeltaTime = Timer->GetDeltaTime();
             WaveController->Update(DeltaTime);
-            for (UGameObject* const& obj : UGameObject::GameObjectList)
+
+            //for (UGameObject* const& obj : UGameObject::GameObjectList)
+            //{
+            //    obj->Update(DeltaTime);
+            //    obj->Render(*Renderer);
+            //}
+
+            for (size_t i = 0; i < UGameObject::GameObjectList.size(); ++i)
             {
-                obj->Update(DeltaTime);
-                obj->Render(*Renderer);
+                UGameObject* obj = UGameObject::GameObjectList[i];
+                if (obj)
+                {
+                    obj->Update(DeltaTime);
+                    obj->Render(*Renderer);
+                }
             }
 
             UImGuiManager::Get().beginFrame();
@@ -133,11 +140,12 @@ void GameApp::LoadDefaultAssets()
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
+    Renderer->CreateTexture("projectile.png", "projectile");
 }
 
 void GameApp::CreateGameObjects()
 {
-    UGameObject* player = new UPlayer(
+    UPlayer* player = new UPlayer(
         FTransform(FVector(-0.2f, -0.7f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
@@ -146,4 +154,11 @@ void GameApp::CreateGameObjects()
         FTransform(FVector(-0.2f, -0.7f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
+
+    UGameObject* projectile = new UProjectile(
+        FTransform(player->GetTransform().Location,
+            FVector(0.0f, 0.0f, 0.0f),
+            FVector(0.1f, 0.1f, 1.0f)));
+
+    player->SetAudioSystem(AudioSystem);
 }
