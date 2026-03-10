@@ -34,7 +34,6 @@ LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 GameApp::GameApp()
 {
     Renderer = new URenderer();
-    AudioSystem = new UAudioSystem();
     Timer = new UTimer();
     WaveController = new UWaveController();
 }
@@ -43,7 +42,6 @@ GameApp::~GameApp()
 {
     delete WaveController;
     delete Timer;
-    delete AudioSystem;
     delete Renderer;
 }
 
@@ -69,10 +67,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
         return false;
     }
 
-    if (!AudioSystem->Create())
-    {
-        return false;
-    }
+    UAudioSystem::Get().Create();
 
     UImGuiManager::Get().Create(hWnd, Renderer);
 
@@ -81,18 +76,9 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-    // SceneManager::Get().Initialize(new FGameContext(Renderer, AudioSystem));
-    // SceneManager::Get().ChangeScene(SceneType::Init);
-    FGameContext gameContext(Renderer, AudioSystem);
+     SceneManager::Get().Initialize(new FGameContext(Renderer, Timer));
+     SceneManager::Get().ChangeScene(SceneType::Init);
     //ingameScene = new InGameScene(&gameContext);
-    introScene = new IntroScene(&gameContext);
-    introScene->Initialize();
-    ingameScene = new InGameScene(&gameContext);
-    ingameScene->Initialize();
-
-    currScene = introScene;
-
-    EventSystem::Get().Subscribe("StartGame", std::bind(&GameApp::LoadGameScene, this));
 
     return true;
 }
@@ -113,53 +99,27 @@ void GameApp::Run()
         {
             // Game Loop
             Timer->Update();
-            // float DeltaTime = Timer->GetDeltaTime();
-            // SceneManager::Get().Update(DeltaTime);
-            // SceneManager::Get().Render();
-            // ingameScene->Update(DeltaTime);
-            
+            UInputManager::Get().Update();
             UCollisionSystem::Get().CheckCollisions();
 
-            currScene->Update(Timer->GetDeltaTime());
+            SceneManager::Get().Update(Timer->GetDeltaTime());
 
-            //if (UInputManager::Get().GetKeyDown(VK_SPACE))
-            //{
-            //    AudioSystem->Play("shoot");
-            //}
-
-            //// 오브젝트 Update 및 Render (DeltaTime 사용)
-            //float DeltaTime = Timer->GetDeltaTime();
-            //WaveController->Update(DeltaTime);
-            //for (UGameObject* const& obj : UGameObject::GameObjectList)
-            //{
-            //    obj->Update(DeltaTime);
-            //    obj->Render(*Renderer);
-            //}
-
-            //UImGuiManager::Get().beginFrame();
-            //ImGui::Text("Total Time: %f", Timer->GetTotalTime());
-            //ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
-            //UImGuiManager::Get().endFrame();
-
-            //Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f, FVector(0.0f, 1.0f, 0.0f));
-            //Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
-
-            currScene->Render();
+            SceneManager::Get().Render();
         }
     }
 }
 
 void GameApp::Finalize()
 {
-    AudioSystem->Release();
+    UAudioSystem::Get().Release();
     Renderer->Release();
 }
 
 void GameApp::LoadDefaultAssets()
 {
-    AudioSystem->LoadFromFile("asset/shoot.mp3", "shoot");
-    AudioSystem->LoadFromFile("asset/select.mp3", "select");
-    AudioSystem->LoadFromFile("asset/choose.mp3", "choose");
+    UAudioSystem::Get().LoadFromFile("asset/shoot.mp3", "shoot");
+    UAudioSystem::Get().LoadFromFile("asset/select.mp3", "select");
+    UAudioSystem::Get().LoadFromFile("asset/choose.mp3", "choose");
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
@@ -184,11 +144,4 @@ void GameApp::CreateGameObjects()
         FTransform(player->GetTransform().Location,
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.1f, 0.1f, 1.0f)));
-
-    player->SetAudioSystem(AudioSystem);
-}
-
-void GameApp::LoadGameScene()
-{
-    currScene = ingameScene;
 }

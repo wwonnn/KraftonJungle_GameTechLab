@@ -2,14 +2,15 @@
 
 struct FGameContext {
     class URenderer* Renderer;
-    class UAudioSystem* AudioSystem;
+    class UTimer* Timer;
 
-    FGameContext(URenderer* renderer, UAudioSystem* audioSystem) :
-        Renderer(renderer), AudioSystem(audioSystem) {
+    FGameContext(URenderer* renderer, UTimer* timer) :
+        Renderer(renderer), Timer(timer){
     }
 };
 
-enum SceneType {
+enum class SceneType {
     Init,
     InGame,
+    Outro,
 };

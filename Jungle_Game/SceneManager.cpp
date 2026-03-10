@@ -2,6 +2,10 @@
 #include "InitScene.h"
 #include "InGameScene.h"
 
+void SceneManager::Initialize(FGameContext* gameContext) {
+    GameContext = gameContext;
+}
+
 void SceneManager::ChangeScene(SceneType type) {
     if (currentScene) {
         currentScene->Release();

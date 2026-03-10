@@ -19,12 +19,8 @@ public:
     SceneManager() = default;
     ~SceneManager() = default;
 
-    void Initialize(FGameContext* gameContext) {
-        GameContext = gameContext;
-    }
-
+    void Initialize(FGameContext* gameContext);
     void ChangeScene(SceneType type);
-
     void Update(float deltaTime);
     void Render();
 };

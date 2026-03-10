@@ -1,31 +1,37 @@
 #include "InGameScene.h"
 #include "SceneManager.h"
 
-void InGameScene::Update(float deltaTime) {
-    UInputManager::Get().Update();
+InGameScene::InGameScene(FGameContext* gameContext)
+    :UScene(gameContext) {
+    Timer = gameContext->Timer;
 
-    GameContext->Renderer->BeginFrame();
+    WaveController = new UWaveController();
+    WaveController->LoadStageData(1);
+}
 
-    if (UInputManager::Get().GetKeyDown(VK_SPACE))
-    {
-        OutputDebugString(L"Space key pressed!\n");
-        GameContext->AudioSystem->Play("shoot");
-    }
+void InGameScene::Initialize() { }
 
-    // 오브젝트 Update 및 Render (DeltaTime 사용)
+void InGameScene::Update(float deltaTime) {}
+
+void InGameScene::Render() {
+    Renderer->BeginFrame();
+
+    float deltaTime = Timer->GetDeltaTime();
     WaveController->Update(deltaTime);
-    for (UGameObject* const& obj : UGameObject::GameObjectList)
+    for (UGameObject* const& obj : GameObjects)
     {
         obj->Update(deltaTime);
-        obj->Render(*(GameContext->Renderer));
+        obj->Render(*Renderer);
     }
 
     UImGuiManager::Get().beginFrame();
-    // ImGui::Text("Total Time: %f", Timer->GetTotalTime());
+    ImGui::Text("Total Time: %f", Timer->GetTotalTime());
     ImGui::Text("Delta Time: %f", deltaTime);
-    if (ImGui::Button("click")) {
-        // scene change
-    }
     UImGuiManager::Get().endFrame();
 
+    Renderer->SwapBuffer();
+}
+
+void InGameScene::Release() {
+    delete WaveController;
 }
