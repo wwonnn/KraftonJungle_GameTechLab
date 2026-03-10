@@ -31,19 +31,22 @@ void IntroScene::Update(float deltaTime) {
             IsCredit = false;
             OptionIndex = 0;
         }
-        switch (OptionIndex) {
-        case 0:
-            // Start the game
-            SceneManager::Get().ChangeScene(SceneType::InGame);
-            break;
-        case 1:
-            // Show credits
-            IsCredit = true;
-            break;
-        case 2:
-            // Exit the game
-            PostQuitMessage(0);
-            break;
+        else
+        {
+            switch (OptionIndex) {
+            case 0:
+                // Start the game
+                SceneManager::Get().ChangeScene(SceneType::InGame);
+                break;
+            case 1:
+                // Show credits
+                IsCredit = true;
+                break;
+            case 2:
+                // Exit the game
+                PostQuitMessage(0);
+                break;
+            }
         }
     }
 }
