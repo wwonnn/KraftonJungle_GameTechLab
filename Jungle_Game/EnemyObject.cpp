@@ -113,6 +113,11 @@ void UEnemyObject::Move(float deltaTime)
 
 void UEnemyObject::Dead(UCircleCollider* other)
 {
+    if (State == EnemyState::Dead)
+        return;
+
+    TransitionToState(EnemyState::Dead);
+    UAudioSystem::Get().Play("pop");
     Destroy();
     EventSystem::Get().Trigger("EnemyDied");
 }
