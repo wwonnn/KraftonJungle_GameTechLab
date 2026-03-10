@@ -6,8 +6,16 @@
 #include "Player.h"
 #include "EnemyObject.h"
 
+#include "SceneManager.h"
+#include "GameContext.h"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+        return true;
+
     switch (message)
     {
     case WM_DESTROY:
@@ -69,7 +77,8 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-    ingameScene = new InGameScene(new FGameContext(Renderer, AudioSystem));
+    SceneManager::Get().Initialize(new FGameContext(Renderer, AudioSystem));
+    SceneManager::Get().ChangeScene(SceneType::Init);
 
     return true;
 }
@@ -91,7 +100,9 @@ void GameApp::Run()
             // Game Loop
             Timer->Update();
             float DeltaTime = Timer->GetDeltaTime();
-            ingameScene->Update(DeltaTime);
+            SceneManager::Get().Update(DeltaTime);
+            SceneManager::Get().Render();
+            // ingameScene->Update(DeltaTime);
             
         }
     }
