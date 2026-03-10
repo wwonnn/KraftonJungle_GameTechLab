@@ -631,7 +631,7 @@ static unsigned char* load_file(const char* fileName)
 
 void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
 {
-    unsigned char* fontBuffer = load_file("arial.ttf");
+    unsigned char* fontBuffer = load_file("Pixel-Game.ttf");
     if (!fontBuffer)
     {
         return;

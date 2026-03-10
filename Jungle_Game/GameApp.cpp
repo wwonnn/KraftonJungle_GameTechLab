@@ -124,12 +124,17 @@ void GameApp::LoadDefaultAssets()
     UAudioSystem::Get().LoadFromFile("asset/shoot.mp3", "shoot");
     UAudioSystem::Get().LoadFromFile("asset/select.mp3", "select");
     UAudioSystem::Get().LoadFromFile("asset/choose.mp3", "choose");
+    UAudioSystem::Get().LoadFromFile("asset/pop.mp3", "pop");
+    UAudioSystem::Get().LoadFromFile("asset/clear.mp3", "clear");
+    UAudioSystem::Get().LoadFromFile("asset/win.mp3", "win");
+    UAudioSystem::Get().LoadFromFile("asset/gameover.mp3", "gameover");
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
     Renderer->CreateTexture("background.png", "background");
     Renderer->CreateTexture("title.png", "title");
     Renderer->CreateTexture("projectile.png", "projectile");
+    Renderer->CreateTexture("game_bg.png", "game_bg");
 }
 
 void GameApp::CreateGameObjects()
