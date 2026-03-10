@@ -83,5 +83,4 @@ void IntroScene::Render() {
 
 void IntroScene::Release() {
     UScene::Release();
-    // Clean up resources, if necessary.
 }

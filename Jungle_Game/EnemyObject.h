@@ -34,7 +34,7 @@ public:
 
 private:
     void Move(float DeltaTime);
-    void Dead();
+    void Dead(UCircleCollider* other);
 
 private:
     EnemyState State = EnemyState::Spawn;
