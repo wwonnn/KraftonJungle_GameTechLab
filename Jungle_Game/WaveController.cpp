@@ -43,4 +43,7 @@ void UWaveController::SpawnEnemy(float x, float y) {
         FTransform(FVector(x, y, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
+
+    dynamic_cast<UEnemyObject*>(enemy)->SetMovementStrategy(
+        std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f));
 }

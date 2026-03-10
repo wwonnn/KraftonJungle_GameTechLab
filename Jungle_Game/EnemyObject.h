@@ -1,6 +1,17 @@
 #pragma once
 
 #include "GameObject.h"
+#include "Player.h"
+#include "MovementStrategies.h"
+#include <memory>
+
+// 상태 패턴
+enum class EnemyState
+{
+    Spawn,
+    Move,
+    Dead
+};
 
 class UEnemyObject : public UGameObject
 {
@@ -14,5 +25,20 @@ public:
     void Render(URenderer& renderer) override;
     bool CheckCollision(UGameObject* other) override { return true; }
     void ApplyImpulse(const FConstantBuffer& v) override {}
+
+    void SetPlayer(UPlayer* player) { Player = player; }
+    void SetMovementStrategy(std::unique_ptr<IMovementStrategy> strategy);
+    IMovementStrategy* GetMovementStrategy() const;
+
+private:
+    void TransitionToState(EnemyState newState);
+    void Move(float DeltaTime);
+    void Dead();
+
+private:
+    EnemyState State = EnemyState::Spawn;
+    std::unique_ptr<IMovementStrategy> MovementStrategy;
+
+    UPlayer* Player = nullptr;
 };
 

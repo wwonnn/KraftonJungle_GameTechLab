@@ -63,7 +63,7 @@ bool UCollisionSystem::CheckCollision(UCircleCollider* colliderA, UCircleCollide
     return distanceSquared <= (radiusSum * radiusSum);
 }
 
-void UCollisionSystem::CheckWallCollision(FVector& location, FVector& scale)
+bool UCollisionSystem::CheckWallCollision(FVector& location, FVector& scale)
 {
     float left = -1.0f;
     float right = 1.0f;
@@ -74,17 +74,23 @@ void UCollisionSystem::CheckWallCollision(FVector& location, FVector& scale)
     if (location.x - halfScale.x < left)
     {
         location.x = left + halfScale.x;
+        return true;
     }
     else if (location.x + halfScale.x > right)
     {
         location.x = right - halfScale.x;
+        return true;
     }
     else if (location.y - halfScale.y < top)
     {
         location.y = top + halfScale.y;
+        return true;
     }
     else if (location.y + halfScale.y > bottom)
     {
         location.y = bottom - halfScale.y;
+        return true;
     }
+
+    return false;
 }
