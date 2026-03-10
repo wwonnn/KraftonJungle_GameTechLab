@@ -44,10 +44,6 @@ void UPlayer::Update(float DeltaTime)
     {
         Transform.Location.x += Velocity.x * DeltaTime;
     }
-    if (Input.GetKey(VK_UP))
-    {
-        Transform.Location.y += Velocity.x * DeltaTime;
-    }
 
     if (Input.GetKeyDown(VK_SPACE))
     {
