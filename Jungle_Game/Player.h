@@ -39,7 +39,7 @@ private:
     UAudioSystem* AudioSystem = nullptr;
 
     int HP = 3;
-    float delayTime = 3.0f;
+    float delayTime = 0.5f;
     float HitTime = 3.0f;
 
     const float ShootCooldown = 0.2f;
