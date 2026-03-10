@@ -61,9 +61,9 @@ void IntroScene::Render() {
     if (IsCredit)
     {
         Renderer->DrawString(L"Team 6", 400.0f, 500.0f, FVector(1.0f, 1.0f, 1.0f));
-        Renderer->DrawString(L"Name", 400.0f, 600.0f, FVector(1.0f, 1.0f, 1.0f));
-        Renderer->DrawString(L"Name", 400.0f, 650.0f, FVector(1.0f, 1.0f, 1.0f));
-        Renderer->DrawString(L"Name", 400.0f, 700.0f, FVector(1.0f, 1.0f, 1.0f));
+        Renderer->DrawString(L"Gihong Kim", 400.0f, 600.0f, FVector(1.0f, 1.0f, 1.0f));
+        Renderer->DrawString(L"Junhyeok Oh", 400.0f, 650.0f, FVector(1.0f, 1.0f, 1.0f));
+        Renderer->DrawString(L"Wonhee Seong", 400.0f, 700.0f, FVector(1.0f, 1.0f, 1.0f));
         Renderer->DrawString(L"Dongjin Kuk", 400.0f, 750.0f, FVector(1.0f, 1.0f, 1.0f));
 
         Renderer->DrawString(L"Press SPACE to return", 400.0f, 850.0f, FVector(0.0f, 1.0f, 0.0f));
