@@ -1,5 +1,6 @@
 #include "WaveController.h"
 #include "SceneManager.h"
+#include "EventSystem.h"
 #include <fstream>
 
 bool UWaveController::LoadStageData(int stageNumber) {
@@ -88,4 +89,15 @@ void UWaveController::StartMove()
     {
         enemy->TransitionToState(EnemyState::Move);
     }
+}
+
+void UWaveController::GoNextStage() {
+    currentStageNumber++;
+    if (currentStageNumber > totalStages)
+    {
+        EventSystem::Get().Trigger("AllStageCleared");
+        return;
+    }
+
+    LoadStageData(currentStageNumber);
 }

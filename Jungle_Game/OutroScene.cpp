@@ -1,6 +1,7 @@
 #include "OutroScene.h"
 #include "InputManager.h"
 #include "SceneManager.h"
+#include "GlobalState.h"
 
 void OutroScene::Initialize() {
     // Load resources, initialize variables, etc.
@@ -17,7 +18,14 @@ void OutroScene::Update(float deltaTime) {
 void OutroScene::Render() {
     Renderer->BeginFrame();
 
-    Renderer->DrawString(L"Game Over!", 400.0f, 300.0f, FVector(1.0f, 0.0f, 0.0f));
+    if (GlobalState::Get().bAllStageCleared)
+    {
+        Renderer->DrawString(L"Congratulations! You Cleared All Stages!", 400.0f, 300.0f, FVector(0.0f, 1.0f, 0.0f));
+    }
+    else
+    {
+        Renderer->DrawString(L"Game Over!", 400.0f, 300.0f, FVector(1.0f, 0.0f, 0.0f));
+    }
     Renderer->DrawString(L"Press Space to Return to Main Menu", 400.0f, 350.0f, FVector(1.0f, 1.0f, 1.0f));
 
     Renderer->SwapBuffer();

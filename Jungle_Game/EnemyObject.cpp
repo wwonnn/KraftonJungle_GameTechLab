@@ -1,4 +1,5 @@
 #include "EnemyObject.h"
+#include "EventSystem.h"
 
 UEnemyObject::UEnemyObject()
     : UGameObject()
@@ -113,4 +114,5 @@ void UEnemyObject::Move(float deltaTime)
 void UEnemyObject::Dead(UCircleCollider* other)
 {
     Destroy();
+    EventSystem::Get().Trigger("EnemyDied");
 }
