@@ -108,6 +108,9 @@ void GameApp::Run()
             ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
             UImGuiManager::Get().endFrame();
 
+            Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f);
+            Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
+
             Renderer->SwapBuffer();
         }
     }
