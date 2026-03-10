@@ -69,7 +69,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-    ingameScene = new InGameScene(&FGameContext(Renderer, AudioSystem));
+    ingameScene = new InGameScene(new FGameContext(Renderer, AudioSystem));
 
     return true;
 }
@@ -89,32 +89,10 @@ void GameApp::Run()
         else
         {
             // Game Loop
-            UInputManager::Get().Update();
             Timer->Update();
-
-            Renderer->BeginFrame();
-
-            if (UInputManager::Get().GetKeyDown(VK_SPACE))
-            {
-                OutputDebugString(L"Space key pressed!\n");
-                AudioSystem->Play("shoot");
-            }
-
-            // 오브젝트 Update 및 Render (DeltaTime 사용)
             float DeltaTime = Timer->GetDeltaTime();
-            WaveController->Update(DeltaTime);
-            for (UGameObject* const& obj : UGameObject::GameObjectList)
-            {
-                obj->Update(DeltaTime);
-                obj->Render(*Renderer);
-            }
-
-            UImGuiManager::Get().beginFrame();
-            ImGui::Text("Total Time: %f", Timer->GetTotalTime());
-            ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
-            UImGuiManager::Get().endFrame();
-
-            Renderer->SwapBuffer();
+            ingameScene->Update(DeltaTime);
+            
         }
     }
 }

@@ -11,7 +11,7 @@ struct FGameContext {
     class UAudioSystem* AudioSystem;
     // class SceneManager* Scene;
 
-    FGameContext(class URenderer* r, class UAudioSystem* a)
+    FGameContext(URenderer* r, UAudioSystem* a)
         : Renderer(r), AudioSystem(a)
     {}
 };
@@ -34,17 +34,20 @@ public:
 };
 
 class InitScene :UScene {
+public:
+    InitScene(FGameContext* gameContext) :UScene(gameContext) {}
+    void Update(float deltaTime) override {
+
+    }
 
 };
 
 class InGameScene : public UScene {
 private:
     UWaveController* WaveController = nullptr;
-    UTimer* Timer = nullptr;
 
 public:
     InGameScene(FGameContext* gameContext) :UScene(gameContext){
-        Timer = new UTimer();
         WaveController = new UWaveController();
         WaveController->LoadStageData(1);
     }
@@ -55,7 +58,6 @@ public:
 
     void Update(float deltaTime) override {
         UInputManager::Get().Update();
-        Timer->Update();
 
         GameContext->Renderer->BeginFrame();
 
@@ -66,28 +68,26 @@ public:
         }
 
         // 오브젝트 Update 및 Render (DeltaTime 사용)
-        float DeltaTime = Timer->GetDeltaTime();
-        WaveController->Update(DeltaTime);
+        WaveController->Update(deltaTime);
         for (UGameObject* const& obj : UGameObject::GameObjectList)
         {
-            obj->Update(DeltaTime);
+            obj->Update(deltaTime);
             obj->Render(*(GameContext->Renderer));
         }
 
         UImGuiManager::Get().beginFrame();
-        ImGui::Text("Total Time: %f", Timer->GetTotalTime());
-        ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
+        // ImGui::Text("Total Time: %f", Timer->GetTotalTime());
+        ImGui::Text("Delta Time: %f", deltaTime);
         UImGuiManager::Get().endFrame();
 
-        GameContext->Renderer->SwapBuffer();
+        Render();
     }
 
     void Render() override {
-        // 배경 그리기, 적들 그리기 호출
+        GameContext->Renderer->SwapBuffer();
     }
 
     void Release() override {
         delete WaveController;
-        delete Timer;
     }
 };
