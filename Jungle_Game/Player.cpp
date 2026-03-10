@@ -2,12 +2,13 @@
 #include "InputManager.h"
 #include "AudioSystem.h"
 #include "Projectile.h"
+#include "AudioSystem.h"
+#include "CollisionSystem.h"
 
 void UPlayer::SetAudioSystem(UAudioSystem* sys)
 {
     AudioSystem = sys;
 }
-#include "CollisionSystem.h"
 
 UPlayer::UPlayer()
     :UGameObject()
