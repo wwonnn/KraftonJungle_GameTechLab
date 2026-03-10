@@ -32,6 +32,4 @@ public:
 
 private:
 	char buffer[256];
-    int HP = 0;
-    UPlayer* Player;
 };

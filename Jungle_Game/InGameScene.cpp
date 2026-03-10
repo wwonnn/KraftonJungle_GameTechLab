@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "Projectile.h"
+#include "ScoreManager.h"
 #include "GameBackground.h"
 
 InGameScene::InGameScene(FGameContext* gameContext)
@@ -70,6 +71,8 @@ void InGameScene::Render() {
     {
         obj->Render(*Renderer);
     }
+
+    Renderer->DrawString(std::to_wstring(ScoreManager::Get().GetScore()), 50.0f, 50.0f, FVector(1.0f, 1.0f, 1.0f));
 
     if (bStageClearText)
     {

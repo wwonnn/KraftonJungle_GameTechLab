@@ -1,5 +1,6 @@
 #include "EnemyObject.h"
 #include "EventSystem.h"
+#include "ScoreManager.h"
 
 UEnemyObject::UEnemyObject()
     : UGameObject()
@@ -117,6 +118,7 @@ void UEnemyObject::Dead(UCircleCollider* other)
         return;
 
     TransitionToState(EnemyState::Dead);
+    ScoreManager::Get().AddScore(100);
     UAudioSystem::Get().Play("pop");
     Destroy();
     EventSystem::Get().Trigger("EnemyDied");
