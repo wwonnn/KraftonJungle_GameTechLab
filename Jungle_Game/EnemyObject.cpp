@@ -8,7 +8,7 @@ UEnemyObject::UEnemyObject()
     Collider->SetLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::Player);
     Collider->AddContactLayer(ECollisionLayer::Projectile);
-    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this));
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this, std::placeholders::_1));
 }
 
 UEnemyObject::UEnemyObject(FTransform transform)
@@ -19,7 +19,7 @@ UEnemyObject::UEnemyObject(FTransform transform)
     Collider->SetLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::Player);
     Collider->AddContactLayer(ECollisionLayer::Projectile);
-    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this));
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this, std::placeholders::_1));
 }
 
 UEnemyObject::~UEnemyObject()
@@ -37,7 +37,6 @@ void UEnemyObject::Update(float DeltaTime)
         Move(DeltaTime);
         break;
     case EnemyState::Dead:
-        Dead();
         break;
     }
 }
@@ -96,7 +95,7 @@ void UEnemyObject::Move(float deltaTime)
     }
 }
 
-void UEnemyObject::Dead()
+void UEnemyObject::Dead(UCircleCollider* other)
 {
     Destroy();
 }
