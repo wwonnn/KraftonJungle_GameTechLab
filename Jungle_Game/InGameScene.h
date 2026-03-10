@@ -14,14 +14,12 @@ public:
         Release();
     }
 
-    void Initialize() override {
-
-    }
+    void Initialize() override;
 
     void Update(float deltaTime) override;
 
     void Render() override {
-        GameContext->Renderer->SwapBuffer();
+        Renderer->SwapBuffer();
     }
 
     void Release() override {

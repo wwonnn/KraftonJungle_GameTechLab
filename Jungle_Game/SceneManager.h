@@ -27,4 +27,6 @@ public:
 
     void Update(float deltaTime);
     void Render();
+
+    UScene* GetcurrentScene() const { return currentScene; }
 };

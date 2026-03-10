@@ -1,23 +1,22 @@
 #include "InGameScene.h"
 #include "SceneManager.h"
 
+void InGameScene::Initialize()
+{
+
+}
+
 void InGameScene::Update(float deltaTime) {
     UInputManager::Get().Update();
 
-    GameContext->Renderer->BeginFrame();
-
-    if (UInputManager::Get().GetKeyDown(VK_SPACE))
-    {
-        OutputDebugString(L"Space key pressed!\n");
-        GameContext->AudioSystem->Play("shoot");
-    }
+    Renderer->BeginFrame();
 
     // 오브젝트 Update 및 Render (DeltaTime 사용)
     WaveController->Update(deltaTime);
-    for (UGameObject* const& obj : UGameObject::GameObjectList)
+    for (UGameObject* const& obj : GameObjects)
     {
         obj->Update(deltaTime);
-        obj->Render(*(GameContext->Renderer));
+        obj->Render(*Renderer);
     }
 
     UImGuiManager::Get().beginFrame();

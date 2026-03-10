@@ -9,7 +9,8 @@ struct FGameContext {
     }
 };
 
-enum SceneType {
+enum class SceneType {
     Init,
     InGame,
+    Outro,
 };
