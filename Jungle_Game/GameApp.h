@@ -21,6 +21,8 @@ private:
     void LoadDefaultAssets();
     void CreateGameObjects();
 
+    void LoadGameScene();
+
 private:
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -30,6 +32,10 @@ private:
     UAudioSystem* AudioSystem = nullptr;
     UTimer* Timer = nullptr;
     UWaveController* WaveController = nullptr;
+
+    UScene* introScene = nullptr;
     UScene* ingameScene = nullptr;
+
+    UScene* currScene = nullptr;
 };
 

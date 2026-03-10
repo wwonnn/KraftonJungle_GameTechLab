@@ -128,6 +128,7 @@
     <ClCompile Include="CircleCollider.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="EnemyObject.cpp" />
+    <ClCompile Include="EventSystem.cpp" />
     <ClCompile Include="GameApp.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="dr_mp3.h" />
     <ClInclude Include="EnemyObject.h" />
+    <ClInclude Include="EventSystem.h" />
     <ClInclude Include="fmod\fmod.h" />
     <ClInclude Include="fmod\fmod.hpp" />
     <ClInclude Include="fmod\fmod_codec.h" />

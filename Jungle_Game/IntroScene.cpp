@@ -1,5 +1,6 @@
 #include "IntroScene.h"
 #include "IntroBackgroundObject.h"
+#include "EventSystem.h"
 
 void IntroScene::Initialize() {
     // Load resources, initialize variables, etc.
@@ -30,6 +31,8 @@ void IntroScene::Update(float deltaTime) {
         switch (OptionIndex) {
         case 0:
             // Start the game
+            EventSystem::Get().Trigger("StartGame");
+            EventSystem::Get().UnSubscribe("StartGame");
             break;
         case 1:
             // Show credits
@@ -46,6 +49,8 @@ void IntroScene::Update(float deltaTime) {
 }
 
 void IntroScene::Render() {
+    Renderer->BeginFrame();
+
     for (UGameObject* const& obj : GameObjects) {
         obj->Render(*Renderer);
     }
@@ -69,6 +74,8 @@ void IntroScene::Render() {
         option++;
         Renderer->DrawString(L"EXIT", 400.0f, 760.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
     }
+
+    Renderer->SwapBuffer();
 }
 
 void IntroScene::Release() {
