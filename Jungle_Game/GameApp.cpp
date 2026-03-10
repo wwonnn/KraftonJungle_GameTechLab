@@ -37,12 +37,10 @@ GameApp::GameApp()
 {
     Renderer = new URenderer();
     Timer = new UTimer();
-    WaveController = new UWaveController();
 }
 
 GameApp::~GameApp()
 {
-    delete WaveController;
     delete Timer;
     delete Renderer;
 }
@@ -78,10 +76,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
 
     UImGuiManager::Get().Create(hWnd, Renderer);
 
-    WaveController->LoadStageData(1);
-
     LoadDefaultAssets();
-    CreateGameObjects();
 
      SceneManager::Get().Initialize(new FGameContext(Renderer, Timer));
      SceneManager::Get().ChangeScene(SceneType::Init);
@@ -118,6 +113,8 @@ void GameApp::Run()
 
 void GameApp::Finalize()
 {
+    UImGuiManager::Get().Release();
+
     UAudioSystem::Get().Release();
     Renderer->Release();
 }
@@ -140,9 +137,4 @@ void GameApp::LoadDefaultAssets()
     Renderer->CreateTexture("title.png", "title");
     Renderer->CreateTexture("projectile.png", "projectile");
     Renderer->CreateTexture("game_bg.png", "game_bg");
-}
-
-void GameApp::CreateGameObjects()
-{
-
 }
