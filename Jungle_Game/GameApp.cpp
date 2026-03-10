@@ -81,18 +81,10 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-    // SceneManager::Get().Initialize(new FGameContext(Renderer, AudioSystem));
-    // SceneManager::Get().ChangeScene(SceneType::Init);
+     SceneManager::Get().Initialize(new FGameContext(Renderer, AudioSystem));
+     SceneManager::Get().ChangeScene(SceneType::Init);
     FGameContext gameContext(Renderer, AudioSystem);
     //ingameScene = new InGameScene(&gameContext);
-    introScene = new IntroScene(&gameContext);
-    introScene->Initialize();
-    ingameScene = new InGameScene(&gameContext);
-    ingameScene->Initialize();
-
-    currScene = introScene;
-
-    EventSystem::Get().Subscribe("StartGame", std::bind(&GameApp::LoadGameScene, this));
 
     return true;
 }
@@ -120,7 +112,7 @@ void GameApp::Run()
             
             UCollisionSystem::Get().CheckCollisions();
 
-            currScene->Update(Timer->GetDeltaTime());
+            SceneManager::Get().Update(Timer->GetDeltaTime());
 
             //if (UInputManager::Get().GetKeyDown(VK_SPACE))
             //{
@@ -144,7 +136,7 @@ void GameApp::Run()
             //Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f, FVector(0.0f, 1.0f, 0.0f));
             //Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
 
-            currScene->Render();
+            SceneManager::Get().Render();
         }
     }
 }
@@ -186,9 +178,4 @@ void GameApp::CreateGameObjects()
             FVector(0.1f, 0.1f, 1.0f)));
 
     player->SetAudioSystem(AudioSystem);
-}
-
-void GameApp::LoadGameScene()
-{
-    currScene = ingameScene;
 }

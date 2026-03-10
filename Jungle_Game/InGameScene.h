@@ -21,7 +21,7 @@ public:
     void Update(float deltaTime) override;
 
     void Render() override {
-        GameContext->Renderer->SwapBuffer();
+        Renderer->SwapBuffer();
     }
 
     void Release() override {
