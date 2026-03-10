@@ -105,36 +105,10 @@ void GameApp::Run()
         {
             // Game Loop
             Timer->Update();
-            // float DeltaTime = Timer->GetDeltaTime();
-            // SceneManager::Get().Update(DeltaTime);
-            // SceneManager::Get().Render();
-            // ingameScene->Update(DeltaTime);
-            
+            UInputManager::Get().Update();
             UCollisionSystem::Get().CheckCollisions();
 
             SceneManager::Get().Update(Timer->GetDeltaTime());
-
-            //if (UInputManager::Get().GetKeyDown(VK_SPACE))
-            //{
-            //    AudioSystem->Play("shoot");
-            //}
-
-            //// 오브젝트 Update 및 Render (DeltaTime 사용)
-            //float DeltaTime = Timer->GetDeltaTime();
-            //WaveController->Update(DeltaTime);
-            //for (UGameObject* const& obj : UGameObject::GameObjectList)
-            //{
-            //    obj->Update(DeltaTime);
-            //    obj->Render(*Renderer);
-            //}
-
-            //UImGuiManager::Get().beginFrame();
-            //ImGui::Text("Total Time: %f", Timer->GetTotalTime());
-            //ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
-            //UImGuiManager::Get().endFrame();
-
-            //Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f, FVector(0.0f, 1.0f, 0.0f));
-            //Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
 
             SceneManager::Get().Render();
         }

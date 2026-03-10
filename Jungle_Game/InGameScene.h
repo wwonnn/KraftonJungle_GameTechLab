@@ -14,9 +14,7 @@ public:
         Release();
     }
 
-    void Initialize() override {
-
-    }
+    void Initialize() override;
 
     void Update(float deltaTime) override;
 

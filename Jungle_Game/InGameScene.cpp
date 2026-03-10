@@ -1,6 +1,11 @@
 #include "InGameScene.h"
 #include "SceneManager.h"
 
+void InGameScene::Initialize()
+{
+
+}
+
 void InGameScene::Update(float deltaTime) {
     UInputManager::Get().Update();
 
@@ -8,7 +13,7 @@ void InGameScene::Update(float deltaTime) {
 
     // 오브젝트 Update 및 Render (DeltaTime 사용)
     WaveController->Update(deltaTime);
-    for (UGameObject* const& obj : UGameObject::GameObjectList)
+    for (UGameObject* const& obj : GameObjects)
     {
         obj->Update(deltaTime);
         obj->Render(*Renderer);
