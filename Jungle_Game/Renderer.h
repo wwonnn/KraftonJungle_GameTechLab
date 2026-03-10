@@ -6,6 +6,9 @@
 #include <string>
 #include "Math.h"
 
+#include "stb_image.h"
+#include "stb_truetype.h"
+
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -46,6 +49,8 @@ public:
     void ReleaseTexture(const std::string& filePath);
     void BindTexture(const std::string& name);
 
+    void DrawString(const std::string& name, float x, float y);
+
 	ID3D11Device* GetDevice();
 	ID3D11DeviceContext* GetDeviceContext();
 
@@ -76,6 +81,12 @@ private:
 
 	void CreateBlendState();
 	void ReleaseBlendState();
+
+    void CreateDefaultFontAtlasAndVertexBuffer();
+    void ReleaseDefaultFontAtlasAndVertexBuffer();
+
+    void CreateTextShader();
+    void ReleaseTextShader();
 
 private:
 	ID3D11Device* Device = nullptr;
@@ -108,5 +119,13 @@ private:
 	ID3D11SamplerState* DefaultSamplerState = nullptr;
 
 	ID3D11BlendState* BlendState = nullptr;
+
+    stbtt_bakedchar FontAtlas[96];
+    ID3D11ShaderResourceView* FontAtlasSRV = nullptr;
+
+    ID3D11Buffer* TextVertexBuffer = nullptr;
+
+    ID3D11VertexShader* TextVertexShader = nullptr;
+    ID3D11PixelShader* TextPixelShader = nullptr;
 };
 
