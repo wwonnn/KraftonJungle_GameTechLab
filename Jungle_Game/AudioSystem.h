@@ -17,6 +17,12 @@ struct FAudio
 class UAudioSystem
 {
 public:
+    static UAudioSystem& Get()
+    {
+        static UAudioSystem instance;
+        return instance;
+    }
+
 	UAudioSystem() = default;
 	~UAudioSystem() = default;
 

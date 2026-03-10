@@ -27,7 +27,6 @@ private:
 private:
     HWND hWnd = nullptr;
     URenderer* Renderer = nullptr;
-    UAudioSystem* AudioSystem = nullptr;
     UTimer* Timer = nullptr;
     UWaveController* WaveController = nullptr;
 };

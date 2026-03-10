@@ -17,14 +17,14 @@ void IntroScene::Update(float deltaTime) {
 
     if (input.GetKeyDown(VK_UP)) {
         OptionIndex = (OptionIndex - 1 + MaxOptions + 1) % (MaxOptions + 1);
-        AudioSystem->Play("select");
+        UAudioSystem::Get().Play("select");
     }
     else if (input.GetKeyDown(VK_DOWN)) {
         OptionIndex = (OptionIndex + 1) % (MaxOptions + 1);
-        AudioSystem->Play("select");
+        UAudioSystem::Get().Play("select");
     }
      else if (input.GetKeyDown(VK_SPACE)) {
-        AudioSystem->Play("choose");
+        UAudioSystem::Get().Play("choose");
 
         if (IsCredit)
         {

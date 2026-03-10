@@ -34,7 +34,6 @@ LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 GameApp::GameApp()
 {
     Renderer = new URenderer();
-    AudioSystem = new UAudioSystem();
     Timer = new UTimer();
     WaveController = new UWaveController();
 }
@@ -43,7 +42,6 @@ GameApp::~GameApp()
 {
     delete WaveController;
     delete Timer;
-    delete AudioSystem;
     delete Renderer;
 }
 
@@ -69,10 +67,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
         return false;
     }
 
-    if (!AudioSystem->Create())
-    {
-        return false;
-    }
+    UAudioSystem::Get().Create();
 
     UImGuiManager::Get().Create(hWnd, Renderer);
 
@@ -81,9 +76,8 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-     SceneManager::Get().Initialize(new FGameContext(Renderer, AudioSystem));
+     SceneManager::Get().Initialize(new FGameContext(Renderer));
      SceneManager::Get().ChangeScene(SceneType::Init);
-    FGameContext gameContext(Renderer, AudioSystem);
     //ingameScene = new InGameScene(&gameContext);
 
     return true;
@@ -117,15 +111,15 @@ void GameApp::Run()
 
 void GameApp::Finalize()
 {
-    AudioSystem->Release();
+    UAudioSystem::Get().Release();
     Renderer->Release();
 }
 
 void GameApp::LoadDefaultAssets()
 {
-    AudioSystem->LoadFromFile("asset/shoot.mp3", "shoot");
-    AudioSystem->LoadFromFile("asset/select.mp3", "select");
-    AudioSystem->LoadFromFile("asset/choose.mp3", "choose");
+    UAudioSystem::Get().LoadFromFile("asset/shoot.mp3", "shoot");
+    UAudioSystem::Get().LoadFromFile("asset/select.mp3", "select");
+    UAudioSystem::Get().LoadFromFile("asset/choose.mp3", "choose");
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
@@ -150,6 +144,4 @@ void GameApp::CreateGameObjects()
         FTransform(player->GetTransform().Location,
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.1f, 0.1f, 1.0f)));
-
-    player->SetAudioSystem(AudioSystem);
 }
