@@ -22,6 +22,7 @@ bool URenderer::Create(HWND hWnd)
         return false;
 
     CreateConstantBuffer();
+    CreateSpriteConstantBuffer();
     CreateDefaultQuad();
     CreateDefaultShader();
     CreateDefaultTexture();
@@ -43,6 +44,7 @@ void URenderer::Release()
     ReleaseDefaultShader();
     ReleaseDefaultQuad();
     ReleaseConstantBuffer();
+    ReleaseSpriteConstantBuffer();
     ReleaseRasterzerState();
     ReleaseFrameBuffer();
     ReleaseDeviceAndSwapChain();
@@ -102,6 +104,21 @@ void URenderer::UpdateConstantBuffer(const FConstantBuffer& data)
     DeviceContext->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     memcpy(mappedResource.pData, &data, sizeof(FConstantBuffer));
     DeviceContext->Unmap(ConstantBuffer, 0);
+}
+
+void URenderer::UpdateSpriteUV(FSpriteUVBuffer& data)
+{
+    D3D11_MAPPED_SUBRESOURCE mappedResource = {};
+    DeviceContext->Map(SpriteConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+
+    FSpriteUVBuffer* buf = reinterpret_cast<FSpriteUVBuffer*>(mappedResource.pData);
+    buf->UVOffsetX = data.UVOffsetX;
+    buf->UVOffsetY = data.UVOffsetY;
+    buf->UVScaleX = data.UVScaleX;
+    buf->UVScaleY = data.UVScaleY;
+
+    DeviceContext->Unmap(SpriteConstantBuffer, 0);
+    DeviceContext->PSSetConstantBuffers(1, 1, &SpriteConstantBuffer);
 }
 
 void URenderer::CreateTexture(const std::string& filePath, const std::string& name)
@@ -402,6 +419,31 @@ void URenderer::ReleaseConstantBuffer()
     {
         ConstantBuffer->Release();
         ConstantBuffer = nullptr;
+    }
+}
+
+void URenderer::CreateSpriteConstantBuffer()
+{
+    FSpriteUVBuffer initData = { 0.f, 0.f, 1.f, 1.f }; // 기본값: 전체 텍스처
+
+    D3D11_BUFFER_DESC bufferDesc = {};
+    bufferDesc.ByteWidth = sizeof(FSpriteUVBuffer);
+    bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA data = {};
+    data.pSysMem = &initData;
+
+    Device->CreateBuffer(&bufferDesc, &data, &SpriteConstantBuffer);
+}
+
+void URenderer::ReleaseSpriteConstantBuffer()
+{
+    if (SpriteConstantBuffer)
+    {
+        SpriteConstantBuffer->Release();
+        SpriteConstantBuffer = nullptr;
     }
 }
 

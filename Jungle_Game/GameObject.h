@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "Math.h"
 #include "CircleCollider.h"
+#include "Animator.h"
 
 // STL
 #include <vector>

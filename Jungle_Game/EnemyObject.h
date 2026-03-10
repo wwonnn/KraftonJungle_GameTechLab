@@ -49,5 +49,7 @@ private:
     std::unique_ptr<IMovementStrategy> MovementStrategy;
 
     UPlayer* Player = nullptr;
+
+    UAnimator* Animator = nullptr;
 };
 
