@@ -118,7 +118,11 @@ void UEnemyObject::Dead(UCircleCollider* other)
         return;
 
     TransitionToState(EnemyState::Dead);
-    ScoreManager::Get().AddScore(100);
+    if (other->GetLayer() == ECollisionLayer::Projectile)
+    {
+        // ignore collision with player, only projectile can kill enemy
+        ScoreManager::Get().AddScore(100);
+    }
     UAudioSystem::Get().Play("pop");
     Destroy();
     EventSystem::Get().Trigger("EnemyDied");
