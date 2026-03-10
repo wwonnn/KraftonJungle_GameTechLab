@@ -24,6 +24,7 @@ public:
 
     bool IsDead() const { return bIsDead; }
 
+    void FireProjectile();
     int GetHP();
     void TakeDamage();
 
