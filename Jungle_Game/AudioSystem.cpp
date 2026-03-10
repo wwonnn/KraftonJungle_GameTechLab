@@ -7,7 +7,12 @@ bool UAudioSystem::Create()
 {
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     XAudio2Create(&XAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
-    XAudio2->CreateMasteringVoice(&MasteringVoice);
+    HRESULT hr = XAudio2->CreateMasteringVoice(&MasteringVoice);
+
+    if (FAILED(hr))
+    {
+        MasteringVoice = nullptr;
+    }
 
     return true;
 }
@@ -65,11 +70,23 @@ void UAudioSystem::LoadFromFile(const std::string& filePath, const std::string& 
 
 void UAudioSystem::Play(const std::string& soundName)
 {
+    if (MasteringVoice == nullptr)
+    {
+        if (FAILED(XAudio2->CreateMasteringVoice(&MasteringVoice)))
+        {
+            MasteringVoice = nullptr;
+            return;
+        }
+    }
+
 	auto iter = SoundMap.find(soundName);
 	if (iter != SoundMap.end())
 	{
         IXAudio2SourceVoice* sourceVoice;
-        XAudio2->CreateSourceVoice(&sourceVoice, &iter->second.wfx);
+        if (FAILED(XAudio2->CreateSourceVoice(&sourceVoice, &iter->second.wfx)))
+        {
+            return;
+        }
 
         XAUDIO2_BUFFER buffer = { 0 };
         buffer.pAudioData = iter->second.AudioData.data();
