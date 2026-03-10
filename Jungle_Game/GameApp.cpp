@@ -77,7 +77,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-     SceneManager::Get().Initialize(new FGameContext(Renderer));
+     SceneManager::Get().Initialize(new FGameContext(Renderer, Timer));
      SceneManager::Get().ChangeScene(SceneType::Init);
     //ingameScene = new InGameScene(&gameContext);
 

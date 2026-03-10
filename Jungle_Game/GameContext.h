@@ -2,9 +2,10 @@
 
 struct FGameContext {
     class URenderer* Renderer;
+    class UTimer* Timer;
 
-    FGameContext(URenderer* renderer) :
-        Renderer(renderer) {
+    FGameContext(URenderer* renderer, UTimer* timer) :
+        Renderer(renderer), Timer(timer){
     }
 };
 

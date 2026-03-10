@@ -2,6 +2,14 @@
 #include "SceneManager.h"
 #include "CollisionSystem.h"
 
+InGameScene::InGameScene(FGameContext* gameContext)
+    :UScene(gameContext) {
+    Timer = gameContext->Timer;
+
+    WaveController = new UWaveController();
+    WaveController->LoadStageData(1);
+}
+
 void InGameScene::Initialize()
 {
     UGameObject* playerObj = CreateGameObject(new UPlayer(
@@ -20,10 +28,7 @@ void InGameScene::Update(float deltaTime) {
 }
 
 void InGameScene::Render() {
-
     Renderer->BeginFrame();
-
-    // 오브젝트 Update 및 Render (DeltaTime 사용)
 
     for (UGameObject* const& obj : GameObjects)
     {
@@ -36,4 +41,8 @@ void InGameScene::Render() {
     UImGuiManager::Get().Update();
 
     Renderer->SwapBuffer();
+}
+
+void InGameScene::Release() {
+    delete WaveController;
 }
