@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "EnemyObject.h"
+#include "CollisionSystem.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -89,12 +90,12 @@ void GameApp::Run()
             // Game Loop
             UInputManager::Get().Update();
             Timer->Update();
+            UCollisionSystem::Get().CheckCollisions();
 
             Renderer->BeginFrame();
 
             if (UInputManager::Get().GetKeyDown(VK_SPACE))
             {
-                OutputDebugString(L"Space key pressed!\n");
                 AudioSystem->Play("shoot");
             }
 
@@ -111,6 +112,9 @@ void GameApp::Run()
             ImGui::Text("Total Time: %f", Timer->GetTotalTime());
             ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
             UImGuiManager::Get().endFrame();
+
+            Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f);
+            Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
 
             Renderer->SwapBuffer();
         }
@@ -138,4 +142,8 @@ void GameApp::CreateGameObjects()
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
 
+    UGameObject* enemy = new UEnemyObject(
+        FTransform(FVector(-0.2f, -0.7f, 0.0f),
+            FVector(0.0f, 0.0f, 0.0f),
+            FVector(0.3f, 0.3f, 1.0f)));
 }
