@@ -95,11 +95,6 @@ void GameApp::Run()
 
             Renderer->BeginFrame();
 
-            if (UInputManager::Get().GetKeyDown(VK_SPACE))
-            {
-                AudioSystem->Play("shoot");
-            }
-
             // 오브젝트 Update 및 Render (DeltaTime 사용)
             float DeltaTime = Timer->GetDeltaTime();
             WaveController->Update(DeltaTime);
@@ -139,7 +134,7 @@ void GameApp::LoadDefaultAssets()
 
 void GameApp::CreateGameObjects()
 {
-    UGameObject* player = new UPlayer(
+    UPlayer* player = new UPlayer(
         FTransform(FVector(-0.2f, -0.7f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
@@ -153,4 +148,6 @@ void GameApp::CreateGameObjects()
         FTransform(player->GetTransform().Location,
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.1f, 0.1f, 1.0f)));
+
+    player->SetAudioSystem(AudioSystem);
 }
