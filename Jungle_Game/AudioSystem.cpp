@@ -2,6 +2,7 @@
 
 #include "AudioSystem.h"
 #include "dr_mp3.h"
+#include "GlobalSettings.h"
 
 bool UAudioSystem::Create()
 {
@@ -13,6 +14,15 @@ bool UAudioSystem::Create()
     {
         MasteringVoice = nullptr;
     }
+
+    hr = XAudio2->CreateSubmixVoice(&SFXSubmixVoice, 2, 44100);
+    if (FAILED(hr))
+    {
+        SFXSubmixVoice = nullptr;
+    }
+
+    SetBGMVolume(GlobalSettings::Get().GetData().BGMVolume);
+    SetSFXVolume(GlobalSettings::Get().GetData().SFXVolume);
 
     return true;
 }
@@ -78,12 +88,23 @@ void UAudioSystem::Play(const std::string& soundName)
             return;
         }
     }
+    if (SFXSubmixVoice == nullptr)
+    {
+        if (FAILED(XAudio2->CreateSubmixVoice(&SFXSubmixVoice, 2, 44100)))
+        {
+            SFXSubmixVoice = nullptr;
+            return;
+        }
+    }
 
 	auto iter = SoundMap.find(soundName);
 	if (iter != SoundMap.end())
 	{
+        XAUDIO2_SEND_DESCRIPTOR sendDesc = { 0, SFXSubmixVoice };
+        XAUDIO2_VOICE_SENDS sendList = { 1, &sendDesc };
+
         IXAudio2SourceVoice* sourceVoice;
-        if (FAILED(XAudio2->CreateSourceVoice(&sourceVoice, &iter->second.wfx)))
+        if (FAILED(XAudio2->CreateSourceVoice(&sourceVoice, &iter->second.wfx, 0, 2.0f, nullptr, &sendList)))
         {
             return;
         }
@@ -96,4 +117,57 @@ void UAudioSystem::Play(const std::string& soundName)
         sourceVoice->SubmitSourceBuffer(&buffer);
         sourceVoice->Start();
 	}
+}
+
+void UAudioSystem::PlayBGM(const std::string& soundName)
+{
+    if (BGMSourceVoice)
+    {
+        BGMSourceVoice->Stop();
+        BGMSourceVoice->DestroyVoice();
+        BGMSourceVoice = nullptr;
+    }
+
+    auto iter = SoundMap.find(soundName);
+    if (iter != SoundMap.end())
+    {
+        if (FAILED(XAudio2->CreateSourceVoice(&BGMSourceVoice, &iter->second.wfx)))
+        {
+            return;
+        }
+
+        XAUDIO2_BUFFER buffer = { 0 };
+        buffer.pAudioData = iter->second.AudioData.data();
+        buffer.AudioBytes = iter->second.audioBytes;
+        buffer.Flags = XAUDIO2_END_OF_STREAM;
+        buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
+
+        BGMSourceVoice->SubmitSourceBuffer(&buffer);
+        BGMSourceVoice->SetVolume(GlobalSettings::Get().GetData().BGMVolume);
+        BGMSourceVoice->Start();
+    }
+}
+
+void UAudioSystem::StopBGM()
+{
+    if (BGMSourceVoice)
+    {
+        BGMSourceVoice->Stop();
+    }
+}
+
+void UAudioSystem::SetBGMVolume(float volume)
+{
+    if (BGMSourceVoice)
+    {
+        BGMSourceVoice->SetVolume(volume);
+    }
+}
+
+void UAudioSystem::SetSFXVolume(float volume)
+{
+    if (SFXSubmixVoice)
+    {
+        SFXSubmixVoice->SetVolume(volume);
+    }
 }

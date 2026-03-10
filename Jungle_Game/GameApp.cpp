@@ -13,6 +13,7 @@
 
 #include "SceneManager.h"
 #include "GameContext.h"
+#include "GlobalSettings.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -62,6 +63,8 @@ bool GameApp::Initialize(HINSTANCE hInstance)
 
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
+
+    GlobalSettings::Get().Load();
 
     if (!Renderer->Create(hWnd))
     {
@@ -128,6 +131,8 @@ void GameApp::LoadDefaultAssets()
     UAudioSystem::Get().LoadFromFile("asset/clear.mp3", "clear");
     UAudioSystem::Get().LoadFromFile("asset/win.mp3", "win");
     UAudioSystem::Get().LoadFromFile("asset/gameover.mp3", "gameover");
+    UAudioSystem::Get().LoadFromFile("asset/whoosh.mp3", "whoosh");
+    UAudioSystem::Get().LoadFromFile("asset/bgm.mp3", "bgm");
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");

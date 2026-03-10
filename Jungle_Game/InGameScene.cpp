@@ -48,6 +48,8 @@ void InGameScene::Initialize()
             lifeObjects[newHP - 1]->Destroy();
         }
     };
+
+    UAudioSystem::Get().PlayBGM("bgm");
 }
 
 void InGameScene::Update(float deltaTime) {
@@ -87,6 +89,8 @@ void InGameScene::Render() {
 }
 
 void InGameScene::Release() {
+    UAudioSystem::Get().StopBGM();
+
     Timer->ClearDelayedActions();
     EventSystem::Get().UnSubscribe("EnemyDied");
 

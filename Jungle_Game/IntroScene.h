@@ -13,9 +13,22 @@ public:
     void Release() override;
 
 private:
-    int OptionIndex = 0;
-    int MaxOptions = 2;
+    void UpdateMainMenu();
+    void RenderMainMenu();
 
-    bool IsCredit = false;
+    void UpdateCredits();
+    void RenderCredits();
+
+    void UpdateSettings();
+    void RenderSettings();
+
+private:
+    std::string State = "MainMenu";
+
+    int OptionIndex = 0;
+    int MaxOptions = 3;
+
+    int SettingOptionIndex = 0;
+    int MaxsettingOptions = 1;
 };
 
