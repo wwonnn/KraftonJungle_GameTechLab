@@ -1,6 +1,7 @@
 #include "Player.h"
 #include "InputManager.h"
 #include "AudioSystem.h"
+#include "Projectile.h"
 
 void UPlayer::SetAudioSystem(UAudioSystem* sys)
 {
@@ -45,14 +46,6 @@ void UPlayer::Update(float DeltaTime)
     {
         Transform.Location.x += Velocity.x * DeltaTime;
     }
-/*    if (Input.GetKey(VK_UP))
-    {
-        Location.y += Speed * DeltaTime;
-    }
-    if (Input.GetKey(VK_DOWN))
-    {
-        Location.y -= Speed * DeltaTime;
-    }*/
 
     if (Input.GetKeyDown(VK_SPACE))
     {
@@ -60,6 +53,10 @@ void UPlayer::Update(float DeltaTime)
         {
             AudioSystem->Play("shoot");
         }
+
+        UGameObject* projectile = new UProjectile(
+            FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
+        );
     }
 }
 

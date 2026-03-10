@@ -98,10 +98,21 @@ void GameApp::Run()
             // 오브젝트 Update 및 Render (DeltaTime 사용)
             float DeltaTime = Timer->GetDeltaTime();
             WaveController->Update(DeltaTime);
-            for (UGameObject* const& obj : UGameObject::GameObjectList)
+
+            //for (UGameObject* const& obj : UGameObject::GameObjectList)
+            //{
+            //    obj->Update(DeltaTime);
+            //    obj->Render(*Renderer);
+            //}
+
+            for (size_t i = 0; i < UGameObject::GameObjectList.size(); ++i)
             {
-                obj->Update(DeltaTime);
-                obj->Render(*Renderer);
+                UGameObject* obj = UGameObject::GameObjectList[i];
+                if (obj)
+                {
+                    obj->Update(DeltaTime);
+                    obj->Render(*Renderer);
+                }
             }
 
             UImGuiManager::Get().beginFrame();
