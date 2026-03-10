@@ -21,5 +21,8 @@ public:
     void OnCollisionExit();
 
 private:
+    void CheckWallCollision();
+
+private:
     FVector Velocity;
 };

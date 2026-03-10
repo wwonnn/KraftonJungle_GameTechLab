@@ -1,4 +1,5 @@
 #include "CollisionSystem.h"
+#include "GameApp.h"
 
 void UCollisionSystem::CheckCollisions()
 {
@@ -60,4 +61,30 @@ bool UCollisionSystem::CheckCollision(UCircleCollider* colliderA, UCircleCollide
     float distanceSquared = (centerA - centerB).LengthSquared();
     float radiusSum = radiusA + radiusB;
     return distanceSquared <= (radiusSum * radiusSum);
+}
+
+void UCollisionSystem::CheckWallCollision(FVector& location, FVector& scale)
+{
+    float left = -1.0f;
+    float right = 1.0f;
+    float top = -1.0f;
+    float bottom = 1.0f;
+
+    FVector halfScale = scale / 2.0f;
+    if (location.x - halfScale.x < left)
+    {
+        location.x = left + halfScale.x;
+    }
+    else if (location.x + halfScale.x > right)
+    {
+        location.x = right - halfScale.x;
+    }
+    else if (location.y - halfScale.y < top)
+    {
+        location.y = top + halfScale.y;
+    }
+    else if (location.y + halfScale.y > bottom)
+    {
+        location.y = bottom - halfScale.y;
+    }
 }

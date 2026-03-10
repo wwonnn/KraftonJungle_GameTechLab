@@ -1,5 +1,6 @@
 #include "Player.h"
 #include "InputManager.h"
+#include "CollisionSystem.h"
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -47,6 +48,8 @@ void UPlayer::Update(float DeltaTime)
     {
         Location.y -= Speed * DeltaTime;
     }*/
+
+    CheckWallCollision();
 }
 
 void UPlayer::Render(URenderer& renderer)
@@ -65,6 +68,11 @@ bool UPlayer::CheckCollision(UGameObject* other)
 {
     // 충돌 처리
     return false;
+}
+
+void UPlayer::CheckWallCollision()
+{
+    UCollisionSystem::Get().CheckWallCollision(Transform.Location, Transform.Scale);
 }
 
 void UPlayer::ApplyImpulse(const FConstantBuffer& v)
