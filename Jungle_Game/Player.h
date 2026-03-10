@@ -23,6 +23,9 @@ public:
 
     bool IsDead() const { return bIsDead; }
 
+    int GetHP();
+    void TakeDamage();
+
 private:
     void CheckWallCollision();
 
@@ -30,4 +33,9 @@ private:
     FVector Velocity;
 
     bool bIsDead = false;
+    UAudioSystem* AudioSystem = nullptr;
+
+    int HP = 3;
+    float delayTime = 3.0f;
+    float HitTime = 3.0f;
 };

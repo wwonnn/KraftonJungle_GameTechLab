@@ -19,6 +19,8 @@ void InGameScene::Initialize()
             FVector(0.1f, 0.1f, 1.0f))));
     Player = dynamic_cast<UPlayer*>(playerObj);
 
+    UImGuiManager::Get().SettingPlayer(Player);
+
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InGameScene::OnEnemyDied, this));
     EventSystem::Get().Subscribe("AllStageCleared", std::bind(&InGameScene::OnAllStageCleared, this));
 
@@ -32,6 +34,8 @@ void InGameScene::Update(float deltaTime) {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
     }
+
+    if (Player->GetHP() <= 0) SceneManager::Get().ChangeScene(SceneType::Outro);
 }
 
 void InGameScene::Render() {
@@ -42,9 +46,7 @@ void InGameScene::Render() {
         obj->Render(*Renderer);
     }
 
-    UImGuiManager::Get().beginFrame();
     UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
-    UImGuiManager::Get().endFrame();
     UImGuiManager::Get().Update();
 
     Renderer->SwapBuffer();

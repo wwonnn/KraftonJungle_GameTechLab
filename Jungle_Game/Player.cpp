@@ -49,7 +49,6 @@ void UPlayer::Update(float DeltaTime)
     if (Input.GetKeyDown(VK_SPACE))
     {
         UAudioSystem::Get().Play("shoot");
-
         UGameObject* projectile = new UProjectile(
             FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
         );
@@ -58,7 +57,18 @@ void UPlayer::Update(float DeltaTime)
         projectile->Destroy(1.5f);
     }
 
+    if (HitTime < delayTime) HitTime += DeltaTime;
+
     CheckWallCollision();
+}
+
+int UPlayer::GetHP() { return HP; }
+
+void UPlayer::TakeDamage() {
+    if (HitTime >= delayTime) {
+        HP--;
+        HitTime = 0.0f;
+    }
 }
 
 void UPlayer::Render(URenderer& renderer)
