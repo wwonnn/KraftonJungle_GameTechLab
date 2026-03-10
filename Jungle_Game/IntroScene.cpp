@@ -82,5 +82,7 @@ void IntroScene::Render() {
 }
 
 void IntroScene::Release() {
-    // Clean up resources, if necessary.
+    for (UGameObject* obj : GameObjects) {
+        delete obj;
+    }
 }

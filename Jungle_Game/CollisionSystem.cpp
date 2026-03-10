@@ -19,13 +19,13 @@ void UCollisionSystem::CheckCollisions()
 
                 if (PreviousCollisions.find(pair) == PreviousCollisions.end())
                 {
-                    colliderA->InvokeCollisionCallback(ECollisionEvent::Enter);
-                    colliderB->InvokeCollisionCallback(ECollisionEvent::Enter);
+                    colliderA->InvokeCollisionCallback(ECollisionEvent::Enter, colliderB);
+                    colliderB->InvokeCollisionCallback(ECollisionEvent::Enter, colliderA);
                 }
                 else
                 {
-                    colliderA->InvokeCollisionCallback(ECollisionEvent::Stay);
-                    colliderB->InvokeCollisionCallback(ECollisionEvent::Stay);
+                    colliderA->InvokeCollisionCallback(ECollisionEvent::Stay, colliderB);
+                    colliderB->InvokeCollisionCallback(ECollisionEvent::Stay, colliderA);
                 }
             }
         }
@@ -35,8 +35,8 @@ void UCollisionSystem::CheckCollisions()
     {
         if (currentCollisions.find(pair) == currentCollisions.end())
         {
-            pair.ColliderA->InvokeCollisionCallback(ECollisionEvent::Exit);
-            pair.ColliderB->InvokeCollisionCallback(ECollisionEvent::Exit);
+            pair.ColliderA->InvokeCollisionCallback(ECollisionEvent::Exit, pair.ColliderB);
+            pair.ColliderB->InvokeCollisionCallback(ECollisionEvent::Exit, pair.ColliderA);
         }
     }
 

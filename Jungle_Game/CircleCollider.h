@@ -28,7 +28,7 @@ public:
     ~UCircleCollider();
 
 public:
-    void AddCollisionCallback(ECollisionEvent type, std::function<void()> callback)
+    void AddCollisionCallback(ECollisionEvent type, std::function<void(UCircleCollider*)> callback)
     {
         CollisionCallbacks[type] = callback;
     }
@@ -36,12 +36,12 @@ public:
     {
         CollisionCallbacks.erase(type);
     }
-    void InvokeCollisionCallback(ECollisionEvent type)
+    void InvokeCollisionCallback(ECollisionEvent type, UCircleCollider* other)
     {
         auto it = CollisionCallbacks.find(type);
         if (it != CollisionCallbacks.end())
         {
-            it->second();
+            it->second(other);
         }
     }
 
@@ -67,7 +67,7 @@ private:
     FVector Center = { 0, 0, 0 };
     float Radius = 0.25f;
 
-    std::unordered_map<ECollisionEvent, std::function<void()>> CollisionCallbacks;
+    std::unordered_map<ECollisionEvent, std::function<void(UCircleCollider*)>> CollisionCallbacks;
 
     ECollisionLayer Layer = ECollisionLayer::Player;
     std::set<ECollisionLayer> ContactLayer;
