@@ -12,10 +12,6 @@ void UImGuiManager::Create(HWND hWnd, URenderer* renderer) {
 void UImGuiManager::Update() {
     beginFrame();
     ImGui::Text(buffer);
-    if (ImGui::Button("good")) {
-        Player->TakeDamage();
-    }
-    ImGui::Text("%d", Player->GetHP());
     endFrame();
 }
 

@@ -208,6 +208,7 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="ScoreManager.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="Timer.h" />
