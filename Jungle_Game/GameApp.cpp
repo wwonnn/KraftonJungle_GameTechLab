@@ -70,6 +70,8 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
+    ingameScene = new InGameScene(&FGameContext(Renderer, AudioSystem));
+
     return true;
 }
 

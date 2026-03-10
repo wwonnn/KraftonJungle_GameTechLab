@@ -3,6 +3,7 @@
 #include "AudioSystem.h"
 #include "Timer.h"
 #include "WaveController.h"
+#include "Scene.h"
 #include <windows.h>
 
 class GameApp
@@ -29,5 +30,6 @@ private:
     UAudioSystem* AudioSystem = nullptr;
     UTimer* Timer = nullptr;
     UWaveController* WaveController = nullptr;
+    UScene* ingameScene = nullptr;
 };
 
