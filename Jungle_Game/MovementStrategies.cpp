@@ -17,7 +17,7 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    outRotation = std::atan2(Direction.y, Direction.x);
+    //outRotation = std::atan2(Direction.y, Direction.x);
 
     CurrentRange += Direction.x * moveDist;
     if (CurrentRange > MovementRange || CurrentRange < -MovementRange)
@@ -58,7 +58,7 @@ bool FollowPlayerMovement::Update(FVector& outPosition, float& outRotation, cons
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    outRotation = std::atan2(Direction.y, Direction.x);
+    outRotation = std::atan2(Direction.y, Direction.x) + 3.14159265f / 2.0f;
 
     return false;
 }
