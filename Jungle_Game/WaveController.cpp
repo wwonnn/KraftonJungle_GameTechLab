@@ -1,4 +1,5 @@
 #include "WaveController.h"
+#include "GameObjectManager.h"
 #include <fstream>
 
 bool UWaveController::LoadStageData(int stageNumber) {
@@ -43,4 +44,6 @@ void UWaveController::SpawnEnemy(float x, float y) {
         FTransform(FVector(x, y, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
+
+    UGameObjectManager::Get().AddGameObject(enemy);
 }

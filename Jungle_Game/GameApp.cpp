@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "ImGuiManager.h"
 #include "GameObject.h"
+#include "GameObjectManager.h"
 #include "Player.h"
 #include "EnemyObject.h"
 #include "Projectile.h"
@@ -90,7 +91,7 @@ void GameApp::Run()
         {
             // Game Loop
             UInputManager::Get().Update();
-            Timer->Update();
+              Timer->Update();
             UCollisionSystem::Get().CheckCollisions();
 
             Renderer->BeginFrame();
@@ -99,20 +100,16 @@ void GameApp::Run()
             float DeltaTime = Timer->GetDeltaTime();
             WaveController->Update(DeltaTime);
 
-            //for (UGameObject* const& obj : UGameObject::GameObjectList)
-            //{
-            //    obj->Update(DeltaTime);
-            //    obj->Render(*Renderer);
-            //}
-
-            for (size_t i = 0; i < UGameObject::GameObjectList.size(); ++i)
+            for (UGameObject* const& obj : UGameObjectManager::Get().GetGameObjects())
             {
-                UGameObject* obj = UGameObject::GameObjectList[i];
-                if (obj)
-                {
-                    obj->Update(DeltaTime);
-                    obj->Render(*Renderer);
-                }
+                obj->Update(DeltaTime);
+            }
+
+            UGameObjectManager::Get().Refresh();
+
+            for (UGameObject* const& obj : UGameObjectManager::Get().GetGameObjects())
+            {
+                obj->Render(*Renderer);
             }
 
             UImGuiManager::Get().beginFrame();
@@ -149,6 +146,7 @@ void GameApp::CreateGameObjects()
         FTransform(FVector(-0.2f, -0.7f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
+    player->SetAudioSystem(AudioSystem);
 
     UGameObject* enemy = new UEnemyObject(
         FTransform(FVector(-0.2f, -0.7f, 0.0f),
@@ -156,9 +154,12 @@ void GameApp::CreateGameObjects()
             FVector(0.3f, 0.3f, 1.0f)));
 
     UGameObject* projectile = new UProjectile(
-        FTransform(player->GetTransform().Location,
+        FTransform(FVector(0.2f, -0.7f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.1f, 0.1f, 1.0f)));
 
-    player->SetAudioSystem(AudioSystem);
+    UGameObjectManager::Get().AddGameObject(player);
+    UGameObjectManager::Get().AddGameObject(enemy);
+    UGameObjectManager::Get().AddGameObject(projectile);
+    UGameObjectManager::Get().Refresh();
 }
