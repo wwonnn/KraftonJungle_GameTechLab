@@ -24,6 +24,8 @@ void UTimer::Update() {
 
 		prevTime = currTime;
 		totalTime += deltaTime;
+
+        UpdateDelayedActions();
 	}
 }
 
@@ -33,4 +35,26 @@ float UTimer::GetTotalTime() {
 
 float UTimer::GetDeltaTime() {
     return deltaTime;
+}
+
+void UTimer::ExecuteAfter(float seconds, std::function<void()> callback) {
+    DelayedActions.push_back({ callback, seconds, totalTime, false });
+}
+
+void UTimer::UpdateDelayedActions() {
+    for (auto it = DelayedActions.begin(); it != DelayedActions.end();) {
+        if (!it->executed && totalTime - it->startTime >= it->delay) {
+            it->callback();
+            it->executed = true;
+            it = DelayedActions.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+void UTimer::ClearDelayedActions() {
+    DelayedActions.clear();
 }

@@ -41,4 +41,7 @@ private:
     int HP = 3;
     float delayTime = 3.0f;
     float HitTime = 3.0f;
+
+    const float ShootCooldown = 0.2f;
+    float ShootCooldownTimer = 0.0f;
 };

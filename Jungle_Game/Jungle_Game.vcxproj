@@ -130,6 +130,7 @@
     <ClCompile Include="EnemyObject.cpp" />
     <ClCompile Include="EventSystem.cpp" />
     <ClCompile Include="GameApp.cpp" />
+    <ClCompile Include="GameBackground.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectManager.cpp" />
     <ClCompile Include="GlobalState.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="fmod\fmod_errors.h" />
     <ClInclude Include="fmod\fmod_output.h" />
     <ClInclude Include="GameApp.h" />
+    <ClInclude Include="GameBackground.h" />
     <ClInclude Include="GameContext.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectManager.h" />

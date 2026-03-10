@@ -2,9 +2,17 @@
 #include "InputManager.h"
 #include "SceneManager.h"
 #include "GlobalState.h"
+#include "AudioSystem.h"
 
 void OutroScene::Initialize() {
-    // Load resources, initialize variables, etc.
+    if (GlobalState::Get().bAllStageCleared)
+    {
+        UAudioSystem::Get().Play("win");
+    }
+    else
+    {
+        UAudioSystem::Get().Play("gameover");
+    }
 }
 
 void OutroScene::Update(float deltaTime) {

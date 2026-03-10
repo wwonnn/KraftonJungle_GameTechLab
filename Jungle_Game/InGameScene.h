@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Player.h"
+#include "GameBackground.h"
 
 class InGameScene : public UScene {
 private:
@@ -7,11 +8,13 @@ private:
     UTimer* Timer = nullptr;
 
     UPlayer* Player = nullptr;
+    UGameBackground* Background = nullptr;
 
     std::vector<UGameObject*> lifeObjects;
 
 public:
     int EnemyKillCount = 0;
+    bool bStageClearText = false;
     bool bAllStageCleared = false;
 
 public:

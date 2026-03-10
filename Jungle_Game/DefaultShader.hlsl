@@ -23,9 +23,14 @@ struct PS_INPUT
 PS_INPUT mainVS(VS_INPUT input)
 {
     PS_INPUT output;
-
-    float3 scaledPos = input.position * scale;
-    float3 worldPos = scaledPos + offset;
+    
+    float3 scaledPos = input.position * scale.xyz;
+    
+    float3 rotatedPos = scaledPos;
+    rotatedPos.x = scaledPos.x * cos(rotation.z) - scaledPos.y * sin(rotation.z);
+    rotatedPos.y = scaledPos.x * sin(rotation.z) + scaledPos.y * cos(rotation.z);
+    
+    float3 worldPos = rotatedPos + offset.xyz;
     output.position = float4(worldPos, 1.0f);
     output.uv = input.uv;
 	

@@ -6,6 +6,8 @@
 #include "LifeObject.h"
 
 #include <vector>
+#include "Projectile.h"
+#include "GameBackground.h"
 
 InGameScene::InGameScene(FGameContext* gameContext)
     :UScene(gameContext) {
@@ -16,6 +18,10 @@ InGameScene::InGameScene(FGameContext* gameContext)
 
 void InGameScene::Initialize()
 {
+    UGameObject* bgObj = CreateGameObject(new UGameBackground(
+        FTransform(FVector(), FVector(), FVector(2.0f, 2.0f, 1.0f))));
+    Background = dynamic_cast<UGameBackground*>(bgObj);
+    
     UGameObject* playerObj = CreateGameObject(new UPlayer(
         FTransform(FVector(-0.2f, -0.8f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
@@ -63,6 +69,12 @@ void InGameScene::Render() {
         obj->Render(*Renderer);
     }
 
+    if (bStageClearText)
+    {
+        Renderer->DrawString(L"Stage Clear!", 400.0f, 300.0f, FVector(1.0f, 1.0f, 0.0f));
+    }
+
+    UImGuiManager::Get().beginFrame();
     UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
     UImGuiManager::Get().Update();
 
@@ -76,6 +88,7 @@ void InGameScene::Render() {
 }
 
 void InGameScene::Release() {
+    Timer->ClearDelayedActions();
     EventSystem::Get().UnSubscribe("EnemyDied");
 
     UScene::Release();
@@ -87,8 +100,26 @@ void InGameScene::OnEnemyDied() {
 
     if (EnemyKillCount >= WaveController->GetCurrentStageInfo().enemyCount)
     {
+        UAudioSystem::Get().Play("clear");
+
         EnemyKillCount = 0;
-        WaveController->GoNextStage();
+        bStageClearText = true;
+
+        for (UGameObject* obj : GameObjects)
+        {
+            if (dynamic_cast<UProjectile*>(obj))
+            {
+                obj->SetPendingDestroy(true);
+            }
+        }
+
+        Background->SetScrollSpeed(1.0f);
+
+        Timer->ExecuteAfter(2.0f, [this]() {
+            bStageClearText = false;
+            Background->SetScrollSpeed(0.3f);
+            WaveController->GoNextStage();
+        });
     }
 }
 
