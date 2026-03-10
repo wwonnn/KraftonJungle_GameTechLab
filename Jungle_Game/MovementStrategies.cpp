@@ -2,9 +2,10 @@
 #include "CollisionSystem.h"
 #include <algorithm>
 
-LinearMovement::LinearMovement(FVector direction, float speed)
+LinearMovement::LinearMovement(FVector direction, float speed, float movementRange)
     : Direction(direction.Normalize())
     , Speed(speed)
+    , MovementRange(movementRange)
 {}
 
 bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVector& currentPos, const FVector& playerPos, float dt)
@@ -18,9 +19,9 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
     };
     outRotation = std::atan2(Direction.y, Direction.x);
 
-    // 벽 충돌 시 방향 바꿈
-    FVector box(1.0f, 1.0f, 1.0f);
-    if (UCollisionSystem::Get().CheckWallCollision(outPosition, box)) {
+    CurrentRange += Direction.x * moveDist;
+    if (CurrentRange > MovementRange || CurrentRange < -MovementRange)
+    {
         SetDirection(FVector(-Direction.x, -Direction.y));
     }
 
@@ -33,6 +34,7 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
 
 void LinearMovement::Reset()
 {
+    CurrentRange = 0.0f;
 }
 
 void LinearMovement::SetDirection(FVector newDir)

@@ -31,7 +31,7 @@ void UEnemyObject::Update(float DeltaTime)
     switch (State)
     {
     case EnemyState::Spawn:
-        TransitionToState(EnemyState::Move);
+        //TransitionToState(EnemyState::Move);
         break;
     case EnemyState::Move:
         Move(DeltaTime);

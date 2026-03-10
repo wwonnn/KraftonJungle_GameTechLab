@@ -30,9 +30,9 @@ public:
     void SetPlayer(UPlayer* player) { Player = player; }
     void SetMovementStrategy(std::unique_ptr<IMovementStrategy> strategy);
     IMovementStrategy* GetMovementStrategy() const;
+    void TransitionToState(EnemyState newState);
 
 private:
-    void TransitionToState(EnemyState newState);
     void Move(float DeltaTime);
     void Dead();
 

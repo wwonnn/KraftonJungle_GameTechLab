@@ -32,7 +32,7 @@ public:
 class LinearMovement : public IMovementStrategy
 {
 public:
-    explicit LinearMovement(FVector direction = { 1.0f, 0.0f }, float speed = 1.0f);
+    explicit LinearMovement(FVector direction = { 1.0f, 0.0f }, float speed = 1.0f, float movementRange = 0.3f);
 
     bool Update(FVector& outPosition,
         float& outRotation,
@@ -46,6 +46,8 @@ public:
 private:
     FVector Direction;       
     float Speed;
+    float MovementRange;    // 이동 범위
+    float CurrentRange = 0.0f; // 현재 이동한 거리
 };
 
 /// <summary>
