@@ -15,14 +15,12 @@ class SceneManager;
 class UScene {
 protected:
     URenderer* Renderer = nullptr;
-    UAudioSystem* AudioSystem = nullptr;
 
     std::vector<UGameObject*> GameObjects;
 public:
     virtual ~UScene() {}
     UScene(FGameContext* gameContext) {
         Renderer = gameContext->Renderer;
-        AudioSystem = gameContext->AudioSystem;
     }
     virtual void Initialize() = 0;
     virtual void Update(float deltaTime) = 0;
