@@ -1,10 +1,18 @@
 #pragma once
 
-#include "fmod/fmod.hpp"
+#include <xaudio2.h>
 #include <unordered_map>
 #include <string>
+#include <vector>
 
-#pragma comment(lib, "fmodL_vc.lib")
+#pragma comment(lib, "xaudio2.lib")
+
+struct FAudio
+{
+    WAVEFORMATEX wfx;
+    std::vector<BYTE> AudioData;
+    unsigned int audioBytes;
+};
 
 class UAudioSystem
 {
@@ -20,8 +28,9 @@ public:
 	void Play(const std::string& soundName);
 
 private:
-	FMOD::System* System = nullptr;
+    IXAudio2* XAudio2 = nullptr;
+    IXAudio2MasteringVoice* MasteringVoice = nullptr;
 
-	std::unordered_map<std::string, FMOD::Sound*> SoundMap;
+	std::unordered_map<std::string, FAudio> SoundMap;
 };
 

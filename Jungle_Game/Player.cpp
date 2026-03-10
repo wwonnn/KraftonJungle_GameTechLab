@@ -1,5 +1,14 @@
 #include "Player.h"
 #include "InputManager.h"
+#include "AudioSystem.h"
+#include "Projectile.h"
+#include "AudioSystem.h"
+#include "CollisionSystem.h"
+
+void UPlayer::SetAudioSystem(UAudioSystem* sys)
+{
+    AudioSystem = sys;
+}
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -21,6 +30,10 @@ UPlayer::~UPlayer()
 void UPlayer::Initialize()
 {
     Velocity = FVector(0.5f, 0.0f, 0.0f);
+    Collider->SetLayer(ECollisionLayer::Player);
+    Collider->AddContactLayer(ECollisionLayer::Enemy);
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UPlayer::OnCollisionEnter, this));
+    Collider->AddCollisionCallback(ECollisionEvent::Exit, std::bind(&UPlayer::OnCollisionExit, this));
 }
 
 void UPlayer::Update(float DeltaTime)
@@ -35,14 +48,20 @@ void UPlayer::Update(float DeltaTime)
     {
         Transform.Location.x += Velocity.x * DeltaTime;
     }
-/*    if (Input.GetKey(VK_UP))
+
+    if (Input.GetKeyDown(VK_SPACE))
     {
-        Location.y += Speed * DeltaTime;
+        if (AudioSystem)
+        {
+            AudioSystem->Play("shoot");
+        }
+
+        UGameObject* projectile = new UProjectile(
+            FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
+        );
     }
-    if (Input.GetKey(VK_DOWN))
-    {
-        Location.y -= Speed * DeltaTime;
-    }*/
+
+    CheckWallCollision();
 }
 
 void UPlayer::Render(URenderer& renderer)
@@ -63,7 +82,22 @@ bool UPlayer::CheckCollision(UGameObject* other)
     return false;
 }
 
+void UPlayer::CheckWallCollision()
+{
+    UCollisionSystem::Get().CheckWallCollision(Transform.Location, Transform.Scale);
+}
+
 void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 {
 
+}
+
+void UPlayer::OnCollisionEnter()
+{
+    OutputDebugString(L"Player enter\n");
+}
+
+void UPlayer::OnCollisionExit()
+{
+    OutputDebugString(L"Player exit\n");
 }

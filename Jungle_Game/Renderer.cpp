@@ -1,7 +1,8 @@
 #include "Renderer.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
 
 URenderer::URenderer()
 {
@@ -26,12 +27,16 @@ bool URenderer::Create(HWND hWnd)
     CreateDefaultTexture();
     CreateDefaultSamplerState();
     CreateBlendState();
+    CreateDefaultFontAtlasAndVertexBuffer();
+    CreateTextShader();
 
     return true;
 }
 
 void URenderer::Release()
 {
+    ReleaseTextShader();
+    ReleaseDefaultFontAtlasAndVertexBuffer();
     ReleaseBlendState();
     ReleaseDefaultSamplerState();
     ReleaseDefaultTexture();
@@ -159,6 +164,106 @@ void URenderer::BindTexture(const std::string& name)
     if (srvIt != SRVs.end()) {
         DeviceContext->PSSetShaderResources(0, 1, &srvIt->second);
     }
+}
+
+void URenderer::GetQuad(wchar_t c, float* x, float* y, stbtt_aligned_quad* q)
+{
+    if (c >= 32 && c < 128)
+    {
+        stbtt_GetPackedQuad(FontAtlas, 512, 512, c - 32, x, y, q, 1);
+    }
+    else
+    {
+        int index = HangulMap[c];
+
+        stbtt_GetPackedQuad(FontHangulAtlas, 512, 512, index, x, y, q, 1);
+    }
+}
+
+void URenderer::DrawString(const std::wstring& name, float x, float y, const FVector& color, ETextAlign align)
+{
+    std::vector<FTextVertex> vertices;
+
+    float viewportWidth = Viewport.Width;
+    float viewportHeight = Viewport.Height;
+
+    float totalWidth = 0.0f;
+    float tempX = 0.0f;
+    float tempY = 0.0f;
+
+    for (wchar_t c : name)
+    {
+        stbtt_aligned_quad q;
+        GetQuad(c, &tempX, &tempY, &q);
+    }
+    totalWidth = tempX;
+
+    float currX = x;
+    float currY = y;
+    switch (align)
+    {
+    case ETextAlign::Center:
+        currX = x - (totalWidth / 2.0f);
+        break;
+    case ETextAlign::Right:
+        currX = x - totalWidth;
+        break;
+    case ETextAlign::Left:
+    default:
+        currX = x;
+    }
+
+    for (wchar_t c : name)
+    {
+        stbtt_aligned_quad q;
+        GetQuad(c, &currX, &currY, &q);
+
+        // 픽셀 좌표를 NDC로 변환 (-1 ~ 1)
+        float x0 = (q.x0 / viewportWidth) * 2.0f - 1.0f;
+        float y0 = (q.y0 / viewportHeight) * 2.0f - 1.0f;
+        float x1 = (q.x1 / viewportWidth) * 2.0f - 1.0f;
+        float y1 = (q.y1 / viewportHeight) * 2.0f - 1.0f;
+
+        FTextVertex v0 = { FVector(x0, -y0, 0.0f), q.s0, q.t0, color }; // Y축 반전
+        FTextVertex v1 = { FVector(x1, -y0, 0.0f), q.s1, q.t0, color };
+        FTextVertex v2 = { FVector(x1, -y1, 0.0f), q.s1, q.t1, color };
+        FTextVertex v3 = { FVector(x0, -y1, 0.0f), q.s0, q.t1, color };
+
+        vertices.push_back(v0);
+        vertices.push_back(v1);
+        vertices.push_back(v2);
+        vertices.push_back(v0);
+        vertices.push_back(v2);
+        vertices.push_back(v3);
+    }
+
+    if (vertices.empty())
+        return;
+
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    DeviceContext->Map(TextVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    memcpy(mappedResource.pData, vertices.data(), vertices.size() * sizeof(FTextVertex));
+    DeviceContext->Unmap(TextVertexBuffer, 0);
+
+    UINT stride = sizeof(FTextVertex);
+    UINT offset = 0;
+    DeviceContext->IASetVertexBuffers(0, 1, &TextVertexBuffer, &stride, &offset);
+    DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    DeviceContext->IASetInputLayout(TextInputLayout);
+
+    DeviceContext->VSSetShader(TextVertexShader, nullptr, 0);
+    DeviceContext->PSSetShader(TextPixelShader, nullptr, 0);
+
+    DeviceContext->PSSetShaderResources(0, 1, &FontAtlasSRV);
+    DeviceContext->PSSetSamplers(0, 1, &DefaultSamplerState);
+
+    FConstantBuffer constants;
+    constants.position = FVector(0.0f, 0.0f, 0.0f);
+    constants.rotation = FVector(0.0f, 0.0f, 0.0f);
+    constants.scale = FVector(1.0f, 1.0f, 1.0f);
+    UpdateConstantBuffer(constants);
+
+    DeviceContext->Draw(vertices.size(), 0);
 }
 
 bool URenderer::CreateDeviceAndSwapChain(HWND hWnd)
@@ -496,5 +601,172 @@ void URenderer::ReleaseBlendState()
     if (BlendState) {
         BlendState->Release();
         BlendState = nullptr;
+    }
+}
+
+static unsigned char* load_file(const char* fileName)
+{
+    std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << fileName << std::endl;
+        return nullptr;
+    }
+
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    unsigned char* buffer = new unsigned char[size];
+    if (!buffer) {
+        return nullptr;
+    }
+
+    if (file.read((char*)buffer, size)) {
+        return buffer;
+    }
+
+    delete[] buffer;
+    return nullptr;
+}
+
+void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
+{
+    unsigned char* fontBuffer = load_file("arial.ttf");
+    if (!fontBuffer)
+    {
+        return;
+    }
+
+    unsigned char* alphaPixels = new unsigned char[512 * 512];
+    memset(alphaPixels, 0, 512 * 512);
+
+    stbtt_pack_context pc;
+    stbtt_PackBegin(&pc, alphaPixels, 512, 512, 0, 1, NULL);
+
+    stbtt_pack_range ranges[2];
+
+    ranges[0].font_size = 32.0f;
+    ranges[0].first_unicode_codepoint_in_range = 32;
+    ranges[0].num_chars = 96;
+    ranges[0].chardata_for_range = FontAtlas;
+    ranges[0].array_of_unicode_codepoints = nullptr;
+
+    static const wchar_t* hangulChars = L"성원희김기홍오준혁국동진";
+    ranges[1].font_size = 32.0f;
+    ranges[1].first_unicode_codepoint_in_range = 0;
+    ranges[1].num_chars = 12;
+    ranges[1].chardata_for_range = FontHangulAtlas;
+    ranges[1].array_of_unicode_codepoints = (int*)hangulChars;
+
+    stbtt_PackFontRanges(&pc, fontBuffer, 0, ranges, 2);
+    stbtt_PackEnd(&pc);
+
+    for (int i = 0; i < 12; ++i) {
+        HangulMap[hangulChars[i]] = i;
+    }
+
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width = 512;
+    texDesc.Height = 512;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.Format = DXGI_FORMAT_R8_UNORM;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_IMMUTABLE;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA initData = { alphaPixels, 512, 0 };
+    ID3D11Texture2D* fontTexture;
+    Device->CreateTexture2D(&texDesc, &initData, &fontTexture);
+    if (fontTexture)
+    {
+        Device->CreateShaderResourceView(fontTexture, nullptr, &FontAtlasSRV);
+    }
+
+    D3D11_BUFFER_DESC vertexBufferDesc = {};
+    vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    vertexBufferDesc.ByteWidth = sizeof(FTextVertex) * 6 * 100; // Max 100 characters
+    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+    Device->CreateBuffer(&vertexBufferDesc, nullptr, &TextVertexBuffer);
+}
+
+void URenderer::ReleaseDefaultFontAtlasAndVertexBuffer()
+{
+    if (TextVertexBuffer)
+    {
+        TextVertexBuffer->Release();
+        TextVertexBuffer = nullptr;
+    }
+
+    if (FontAtlasSRV)
+    {
+        FontAtlasSRV->Release();
+        FontAtlasSRV = nullptr;
+    }
+}
+
+void URenderer::CreateTextShader()
+{
+    std::wstring shaderPath = L"TextShader.hlsl";
+
+    ID3DBlob* vsBlob = nullptr;
+    ID3DBlob* psBlob = nullptr;
+
+    D3DCompileFromFile(shaderPath.c_str(),
+        nullptr,
+        nullptr,
+        "mainVS",
+        "vs_5_0",
+        0,
+        0,
+        &vsBlob,
+        nullptr
+    );
+    Device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &TextVertexShader);
+
+    D3DCompileFromFile(shaderPath.c_str(),
+        nullptr,
+        nullptr,
+        "mainPS",
+        "ps_5_0",
+        0,
+        0,
+        &psBlob,
+        nullptr
+    );
+    Device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &TextPixelShader);
+
+    D3D11_INPUT_ELEMENT_DESC inputLayout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    };
+    Device->CreateInputLayout(inputLayout, ARRAYSIZE(inputLayout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &TextInputLayout);
+
+    vsBlob->Release();
+    psBlob->Release();
+}
+
+void URenderer::ReleaseTextShader()
+{
+    if (TextInputLayout)
+    {
+        TextInputLayout->Release();
+        TextInputLayout = nullptr;
+    }
+
+    if (TextPixelShader)
+    {
+        TextPixelShader->Release();
+        TextPixelShader = nullptr;
+    }
+
+    if (TextVertexShader)
+    {
+        TextVertexShader->Release();
+        TextVertexShader = nullptr;
     }
 }

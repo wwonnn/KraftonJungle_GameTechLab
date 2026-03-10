@@ -1,3 +1,6 @@
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
+
 #include "GameApp.h"
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)

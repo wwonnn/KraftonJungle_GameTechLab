@@ -1,7 +1,7 @@
 {
   "stage_1": {
     "enemy_count": 3,
-    "spawn_interval": 0.5,
+    "spawn_interval": 0.15,
     "spawn_positions": [
       {
         "x": -0.5,

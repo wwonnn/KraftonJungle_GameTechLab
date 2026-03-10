@@ -6,8 +6,18 @@
 #include <string>
 #include "Math.h"
 
+#include "stb_image.h"
+#include "stb_truetype.h"
+
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+
+enum class ETextAlign
+{
+    Left,
+    Center,
+    Right
+};
 
 struct FConstantBuffer
 {
@@ -23,6 +33,13 @@ struct FVertex
 {
     FVector position;
 	float u, v;
+};
+
+struct FTextVertex
+{
+    FVector position;
+    float u, v;
+    FVector color;
 };
 
 class URenderer
@@ -45,6 +62,9 @@ public:
     void CreateTexture(const std::string& filePath, const std::string& name);
     void ReleaseTexture(const std::string& filePath);
     void BindTexture(const std::string& name);
+
+    void GetQuad(wchar_t c, float* x, float* y, stbtt_aligned_quad* q);
+    void DrawString(const std::wstring& name, float x, float y, const FVector& color = FVector(1.0f, 1.0f, 1.0f), ETextAlign align = ETextAlign::Center);
 
 	ID3D11Device* GetDevice();
 	ID3D11DeviceContext* GetDeviceContext();
@@ -77,6 +97,12 @@ private:
 	void CreateBlendState();
 	void ReleaseBlendState();
 
+    void CreateDefaultFontAtlasAndVertexBuffer();
+    void ReleaseDefaultFontAtlasAndVertexBuffer();
+
+    void CreateTextShader();
+    void ReleaseTextShader();
+
 private:
 	ID3D11Device* Device = nullptr;
 	ID3D11DeviceContext* DeviceContext = nullptr;
@@ -108,5 +134,16 @@ private:
 	ID3D11SamplerState* DefaultSamplerState = nullptr;
 
 	ID3D11BlendState* BlendState = nullptr;
+
+    stbtt_packedchar FontAtlas[96];
+    stbtt_packedchar FontHangulAtlas[12];
+    ID3D11ShaderResourceView* FontAtlasSRV = nullptr;
+    std::unordered_map<wchar_t, int> HangulMap;
+
+    ID3D11Buffer* TextVertexBuffer = nullptr;
+
+    ID3D11VertexShader* TextVertexShader = nullptr;
+    ID3D11PixelShader* TextPixelShader = nullptr;
+    ID3D11InputLayout* TextInputLayout = nullptr;
 };
 

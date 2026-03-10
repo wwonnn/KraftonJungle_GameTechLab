@@ -6,16 +6,23 @@
 #include "ImGuiManager.h"
 #include "Timer.h"
 #include "GameContext.h"
+#include "GameObject.h"
+
+#include <vector>
 
 class SceneManager;
 
 class UScene {
 protected:
-    FGameContext* GameContext = nullptr;
+    URenderer* Renderer = nullptr;
+    UAudioSystem* AudioSystem = nullptr;
+
+    std::vector<UGameObject*> GameObjects;
 public:
     virtual ~UScene() {}
     UScene(FGameContext* gameContext) {
-        GameContext = gameContext;
+        Renderer = gameContext->Renderer;
+        AudioSystem = gameContext->AudioSystem;
     }
     virtual void Initialize() = 0;
     virtual void Update(float deltaTime) = 0;
@@ -24,4 +31,9 @@ public:
 
     virtual void OnEnter() {}
     virtual void OnExit() {}
+
+    UGameObject* CreateGameObject(UGameObject* obj) {
+        GameObjects.push_back(obj);
+        return obj;
+    }
 };
