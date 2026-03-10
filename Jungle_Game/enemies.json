@@ -1,0 +1,34 @@
+{
+  "stage_1": {
+    "enemy_count": 3,
+    "spawn_interval": 0.5,
+    "spawn_positions": [
+      {
+        "x": -0.5,
+        "y": 0.0
+      },
+      {
+        "x": 0.0,
+        "y": 0.0
+      },
+      {
+        "x": 0.5,
+        "y": 0.0
+      }
+    ]
+  },
+  "stage_2": {
+    "enemy_count": 15,
+    "spawn_interval": 0.3,
+    "spawn_positions": [
+      {
+        "x": 50,
+        "y": 0
+      },
+      {
+        "x": 300,
+        "y": 0
+      }
+    ]
+  }
+}

@@ -140,6 +140,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="WaveController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioSystem.h" />
@@ -169,11 +170,15 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="WaveController.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DefaultShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="enemies.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
