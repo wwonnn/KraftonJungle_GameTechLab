@@ -31,6 +31,8 @@ void UEnemyObject::Update(float DeltaTime)
     case EnemyState::Dead:
         break;
     }
+
+    Animator->Update(DeltaTime, Animator->State);
 }
 
 void UEnemyObject::Render(URenderer& renderer)
@@ -40,9 +42,19 @@ void UEnemyObject::Render(URenderer& renderer)
     constants.rotation = Transform.Rotation;
     constants.scale = Transform.Scale;
 
+    FSpriteUVBuffer spriteConstants;
+    if (State != EnemyState::Dead)
+        spriteConstants = { 0.0f, 0.0f, 1.0f, 1.0f };
+    else
+        Animator->GetFrameUV(spriteConstants.UVOffsetX, spriteConstants.UVOffsetY, spriteConstants.UVScaleX, spriteConstants.UVScaleY);
+
     renderer.UpdateConstantBuffer(constants);
+    renderer.UpdateSpriteUV(spriteConstants);
     renderer.BindTexture(GetTextureName());
     renderer.Render();
+
+    spriteConstants = { 0.0f, 0.0f, 1.0f, 1.0f };
+    renderer.UpdateSpriteUV(spriteConstants);
 }
 
 /// <summary>
@@ -68,6 +80,7 @@ void UEnemyObject::TransitionToState(EnemyState newState)
 void UEnemyObject::Initialize()
 {
     SetTextureName("enemy");
+    Animator = new UAnimator();
 
     Collider->SetLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::Player);
@@ -117,6 +130,17 @@ void UEnemyObject::Dead(UCircleCollider* other)
     if (State == EnemyState::Dead)
         return;
 
+    SetTextureName("deadAnim");
+    auto anim = FAnimationClip();
+    anim.TextureName = GetTextureName();
+    anim.FrameCount = 3;
+    anim.Columns = 3;
+    anim.Rows = 1;
+    anim.FrameDuration = 0.1f;
+    anim.bLoop = false;
+
+    Animator->SetAnimationClip(anim);
+
     TransitionToState(EnemyState::Dead);
     if (other->GetLayer() == ECollisionLayer::Projectile)
     {
@@ -124,6 +148,6 @@ void UEnemyObject::Dead(UCircleCollider* other)
         ScoreManager::Get().AddScore(100);
     }
     UAudioSystem::Get().Play("pop");
-    Destroy();
+    Destroy(0.3f);
     EventSystem::Get().Trigger("EnemyDied");
 }

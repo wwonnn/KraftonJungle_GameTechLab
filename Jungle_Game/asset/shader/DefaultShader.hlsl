@@ -5,6 +5,12 @@ cbuffer ConstantBuffer : register(b0)
     float4 scale;
 }
 
+cbuffer SpriteBuffer : register(b1)
+{
+    float2 UVOffset;
+    float2 UVScale;
+}
+
 Texture2D texture0 : register(t0);
 SamplerState samplerState : register(s0);
 
@@ -39,6 +45,7 @@ PS_INPUT mainVS(VS_INPUT input)
 
 float4 mainPS(PS_INPUT input) : SV_TARGET
 {
-    float4 color = texture0.Sample(samplerState, input.uv);
+    float2 uv = input.uv * UVScale + UVOffset;
+    float4 color = texture0.Sample(samplerState, uv);
     return color;
 }

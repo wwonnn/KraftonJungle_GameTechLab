@@ -29,6 +29,14 @@ struct FConstantBuffer
     float padding3;
 };
 
+struct FSpriteUVBuffer
+{
+    float UVOffsetX;
+    float UVOffsetY;
+    float UVScaleX;
+    float UVScaleY;
+};
+
 struct FVertex
 {
     FVector position;
@@ -58,6 +66,7 @@ public:
 	
 	void SwapBuffer();
 	void UpdateConstantBuffer(const FConstantBuffer& data);
+    void UpdateSpriteUV(FSpriteUVBuffer& data);
 
     void CreateTexture(const std::string& filePath, const std::string& name);
     void ReleaseTexture(const std::string& filePath);
@@ -81,6 +90,9 @@ private:
 
 	void CreateConstantBuffer();
 	void ReleaseConstantBuffer();
+
+    void CreateSpriteConstantBuffer();
+    void ReleaseSpriteConstantBuffer();
 
 	void CreateDefaultQuad();
 	void ReleaseDefaultQuad();
@@ -118,6 +130,7 @@ private:
 	FLOAT ClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	ID3D11Buffer* ConstantBuffer = nullptr;
+    ID3D11Buffer* SpriteConstantBuffer = nullptr;
 
     std::unordered_map<std::string, ID3D11Texture2D*> Textures;
     std::unordered_map<std::string, ID3D11ShaderResourceView*> SRVs;

@@ -133,6 +133,7 @@ void GameApp::LoadDefaultAssets()
 
     Renderer->CreateTexture("asset/texture/player.png", "player");
     Renderer->CreateTexture("asset/texture/enemy.png", "enemy");
+    Renderer->CreateTexture("asset/texture/deadAnim.png", "deadAnim");
     Renderer->CreateTexture("asset/texture/background.png", "background");
     Renderer->CreateTexture("asset/texture/title.png", "title");
     Renderer->CreateTexture("asset/texture/projectile.png", "projectile");
