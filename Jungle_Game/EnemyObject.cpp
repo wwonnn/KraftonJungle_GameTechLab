@@ -3,23 +3,13 @@
 UEnemyObject::UEnemyObject()
     : UGameObject()
 {
-    SetTextureName("enemy");
-
-    Collider->SetLayer(ECollisionLayer::Enemy);
-    Collider->AddContactLayer(ECollisionLayer::Player);
-    Collider->AddContactLayer(ECollisionLayer::Projectile);
-    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this, std::placeholders::_1));
+    Initialize();
 }
 
 UEnemyObject::UEnemyObject(FTransform transform)
     : UGameObject(transform)
 {
-    SetTextureName("enemy");
-
-    Collider->SetLayer(ECollisionLayer::Enemy);
-    Collider->AddContactLayer(ECollisionLayer::Player);
-    Collider->AddContactLayer(ECollisionLayer::Projectile);
-    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this, std::placeholders::_1));
+    Initialize();
 }
 
 UEnemyObject::~UEnemyObject()
@@ -31,7 +21,7 @@ void UEnemyObject::Update(float DeltaTime)
     switch (State)
     {
     case EnemyState::Spawn:
-        //TransitionToState(EnemyState::Move);
+        Spawn(DeltaTime);
         break;
     case EnemyState::Move:
         Move(DeltaTime);
@@ -73,6 +63,34 @@ void UEnemyObject::TransitionToState(EnemyState newState)
     State = newState;
 }
 
+void UEnemyObject::Initialize()
+{
+    SetTextureName("enemy");
+
+    Collider->SetLayer(ECollisionLayer::Enemy);
+    Collider->AddContactLayer(ECollisionLayer::Player);
+    Collider->AddContactLayer(ECollisionLayer::Projectile);
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this, std::placeholders::_1));
+
+    SpawnedTransform = Transform;
+    Transform.Location.x = rand() % 100 / 100.0f * 2.0f - 1.0f; // -1.0 ~ 1.0 
+    Transform.Location.y = rand() % 100 / 100.0f * 1.3f - 0.3f; // -0.3 ~ 1.0 
+
+    StartPos = Transform.Location;
+    TargetPos = SpawnedTransform.Location;
+}
+
+void UEnemyObject::Spawn(float deltaTime)
+{
+    float speed = 1.0f;
+
+    spawnTimer += speed * deltaTime;
+    if (spawnTimer >= 1.0f)
+        spawnTimer = 1.0f;
+
+    Transform.Location = StartPos + (TargetPos - StartPos) * spawnTimer;
+}
+
 void UEnemyObject::Move(float deltaTime)
 {
     if (MovementStrategy)
@@ -82,9 +100,6 @@ void UEnemyObject::Move(float deltaTime)
         if (MovementStrategy->Update(newPos, newRot, Transform.Location, Player ? Player->GetTransform().Location : FVector(), deltaTime))
         {
             // 이동 완료
-
-            // TODO: 플레이어 총에 맞아 사망
-            TransitionToState(EnemyState::Dead);
         }
         else
         {

@@ -42,8 +42,11 @@ void UWaveController::Update(float deltaTime, UPlayer * player) {
     {
         if(!spawnFinished)
         {
-            spawnFinished = true;
-            StartMove();
+            spawnTimer += deltaTime;
+            if (spawnTimer >= 2.0f) {
+                spawnFinished = true;
+                StartMove();
+            }
         }
         return;
     }
@@ -72,7 +75,7 @@ void UWaveController::SpawnEnemy(FTransform transform, UPlayer * player) {
 
     auto seq = std::make_unique<MovementSequence>();
     seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 10.0f);
-    seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.2f), 0.0f);
+    seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.5f), 0.0f);
 
     enemyObj->SetMovementStrategy(std::move(seq));
 

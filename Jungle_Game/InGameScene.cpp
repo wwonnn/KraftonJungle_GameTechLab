@@ -13,9 +13,9 @@ InGameScene::InGameScene(FGameContext* gameContext)
 void InGameScene::Initialize()
 {
     UGameObject* playerObj = CreateGameObject(new UPlayer(
-        FTransform(FVector(-0.2f, -0.7f, 0.0f),
+        FTransform(FVector(-0.2f, -0.8f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.3f, 0.3f, 1.0f))));
+            FVector(0.1f, 0.1f, 1.0f))));
     Player = dynamic_cast<UPlayer*>(playerObj);
 }
 
