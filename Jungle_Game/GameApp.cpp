@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "ImGuiManager.h"
 #include "GameObject.h"
+#include "GameObjectManager.h"
 #include "Player.h"
 #include "EnemyObject.h"
 #include "Projectile.h"
@@ -98,8 +99,8 @@ void GameApp::Run()
         else
         {
             // Game Loop
-            Timer->Update();
             UInputManager::Get().Update();
+              Timer->Update();
             UCollisionSystem::Get().CheckCollisions();
 
             SceneManager::Get().Update(Timer->GetDeltaTime());
@@ -130,18 +131,5 @@ void GameApp::LoadDefaultAssets()
 
 void GameApp::CreateGameObjects()
 {
-    UPlayer* player = new UPlayer(
-        FTransform(FVector(-0.2f, -0.7f, 0.0f),
-            FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.3f, 0.3f, 1.0f)));
 
-    UGameObject* enemy = new UEnemyObject(
-        FTransform(FVector(-0.2f, -0.7f, 0.0f),
-            FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.3f, 0.3f, 1.0f)));
-
-    UGameObject* projectile = new UProjectile(
-        FTransform(player->GetTransform().Location,
-            FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.1f, 0.1f, 1.0f)));
 }

@@ -28,7 +28,10 @@ void SceneManager::ChangeScene(SceneType type) {
 
 void SceneManager::Update(float deltaTime)
 {
-    if (currentScene) currentScene->Update(deltaTime);
+    if (currentScene) {
+        currentScene->Refresh();
+        currentScene->Update(deltaTime);
+    }
 }
 
 void SceneManager::Render()

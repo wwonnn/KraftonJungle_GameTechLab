@@ -1,9 +1,12 @@
 #include "Scene.h"
+#include "Player.h"
 
 class InGameScene : public UScene {
 private:
     UWaveController* WaveController = nullptr;
     UTimer* Timer = nullptr;
+
+    UPlayer* Player = nullptr;
 
 public:
     InGameScene(FGameContext* gameContext);

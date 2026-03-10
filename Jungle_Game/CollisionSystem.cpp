@@ -94,3 +94,18 @@ bool UCollisionSystem::CheckWallCollision(FVector& location, FVector& scale)
 
     return false;
 }
+
+void UCollisionSystem::ClearCollisionPair(UGameObject* target)
+{
+    for (auto it = PreviousCollisions.begin(); it != PreviousCollisions.end(); )
+    {
+        if (it->ColliderA->GetOwner() == target || it->ColliderB->GetOwner() == target)
+        {
+            it = PreviousCollisions.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}

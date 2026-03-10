@@ -29,6 +29,6 @@ private:
 
 public:
     bool LoadStageData(int stageNumber);
-    void Update(float deltaTime);
-    void SpawnEnemy(float x, float y);
+    void Update(float deltaTime, UPlayer* player);
+    void SpawnEnemy(float x, float y, UPlayer* player);
 };

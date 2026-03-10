@@ -4,6 +4,11 @@ UEnemyObject::UEnemyObject()
     : UGameObject()
 {
     SetTextureName("enemy");
+
+    Collider->SetLayer(ECollisionLayer::Enemy);
+    Collider->AddContactLayer(ECollisionLayer::Player);
+    Collider->AddContactLayer(ECollisionLayer::Projectile);
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this));
 }
 
 UEnemyObject::UEnemyObject(FTransform transform)
@@ -14,16 +19,7 @@ UEnemyObject::UEnemyObject(FTransform transform)
     Collider->SetLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::Player);
     Collider->AddContactLayer(ECollisionLayer::Projectile);
-
-    // Player 주입
-    for (UGameObject* obj : GameObjectList)
-    {
-        if (UPlayer* player = dynamic_cast<UPlayer*>(obj))
-        {
-            Player = player;
-            break;
-        }
-    }
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this));
 }
 
 UEnemyObject::~UEnemyObject()
@@ -102,4 +98,5 @@ void UEnemyObject::Move(float deltaTime)
 
 void UEnemyObject::Dead()
 {
+    Destroy();
 }

@@ -32,9 +32,7 @@ public:
 	virtual void Render(URenderer& renderer) = 0;
 	virtual bool CheckCollision(UGameObject* other) = 0;
 	virtual void ApplyImpulse(const FConstantBuffer& v) = 0;
-
-	// 현재 생성된 게임 오브젝트 리스트
-	static std::vector<UGameObject*> GameObjectList;
+    virtual void Destroy();
 
     std::string GetTextureName() const { return TextureName; }
     void SetTextureName(std::string name) { TextureName = name; }
@@ -42,12 +40,13 @@ public:
     FTransform GetTransform() const { return Transform; }
     UCircleCollider* GetCollider() const { return Collider; }
 
+    bool IsPendingDestroy() const { return bIsPendingDestroy; }
+
 protected:
     FTransform Transform;
     UCircleCollider* Collider = nullptr;
+    bool bIsPendingDestroy = false;
 
 private:
-	int ListIndex;
-
     std::string TextureName = "player";
 };

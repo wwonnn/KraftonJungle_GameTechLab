@@ -26,24 +26,26 @@ bool UWaveController::LoadStageData(int stageNumber) {
     return true;
 }
 
-void UWaveController::Update(float deltaTime) {
+void UWaveController::Update(float deltaTime, UPlayer* player) {
     if (spawnedCount >= currentStage.enemyCount) return;
 
     spawnTimer += deltaTime;
     if (spawnTimer >= currentStage.spawnInterval) {
         auto& pos = currentStage.positions[spawnedCount % currentStage.positions.size()];
-        SpawnEnemy(pos.x, pos.y);
+        SpawnEnemy(pos.x, pos.y, player);
 
         spawnTimer = 0.0f;
         spawnedCount++;
     }
 }
 
-void UWaveController::SpawnEnemy(float x, float y) {
+void UWaveController::SpawnEnemy(float x, float y, UPlayer* player) {
     UGameObject* enemy = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyObject(
         FTransform(FVector(x, y, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f))));
+    UEnemyObject* enemyObj = dynamic_cast<UEnemyObject*>(enemy);
+    enemyObj->SetPlayer(player);
 
     auto seq = std::make_unique<MovementSequence>();
     seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 5.0f);

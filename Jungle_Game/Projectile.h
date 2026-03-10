@@ -8,7 +8,7 @@ class UProjectile : public UGameObject
 public:
     UProjectile();
     UProjectile(FTransform transform);
-    virtual ~UProjectile();
+    ~UProjectile() override;
 
 public:
     void Initialize();
