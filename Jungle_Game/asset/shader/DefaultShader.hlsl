@@ -11,6 +11,12 @@ cbuffer SpriteBuffer : register(b1)
     float2 UVScale;
 }
 
+cbuffer EffectBuffer : register(b2)
+{
+    float time;
+    float3 padding;
+}
+
 Texture2D texture0 : register(t0);
 SamplerState samplerState : register(s0);
 
@@ -47,5 +53,11 @@ float4 mainPS(PS_INPUT input) : SV_TARGET
 {
     float2 uv = input.uv * UVScale + UVOffset;
     float4 color = texture0.Sample(samplerState, uv);
+
+    if(time > 0.0f)
+    {
+        float alpha = 0.5f + 0.5f * sin(time * 30.0f);
+        color.a *= alpha;
+    }
     return color;
 }

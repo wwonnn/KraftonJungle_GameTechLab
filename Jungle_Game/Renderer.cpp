@@ -23,6 +23,7 @@ bool URenderer::Create(HWND hWnd)
 
     CreateConstantBuffer();
     CreateSpriteConstantBuffer();
+    CreateEffectConstantBuffer();
     CreateDefaultQuad();
     CreateDefaultShader();
     CreateDefaultTexture();
@@ -63,6 +64,7 @@ void URenderer::BeginFrame()
     DeviceContext->OMSetBlendState(BlendState, NULL, 0xffffffff);
 
     DeviceContext->VSSetConstantBuffers(0, 1, &ConstantBuffer);
+    DeviceContext->PSSetConstantBuffers(2, 1, &EffectConstantBuffer);
 }
 
 void URenderer::Render()
@@ -119,6 +121,14 @@ void URenderer::UpdateSpriteUV(FSpriteUVBuffer& data)
 
     DeviceContext->Unmap(SpriteConstantBuffer, 0);
     DeviceContext->PSSetConstantBuffers(1, 1, &SpriteConstantBuffer);
+}
+
+void URenderer::UpdateEffectConstantBuffer(const FEffectConstantBuffer& data)
+{
+    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    DeviceContext->Map(EffectConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    memcpy(mappedResource.pData, &data, sizeof(FEffectConstantBuffer));
+    DeviceContext->Unmap(EffectConstantBuffer, 0);
 }
 
 void URenderer::CreateTexture(const std::string& filePath, const std::string& name)
@@ -413,12 +423,28 @@ void URenderer::CreateConstantBuffer()
     Device->CreateBuffer(&bufferDesc, nullptr, &ConstantBuffer);
 }
 
+void URenderer::CreateEffectConstantBuffer()
+{
+    D3D11_BUFFER_DESC bufferDesc = {};
+    bufferDesc.ByteWidth = sizeof(FEffectConstantBuffer) + 0xf & ~0xf;
+    bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    Device->CreateBuffer(&bufferDesc, nullptr, &EffectConstantBuffer);
+}
+
 void URenderer::ReleaseConstantBuffer()
 {
     if (ConstantBuffer)
     {
         ConstantBuffer->Release();
         ConstantBuffer = nullptr;
+    }
+
+    if (EffectConstantBuffer)
+    {
+        EffectConstantBuffer->Release();
+        EffectConstantBuffer = nullptr;
     }
 }
 

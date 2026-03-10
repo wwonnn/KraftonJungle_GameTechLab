@@ -55,7 +55,14 @@ void UPlayer::Update(float DeltaTime)
         FireProjectile();
     }
 
-    if (HitTime < delayTime) HitTime += DeltaTime;
+    if (bIsInvincible) {
+        InvincibilityTime += DeltaTime;
+
+        if (InvincibilityTime >= TotalInvincibleDuration) {
+            bIsInvincible = false;
+            InvincibilityTime = 0.0f;
+        }
+    }
 
     CheckWallCollision();
 }
@@ -77,10 +84,10 @@ void UPlayer::FireProjectile()
 int UPlayer::GetHP() { return HP; }
 
 void UPlayer::TakeDamage() {
-    if (HitTime >= delayTime) {
+    if (!bIsInvincible) {
         HP--;
         OnHPChanged(HP);
-        HitTime = 0.0f;
+        bIsInvincible = true;
         if (HP <= 0) {
             bIsDead = true;
             GlobalState::Get().bAllStageCleared = false;
@@ -95,9 +102,18 @@ void UPlayer::Render(URenderer& renderer)
     data.rotation = Transform.Rotation;
     data.scale = Transform.Scale;
 
+    FEffectConstantBuffer effectData;
+    if (bIsInvincible) {
+        effectData.time = InvincibilityTime;
+    }
+
     renderer.UpdateConstantBuffer(data);
+    renderer.UpdateEffectConstantBuffer(effectData);
     renderer.BindTexture(GetTextureName());
     renderer.Render();
+
+    effectData.time = 0.0f;
+    renderer.UpdateEffectConstantBuffer(effectData);
 }
 
 bool UPlayer::CheckCollision(UGameObject* other)
