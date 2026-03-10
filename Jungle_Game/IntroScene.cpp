@@ -109,7 +109,6 @@ void IntroScene::UpdateCredits()
     if (input.GetKeyDown(VK_SPACE)) {
         UAudioSystem::Get().Play("choose");
         State = "MainMenu";
-        OptionIndex = 0;
     }
 }
 
@@ -141,7 +140,6 @@ void IntroScene::UpdateSettings()
     else if (input.GetKeyDown(VK_SPACE)) {
         UAudioSystem::Get().Play("choose");
         State = "MainMenu";
-        OptionIndex = 0;
     }
 
     if (input.GetKeyDown(VK_LEFT))
