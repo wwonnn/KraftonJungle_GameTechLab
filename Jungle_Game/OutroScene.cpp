@@ -19,6 +19,7 @@ void OutroScene::Update(float deltaTime) {
     if (UInputManager::Get().GetKeyDown(VK_SPACE))
     {
         // Return to the intro scene
+        UAudioSystem::Get().Play("select");
         SceneManager::Get().ChangeScene(SceneType::Init);
     }
 }
