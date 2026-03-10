@@ -30,4 +30,7 @@ private:
     FVector Velocity;
 
     bool bIsDead = false;
+
+    const float ShootCooldown = 0.2f;
+    float ShootCooldownTimer = 0.0f;
 };

@@ -46,8 +46,15 @@ void UPlayer::Update(float DeltaTime)
         Transform.Location.x += Velocity.x * DeltaTime;
     }
 
+    if (ShootCooldownTimer > 0.0f)
+    {
+        ShootCooldownTimer -= DeltaTime;
+    }
+
     if (Input.GetKeyDown(VK_SPACE))
     {
+        if (ShootCooldownTimer > 0.0f) return;
+        ShootCooldownTimer = ShootCooldown;
         UAudioSystem::Get().Play("shoot");
 
         UGameObject* projectile = new UProjectile(
