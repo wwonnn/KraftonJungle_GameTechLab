@@ -3,8 +3,8 @@
 #include "AudioSystem.h"
 #include "Timer.h"
 #include "WaveController.h"
-#include "Scene.h"
 #include <windows.h>
+
 
 class GameApp
 {

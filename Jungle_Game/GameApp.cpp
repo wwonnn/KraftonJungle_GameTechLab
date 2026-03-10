@@ -10,8 +10,16 @@
 #include "IntroScene.h"
 #include "EventSystem.h"
 
+#include "SceneManager.h"
+#include "GameContext.h"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+        return true;
+
     switch (message)
     {
     case WM_DESTROY:
@@ -73,6 +81,8 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
+    // SceneManager::Get().Initialize(new FGameContext(Renderer, AudioSystem));
+    // SceneManager::Get().ChangeScene(SceneType::Init);
     FGameContext gameContext(Renderer, AudioSystem);
     //ingameScene = new InGameScene(&gameContext);
     introScene = new IntroScene(&gameContext);
@@ -102,8 +112,12 @@ void GameApp::Run()
         else
         {
             // Game Loop
-            UInputManager::Get().Update();
             Timer->Update();
+            // float DeltaTime = Timer->GetDeltaTime();
+            // SceneManager::Get().Update(DeltaTime);
+            // SceneManager::Get().Render();
+            // ingameScene->Update(DeltaTime);
+            
             UCollisionSystem::Get().CheckCollisions();
 
             currScene->Update(Timer->GetDeltaTime());
