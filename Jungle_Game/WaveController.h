@@ -31,9 +31,16 @@ private:
     bool spawnFinished = false;
     std::vector<UEnemyObject*> spawnedEnemies;
 
+    int currentStageNumber = 0;
+    int totalStages = 2;
+
 public:
     bool LoadStageData(int stageNumber);
     void Update(float deltaTime, UPlayer* player);
     void SpawnEnemy(FTransform transform, UPlayer* player);
     void StartMove();
+
+    void GoNextStage();
+
+    StageInfo GetCurrentStageInfo() const { return currentStage; }
 };

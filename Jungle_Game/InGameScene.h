@@ -9,6 +9,10 @@ private:
     UPlayer* Player = nullptr;
 
 public:
+    int EnemyKillCount = 0;
+    bool bAllStageCleared = false;
+
+public:
     InGameScene(FGameContext* gameContext);
     ~InGameScene() override {}
 
@@ -16,4 +20,7 @@ public:
     void Update(float deltaTime) override;
     void Render() override;
     void Release() override;
+
+    void OnEnemyDied();
+    void OnAllStageCleared();
 };

@@ -5,6 +5,7 @@
 #include "CollisionSystem.h"
 #include "GameObjectManager.h"
 #include "SceneManager.h"
+#include "GlobalState.h"
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -90,6 +91,7 @@ void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 void UPlayer::OnCollisionEnter()
 {
     bIsDead = true;
+    GlobalState::Get().bAllStageCleared = false;
 }
 
 void UPlayer::OnCollisionExit()
