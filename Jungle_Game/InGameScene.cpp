@@ -47,7 +47,7 @@ void InGameScene::Initialize()
         if (newHP > 0) {
             lifeObjects[newHP - 1]->Destroy();
         }
-     };
+    };
 }
 
 void InGameScene::Update(float deltaTime) {
@@ -74,7 +74,6 @@ void InGameScene::Render() {
         Renderer->DrawString(L"Stage Clear!", 400.0f, 300.0f, FVector(1.0f, 1.0f, 0.0f));
     }
 
-    UImGuiManager::Get().beginFrame();
     UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
     UImGuiManager::Get().Update();
 
