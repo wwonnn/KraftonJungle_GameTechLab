@@ -3,6 +3,9 @@
 #include "CollisionSystem.h"
 #include "EventSystem.h"
 #include "GlobalState.h"
+#include "LifeObject.h"
+
+#include <vector>
 
 InGameScene::InGameScene(FGameContext* gameContext)
     :UScene(gameContext) {
@@ -25,6 +28,20 @@ void InGameScene::Initialize()
     EventSystem::Get().Subscribe("AllStageCleared", std::bind(&InGameScene::OnAllStageCleared, this));
 
     WaveController->GoNextStage();
+
+    for (int i = 0; i < 2; i++) {
+        float xPos = -0.9f + (i * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        lifeObjects.push_back(life);
+    }
+
+    Player->OnHPChanged = [&](int newHP) {
+        if (newHP > 0) {
+            lifeObjects[newHP - 1]->Destroy();
+        }
+     };
 }
 
 void InGameScene::Update(float deltaTime) {

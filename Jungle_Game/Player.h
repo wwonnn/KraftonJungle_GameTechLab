@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "GameObject.h"
 #include "AudioSystem.h"
+#include <functional>
 
 class UPlayer : public UGameObject
 {
@@ -25,6 +26,8 @@ public:
 
     int GetHP();
     void TakeDamage();
+
+    std::function<void(int)> OnHPChanged;
 
 private:
     void CheckWallCollision();

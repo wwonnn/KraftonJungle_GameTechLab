@@ -8,6 +8,8 @@ private:
 
     UPlayer* Player = nullptr;
 
+    std::vector<UGameObject*> lifeObjects;
+
 public:
     int EnemyKillCount = 0;
     bool bAllStageCleared = false;

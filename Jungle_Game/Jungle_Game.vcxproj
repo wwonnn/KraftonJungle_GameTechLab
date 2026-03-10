@@ -145,6 +145,7 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="IntroBackgroundObject.cpp" />
     <ClCompile Include="IntroScene.cpp" />
+    <ClCompile Include="LifeObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MovementSequence.cpp" />
     <ClCompile Include="MovementStrategies.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="IntroBackgroundObject.h" />
     <ClInclude Include="IntroScene.h" />
+    <ClInclude Include="LifeObject.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MovementSequence.h" />
     <ClInclude Include="MovementStrategies.h" />

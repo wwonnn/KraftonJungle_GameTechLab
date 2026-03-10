@@ -67,7 +67,12 @@ int UPlayer::GetHP() { return HP; }
 void UPlayer::TakeDamage() {
     if (HitTime >= delayTime) {
         HP--;
+        OnHPChanged(HP);
         HitTime = 0.0f;
+        if (HP <= 0) {
+            bIsDead = true;
+            GlobalState::Get().bAllStageCleared = false;
+        }
     }
 }
 
@@ -101,8 +106,7 @@ void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 
 void UPlayer::OnCollisionEnter()
 {
-    bIsDead = true;
-    GlobalState::Get().bAllStageCleared = false;
+    TakeDamage();
 }
 
 void UPlayer::OnCollisionExit()
