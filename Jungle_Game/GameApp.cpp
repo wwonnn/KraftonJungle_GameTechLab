@@ -8,6 +8,7 @@
 #include "Projectile.h"
 #include "CollisionSystem.h"
 #include "IntroScene.h"
+#include "EventSystem.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -74,8 +75,14 @@ bool GameApp::Initialize(HINSTANCE hInstance)
 
     FGameContext gameContext(Renderer, AudioSystem);
     //ingameScene = new InGameScene(&gameContext);
-    ingameScene = new IntroScene(&gameContext);
+    introScene = new IntroScene(&gameContext);
+    introScene->Initialize();
+    ingameScene = new InGameScene(&gameContext);
     ingameScene->Initialize();
+
+    currScene = introScene;
+
+    EventSystem::Get().Subscribe("StartGame", std::bind(&GameApp::LoadGameScene, this));
 
     return true;
 }
@@ -99,9 +106,7 @@ void GameApp::Run()
             Timer->Update();
             UCollisionSystem::Get().CheckCollisions();
 
-            ingameScene->Update(Timer->GetDeltaTime());
-
-            Renderer->BeginFrame();
+            currScene->Update(Timer->GetDeltaTime());
 
             //if (UInputManager::Get().GetKeyDown(VK_SPACE))
             //{
@@ -125,9 +130,7 @@ void GameApp::Run()
             //Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f, FVector(0.0f, 1.0f, 0.0f));
             //Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
 
-            ingameScene->Render();
-
-            Renderer->SwapBuffer();
+            currScene->Render();
         }
     }
 }
@@ -169,4 +172,9 @@ void GameApp::CreateGameObjects()
             FVector(0.1f, 0.1f, 1.0f)));
 
     player->SetAudioSystem(AudioSystem);
+}
+
+void GameApp::LoadGameScene()
+{
+    currScene = ingameScene;
 }
