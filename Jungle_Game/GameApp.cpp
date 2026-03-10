@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Player.h"
 #include "EnemyObject.h"
+#include "Projectile.h"
 #include "CollisionSystem.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -125,6 +126,7 @@ void GameApp::LoadDefaultAssets()
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
+    Renderer->CreateTexture("projectile.png", "projectile");
 }
 
 void GameApp::CreateGameObjects()
@@ -138,4 +140,9 @@ void GameApp::CreateGameObjects()
         FTransform(FVector(-0.2f, -0.7f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
             FVector(0.3f, 0.3f, 1.0f)));
+
+    UGameObject* projectile = new UProjectile(
+        FTransform(player->GetTransform().Location,
+            FVector(0.0f, 0.0f, 0.0f),
+            FVector(0.1f, 0.1f, 1.0f)));
 }
