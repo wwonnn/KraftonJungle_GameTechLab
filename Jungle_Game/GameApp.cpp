@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "EnemyObject.h"
 #include "CollisionSystem.h"
+#include "IntroScene.h"
 
 LRESULT CALLBACK GameApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -70,7 +71,10 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     LoadDefaultAssets();
     CreateGameObjects();
 
-    ingameScene = new InGameScene(&FGameContext(Renderer, AudioSystem));
+    FGameContext gameContext(Renderer, AudioSystem);
+    //ingameScene = new InGameScene(&gameContext);
+    ingameScene = new IntroScene(&gameContext);
+    ingameScene->Initialize();
 
     return true;
 }
@@ -94,29 +98,33 @@ void GameApp::Run()
             Timer->Update();
             UCollisionSystem::Get().CheckCollisions();
 
+            ingameScene->Update(Timer->GetDeltaTime());
+
             Renderer->BeginFrame();
 
-            if (UInputManager::Get().GetKeyDown(VK_SPACE))
-            {
-                AudioSystem->Play("shoot");
-            }
+            //if (UInputManager::Get().GetKeyDown(VK_SPACE))
+            //{
+            //    AudioSystem->Play("shoot");
+            //}
 
-            // 오브젝트 Update 및 Render (DeltaTime 사용)
-            float DeltaTime = Timer->GetDeltaTime();
-            WaveController->Update(DeltaTime);
-            for (UGameObject* const& obj : UGameObject::GameObjectList)
-            {
-                obj->Update(DeltaTime);
-                obj->Render(*Renderer);
-            }
+            //// 오브젝트 Update 및 Render (DeltaTime 사용)
+            //float DeltaTime = Timer->GetDeltaTime();
+            //WaveController->Update(DeltaTime);
+            //for (UGameObject* const& obj : UGameObject::GameObjectList)
+            //{
+            //    obj->Update(DeltaTime);
+            //    obj->Render(*Renderer);
+            //}
 
-            UImGuiManager::Get().beginFrame();
-            ImGui::Text("Total Time: %f", Timer->GetTotalTime());
-            ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
-            UImGuiManager::Get().endFrame();
+            //UImGuiManager::Get().beginFrame();
+            //ImGui::Text("Total Time: %f", Timer->GetTotalTime());
+            //ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
+            //UImGuiManager::Get().endFrame();
 
-            Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f, FVector(0.0f, 1.0f, 0.0f));
-            Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
+            //Renderer->DrawString("Hello, Galaga!", 0.2f, 100.0f, FVector(0.0f, 1.0f, 0.0f));
+            //Renderer->DrawString("Press Space to Shoot!", 0.2f, 150.0f);
+
+            ingameScene->Render();
 
             Renderer->SwapBuffer();
         }
@@ -132,9 +140,13 @@ void GameApp::Finalize()
 void GameApp::LoadDefaultAssets()
 {
     AudioSystem->LoadFromFile("asset/shoot.mp3", "shoot");
+    AudioSystem->LoadFromFile("asset/select.mp3", "select");
+    AudioSystem->LoadFromFile("asset/choose.mp3", "choose");
 
     Renderer->CreateTexture("player.png", "player");
     Renderer->CreateTexture("enemy.png", "enemy");
+    Renderer->CreateTexture("background.png", "background");
+    Renderer->CreateTexture("title.png", "title");
 }
 
 void GameApp::CreateGameObjects()

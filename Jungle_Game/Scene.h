@@ -5,6 +5,9 @@
 #include "AudioSystem.h"
 #include "ImGuiManager.h"
 #include "Timer.h"
+#include "GameObject.h"
+
+#include <vector>
 
 struct FGameContext {
     class URenderer* Renderer;
@@ -18,11 +21,15 @@ struct FGameContext {
 
 class UScene {
 protected:
-    FGameContext* GameContext = nullptr;
+    URenderer* Renderer = nullptr;
+    UAudioSystem* AudioSystem = nullptr;
+
+    std::vector<UGameObject*> GameObjects;
 public:
     virtual ~UScene() {}
     UScene(FGameContext* gameContext) {
-        GameContext = gameContext;
+        Renderer = gameContext->Renderer;
+        AudioSystem = gameContext->AudioSystem;
     }
     virtual void Initialize() = 0;
     virtual void Update(float deltaTime) = 0;
@@ -31,6 +38,11 @@ public:
 
     virtual void OnEnter() {}
     virtual void OnExit() {}
+
+    UGameObject* CreateGameObject(UGameObject* obj) {
+        GameObjects.push_back(obj);
+        return obj;
+    }
 };
 
 class InitScene :UScene {
@@ -57,12 +69,12 @@ public:
         UInputManager::Get().Update();
         Timer->Update();
 
-        GameContext->Renderer->BeginFrame();
+        Renderer->BeginFrame();
 
         if (UInputManager::Get().GetKeyDown(VK_SPACE))
         {
             OutputDebugString(L"Space key pressed!\n");
-            GameContext->AudioSystem->Play("shoot");
+            AudioSystem->Play("shoot");
         }
 
         // 오브젝트 Update 및 Render (DeltaTime 사용)
@@ -71,7 +83,7 @@ public:
         for (UGameObject* const& obj : UGameObject::GameObjectList)
         {
             obj->Update(DeltaTime);
-            obj->Render(*(GameContext->Renderer));
+            obj->Render(*(Renderer));
         }
 
         UImGuiManager::Get().beginFrame();
@@ -79,7 +91,7 @@ public:
         ImGui::Text("Delta Time: %f", Timer->GetDeltaTime());
         UImGuiManager::Get().endFrame();
 
-        GameContext->Renderer->SwapBuffer();
+        Renderer->SwapBuffer();
     }
 
     void Render() override {
