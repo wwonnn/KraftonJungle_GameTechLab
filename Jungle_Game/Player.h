@@ -2,6 +2,7 @@
 
 #include "Renderer.h"
 #include "GameObject.h"
+#include "AudioSystem.h"
 
 class UPlayer : public UGameObject
 {
@@ -20,6 +21,9 @@ public:
     void OnCollisionEnter();
     void OnCollisionExit();
 
+    void SetAudioSystem(UAudioSystem* sys);
+
 private:
     FVector Velocity;
+    UAudioSystem* AudioSystem = nullptr;
 };

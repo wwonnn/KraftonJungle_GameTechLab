@@ -1,5 +1,11 @@
 #include "Player.h"
 #include "InputManager.h"
+#include "AudioSystem.h"
+
+void UPlayer::SetAudioSystem(UAudioSystem* sys)
+{
+    AudioSystem = sys;
+}
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -47,6 +53,14 @@ void UPlayer::Update(float DeltaTime)
     {
         Location.y -= Speed * DeltaTime;
     }*/
+
+    if (Input.GetKeyDown(VK_SPACE))
+    {
+        if (AudioSystem)
+        {
+            AudioSystem->Play("shoot");
+        }
+    }
 }
 
 void UPlayer::Render(URenderer& renderer)
