@@ -9,7 +9,7 @@ class UPlayer : public UGameObject
 public:
     UPlayer();
     UPlayer(FTransform transform);
-    virtual ~UPlayer();
+    virtual ~UPlayer() override;
 
 public:
     void Initialize();

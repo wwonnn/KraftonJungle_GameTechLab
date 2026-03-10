@@ -44,6 +44,10 @@ void UPlayer::Update(float DeltaTime)
     {
         Transform.Location.x += Velocity.x * DeltaTime;
     }
+    if (Input.GetKey(VK_UP))
+    {
+        Transform.Location.y += Velocity.x * DeltaTime;
+    }
 
     if (Input.GetKeyDown(VK_SPACE))
     {
@@ -89,7 +93,7 @@ void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 
 void UPlayer::OnCollisionEnter()
 {
-    OutputDebugString(L"Player enter\n");
+    SceneManager::Get().ChangeScene(SceneType::Outro);
 }
 
 void UPlayer::OnCollisionExit()
