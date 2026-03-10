@@ -48,8 +48,12 @@ public:
             Colliders.erase(it);
         }
     }
+    std::vector<UCircleCollider*>& GetColliders() { return Colliders; }
+
     void CheckCollisions();
     bool CheckWallCollision(FVector& location, FVector& scale);
+
+    void ClearCollisionPair(UGameObject* target);
 
 private:
     bool CheckCollision(UCircleCollider* colliderA, UCircleCollider* colliderB);

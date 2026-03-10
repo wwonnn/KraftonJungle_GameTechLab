@@ -131,19 +131,5 @@ void GameApp::LoadDefaultAssets()
 
 void GameApp::CreateGameObjects()
 {
-    UPlayer* player = new UPlayer(
-        FTransform(FVector(-0.2f, -0.7f, 0.0f),
-            FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.3f, 0.3f, 1.0f)));
-    player->SetAudioSystem(AudioSystem);
 
-    UGameObject* enemy = new UEnemyObject(
-        FTransform(FVector(-0.2f, -0.7f, 0.0f),
-            FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.3f, 0.3f, 1.0f)));
-
-    UGameObject* projectile = new UProjectile(
-        FTransform(FVector(0.2f, -0.7f, 0.0f),
-            FVector(0.0f, 0.0f, 0.0f),
-            FVector(0.1f, 0.1f, 1.0f)));
 }

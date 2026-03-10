@@ -4,11 +4,7 @@
 #include "Projectile.h"
 #include "CollisionSystem.h"
 #include "GameObjectManager.h"
-
-void UPlayer::SetAudioSystem(UAudioSystem* sys)
-{
-    AudioSystem = sys;
-}
+#include "SceneManager.h"
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -51,15 +47,13 @@ void UPlayer::Update(float DeltaTime)
 
     if (Input.GetKeyDown(VK_SPACE))
     {
-        if (AudioSystem)
-        {
-            AudioSystem->Play("shoot");
-        }
+        UAudioSystem::Get().Play("shoot");
 
         UGameObject* projectile = new UProjectile(
             FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
         );
-        UGameObjectManager::Get().AddGameObject(projectile);
+
+        SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
     }
 
     CheckWallCollision();

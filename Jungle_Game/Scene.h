@@ -17,6 +17,8 @@ protected:
     URenderer* Renderer = nullptr;
 
     std::vector<UGameObject*> GameObjects;
+    std::vector<UGameObject*> PendingGameObjects;
+    std::vector<UGameObject*> ObjectsToDestroy;
 public:
     virtual ~UScene() {}
     UScene(FGameContext* gameContext) {
@@ -27,11 +29,13 @@ public:
     virtual void Render() = 0;
     virtual void Release() = 0;
 
+    virtual void Refresh();
+
     virtual void OnEnter() {}
     virtual void OnExit() {}
 
     UGameObject* CreateGameObject(UGameObject* obj) {
-        GameObjects.push_back(obj);
+        PendingGameObjects.push_back(obj);
         return obj;
     }
 };

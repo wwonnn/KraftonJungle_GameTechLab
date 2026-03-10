@@ -65,7 +65,7 @@ private:
     UGameObject* Owner = nullptr;
 
     FVector Center = { 0, 0, 0 };
-    float Radius = 0.5f;
+    float Radius = 0.25f;
 
     std::unordered_map<ECollisionEvent, std::function<void()>> CollisionCallbacks;
 

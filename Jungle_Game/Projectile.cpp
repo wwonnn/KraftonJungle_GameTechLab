@@ -25,7 +25,6 @@ void UProjectile::Initialize()
     Collider->SetLayer(ECollisionLayer::Projectile);
     Collider->AddContactLayer(ECollisionLayer::Enemy);
     Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UProjectile::OnCollisionEnter, this));
-
 }
 
 void UProjectile::Update(float DeltaTime)
@@ -57,6 +56,5 @@ void UProjectile::ApplyImpulse(const FConstantBuffer& v)
 
 void UProjectile::OnCollisionEnter()
 {
-    OutputDebugString(L"Projectile Enter\n");
     Destroy();
 }
