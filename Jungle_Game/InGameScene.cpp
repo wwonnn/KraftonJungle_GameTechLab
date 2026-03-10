@@ -1,17 +1,22 @@
 #include "InGameScene.h"
 #include "SceneManager.h"
 
-void InGameScene::Initialize()
-{
+InGameScene::InGameScene(FGameContext* gameContext)
+    :UScene(gameContext) {
+    Timer = gameContext->Timer;
 
+    WaveController = new UWaveController();
+    WaveController->LoadStageData(1);
 }
 
-void InGameScene::Update(float deltaTime) {
-    UInputManager::Get().Update();
+void InGameScene::Initialize() { }
 
+void InGameScene::Update(float deltaTime) {}
+
+void InGameScene::Render() {
     Renderer->BeginFrame();
 
-    // 오브젝트 Update 및 Render (DeltaTime 사용)
+    float deltaTime = Timer->GetDeltaTime();
     WaveController->Update(deltaTime);
     for (UGameObject* const& obj : GameObjects)
     {
@@ -20,11 +25,13 @@ void InGameScene::Update(float deltaTime) {
     }
 
     UImGuiManager::Get().beginFrame();
-    // ImGui::Text("Total Time: %f", Timer->GetTotalTime());
+    ImGui::Text("Total Time: %f", Timer->GetTotalTime());
     ImGui::Text("Delta Time: %f", deltaTime);
-    if (ImGui::Button("click")) {
-        // scene change
-    }
     UImGuiManager::Get().endFrame();
 
+    Renderer->SwapBuffer();
+}
+
+void InGameScene::Release() {
+    delete WaveController;
 }
