@@ -1,5 +1,6 @@
 #include "GameObject.h"
 #include "InputManager.h"
+#include "CollisionSystem.h"
 #include <cmath>
 
 UGameObject::UGameObject()
@@ -17,6 +18,7 @@ UGameObject::UGameObject(FTransform transform)
 UGameObject::~UGameObject()
 {
     if (Collider) {
+        UCollisionSystem::Get().ClearCollisionPair(this);
         delete Collider;
     }
 }

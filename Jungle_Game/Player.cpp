@@ -21,7 +21,6 @@ UPlayer::UPlayer(FTransform transform)
 
 UPlayer::~UPlayer()
 {
-
 }
 
 void UPlayer::Initialize()
