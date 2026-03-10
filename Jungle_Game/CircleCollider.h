@@ -1,6 +1,7 @@
 #pragma once
 #include "Math.h"
 #include <functional>
+#include <set>
 #include <unordered_map>
 
 enum class ECollisionEvent
@@ -8,6 +9,13 @@ enum class ECollisionEvent
     Enter,
     Stay,
     Exit
+};
+
+enum class ECollisionLayer
+{
+    Player,
+    Enemy,
+    Projectile
 };
 
 class UGameObject;
@@ -46,6 +54,13 @@ public:
     float GetRadius() const;
     void SetRadius(float radius) { Radius = radius; }
 
+    void SetLayer(ECollisionLayer layer) { Layer = layer; }
+    ECollisionLayer GetLayer() const { return Layer; }
+
+    void AddContactLayer(ECollisionLayer layer) { ContactLayer.insert(layer); }
+    void RemoveContactLayer(ECollisionLayer layer) { ContactLayer.erase(layer); }
+    const std::set<ECollisionLayer>& GetContactLayer() const { return ContactLayer; }
+
 private:
     UGameObject* Owner = nullptr;
 
@@ -53,5 +68,8 @@ private:
     float Radius = 0.5f;
 
     std::unordered_map<ECollisionEvent, std::function<void()>> CollisionCallbacks;
+
+    ECollisionLayer Layer = ECollisionLayer::Player;
+    std::set<ECollisionLayer> ContactLayer;
 };
 

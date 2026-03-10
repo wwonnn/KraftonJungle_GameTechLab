@@ -44,6 +44,15 @@ void UCollisionSystem::CheckCollisions()
 
 bool UCollisionSystem::CheckCollision(UCircleCollider* colliderA, UCircleCollider* colliderB)
 {
+    if (colliderA->GetContactLayer().find(colliderB->GetLayer()) == colliderA->GetContactLayer().end())
+    {
+        return false;
+    }
+    if (colliderB->GetContactLayer().find(colliderA->GetLayer()) == colliderB->GetContactLayer().end())
+    {
+        return false;
+    }
+
     FVector centerA = colliderA->GetCenter();
     FVector centerB = colliderB->GetCenter();
     float radiusA = colliderA->GetRadius();
