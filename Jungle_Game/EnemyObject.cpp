@@ -10,6 +10,9 @@ UEnemyObject::UEnemyObject(FTransform transform)
     : UGameObject(transform)
 {
     SetTextureName("enemy");
+
+    Collider->SetLayer(ECollisionLayer::Enemy);
+    Collider->AddContactLayer(ECollisionLayer::Player);
 }
 
 UEnemyObject::~UEnemyObject()

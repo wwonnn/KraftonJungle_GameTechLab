@@ -21,6 +21,8 @@ UPlayer::~UPlayer()
 void UPlayer::Initialize()
 {
     Velocity = FVector(0.5f, 0.0f, 0.0f);
+    Collider->SetLayer(ECollisionLayer::Player);
+    Collider->AddContactLayer(ECollisionLayer::Enemy);
     Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UPlayer::OnCollisionEnter, this));
     Collider->AddCollisionCallback(ECollisionEvent::Exit, std::bind(&UPlayer::OnCollisionExit, this));
 }
