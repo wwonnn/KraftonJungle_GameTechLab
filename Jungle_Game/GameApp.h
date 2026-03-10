@@ -19,7 +19,6 @@ public:
 
 private:
     void LoadDefaultAssets();
-    void CreateGameObjects();
 
 private:
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -28,6 +27,5 @@ private:
     HWND hWnd = nullptr;
     URenderer* Renderer = nullptr;
     UTimer* Timer = nullptr;
-    UWaveController* WaveController = nullptr;
 };
 
