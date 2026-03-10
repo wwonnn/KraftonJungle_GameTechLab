@@ -25,10 +25,12 @@ GameApp::GameApp()
     Renderer = new URenderer();
     AudioSystem = new UAudioSystem();
     Timer = new UTimer();
+    WaveController = new UWaveController();
 }
 
 GameApp::~GameApp()
 {
+    delete WaveController;
     delete Timer;
     delete AudioSystem;
     delete Renderer;
@@ -62,6 +64,8 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     }
 
     UImGuiManager::Get().Create(hWnd, Renderer);
+
+    WaveController->LoadStageData(1);
 
     LoadDefaultAssets();
     CreateGameObjects();
@@ -97,6 +101,7 @@ void GameApp::Run()
 
             // 오브젝트 Update 및 Render (DeltaTime 사용)
             float DeltaTime = Timer->GetDeltaTime();
+            WaveController->Update(DeltaTime);
             for (UGameObject* const& obj : UGameObject::GameObjectList)
             {
                 obj->Update(DeltaTime);
