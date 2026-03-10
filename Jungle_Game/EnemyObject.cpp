@@ -13,6 +13,7 @@ UEnemyObject::UEnemyObject(FTransform transform)
 
     Collider->SetLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::Player);
+    Collider->AddContactLayer(ECollisionLayer::Projectile);
 }
 
 UEnemyObject::~UEnemyObject()
