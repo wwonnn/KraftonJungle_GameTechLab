@@ -22,11 +22,11 @@ enum class ETextAlign
 struct FConstantBuffer
 {
     FVector position;
-    float padding1;
+    float padding1 = 0.0f;
     FVector rotation;
-    float padding2;
+    float padding2 = 0.0f;
     FVector scale;
-    float padding3;
+    float padding3 = 0.0f;
 };
 
 struct FSpriteUVBuffer

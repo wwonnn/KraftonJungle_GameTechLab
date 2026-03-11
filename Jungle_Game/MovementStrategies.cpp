@@ -19,7 +19,7 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    outRotation = 3.14159265; // look down
+    outRotation = 3.14159265f; // look down
 
     CurrentRange += moveDist;
     if (abs(CurrentRange) > MovementRange)
