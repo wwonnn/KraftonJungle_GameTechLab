@@ -16,6 +16,7 @@ public:
     virtual void Render(URenderer& renderer) override;
 
     void OnCollisionEnter();
+    void SetVelocity(FVector velocity) { Velocity = velocity; }
 
 private:
     FVector Velocity;

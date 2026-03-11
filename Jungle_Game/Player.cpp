@@ -5,6 +5,8 @@
 #include "CollisionSystem.h"
 #include "SceneManager.h"
 #include "GlobalState.h"
+#include "ItemObject.h"
+#include "ScoreManager.h"
 
 UPlayer::UPlayer()
     :UGameObject()
@@ -72,14 +74,19 @@ void UPlayer::FireProjectile()
 {
     if (ShootCooldownTimer > 0.0f){ return; }
 
-    ShootCooldownTimer = ShootCooldown;
+    ShootCooldownTimer = PowerUpTable[Power].ProjectileCooldown;
     UAudioSystem::Get().Play("shoot");
-    UGameObject* projectile = new UProjectile(
-        FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
-    );
 
-    SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
-    projectile->Destroy(1.5f);
+    for(int i = 0; i < PowerUpTable[Power].ShootCount; i++)
+    {
+        float xOffset = (i - (Power - 1) / 2.0f) * shootInterval;
+        UProjectile* projectile = new UProjectile(
+            FTransform(FVector(Transform.Location.x + xOffset, Transform.Location.y, Transform.Location.z), FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
+        );
+        projectile->SetVelocity(PowerUpTable[Power].ProjectileVelocity);
+        SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
+        projectile->Destroy(1.5f);
+    }
 }
 
 int UPlayer::GetHP() { return HP; }
@@ -104,12 +111,22 @@ void UPlayer::TakeDamage() {
 
 void UPlayer::Heal()
 {
-    if (bIsDead || HP >= 2) return;
+    if (bIsDead) return;
+    if (HP >= maxHP) {
+        ScoreManager::Get().AddScore(100);
+        return;
+    }
 
     HP++;
     if (OnHPChanged) {
         OnHPChanged(HP);
     }
+}
+
+void UPlayer::PowerUp()
+{
+    if (Power >= maxPower || bIsDead) return;
+    Power++;
 }
 
 
@@ -143,7 +160,14 @@ void UPlayer::OnCollisionEnter(UCircleCollider* other)
 {
     if (other->GetLayer() == ECollisionLayer::Item)
     {
-        Heal();
+        
+        UItemObject* item = dynamic_cast<UItemObject*>(other->GetOwner());
+        if (item->GetID() == EItemType::Heal) {
+            Heal();
+        }
+        else if (item->GetID() == EItemType::Upgrade) {
+            PowerUp();
+        }
     }
     else if (other->GetLayer() == ECollisionLayer::Enemy || other->GetLayer() == ECollisionLayer::EnemyProjectile)
     {

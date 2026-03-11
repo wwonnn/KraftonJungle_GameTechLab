@@ -1,13 +1,16 @@
 #pragma once
 #include "GameObject.h"
+#include "ItemDatabase.h"
 
 class UItemObject : public UGameObject
 {
 public:
     UItemObject();
     UItemObject(FTransform transform);
-    UItemObject(FTransform transform, int ItemID);
+    UItemObject(FTransform transform, EItemType itemtype);
     ~UItemObject() override;
+
+    EItemType GetID() const { return Itemtype; }
 
 public:
     void Update(float DeltaTime) override;
@@ -21,5 +24,5 @@ private:
 private:
     FVector Velocity;
     FVector Scale;
-    int ItemID;
+    EItemType Itemtype;
 };
