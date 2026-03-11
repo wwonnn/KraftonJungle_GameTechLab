@@ -1,5 +1,4 @@
 #include <random>
-#include <concepts>
 
 class Random
 {
