@@ -1,6 +1,7 @@
 #include "InfiniteModeLogic.h"
 #include "SceneManager.h"
 #include "Random.h"
+#include "WaveParser.h"
 #include <windows.h>
 
 InfiniteModeLogic::InfiniteModeLogic()
@@ -29,70 +30,40 @@ void InfiniteModeLogic::LoadRandomWave()
     size_t randomIndex = dist(gen);
 
     std::string waveFile = WaveFiles[difficulty][randomIndex];
+    CurrentWaveInfo = WaveParser::ParseWaveFile(waveFile);
 
-    std::ifstream file(waveFile);
-    if (!file.is_open())
-    {
-        return;
-    }
-
-    nlohmann::json j;
-    file >> j;
-
-    CurrentStageInfo.enemyCount = j["enemy_count"];
-    CurrentStageInfo.spawnInterval = j["spawn_interval"];
-
-    CurrentStageInfo.positions.clear();
-    for (auto& pos : j["spawn_positions"])
-    {
-        CurrentStageInfo.positions.push_back({ pos["x"], pos["y"] });
-    }
-
-    CurrentStageInfo.rotations.clear();
-    for (auto& rot : j["spawn_rotations"])
-    {
-        CurrentStageInfo.rotations.push_back({ rot["x"], rot["y"], rot["z"]});
-    }
-
-    CurrentStageInfo.scales.clear();
-    for (auto& scale : j["spawn_scales"])
-    {
-        CurrentStageInfo.scales.push_back({ scale["x"], scale["y"] });
-    }
-
-    CurrentStageInfo.strategies.clear();
-    for (auto& strat : j["move_strategies"])
-    {
-        CurrentStageInfo.strategies.push_back(strat.get<std::string>());
-    }
-
-    LeftEnemyCount += CurrentStageInfo.enemyCount;
+    LeftEnemyCount += CurrentWaveInfo.EnemyCount;
 
     SpawnSequentially();
 }
 
 void InfiniteModeLogic::SpawnSequentially()
 {
-    for (int i = 0; i < CurrentStageInfo.enemyCount; ++i)
+    for (int i = 0; i < CurrentWaveInfo.EnemyCount; ++i)
     {
-        Timer->ExecuteAfter(i * CurrentStageInfo.spawnInterval, [this, i]() {
-             auto& pos = CurrentStageInfo.positions[i % CurrentStageInfo.positions.size()];
-             auto& rot = CurrentStageInfo.rotations[i % CurrentStageInfo.rotations.size()];
-             auto& scale = CurrentStageInfo.scales[i % CurrentStageInfo.scales.size()];
-             FTransform transform;
-             transform.Location = FVector(pos.x, pos.y, 0);
-             transform.Rotation = FVector(rot.x, rot.y, rot.z);
-             transform.Scale = FVector(scale.x, scale.y, 1);
+        Timer->ExecuteAfter(i * CurrentWaveInfo.SpawnInterval, [this, i]()
+            {
+                auto& pos = CurrentWaveInfo.SpawnPositions[i % CurrentWaveInfo.SpawnPositions.size()];
+                auto& rot = CurrentWaveInfo.SpawnRotations[i % CurrentWaveInfo.SpawnRotations.size()];
+                auto& scale = CurrentWaveInfo.SpawnScales[i % CurrentWaveInfo.SpawnScales.size()];
 
-             std::string strategy = CurrentStageInfo.strategies[i % CurrentStageInfo.strategies.size()];
+                FTransform transform;
+                transform.Location = FVector(pos.x, pos.y, 0.0f);
+                transform.Rotation = FVector(rot.x, rot.y, rot.z);
+                transform.Scale = FVector(scale.x, scale.y, 1.0f);
 
-             SpawnEnemy(transform, Player, strategy);
-            });
+                std::string strategy = CurrentWaveInfo.MoveStrategies[i % CurrentWaveInfo.MoveStrategies.size()];
+
+                SpawnEnemy(transform, Player, strategy);
+            }
+        );
     }
 
-    Timer->ExecuteAfter(CurrentStageInfo.enemyCount * CurrentStageInfo.spawnInterval + 1.0f, [this]() {
-        StartMove();
-        });
+    Timer->ExecuteAfter(CurrentWaveInfo.EnemyCount * CurrentWaveInfo.SpawnInterval + 1.0f, [this]()
+        {
+            StartMove();
+        }
+    );
 }
 
 void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player, const std::string& strategy)
@@ -171,60 +142,4 @@ void InfiniteModeLogic::ScanWaveFiles(int difficulty)
     } while (FindNextFileA(hFind, &findData) != 0);
 
     FindClose(hFind);
-}
-
-void InfiniteModeLogic::ReadWaveFiles()
-{
-    for (int i = 0; i < 3; ++i)
-    {
-        auto& fileStrings = WaveFiles[i];
-
-        for (auto& str : fileStrings)
-        {
-            std::ifstream file(str);
-            if (!file.is_open())
-            {
-                return;
-            }
-
-            nlohmann::json j;
-            file >> j;
-
-            StageInfo info;
-
-            info.enemyCount = j["enemy_count"];
-            info.spawnInterval = j["spawn_interval"];
-
-            info.positions.clear();
-            for (auto& pos : j["spawn_positions"])
-            {
-                info.positions.push_back({ pos["x"], pos["y"] });
-            }
-
-            info.rotations.clear();
-            for (auto& rot : j["spawn_rotations"])
-            {
-                info.rotations.push_back({ rot["x"], rot["y"], rot["z"] });
-            }
-
-            info.scales.clear();
-            for (auto& scale : j["spawn_scales"])
-            {
-                info.scales.push_back({ scale["x"], scale["y"] });
-            }
-
-            info.strategies.clear();
-            for (auto& strat : j["move_strategies"])
-            {
-                info.strategies.push_back(strat.get<std::string>());
-            }
-
-            OutputDebugStringA(("Loaded wave file: " + str + "\n").c_str());
-            OutputDebugStringA(("Enemy Count: " + std::to_string(info.enemyCount) + "\n").c_str());
-            OutputDebugStringA(("Position Count: " + std::to_string(info.positions.size()) + "\n").c_str());
-            OutputDebugStringA(("Rotation Count: " + std::to_string(info.rotations.size()) + "\n").c_str());
-            OutputDebugStringA(("Scale Count: " + std::to_string(info.scales.size()) + "\n").c_str());
-            OutputDebugStringA(("Strategy Count: " + std::to_string(info.strategies.size()) + "\n").c_str());
-        }
-    }
 }

@@ -170,6 +170,7 @@
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="WaveController.cpp" />
+    <ClCompile Include="WaveParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animator.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="WaveController.h" />
+    <ClInclude Include="WaveParser.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="DefaultShader.hlsl">
