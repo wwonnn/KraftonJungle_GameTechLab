@@ -171,6 +171,10 @@ void UEnemyObject::Dead(UCircleCollider* other)
            UGameObject* itemobj = new UItemObject(FTransform(Transform.Location), 0);
            SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
         }
+        else if (random < 60) {
+            UGameObject* itemobj = new UItemObject(FTransform(Transform.Location), 1);
+            SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
+        }
     }
     UAudioSystem::Get().Play("pop");
     Destroy(0.3f);
