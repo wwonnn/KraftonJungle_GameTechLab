@@ -17,7 +17,7 @@ public:
     void Update(float deltaTime);
 
     void LoadRandomWave();
-    void SpawnEnemy(FTransform transform, UPlayer* player);
+    void SpawnEnemy(FTransform transform, UPlayer* player, int index);
     void StartMove();
 
     void GoNextWave();

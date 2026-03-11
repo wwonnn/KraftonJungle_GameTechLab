@@ -71,3 +71,61 @@ private:
     FVector Direction;
     float Speed;
 };
+
+/// <summary>
+/// 아래로 지그재그 이동 패턴
+/// </summary>
+class ZigZagMovement : public IMovementStrategy
+{
+public:
+    explicit ZigZagMovement(FVector direction = { 0.0f, -1.0f }, float speed = 1.0f, float zigzagDistance = 0.3f, float zigzagAngle = 0.524f);
+
+    bool Update(FVector& outPosition,
+        float& outRotation,
+        const FVector& currentPos,
+        const FVector& playerPos,
+        float            dt) override;
+
+    void Reset() override;
+    void SetDirection(FVector newDir);
+
+private:
+    FVector Direction;
+    float Speed;
+    float ZigzagDistance;
+    float ZigzagAngle;
+    float CurrentDistance = 0.0f;
+    int ZigzagState = 0;
+    FVector CurrentDirection;
+};
+
+/// <summary>
+/// 아래로 이동
+/// 일정 시간마다 원을 그림
+/// 원을 그린 뒤에는 아래로 이동
+/// </summary>
+class CircularMovement : public IMovementStrategy
+{
+public:
+    explicit CircularMovement(FVector direction = { 0.0f, -1.0f }, float speed = 1.0f, float circleRadius = 0.01f, float circleSpeed = 1.0f, float circleDistance = 0.5f);
+
+    bool Update(FVector& outPosition,
+        float& outRotation,
+        const FVector& currentPos,
+        const FVector& playerPos,
+        float            dt) override;
+
+    void Reset() override;
+    void SetDirection(FVector newDir);
+
+private:
+    FVector Direction;
+    FVector CurrentDirection;
+    float Speed;
+    float CircleRadius;
+    float CircleSpeed;
+    float CircleAngle = 0.0f;
+    bool bInCircle = false;
+    float CurrentDistance = 0.0f;
+    float CircleDistance;
+};

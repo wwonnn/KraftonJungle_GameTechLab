@@ -44,7 +44,7 @@ void InfiniteModeLogic::Update(float deltaTime)
         transform.Location = FVector(pos.x, pos.y, 0);
         transform.Rotation = FVector(rot.x, rot.y, 0);
         transform.Scale = FVector(scale.x, scale.y, 1);
-        SpawnEnemy(transform, Player);
+        SpawnEnemy(transform, Player, SpawnCount);
 
         SpawnCount++;
         SpawnTimer = 0.0f;
@@ -89,18 +89,36 @@ void InfiniteModeLogic::LoadRandomWave()
         CurrentStageInfo.scales.push_back({ scale["x"], scale["y"] });
     }
 
+    CurrentStageInfo.strategies.clear();
+    for (auto& strat : j["move_strategies"])
+    {
+        CurrentStageInfo.strategies.push_back(strat.get<std::string>());
+    }
+
     LeftEnemyCount += CurrentStageInfo.enemyCount;
 }
 
-void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player)
+void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player, int index)
 {
     UGameObject* enemy = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyObject(transform));
     UEnemyObject* enemyObj = dynamic_cast<UEnemyObject*>(enemy);
     enemyObj->SetPlayer(player);
 
-    auto seq = std::make_unique<MovementSequence>();
-    seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 10.0f);
-    seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.5f), 0.0f);
+    auto seq = std::make_unique<MovementSequence>(true);
+
+    if (CurrentStageInfo.strategies[index] == "aligned")
+    {
+        seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 10.0f);
+        seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.5f), 0.0f);
+    }
+    else if (CurrentStageInfo.strategies[index] == "zigzag")
+    {
+        seq->Add(std::make_unique<ZigZagMovement>(FVector(0.0f, -1.0f), 0.6f, 0.5f), 10.0f);
+    }
+    else if (CurrentStageInfo.strategies[index] == "circular")
+    {
+        seq->Add(std::make_unique<CircularMovement>(FVector(0.0f, -1.0f), 0.4f, 0.01f, 10.0f), 10.0f);
+    }
 
     enemyObj->SetMovementStrategy(std::move(seq));
 
