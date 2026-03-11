@@ -29,6 +29,7 @@ public:
     int GetHP();
     void TakeDamage();
     void Heal();
+    void PowerUp();
 
     std::function<void(int)> OnHPChanged;
 
@@ -42,6 +43,10 @@ private:
     UAudioSystem* AudioSystem = nullptr;
 
     int HP = 2;
+    int maxHP = 2;
+    int Power = 1;
+    int maxPower = 3;
+    float shootInterval = 0.03f;
 
     bool bIsInvincible = false;
     float InvincibilityTime = 0.0f;

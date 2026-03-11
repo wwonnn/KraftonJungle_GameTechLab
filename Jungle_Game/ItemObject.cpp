@@ -15,11 +15,11 @@ UItemObject::UItemObject(FTransform transform)
     Initialize();
 }
 
-UItemObject::UItemObject(FTransform transform, int itemID)
+UItemObject::UItemObject(FTransform transform, EItemType itemtype)
     :UGameObject(transform)
 {
-    ItemID = itemID;
-    const auto& data = UItemDatabase::Get().GetItem(itemID);
+    Itemtype = itemtype;
+    const auto& data = UItemDatabase::Get().GetItem(itemtype);
     Transform.Scale = data.Scale;
     Velocity = data.Veclocity;
     SetTextureName(data.TextureName);

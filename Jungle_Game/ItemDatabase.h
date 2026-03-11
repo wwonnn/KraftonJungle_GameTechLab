@@ -4,8 +4,14 @@
 
 #include "GameObject.h"
 
+enum class EItemType
+{
+    Heal,
+    Upgrade,
+};
+
 struct FItemTemplate {
-    int ID;
+    EItemType ItemType;
     std::string Name;
     std::string TextureName;
     FVector Veclocity;
@@ -15,7 +21,7 @@ struct FItemTemplate {
 
 class UItemDatabase {
 private:
-    std::unordered_map<int, FItemTemplate> Data;
+    std::unordered_map<EItemType, FItemTemplate> Data;
 
 public:
     static UItemDatabase& Get()
@@ -28,9 +34,9 @@ public:
     ~UItemDatabase() = default;
 
     void Init() {
-        Data[0] = { 0, std::string("heart"), std::string("heart"), FVector(0.0f, -0.4f, 0.0f), FVector(0.05f, 0.05f, 1.0f), 3.5f };
-        Data[1] = { 1, "upgrade", "upgrade", FVector(0.0f, -0.6f, 0.0f), FVector(0.04f, 0.04f, 1.0f), 3.0f};
+        Data[EItemType::Heal] = { EItemType::Heal, std::string("heart"), std::string("heart"), FVector(0.0f, -0.4f, 0.0f), FVector(0.05f, 0.05f, 1.0f), 3.5f };
+        Data[EItemType::Upgrade] = { EItemType::Upgrade, "upgrade", "upgrade", FVector(0.0f, -0.6f, 0.0f), FVector(0.04f, 0.04f, 1.0f), 3.0f};
     }
 
-    const FItemTemplate& GetItem(int id) { return Data.at(id); }
+    const FItemTemplate& GetItem(EItemType itemtype) { return Data.at(itemtype); }
 };
