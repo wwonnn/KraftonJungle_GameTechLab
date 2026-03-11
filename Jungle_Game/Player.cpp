@@ -74,16 +74,18 @@ void UPlayer::FireProjectile()
 {
     if (ShootCooldownTimer > 0.0f){ return; }
 
-    ShootCooldownTimer = PowerUpTable[Power].ProjectileCooldown;
     UAudioSystem::Get().Play("shoot");
 
-    for(int i = 0; i < PowerUpTable[Power].ShootCount; i++)
+    const auto& currentStats = PowerUpTable[Power];
+    ShootCooldownTimer = currentStats.ProjectileCooldown;
+
+    for(int i = 0; i < currentStats.ShootCount; i++)
     {
-        float xOffset = (i - (Power - 1) / 2.0f) * shootInterval;
+        float xOffset = (i - (currentStats.ShootCount - 1) / 2.0f) * shootInterval;
         UProjectile* projectile = new UProjectile(
             FTransform(FVector(Transform.Location.x + xOffset, Transform.Location.y, Transform.Location.z), FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
         );
-        projectile->SetVelocity(PowerUpTable[Power].ProjectileVelocity);
+        projectile->SetVelocity(currentStats.ProjectileVelocity);
         SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
         projectile->Destroy(1.5f);
     }
