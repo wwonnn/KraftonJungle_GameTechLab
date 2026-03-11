@@ -3,18 +3,52 @@
 #include "GlobalSettings.h"
 #include "ScoreManager.h"
 
+InputNameScene::InputNameScene(FGameContext* gameContext)
+    : UScene(gameContext) {
+    Timer = gameContext->Timer;
+}
+
 void InputNameScene::Initialize() {
     UAudioSystem::Get().Play("win");
+    bCanInput = false;
+    Score = 0;
+
+    Timer->ExecuteAfter(1.0f, [this]() {
+        bScoreAnimationStart = true;
+        });
 }
 
 void InputNameScene::Update(float deltaTime) {
-    ProcessKeyInput();
+    if (bCanInput)
+    {
+        ProcessKeyInput();
+    }
+
+    if (bScoreAnimationStart)
+    {
+        AnimationElapsedTime += deltaTime;
+
+        float progress = std::min<float>(AnimationElapsedTime / ScoreAnimDuration, 1.0f);
+
+        Score = static_cast<int>(ScoreManager::Get().GetScore() * progress);
+
+        if (progress >= 1.0f)
+        {
+            Score = ScoreManager::Get().GetScore();
+            bScoreAnimationStart = false;
+            bCanInput = true;
+        }
+    }
 }
 
 void InputNameScene::Render() {
     Renderer->BeginFrame();
-    Renderer->DrawString(L"Your Score: " + std::to_wstring(ScoreManager::Get().GetScore()), 400.0f, 250.0f, FVector(1.0f, 1.0f, 1.0f));
-    Renderer->DrawString(L"Enter Your Name: " + std::wstring(PlayerName.begin(), PlayerName.end()), 400.0f, 300.0f, FVector(1.0f, 1.0f, 1.0f));
+    Renderer->DrawString(L"Your Score: " + std::to_wstring(Score), 400.0f, 250.0f, FVector(1.0f, 1.0f, 1.0f));
+
+    if (bCanInput)
+    {
+        Renderer->DrawString(L"Enter Your Name: " + std::wstring(PlayerName.begin(), PlayerName.end()), 400.0f, 300.0f, FVector(1.0f, 1.0f, 1.0f));
+    }
     Renderer->SwapBuffer();
 }
 
