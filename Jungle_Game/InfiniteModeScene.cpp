@@ -36,7 +36,7 @@ void InfiniteModeScene::Initialize() {
         LifeObjects.push_back(life);
     }
 
-    Logic->Initialize(Player);
+    Logic->Initialize(Player, Timer);
 
     Player->OnHPChanged = [&](int newHP) {
         if (newHP > 0) {
@@ -94,7 +94,7 @@ void InfiniteModeScene::Render() {
 void InfiniteModeScene::Release() {
     UAudioSystem::Get().StopBGM();
 
-    Timer->ClearDelayedActions();
+     Timer->ClearDelayedActions();
     EventSystem::Get().UnSubscribe("EnemyDied");
 
     UScene::Release();

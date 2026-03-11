@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <random>
 #include "WaveController.h"
+#include "Timer.h"
 
 class InfiniteModeLogic
 {
@@ -13,10 +14,11 @@ public:
     ~InfiniteModeLogic() = default;
 
 public:
-    void Initialize(UPlayer* player);
+    void Initialize(UPlayer* player, UTimer* timer);
     void Update(float deltaTime);
 
     void LoadRandomWave();
+    void SpawnSequentially();
     void SpawnEnemy(FTransform transform, UPlayer* player, int index);
     void StartMove();
 
@@ -46,6 +48,7 @@ private:
     void ScanWaveFiles(int difficulty);
 
 private:
+    UTimer* Timer = nullptr;
     UPlayer* Player = nullptr;
 
     const std::string WaveDataFilePath = "asset/data/infinite";
@@ -54,9 +57,6 @@ private:
     StageInfo CurrentStageInfo;
     int WaveCount = 0;
 
-    int SpawnCount = 0;
-    float SpawnTimer = 0.0f;
-    bool SpawnFinished = false;
     std::vector<UEnemyObject*> SpawnedEnemies;
 
     int LeftEnemyCount = 0;

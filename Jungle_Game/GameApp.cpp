@@ -102,10 +102,10 @@ void GameApp::Run()
         {
             // Game Loop
             UInputManager::Get().Update();
-              Timer->Update();
-            UCollisionSystem::Get().CheckCollisions();
+            Timer->Update();
 
             SceneManager::Get().Update(Timer->GetDeltaTime());
+            UCollisionSystem::Get().CheckCollisions();
 
             SceneManager::Get().Render();
         }

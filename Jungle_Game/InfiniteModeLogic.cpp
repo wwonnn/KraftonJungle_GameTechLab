@@ -8,48 +8,49 @@ InfiniteModeLogic::InfiniteModeLogic()
 {
 }
 
-void InfiniteModeLogic::Initialize(UPlayer* player)
+void InfiniteModeLogic::Initialize(UPlayer* player, UTimer* timer)
 {
     ScanWaveFiles(0);
     ScanWaveFiles(1);
     ScanWaveFiles(2);
 
     Player = player;
+    Timer = timer;
 }
 
 void InfiniteModeLogic::Update(float deltaTime)
 {
-    if (SpawnCount >= CurrentStageInfo.enemyCount)
-    {
-        if (!SpawnFinished)
-        {
-            SpawnTimer += deltaTime;
-            if (SpawnTimer >= 2.0f)
-            {
-                SpawnFinished = true;
-                SpawnTimer = 0.0f;
-                StartMove();
-            }
-        }
-        return;
-    }
+    //if (SpawnCount >= CurrentStageInfo.enemyCount)
+    //{
+    //    if (!SpawnFinished)
+    //    {
+    //        SpawnTimer += deltaTime;
+    //        if (SpawnTimer >= 2.0f)
+    //        {
+    //            SpawnFinished = true;
+    //            SpawnTimer = 0.0f;
+    //            StartMove();
+    //        }
+    //    }
+    //    return;
+    //}
 
-    SpawnTimer += deltaTime;
-    if (SpawnTimer >= CurrentStageInfo.spawnInterval)
-    {
-        auto& pos = CurrentStageInfo.positions[SpawnCount % CurrentStageInfo.positions.size()];
-        auto& rot = CurrentStageInfo.rotations[SpawnCount % CurrentStageInfo.rotations.size()];
-        auto& scale = CurrentStageInfo.scales[SpawnCount % CurrentStageInfo.scales.size()];
+    //SpawnTimer += deltaTime;
+    //if (SpawnTimer >= CurrentStageInfo.spawnInterval)
+    //{
+    //    auto& pos = CurrentStageInfo.positions[SpawnCount % CurrentStageInfo.positions.size()];
+    //    auto& rot = CurrentStageInfo.rotations[SpawnCount % CurrentStageInfo.rotations.size()];
+    //    auto& scale = CurrentStageInfo.scales[SpawnCount % CurrentStageInfo.scales.size()];
 
-        FTransform transform;
-        transform.Location = FVector(pos.x, pos.y, 0);
-        transform.Rotation = FVector(rot.x, rot.y, 0);
-        transform.Scale = FVector(scale.x, scale.y, 1);
-        SpawnEnemy(transform, Player, SpawnCount);
+    //    FTransform transform;
+    //    transform.Location = FVector(pos.x, pos.y, 0);
+    //    transform.Rotation = FVector(rot.x, rot.y, 0);
+    //    transform.Scale = FVector(scale.x, scale.y, 1);
+    //    SpawnEnemy(transform, Player, SpawnCount);
 
-        SpawnCount++;
-        SpawnTimer = 0.0f;
-    }
+    //    SpawnCount++;
+    //    SpawnTimer = 0.0f;
+    //}
 }
 
 void InfiniteModeLogic::LoadRandomWave()
@@ -97,6 +98,29 @@ void InfiniteModeLogic::LoadRandomWave()
     }
 
     LeftEnemyCount += CurrentStageInfo.enemyCount;
+
+    SpawnSequentially();
+}
+
+void InfiniteModeLogic::SpawnSequentially()
+{
+    for (int i = 0; i < CurrentStageInfo.enemyCount; ++i)
+    {
+        Timer->ExecuteAfter(i * CurrentStageInfo.spawnInterval, [this, i]() {
+             auto& pos = CurrentStageInfo.positions[i % CurrentStageInfo.positions.size()];
+             auto& rot = CurrentStageInfo.rotations[i % CurrentStageInfo.rotations.size()];
+             auto& scale = CurrentStageInfo.scales[i % CurrentStageInfo.scales.size()];
+             FTransform transform;
+             transform.Location = FVector(pos.x, pos.y, 0);
+             transform.Rotation = FVector(rot.x, rot.y, 0);
+             transform.Scale = FVector(scale.x, scale.y, 1);
+             SpawnEnemy(transform, Player, i);
+            });
+    }
+
+    Timer->ExecuteAfter(CurrentStageInfo.enemyCount * CurrentStageInfo.spawnInterval + 1.0f, [this]() {
+        StartMove();
+        });
 }
 
 void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player, int index)
@@ -143,9 +167,6 @@ void InfiniteModeLogic::StartMove()
 void InfiniteModeLogic::GoNextWave()
 {
     WaveCount++;
-    SpawnCount = 0;
-    SpawnTimer = 0.0f;
-    SpawnFinished = false;
     SpawnedEnemies.clear();
     LoadRandomWave();
 }
