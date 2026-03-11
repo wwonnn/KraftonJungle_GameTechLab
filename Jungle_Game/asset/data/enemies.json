@@ -1,8 +1,13 @@
 {
   "stage_1": {
+    "stage_type": "Normal",
     "enemy_count": 15,
     "spawn_interval": 0.15,
     "spawn_positions": [
+      {
+        "x": -0.7,
+        "y": 0.5
+      },
       {
         "x": -0.6,
         "y": 0.5
@@ -57,10 +62,6 @@
       },
       {
         "x": 0.7,
-        "y": 0.5
-      },
-      {
-        "x": 0.8,
         "y": 0.5
       }
     ],
@@ -220,6 +221,7 @@
     ]
   },
   "stage_2": {
+    "stage_type": "Normal",
     "enemy_count": 30,
     "spawn_interval": 0.12,
     "spawn_positions": [
@@ -645,6 +647,31 @@
       {
         "x": 0.09,
         "y": 0.09,
+        "z": 1.0
+      }
+    ]
+  },
+  "stage_3": {
+    "stage_type": "Boss",
+    "enemy_count": 1,
+    "spawn_interval": 0.12,
+    "spawn_positions": [
+      {
+        "x": 0.0,
+        "y": 0.6
+      }
+    ],
+    "spawn_rotations": [
+      {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    ],
+    "spawn_scales": [
+      {
+        "x": 0.6,
+        "y": 0.4,
         "z": 1.0
       }
     ]
