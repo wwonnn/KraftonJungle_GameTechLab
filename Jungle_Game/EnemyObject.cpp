@@ -141,7 +141,6 @@ void UEnemyObject::FireEnemyProjectile()
 {
     UGameObject* enemyProjectile = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyProjectile(
         FTransform(Transform.Location, GetTransform().Rotation, FVector(0.1f, 0.1f, 0.1f))));
-    OutputDebugStringA((std::to_string(Transform.Rotation.z) + "\n").c_str());
     dynamic_cast<UEnemyProjectile*>(enemyProjectile)->SetPlayer(GetPlayer());
     enemyProjectile->Destroy(2.0f);
 }
