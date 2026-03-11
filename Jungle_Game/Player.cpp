@@ -75,11 +75,18 @@ void UPlayer::FireProjectile()
     ShootCooldownTimer = ShootCooldown;
     UAudioSystem::Get().Play("shoot");
     UGameObject* projectile = new UProjectile(
-        FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
+        FTransform(Transform.Location + FVector(0.02f, 0.0f, 0.0f), FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
     );
 
     SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
     projectile->Destroy(1.5f);
+
+    UGameObject* projectile1 = new UProjectile(
+        FTransform(Transform.Location + FVector(-0.02f, 0.0f, 0.0f), FVector(0, 0, 0), FVector(0.1f, 0.1f, 0.1f))
+    );
+
+    SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile1);
+    projectile1->Destroy(1.5f);
 }
 
 int UPlayer::GetHP() { return HP; }
@@ -154,7 +161,6 @@ void UPlayer::OnCollisionEnter(UCircleCollider* other)
 {
     if (other->GetLayer() == ECollisionLayer::Item)
     {
-        UAudioSystem::Get().Play("heal");
         Heal();
     }
     else if (other->GetLayer() == ECollisionLayer::Enemy || other->GetLayer() == ECollisionLayer::EnemyProjectile)
