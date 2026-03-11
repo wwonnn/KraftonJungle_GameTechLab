@@ -19,11 +19,12 @@ class UEnemyObject : public UGameObject
 public:
     UEnemyObject();
     UEnemyObject(FTransform transform);
-    ~UEnemyObject() override;
+    virtual ~UEnemyObject();
 
 public:
-    void Update(float DeltaTime) override;
-    void Render(URenderer& renderer) override;
+    virtual void Initialize();
+    virtual void Update(float DeltaTime) override;
+    virtual void Render(URenderer& renderer) override;
     bool CheckCollision(UGameObject* other) override { return true; }
     void ApplyImpulse(const FConstantBuffer& v) override {}
 
@@ -33,14 +34,13 @@ public:
     IMovementStrategy* GetMovementStrategy() const;
     void TransitionToState(EnemyState newState);
 
-private:
-    void Initialize();
+protected:
     void Spawn(float DeltaTime);
     void Move(float DeltaTime);
-    void Dead(UCircleCollider* other);
+    virtual void Dead(UCircleCollider* other);
     void FireEnemyProjectile();
 
-private:
+protected:
     bool isSpawned = false;
     float spawnTimer = 0.0f;
     FTransform SpawnedTransform;

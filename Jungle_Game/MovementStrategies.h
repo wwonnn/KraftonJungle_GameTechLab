@@ -1,6 +1,7 @@
 #pragma once
 #include "Math.h"
 #include <cmath>
+#include <algorithm>
 
 class IMovementStrategy
 {
@@ -70,6 +71,32 @@ public:
 private:
     FVector Direction;
     float Speed;
+};
+
+/// <summary>
+/// 플레이어 방향으로 다이브 후 복귀
+/// </summary>
+class DiveToPlayerMovement : public IMovementStrategy
+{
+public:
+    explicit DiveToPlayerMovement(float speed = 1.0f);
+
+    bool Update(FVector& outPosition,
+        float& outRotation,
+        const FVector& currentPos,
+        const FVector& playerPos,
+        float            dt) override;
+
+    void Reset() override;
+    void SetDirection(FVector newDir);
+
+private:
+    FVector StartPos;
+    FVector PlayerPos;
+    float Speed;
+    float MoveDist = 0.0f;
+    bool bInit = false;
+    bool bBack = false;
 };
 
 /// <summary>

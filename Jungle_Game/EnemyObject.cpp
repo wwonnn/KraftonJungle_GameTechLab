@@ -10,13 +10,11 @@
 UEnemyObject::UEnemyObject()
     : UGameObject()
 {
-    Initialize();
 }
 
 UEnemyObject::UEnemyObject(FTransform transform)
     : UGameObject(transform)
 {
-    Initialize();
 }
 
 UEnemyObject::~UEnemyObject()

@@ -126,6 +126,7 @@
   <ItemGroup>
     <ClCompile Include="Animator.cpp" />
     <ClCompile Include="AudioSystem.cpp" />
+    <ClCompile Include="BossObject.cpp" />
     <ClCompile Include="CircleCollider.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="EnemyObject.cpp" />
@@ -173,6 +174,7 @@
   <ItemGroup>
     <ClInclude Include="Animator.h" />
     <ClInclude Include="AudioSystem.h" />
+    <ClInclude Include="BossObject.h" />
     <ClInclude Include="CircleCollider.h" />
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="dr_mp3.h" />
