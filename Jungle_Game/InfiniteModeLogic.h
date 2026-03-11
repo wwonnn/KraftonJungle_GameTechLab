@@ -19,7 +19,7 @@ public:
 
     void LoadRandomWave();
     void SpawnSequentially();
-    void SpawnEnemy(FTransform transform, UPlayer* player, int index);
+    void SpawnEnemy(FTransform transform, UPlayer* player, const std::string& strategy);
     void StartMove();
 
     void GoNextWave();
@@ -46,6 +46,7 @@ public:
 
 private:
     void ScanWaveFiles(int difficulty);
+    void ReadWaveFiles();
 
 private:
     UTimer* Timer = nullptr;
