@@ -18,6 +18,7 @@ public:
     virtual void ApplyImpulse(const FConstantBuffer& v) override;
 
     void OnCollisionEnter();
+    void SetVelocity(FVector velocity) { Velocity = velocity; }
 
 private:
     FVector Velocity;
