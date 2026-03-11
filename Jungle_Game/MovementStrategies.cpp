@@ -1,5 +1,6 @@
 #include "MovementStrategies.h"
 #include "CollisionSystem.h"
+#include "Random.h"
 #include <algorithm>
 
 LinearMovement::LinearMovement(FVector direction, float speed, float movementRange)
@@ -149,8 +150,9 @@ bool CircularMovement::Update(FVector& outPosition, float& outRotation, const FV
     {
         outPosition = currentPos + CurrentDirection * Speed * dt;
 
-        float rot = std::atan2(CurrentDirection.y, CurrentDirection.x) + 3.14159265f / 2.0f;
-        outRotation = MathUtil::Lerp(outRotation, rot, 0.1f); // 부드러운 회전
+        float oldRot = outRotation;
+        float newRot = std::atan2(CurrentDirection.y, CurrentDirection.x) + 3.14159265f / 2.0f;
+        outRotation = MathUtil::Lerp(oldRot, newRot, 0.2f * dt);
 
         CurrentDistance += Speed * dt;
         if (CurrentDistance >= CircleDistance)
