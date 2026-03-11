@@ -97,6 +97,8 @@ int UPlayer::GetHP() { return HP; }
 void UPlayer::TakeDamage() {
     if (bIsDead || bIsInvincible) return;
 
+    UAudioSystem::Get().Play("playerHit");
+
     HP--;
     if (OnHPChanged) {
         OnHPChanged(HP);
