@@ -26,7 +26,7 @@ private:
     std::string State = "MainMenu";
 
     int OptionIndex = 0;
-    int MaxOptions = 3;
+    int MaxOptions = 4;
 
     int SettingOptionIndex = 0;
     int MaxsettingOptions = 1;

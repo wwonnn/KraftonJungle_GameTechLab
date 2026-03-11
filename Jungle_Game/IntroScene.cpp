@@ -76,13 +76,16 @@ void IntroScene::UpdateMainMenu()
             SceneManager::Get().ChangeScene(SceneType::InGame);
             break;
         case 1:
+            SceneManager::Get().ChangeScene(SceneType::Infinite);
+            break;
+        case 2:
             // Show credits
             State = "Credits";
             break;
-        case 2:
+        case 3:
             State = "Settings";
             break;
-        case 3:
+        case 4:
             // Exit the game
             PostQuitMessage(0);
             break;
@@ -95,11 +98,13 @@ void IntroScene::RenderMainMenu()
     int option = 0;
     Renderer->DrawString(L"START!", 400.0f, 600.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
     option++;
-    Renderer->DrawString(L"CREDIT", 400.0f, 680.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
+    Renderer->DrawString(L"INFINITE MODE", 400.0f, 640.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
     option++;
-    Renderer->DrawString(L"SETTING", 400.0f, 720.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
+    Renderer->DrawString(L"CREDIT", 400.0f, 720.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
     option++;
-    Renderer->DrawString(L"EXIT", 400.0f, 760.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
+    Renderer->DrawString(L"SETTING", 400.0f, 760.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
+    option++;
+    Renderer->DrawString(L"EXIT", 400.0f, 820.0f, option == OptionIndex ? FVector(0.0f, 1.0f, 0.0f) : FVector(1.0f, 1.0f, 1.0f));
 }
 
 void IntroScene::UpdateCredits()

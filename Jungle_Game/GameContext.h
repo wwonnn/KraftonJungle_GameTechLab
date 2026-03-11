@@ -13,4 +13,7 @@ enum class SceneType {
     Init,
     InGame,
     Outro,
+    Infinite,
+    InputName,
+    Scoreboard
 };

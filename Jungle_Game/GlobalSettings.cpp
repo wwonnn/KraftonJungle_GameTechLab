@@ -1,7 +1,7 @@
 #include "GlobalSettings.h"
 #include "AudioSystem.h"
 #include "nlohmann/json.hpp"
-
+#include <algorithm>
 #include <fstream>
 
 void GlobalSettings::Load()
@@ -16,6 +16,17 @@ void GlobalSettings::Load()
 
             Data.BGMVolume = j.value("BGMVolume", 0.5f);
             Data.SFXVolume = j.value("SFXVolume", 1.0f);
+
+            if (j.contains("Scoreboard") && j["Scoreboard"].is_array())
+            {
+                for (const auto& entry : j["Scoreboard"])
+                {
+                    if (entry.contains("Username") && entry.contains("Score"))
+                    {
+                        Data.Scoreboard.push_back({ entry["Username"].get<std::string>(), entry["Score"].get<int>() });
+                    }
+                }
+            }
 
             file.close();
         }
@@ -37,6 +48,11 @@ void GlobalSettings::Save()
 
     j["BGMVolume"] = Data.BGMVolume;
     j["SFXVolume"] = Data.SFXVolume;
+    j["Scoreboard"] = nlohmann::json::array();
+    for (const auto& entry : Data.Scoreboard)
+    {
+        j["Scoreboard"].push_back({ {"Username", entry.Username}, {"Score", entry.Score} });
+    }
 
     std::ofstream file(SaveFilePath);
     if (file.is_open())
@@ -52,4 +68,12 @@ void GlobalSettings::SetGlobalData(const GlobalData& data)
     Save();
     UAudioSystem::Get().SetBGMVolume(Data.BGMVolume);
     UAudioSystem::Get().SetSFXVolume(Data.SFXVolume);
+}
+
+void GlobalSettings::AddScore(const std::string& username, int score)
+{
+    Data.Scoreboard.push_back({ username, score });
+    std::sort(Data.Scoreboard.begin(), Data.Scoreboard.end());
+    Data.Scoreboard.resize(std::min<int>(Data.Scoreboard.size(), static_cast<size_t>(10)));
+    Save();
 }

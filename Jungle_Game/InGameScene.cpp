@@ -97,6 +97,7 @@ void InGameScene::Release() {
 
     Timer->ClearDelayedActions();
     EventSystem::Get().UnSubscribe("EnemyDied");
+    EventSystem::Get().UnSubscribe("AllStageCleared");
 
     UScene::Release();
     delete WaveController;

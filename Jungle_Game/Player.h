@@ -23,7 +23,7 @@ public:
     void OnCollisionExit();
 
     bool IsDead() const { return bIsDead; }
-    void SetDead(bool bDead) { bIsDead = bDead; }
+    void SetDead(bool dead) { bIsDead = dead; }
 
     void FireProjectile();
     int GetHP();
