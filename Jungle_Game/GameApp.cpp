@@ -155,4 +155,5 @@ void GameApp::LoadDefaultAssets()
     Renderer->CreateTexture("asset/texture/enemy_projectile.png", "enemy_projectile");
     Renderer->CreateTexture("asset/texture/upgrade.png", "upgrade");
     Renderer->CreateTexture("asset/texture/heart.png", "heart");
+    Renderer->CreateTexture("asset/texture/boss_hp_bar.png", "boss_hp_bar");
 }

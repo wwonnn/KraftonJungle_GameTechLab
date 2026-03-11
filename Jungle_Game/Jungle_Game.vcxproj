@@ -127,6 +127,7 @@
   <ItemGroup>
     <ClCompile Include="Animator.cpp" />
     <ClCompile Include="AudioSystem.cpp" />
+    <ClCompile Include="BossHPBar.cpp" />
     <ClCompile Include="BossObject.cpp" />
     <ClCompile Include="CircleCollider.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
@@ -185,6 +186,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GlobalSettings.h" />
     <ClInclude Include="GlobalState.h" />
+    <ClInclude Include="BossHPBar.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
