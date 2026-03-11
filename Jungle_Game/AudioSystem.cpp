@@ -29,6 +29,11 @@ bool UAudioSystem::Create()
 
 void UAudioSystem::Release()
 {
+    for (auto& pair : SoundMap)
+    {
+        pair.second.AudioData.clear();
+    }
+
     if (MasteringVoice)
     {
         MasteringVoice->DestroyVoice();

@@ -19,11 +19,13 @@ public:
 
 private:
     void LoadDefaultAssets();
+    void ReleaseDefaultAssets();
 
 private:
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 private:
+    HINSTANCE hInst = nullptr;
     HWND hWnd = nullptr;
     URenderer* Renderer = nullptr;
     UTimer* Timer = nullptr;

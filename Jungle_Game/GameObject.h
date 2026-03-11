@@ -31,14 +31,12 @@ public:
 public:
 	virtual void Update(float DeltaTime) = 0;
 	virtual void Render(URenderer& renderer) = 0;
-	virtual bool CheckCollision(UGameObject* other) = 0;
-	virtual void ApplyImpulse(const FConstantBuffer& v) = 0;
     virtual void Destroy();
     virtual void Destroy(float delay);
     void TickDestroyTimer(float deltaTime);
 
     std::string GetTextureName() const { return TextureName; }
-    void SetTextureName(std::string name) { TextureName = name; }
+    void SetTextureName(const std::string& name) { TextureName = name; }
 
     FTransform GetTransform() const { return Transform; }
     UCircleCollider* GetCollider() const { return Collider; }

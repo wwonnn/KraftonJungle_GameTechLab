@@ -80,9 +80,6 @@ void InGameScene::Render() {
         Renderer->DrawString(L"Stage Clear!", 400.0f, 300.0f, FVector(1.0f, 1.0f, 0.0f));
     }
 
-    UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
-    UImGuiManager::Get().Update();
-
     // After all loop logic is done, check it should change the scene or not
     if (Player->IsDead() || bAllStageCleared)
     {

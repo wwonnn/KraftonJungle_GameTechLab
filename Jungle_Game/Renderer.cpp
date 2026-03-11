@@ -26,7 +26,6 @@ bool URenderer::Create(HWND hWnd)
     CreateEffectConstantBuffer();
     CreateDefaultQuad();
     CreateDefaultShader();
-    CreateDefaultTexture();
     CreateDefaultSamplerState();
     CreateBlendState();
     CreateDefaultFontAtlasAndVertexBuffer();
@@ -37,11 +36,23 @@ bool URenderer::Create(HWND hWnd)
 
 void URenderer::Release()
 {
+    for (auto& pair : SRVs) {
+        if (pair.second) {
+            pair.second->Release();
+        }
+    }
+    SRVs.clear();
+    for (auto& pair : Textures) {
+        if (pair.second) {
+            pair.second->Release();
+        }
+    }
+    Textures.clear();
+
     ReleaseTextShader();
     ReleaseDefaultFontAtlasAndVertexBuffer();
     ReleaseBlendState();
     ReleaseDefaultSamplerState();
-    ReleaseDefaultTexture();
     ReleaseDefaultShader();
     ReleaseDefaultQuad();
     ReleaseConstantBuffer();
@@ -70,13 +81,6 @@ void URenderer::BeginFrame()
 
 void URenderer::Render()
 {
-    //BeginFrame();
-
-/*    FConstantBuffer constants;
-    constants.position = FVector(0.0f, 0.0f, 0.0f);
-    constants.scale = FVector(0.5f, 0.5f, 1.0f);
-    UpdateConstantBuffer(constants);*/
-
     UINT stride = sizeof(FVertex);
     UINT offset = 0;
     DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
@@ -88,8 +92,6 @@ void URenderer::Render()
 
     DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     DeviceContext->DrawIndexed(6, 0, 0);
-
-    //EndFrame();
 }
 
 void URenderer::EndFrame()
@@ -585,48 +587,6 @@ void URenderer::ReleaseDefaultShader()
     }
 }
 
-void URenderer::CreateDefaultTexture()
-{
-    int width, height, channels;
-    unsigned char* textureData = stbi_load("player.png", &width, &height, &channels, 4);
-
-    D3D11_TEXTURE2D_DESC textureDesc = {};
-    textureDesc.Width = width;
-    textureDesc.Height = height;
-    textureDesc.MipLevels = 1;
-    textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
-    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-    D3D11_SUBRESOURCE_DATA textureSRD = {};
-    textureSRD.pSysMem = textureData;
-    textureSRD.SysMemPitch = width * 4;
-
-    Device->CreateTexture2D(&textureDesc, &textureSRD, &DefaultTexture);
-    if (DefaultTexture) {
-        Device->CreateShaderResourceView(DefaultTexture, nullptr, &DefaultSRV);
-    }
-
-    if (textureData) {
-        stbi_image_free(textureData);
-        textureData = nullptr;
-    }
-}
-
-void URenderer::ReleaseDefaultTexture()
-{
-    if (DefaultSRV) {
-        DefaultSRV->Release();
-        DefaultSRV = nullptr;
-    }
-    if (DefaultTexture) {
-        DefaultTexture->Release();
-        DefaultTexture = nullptr;
-    }
-}
-
 void URenderer::CreateDefaultSamplerState()
 {
     D3D11_SAMPLER_DESC sampDesc = {};
@@ -753,6 +713,7 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
     if (fontTexture)
     {
         Device->CreateShaderResourceView(fontTexture, nullptr, &FontAtlasSRV);
+        fontTexture->Release();
     }
 
     D3D11_BUFFER_DESC vertexBufferDesc = {};
@@ -762,6 +723,9 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
     vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
     Device->CreateBuffer(&vertexBufferDesc, nullptr, &TextVertexBuffer);
+
+    free(fontBuffer);
+    delete[] alphaPixels;
 }
 
 void URenderer::ReleaseDefaultFontAtlasAndVertexBuffer()
