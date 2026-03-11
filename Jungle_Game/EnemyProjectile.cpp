@@ -35,8 +35,12 @@ void UEnemyProjectile::Update(float DeltaTime)
 {
     if (player)
     {
-        FVector targetDirection = (player->GetTransform().Location - Transform.Location).Normalize();
-        float targetRotation = std::atan2f(targetDirection.y, targetDirection.x) - 3.14159265f / 2.0f;
+        if (bToPlayer) {
+            TargetDirection = (player->GetTransform().Location - Transform.Location).Normalize();
+        }
+
+        //FVector targetDirection = (player->GetTransform().Location - Transform.Location).Normalize();
+        float targetRotation = std::atan2f(TargetDirection.y, TargetDirection.x) - 3.14159265f / 2.0f;
 
         // 각도 차이 계산
         float angleDiff = targetRotation - Transform.Rotation.z;
@@ -85,4 +89,11 @@ void UEnemyProjectile::OnCollisionEnter()
 {
     Destroy();
     //SetPendingDestroy(true); // same effect
+}
+
+void UEnemyProjectile::SetTargetDirection(FVector direction, FVector offset)
+{
+    direction.Normalize();
+    TargetDirection = (direction + offset).Normalize();
+    bToPlayer = false;
 }

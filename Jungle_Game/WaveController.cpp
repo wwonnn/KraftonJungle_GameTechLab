@@ -92,8 +92,9 @@ void UWaveController::SpawnEnemy(FTransform transform, UPlayer * player) {
 
         auto seq = std::make_unique<MovementSequence>(true);
         seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.8f, 0.5f), 5.0f);
-        seq->Add(std::make_unique<DiveToPlayerMovement>(2.0f), 3.0f);
-        seq->Add(std::make_unique<DiveToPlayerMovement>(3.0f), 3.0f);
+        seq->Add(std::make_unique<DiveToPlayerMovement>(1.0f), 2.5f);
+        seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 1.0f, 0.5f), 1.0f);
+        seq->Add(std::make_unique<DiveToPlayerMovement>(2.0f), 2.0f);
 
         bossObj->SetMovementStrategy(std::move(seq));
         spawnedEnemies.push_back(bossObj);

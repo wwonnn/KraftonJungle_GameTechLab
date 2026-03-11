@@ -1,6 +1,9 @@
 #include "BossObject.h"
 #include "EventSystem.h"
 #include "ScoreManager.h"
+#include "EnemyProjectile.h"
+#include "SceneManager.h"
+#include "Random.h"
 
 UBossObject::UBossObject()
     : UEnemyObject()
@@ -25,6 +28,7 @@ void UBossObject::Update(float DeltaTime)
         break;
     case EnemyState::Move:
         Move(DeltaTime);
+        BossAttack(DeltaTime);
         break;
     case EnemyState::Dead:
         break;
@@ -133,4 +137,34 @@ void UBossObject::Dead(UCircleCollider* other)
     UAudioSystem::Get().Play("pop");
     Destroy(0.3f);
     EventSystem::Get().Trigger("EnemyDied");
+}
+
+void UBossObject::BossAttack(float deltaTime)
+{
+    // 발사체 발사
+    if (Transform.Location.y > -0.2f) {
+        constexpr float chancePerSecond = 0.8f;
+        if (Random::Range(0.0f, 1.0f) < chancePerSecond * deltaTime) {
+            FireBossProjectile();
+        }
+    }
+}
+
+void UBossObject::FireBossProjectile()
+{
+    if (abs(GetTransform().Rotation.z) < 3.0f)
+        return;
+
+    FVector spawnOffset(0.0f, 0.1f, 0.0f);
+
+    for (int i = -1; i <= 1; i++)
+    {
+        FVector offset(i * 0.5f, 0, 0);
+
+        UGameObject* enemyProjectile = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyProjectile(
+            FTransform(Transform.Location + spawnOffset, { 0.0f, 0.0f, 3.14f }, FVector(0.1f, 0.1f, 0.1f))));
+        dynamic_cast<UEnemyProjectile*>(enemyProjectile)->SetPlayer(GetPlayer());
+        dynamic_cast<UEnemyProjectile*>(enemyProjectile)->SetTargetDirection(FVector(0.0f, -1.0f, 0.0f), offset);
+        enemyProjectile->Destroy(2.0f);
+    }
 }
