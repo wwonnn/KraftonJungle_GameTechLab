@@ -4,6 +4,7 @@
 #include "GameObject.h"
 #include "EnemyProjectile.h"
 #include "SceneManager.h"
+#include "Random.h"
 
 UEnemyObject::UEnemyObject()
     : UGameObject()
@@ -130,8 +131,7 @@ void UEnemyObject::Move(float deltaTime)
     // 발사체 발사
     if (Transform.Location.y > -0.2f) {
         constexpr float chancePerSecond = 0.2f;
-        float r = (float)rand() / (float)RAND_MAX;
-        if (r < chancePerSecond * deltaTime) {
+        if (Random::Range(0.0f, 1.0f) < chancePerSecond * deltaTime) {
             FireEnemyProjectile();
         }
     }
