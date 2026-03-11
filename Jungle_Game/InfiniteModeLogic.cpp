@@ -117,7 +117,7 @@ void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player, int in
     }
     else if (CurrentStageInfo.strategies[index] == "circular")
     {
-        seq->Add(std::make_unique<CircularMovement>(FVector(0.0f, -1.0f), 0.4f, 0.01f, 10.0f), 10.0f);
+        seq->Add(std::make_unique<CircularMovement>(FVector(0.0f, -1.0f), 0.4f, 0.02f, 10.0f), 10.0f);
     }
 
     enemyObj->SetMovementStrategy(std::move(seq));
