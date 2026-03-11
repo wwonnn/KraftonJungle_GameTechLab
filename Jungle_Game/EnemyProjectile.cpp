@@ -40,8 +40,10 @@ void UEnemyProjectile::Update(float DeltaTime)
 
         // 각도 차이 계산
         float angleDiff = targetRotation - Transform.Rotation.z;
-        while (angleDiff > 3.14159265f) angleDiff -= 2.0f * 3.14159265f;
-        while (angleDiff < -3.14159265f) angleDiff += 2.0f * 3.14159265f;
+
+        angleDiff = std::fmod(angleDiff + 3.14159265f, 2.0f * 3.14159265f);
+        if (angleDiff < 0) angleDiff += 2.0f * 3.14159265f;
+        angleDiff -= 3.14159265f;
 
         // 각속도 제한
         constexpr float rotationSpeed = 0.3f;

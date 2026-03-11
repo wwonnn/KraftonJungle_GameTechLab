@@ -127,7 +127,7 @@ void UEnemyObject::Move(float deltaTime)
     }
 
     // 발사체 발사
-    if (Transform.Location.y > -0.2f) {
+    if (IsShootable() && Transform.Location.y > -0.2f) {
         constexpr float chancePerSecond = 0.2f;
         if (Random::Range(0.0f, 1.0f) < chancePerSecond * deltaTime) {
             FireEnemyProjectile();
