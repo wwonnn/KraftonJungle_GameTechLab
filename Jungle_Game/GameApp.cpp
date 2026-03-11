@@ -47,6 +47,8 @@ GameApp::~GameApp()
 
 bool GameApp::Initialize(HINSTANCE hInstance)
 {
+    hInst = hInstance;
+
     WNDCLASS windowClass = {};
     windowClass.lpfnWndProc = WndProc;
     windowClass.hInstance = hInstance;
@@ -81,7 +83,6 @@ bool GameApp::Initialize(HINSTANCE hInstance)
 
      SceneManager::Get().Initialize(new FGameContext(Renderer, Timer));
      SceneManager::Get().ChangeScene(SceneType::Init);
-    //ingameScene = new InGameScene(&gameContext);
 
     return true;
 }
@@ -109,8 +110,6 @@ void GameApp::Run()
 
             SceneManager::Get().Render();
 
-            UImGuiManager::Get().Update();
-
             Renderer->SwapBuffer();
         }
     }
@@ -119,9 +118,12 @@ void GameApp::Run()
 void GameApp::Finalize()
 {
     UImGuiManager::Get().Release();
-
+    SceneManager::Get().Release();
     UAudioSystem::Get().Release();
     Renderer->Release();
+
+    DestroyWindow(hWnd);
+    UnregisterClass(L"D3D11WindowClass", hInst);
 }
 
 void GameApp::LoadDefaultAssets()

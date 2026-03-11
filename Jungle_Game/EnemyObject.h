@@ -25,8 +25,6 @@ public:
     virtual void Initialize();
     virtual void Update(float DeltaTime) override;
     virtual void Render(URenderer& renderer) override;
-    bool CheckCollision(UGameObject* other) override { return true; }
-    void ApplyImpulse(const FConstantBuffer& v) override {}
 
     void SetPlayer(UPlayer* player) { Player = player; }
     UPlayer* GetPlayer() const { return Player; }
