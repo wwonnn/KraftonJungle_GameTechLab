@@ -33,6 +33,7 @@
     { "x": 0.0, "y": 0.0, "z": 0.0 },
     { "x": 0.0, "y": 0.0, "z": 0.0 },
     { "x": 0.0, "y": 0.0, "z": 0.0 },
+    { "x": 0.0, "y": 0.0, "z": 0.0 },
     { "x": 0.0, "y": 0.0, "z": 0.0 }
   ],
   "spawn_scales": [
@@ -51,5 +52,22 @@
     { "x": 0.1, "y": 0.1, "z": 1.0 },
     { "x": 0.1, "y": 0.1, "z": 1.0 },
     { "x": 0.1, "y": 0.1, "z": 1.0 }
+  ],
+  "move_strategies": [
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "aligned",
+    "zigzag"
   ]
 }

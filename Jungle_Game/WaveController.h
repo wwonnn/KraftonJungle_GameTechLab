@@ -21,6 +21,7 @@ struct StageInfo {
     std::vector<SpawnPosition> positions;
     std::vector<FVector> rotations;
     std::vector<FVector> scales;
+    std::vector<std::string> strategies;
 };
 
 class UWaveController {
