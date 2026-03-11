@@ -2,6 +2,9 @@
 #include "IntroScene.h"
 #include "InGameScene.h"
 #include "OutroScene.h"
+#include "InifiniteModeScene.h"
+#include "ScoreboardScene.h"
+#include "InputNameScene.h"
 
 void SceneManager::Initialize(FGameContext* gameContext) {
     GameContext = gameContext;
@@ -22,6 +25,15 @@ void SceneManager::ChangeScene(SceneType type) {
         break;
     case SceneType::Outro:
         currentScene = new OutroScene(GameContext);
+        break;
+    case SceneType::Infinite:
+        currentScene = new InfiniteModeScene(GameContext);
+        break;
+    case SceneType::InputName:
+        currentScene = new InputNameScene(GameContext);
+        break;
+    case SceneType::Scoreboard:
+        currentScene = new ScoreboardScene(GameContext);
         break;
     }
 

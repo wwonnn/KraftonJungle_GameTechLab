@@ -11,6 +11,8 @@ public:
     ScoreManager() = default;
     ~ScoreManager() = default;
 
+    void Initialize() { score = 0; }
+
     void AddScore(int points){
         score += points;
     } 
