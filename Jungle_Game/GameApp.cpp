@@ -139,6 +139,7 @@ void GameApp::LoadDefaultAssets()
     UAudioSystem::Get().LoadFromFile("asset/audio/bgm.mp3", "bgm");
     UAudioSystem::Get().LoadFromFile("asset/audio/heal.mp3", "heal");
     UAudioSystem::Get().LoadFromFile("asset/audio/bossDamage.mp3", "bossDamage");
+    UAudioSystem::Get().LoadFromFile("asset/audio/playerHit.mp3", "playerHit");
 
     Renderer->CreateTexture("asset/texture/player.png", "player");
     Renderer->CreateTexture("asset/texture/enemy.png", "enemy");
