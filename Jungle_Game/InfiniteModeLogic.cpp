@@ -103,6 +103,7 @@ void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player, int in
 {
     UGameObject* enemy = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyObject(transform));
     UEnemyObject* enemyObj = dynamic_cast<UEnemyObject*>(enemy);
+    enemyObj->Initialize();
     enemyObj->SetPlayer(player);
 
     auto seq = std::make_unique<MovementSequence>(true);

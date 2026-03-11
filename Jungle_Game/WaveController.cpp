@@ -14,6 +14,7 @@ bool UWaveController::LoadStageData(int stageNumber) {
     if (!j.contains(key)) return false;
 
     auto& data = j[key];
+    currentStage.stageType = data["stage_type"];
     currentStage.enemyCount = data["enemy_count"];
     currentStage.spawnInterval = data["spawn_interval"];
 
@@ -70,17 +71,33 @@ void UWaveController::Update(float deltaTime, UPlayer * player) {
 }
 
 void UWaveController::SpawnEnemy(FTransform transform, UPlayer * player) {
-    UGameObject* enemy = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyObject(transform));
-    UEnemyObject* enemyObj = dynamic_cast<UEnemyObject*>(enemy);
-    enemyObj->SetPlayer(player);
+    if (currentStage.stageType == "Normal") {
+        UGameObject* enemy = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyObject(transform));
+        UEnemyObject* enemyObj = dynamic_cast<UEnemyObject*>(enemy);
+        enemyObj->Initialize();
+        enemyObj->SetPlayer(player);
 
-    auto seq = std::make_unique<MovementSequence>();
-    seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 10.0f);
-    seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.5f), 0.0f);
+        auto seq = std::make_unique<MovementSequence>();
+        seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.5f), 10.0f);
+        seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.5f), 0.0f);
 
-    enemyObj->SetMovementStrategy(std::move(seq));
+        enemyObj->SetMovementStrategy(std::move(seq));
+        spawnedEnemies.push_back(enemyObj);
+    }
+    else if (currentStage.stageType == "Boss") {
+        UGameObject* boss = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UBossObject(transform));
+        UBossObject* bossObj = dynamic_cast<UBossObject*>(boss);
+        bossObj->Initialize();
+        bossObj->SetPlayer(player);
 
-    spawnedEnemies.push_back(enemyObj);
+        auto seq = std::make_unique<MovementSequence>(true);
+        seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.8f, 0.5f), 5.0f);
+        seq->Add(std::make_unique<DiveToPlayerMovement>(2.0f), 3.0f);
+        seq->Add(std::make_unique<DiveToPlayerMovement>(3.0f), 3.0f);
+
+        bossObj->SetMovementStrategy(std::move(seq));
+        spawnedEnemies.push_back(bossObj);
+    }
 }
 
 void UWaveController::StartMove()

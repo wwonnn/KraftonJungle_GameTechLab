@@ -8,6 +8,7 @@
 
 #include "GameObject.h"
 #include "EnemyObject.h"
+#include "BossObject.h"
 
 using json = nlohmann::json;
 
@@ -16,6 +17,7 @@ struct SpawnPosition {
 };
 
 struct StageInfo {
+    std::string stageType;
     int enemyCount;
     float spawnInterval;
     std::vector<SpawnPosition> positions;
@@ -33,7 +35,7 @@ private:
     std::vector<UEnemyObject*> spawnedEnemies;
 
     int currentStageNumber = 0;
-    int totalStages = 2;
+    int totalStages = 3;
 
 public:
     bool LoadStageData(int stageNumber);
