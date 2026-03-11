@@ -217,6 +217,12 @@ void URenderer::DrawString(const std::wstring& name, float x, float y, const FVe
     float viewportWidth = Viewport.Width;
     float viewportHeight = Viewport.Height;
 
+    float scaleX = viewportWidth / 800.0f;
+    float scaleY = viewportHeight / 1024.0f;
+
+    float pixelX = x * scaleX;
+    float pixelY = y * scaleY;
+
     float totalWidth = 0.0f;
     float tempX = 0.0f;
     float tempY = 0.0f;
@@ -228,19 +234,19 @@ void URenderer::DrawString(const std::wstring& name, float x, float y, const FVe
     }
     totalWidth = tempX;
 
-    float currX = x;
-    float currY = y;
+    float currX = pixelX;
+    float currY = pixelY;
     switch (align)
     {
     case ETextAlign::Center:
-        currX = x - (totalWidth / 2.0f);
+        currX = pixelX - (totalWidth / 2.0f);
         break;
     case ETextAlign::Right:
-        currX = x - totalWidth;
+        currX = pixelX - totalWidth;
         break;
     case ETextAlign::Left:
     default:
-        currX = x;
+        currX = pixelX;
     }
 
     for (wchar_t c : name)
