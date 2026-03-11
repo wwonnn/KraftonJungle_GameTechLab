@@ -27,7 +27,16 @@ void InfiniteModeScene::Initialize() {
 
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InfiniteModeScene::OnEnemyDied, this));
 
-    Logic->Initialize(Player);
+    for (int i = 0; i < 2; ++i)
+    {
+        float xPos = -0.9f + (i * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        LifeObjects.push_back(life);
+    }
+
+    Logic->Initialize(Player, Timer);
 
     ScoreManager::Get().Initialize();
 
@@ -77,7 +86,7 @@ void InfiniteModeScene::Render() {
 void InfiniteModeScene::Release() {
     UAudioSystem::Get().StopBGM();
 
-    Timer->ClearDelayedActions();
+     Timer->ClearDelayedActions();
     EventSystem::Get().UnSubscribe("EnemyDied");
 
     UScene::Release();

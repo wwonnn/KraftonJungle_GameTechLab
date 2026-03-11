@@ -155,10 +155,7 @@ bool CircularMovement::Update(FVector& outPosition, float& outRotation, const FV
     if (!bInCircle)
     {
         outPosition = currentPos + CurrentDirection * Speed * dt;
-
-        float oldRot = outRotation;
-        float newRot = std::atan2(CurrentDirection.y, CurrentDirection.x) - 3.14159265f / 2.0f;
-        outRotation = MathUtil::Lerp(oldRot, newRot, 0.2f * dt);
+        outRotation = std::atan2(CurrentDirection.y, CurrentDirection.x) - 3.14159265f / 2.0f;
 
         CurrentDistance += Speed * dt;
         if (CurrentDistance >= CircleDistance)

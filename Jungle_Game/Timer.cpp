@@ -42,16 +42,26 @@ void UTimer::ExecuteAfter(float seconds, std::function<void()> callback) {
 }
 
 void UTimer::UpdateDelayedActions() {
-    for (auto it = DelayedActions.begin(); it != DelayedActions.end();) {
-        if (!it->executed && totalTime - it->startTime >= it->delay) {
-            it->callback();
-            it->executed = true;
-            it = DelayedActions.erase(it);
-        }
-        else
+    std::vector<std::function<void()>> readyCallbacks;
+
+    for (size_t i = 0; i < DelayedActions.size(); ++i)
+    {
+        if (!DelayedActions[i].executed && totalTime - DelayedActions[i].startTime >= DelayedActions[i].delay)
         {
-            ++it;
+            readyCallbacks.push_back(DelayedActions[i].callback);
+            DelayedActions[i].executed = true;
         }
+    }
+
+    DelayedActions.erase(
+        std::remove_if(DelayedActions.begin(), DelayedActions.end(),
+            [](const FDelayedAction& action) { return action.executed; }),
+        DelayedActions.end()
+    );
+
+    for (auto& callback : readyCallbacks)
+    {
+        callback();
     }
 }
 
