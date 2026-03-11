@@ -14,6 +14,7 @@
 #include "SceneManager.h"
 #include "GameContext.h"
 #include "GlobalSettings.h"
+#include "Random.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -63,6 +64,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
     UpdateWindow(hWnd);
 
     GlobalSettings::Get().Load();
+    Random::Initialize();
 
     if (!Renderer->Create(hWnd))
     {
