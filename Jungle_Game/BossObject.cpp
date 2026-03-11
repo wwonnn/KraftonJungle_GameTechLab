@@ -59,6 +59,11 @@ void UBossObject::Initialize()
 
     StartPos = Transform.Location;
     TargetPos = SpawnedTransform.Location;
+
+    if (Collider != nullptr)
+    {
+        Collider->SetRadius(0.5f);
+    }
 }
 
 void UBossObject::Render(URenderer& renderer)

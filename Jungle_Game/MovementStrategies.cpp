@@ -22,9 +22,14 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
     outRotation = 3.14159265; // look down
 
     CurrentRange += moveDist;
-    if (CurrentRange >= MovementRange)
+    if (abs(CurrentRange) > MovementRange)
     {
-        CurrentRange = 0.0f;
+        CurrentRange *= -1.0f;
+        if (CurrentRange < -MovementRange)
+            CurrentRange = -MovementRange;
+        else if (CurrentRange > MovementRange)
+            CurrentRange = MovementRange;
+
         SetDirection(FVector(-Direction.x, -Direction.y));
     }
 
@@ -220,3 +225,45 @@ void CircularMovement::SetDirection(FVector newDir)
     Direction = newDir;
 }
 
+DiveToPlayerMovement::DiveToPlayerMovement(float speed)
+    : Speed(speed)
+{
+}
+
+bool DiveToPlayerMovement::Update(FVector& outPosition, float& outRotation, const FVector& currentPos, const FVector& playerPos, float dt)
+{
+    if (!bInit) {
+        bInit = true;
+        StartPos = currentPos;
+        PlayerPos = playerPos;
+    }
+
+    if (MoveDist < 1.0f && !bBack) {
+        MoveDist += Speed * dt;
+        outPosition = StartPos + (PlayerPos - StartPos) * MoveDist;
+    }
+    else {
+        // 복귀
+        if (!bBack) {
+            bBack = true;
+        }
+        MoveDist -= Speed * dt;
+        if (MoveDist <= 0.0f)
+            MoveDist = 0.0f;
+
+        outPosition = StartPos + (PlayerPos - StartPos) * (MoveDist);
+    }
+
+    return false;
+}
+
+void DiveToPlayerMovement::Reset()
+{
+    MoveDist = 0.0f;
+    bInit = false;
+    bBack = false;
+}
+
+void DiveToPlayerMovement::SetDirection(FVector newDir)
+{
+}
