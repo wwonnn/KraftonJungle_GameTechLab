@@ -87,7 +87,7 @@ void UPlayer::FireProjectile()
         );
         projectile->SetVelocity(currentStats.ProjectileVelocity);
         SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
-        projectile->Destroy(1.5f);
+        projectile->Destroy(2.0f);
     }
 }
 
