@@ -19,13 +19,13 @@ void ScoreboardScene::Update(float deltaTime) {
 void ScoreboardScene::Render() {
     Renderer->BeginFrame();
 
-    Renderer->DrawString(L"Scoreboard", 400.0f, 50.0f, FVector(1.0f, 1.0f, 0.0f));
+    Renderer->DrawString(L"Scoreboard", 400.0f, 300.0f, FVector(1.0f, 1.0f, 0.0f));
 
     const auto& scoreboard = GlobalSettings::Get().GetData().Scoreboard;
     for (size_t i = 0; i < scoreboard.size() && i < 10; ++i) {
         const auto& entry = scoreboard[i];
         std::wstring entryText = std::to_wstring(i + 1) + L". " + std::wstring(entry.Username.begin(), entry.Username.end()) + L" - " + std::to_wstring(entry.Score);
-        Renderer->DrawString(entryText, 400.0f, 100.0f + i * 30.0f, FVector(1.0f, 1.0f, 1.0f));
+        Renderer->DrawString(entryText, 400.0f, 400.0f + i * 30.0f, FVector(1.0f, 1.0f, 1.0f));
     }
 }
 
