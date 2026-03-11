@@ -47,8 +47,6 @@ void IntroScene::Render() {
     {
         RenderSettings();
     }
-
-    Renderer->SwapBuffer();
 }
 
 void IntroScene::Release() {

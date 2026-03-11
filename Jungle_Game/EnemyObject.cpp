@@ -5,6 +5,7 @@
 #include "EnemyProjectile.h"
 #include "SceneManager.h"
 #include "Random.h"
+#include "ItemObject.h"
 
 UEnemyObject::UEnemyObject()
     : UGameObject()
@@ -164,6 +165,15 @@ void UEnemyObject::Dead(UCircleCollider* other)
     {
         // ignore collision with player, only projectile can kill enemy
         ScoreManager::Get().AddScore(100);
+
+        float random = rand() % 100;
+        if (random < 30) {
+            UGameObject* itemobj = new UItemObject(
+                FTransform(Transform.Location, FVector(0, 0, 0), FVector(0.05f, 0.05f, 1.0f))
+            );
+
+            SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
+        }
     }
     UAudioSystem::Get().Play("pop");
     Destroy(0.3f);

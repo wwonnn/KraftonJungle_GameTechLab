@@ -50,7 +50,6 @@ void InputNameScene::Render() {
     {
         Renderer->DrawString(L"Enter Your Name: " + std::wstring(PlayerName.begin(), PlayerName.end()), 400.0f, 300.0f, FVector(1.0f, 1.0f, 1.0f));
     }
-    Renderer->SwapBuffer();
 }
 
 void InputNameScene::Release() {

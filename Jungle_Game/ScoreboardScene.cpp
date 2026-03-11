@@ -27,8 +27,6 @@ void ScoreboardScene::Render() {
         std::wstring entryText = std::to_wstring(i + 1) + L". " + std::wstring(entry.Username.begin(), entry.Username.end()) + L" - " + std::to_wstring(entry.Score);
         Renderer->DrawString(entryText, 400.0f, 100.0f + i * 30.0f, FVector(1.0f, 1.0f, 1.0f));
     }
-
-    Renderer->SwapBuffer();
 }
 
 void ScoreboardScene::Release() {

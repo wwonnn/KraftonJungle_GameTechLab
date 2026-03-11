@@ -83,8 +83,6 @@ void InGameScene::Render() {
     UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
     UImGuiManager::Get().Update();
 
-    Renderer->SwapBuffer();
-
     // After all loop logic is done, check it should change the scene or not
     if (Player->IsDead() || bAllStageCleared)
     {
