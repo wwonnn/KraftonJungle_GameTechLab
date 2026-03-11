@@ -107,6 +107,7 @@ void UBossObject::Hurt(UCircleCollider* other)
     {
         bIsHurt = true;
         SetTextureName("bossHurt");
+        UAudioSystem::Get().Play("bossDamage");
         HP -= 1.0f;
         if(HP <= 0.0f)
         {
