@@ -1,6 +1,8 @@
 #include "WaveController.h"
 #include "SceneManager.h"
 #include "EventSystem.h"
+#include "BossObject.h"
+#include "BossHPBar.h"
 #include <fstream>
 
 bool UWaveController::LoadStageData(int stageNumber) {
@@ -89,6 +91,10 @@ void UWaveController::SpawnEnemy(FTransform transform, UPlayer * player) {
         UBossObject* bossObj = dynamic_cast<UBossObject*>(boss);
         bossObj->Initialize();
         bossObj->SetPlayer(player);
+
+        UGameObject* bossHPBar = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UBossHPBar());
+        UBossHPBar* hpBar = dynamic_cast<UBossHPBar*>(bossHPBar);
+        hpBar->SetBossObject(bossObj);
 
         auto seq = std::make_unique<MovementSequence>(true);
         seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.8f, 0.5f), 5.0f);
