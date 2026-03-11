@@ -112,16 +112,19 @@ void InfiniteModeLogic::SpawnEnemy(FTransform transform, UPlayer* player, int in
     {
         seq->Add(std::make_unique<LinearMovement>(FVector(1.0f, 0.0f), 0.2f), 10.0f);
         seq->Add(std::make_unique<FollowPlayerMovement>(FVector(1.0f, 0.0f), 0.5f), 0.0f);
+        enemyObj->SetShootable(true);
     }
     else if (CurrentStageInfo.strategies[index] == "zigzag")
     {
         seq->Add(std::make_unique<ZigZagMovement>(FVector(0.0f, -1.0f),
             Random::Range(0.4f, 0.6f), Random::Range(0.3f, 0.5f)), 10.0f);
+        enemyObj->SetShootable(true);
     }
     else if (CurrentStageInfo.strategies[index] == "circular")
     {
         seq->Add(std::make_unique<CircularMovement>(FVector(0.0f, -1.0f),
             Random::Range(0.4f, 0.7f), Random::Range(0.02f, 0.03f), Random::Range(10.0f, 12.0f)), 10.0f);
+        enemyObj->SetShootable(false);
     }
 
     enemyObj->SetMovementStrategy(std::move(seq));

@@ -34,6 +34,9 @@ public:
     IMovementStrategy* GetMovementStrategy() const;
     void TransitionToState(EnemyState newState);
 
+    bool IsShootable() const { return bShootable; }
+    void SetShootable(bool shootable) { bShootable = shootable; }
+
 protected:
     void Spawn(float DeltaTime);
     void Move(float DeltaTime);
@@ -47,6 +50,8 @@ protected:
     FVector StartPos;
     FVector TargetPos;
     EnemyState State = EnemyState::Spawn;
+
+    bool bShootable = true;
 
     std::unique_ptr<IMovementStrategy> MovementStrategy;
 
