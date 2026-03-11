@@ -17,6 +17,7 @@ enum class ECollisionLayer
     Enemy,
     Projectile, // TODO: Renaming to PlayerProjectile
     EnemyProjectile,
+    Item
 };
 
 class UGameObject;

@@ -152,6 +152,7 @@
     <ClCompile Include="InputNameScene.cpp" />
     <ClCompile Include="IntroBackgroundObject.cpp" />
     <ClCompile Include="IntroScene.cpp" />
+    <ClCompile Include="ItemObject.cpp" />
     <ClCompile Include="LifeObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MovementSequence.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="InputNameScene.h" />
     <ClInclude Include="IntroBackgroundObject.h" />
     <ClInclude Include="IntroScene.h" />
+    <ClInclude Include="ItemObject.h" />
     <ClInclude Include="LifeObject.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MovementSequence.h" />

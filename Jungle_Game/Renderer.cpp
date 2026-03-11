@@ -45,6 +45,7 @@ void URenderer::Release()
     ReleaseDefaultShader();
     ReleaseDefaultQuad();
     ReleaseConstantBuffer();
+    ReleaseEffectConstantBuffer();
     ReleaseSpriteConstantBuffer();
     ReleaseRasterzerState();
     ReleaseFrameBuffer();
@@ -433,18 +434,21 @@ void URenderer::CreateEffectConstantBuffer()
     Device->CreateBuffer(&bufferDesc, nullptr, &EffectConstantBuffer);
 }
 
+void URenderer::ReleaseEffectConstantBuffer()
+{
+    if (EffectConstantBuffer)
+    {
+        EffectConstantBuffer->Release();
+        EffectConstantBuffer = nullptr;
+    }
+}
+
 void URenderer::ReleaseConstantBuffer()
 {
     if (ConstantBuffer)
     {
         ConstantBuffer->Release();
         ConstantBuffer = nullptr;
-    }
-
-    if (EffectConstantBuffer)
-    {
-        EffectConstantBuffer->Release();
-        EffectConstantBuffer = nullptr;
     }
 }
 

@@ -28,7 +28,8 @@ void UPlayer::Initialize()
     Collider->SetLayer(ECollisionLayer::Player);
     Collider->AddContactLayer(ECollisionLayer::Enemy);
     Collider->AddContactLayer(ECollisionLayer::EnemyProjectile);
-    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UPlayer::OnCollisionEnter, this));
+    Collider->AddContactLayer(ECollisionLayer::Item);
+    Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UPlayer::OnCollisionEnter, this, std::placeholders::_1));
     Collider->AddCollisionCallback(ECollisionEvent::Exit, std::bind(&UPlayer::OnCollisionExit, this));
 }
 
@@ -83,17 +84,34 @@ void UPlayer::FireProjectile()
 
 int UPlayer::GetHP() { return HP; }
 
+
 void UPlayer::TakeDamage() {
-    if (!bIsInvincible) {
-        HP--;
+    if (bIsDead || bIsInvincible) return;
+
+    HP--;
+    if (OnHPChanged) {
         OnHPChanged(HP);
-        bIsInvincible = true;
-        if (HP <= 0) {
-            bIsDead = true;
-            GlobalState::Get().bAllStageCleared = false;
-        }
+    }
+
+    bIsInvincible = true;
+
+    if (HP < 0) {
+        HP = -1;
+        bIsDead = true;
+        GlobalState::Get().bAllStageCleared = false;
     }
 }
+
+void UPlayer::Heal()
+{
+    if (bIsDead || HP >= 2) return;
+
+    HP++;
+    if (OnHPChanged) {
+        OnHPChanged(HP);
+    }
+}
+
 
 void UPlayer::Render(URenderer& renderer)
 {
@@ -132,9 +150,17 @@ void UPlayer::ApplyImpulse(const FConstantBuffer& v)
 
 }
 
-void UPlayer::OnCollisionEnter()
+void UPlayer::OnCollisionEnter(UCircleCollider* other)
 {
-    TakeDamage();
+    if (other->GetLayer() == ECollisionLayer::Item)
+    {
+        UAudioSystem::Get().Play("heal");
+        Heal();
+    }
+    else if (other->GetLayer() == ECollisionLayer::Enemy || other->GetLayer() == ECollisionLayer::EnemyProjectile)
+    {
+        TakeDamage();
+    }
 }
 
 void UPlayer::OnCollisionExit()

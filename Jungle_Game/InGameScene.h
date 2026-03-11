@@ -28,4 +28,7 @@ public:
 
     void OnEnemyDied();
     void OnAllStageCleared();
+
+    void ChangedHP(int newHP);
+    void LifeInitialize();
 };
