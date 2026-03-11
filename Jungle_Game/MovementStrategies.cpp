@@ -19,9 +19,10 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
     };
     //outRotation = std::atan2(Direction.y, Direction.x);
 
-    CurrentRange += Direction.x * moveDist;
-    if (CurrentRange > MovementRange || CurrentRange < -MovementRange)
+    CurrentRange += moveDist;
+    if (CurrentRange >= MovementRange)
     {
+        CurrentRange = 0.0f;
         SetDirection(FVector(-Direction.x, -Direction.y));
     }
 
