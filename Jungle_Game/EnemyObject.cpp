@@ -1,6 +1,10 @@
 #include "EnemyObject.h"
 #include "EventSystem.h"
 #include "ScoreManager.h"
+#include "GameObject.h"
+#include "EnemyProjectile.h"
+#include "SceneManager.h"
+#include "Random.h"
 
 UEnemyObject::UEnemyObject()
     : UGameObject()
@@ -123,6 +127,22 @@ void UEnemyObject::Move(float deltaTime)
             Transform.Rotation.z = newRot;
         }
     }
+
+    // 발사체 발사
+    if (Transform.Location.y > -0.2f) {
+        constexpr float chancePerSecond = 0.2f;
+        if (Random::Range(0.0f, 1.0f) < chancePerSecond * deltaTime) {
+            FireEnemyProjectile();
+        }
+    }
+}
+
+void UEnemyObject::FireEnemyProjectile()
+{
+    UGameObject* enemyProjectile = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyProjectile(
+        FTransform(Transform.Location, GetTransform().Rotation, FVector(0.1f, 0.1f, 0.1f))));
+    dynamic_cast<UEnemyProjectile*>(enemyProjectile)->SetPlayer(GetPlayer());
+    enemyProjectile->Destroy(2.0f);
 }
 
 void UEnemyObject::Dead(UCircleCollider* other)

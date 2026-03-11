@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -129,11 +129,11 @@
     <ClCompile Include="CircleCollider.cpp" />
     <ClCompile Include="CollisionSystem.cpp" />
     <ClCompile Include="EnemyObject.cpp" />
+    <ClCompile Include="EnemyProjectile.cpp" />
     <ClCompile Include="EventSystem.cpp" />
     <ClCompile Include="GameApp.cpp" />
     <ClCompile Include="GameBackground.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="GameObjectManager.cpp" />
     <ClCompile Include="GlobalSettings.cpp" />
     <ClCompile Include="GlobalState.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
@@ -176,12 +176,12 @@
     <ClInclude Include="CollisionSystem.h" />
     <ClInclude Include="dr_mp3.h" />
     <ClInclude Include="EnemyObject.h" />
+    <ClInclude Include="EnemyProjectile.h" />
     <ClInclude Include="EventSystem.h" />
     <ClInclude Include="GameApp.h" />
     <ClInclude Include="GameBackground.h" />
     <ClInclude Include="GameContext.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="GameObjectManager.h" />
     <ClInclude Include="GlobalSettings.h" />
     <ClInclude Include="GlobalState.h" />
     <ClInclude Include="ImGuiManager.h" />

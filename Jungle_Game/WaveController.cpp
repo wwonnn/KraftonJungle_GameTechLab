@@ -24,7 +24,7 @@ bool UWaveController::LoadStageData(int stageNumber) {
 
     currentStage.rotations.clear();
     for (auto& rot : data["spawn_rotations"]) {
-        currentStage.rotations.push_back({ rot["x"], rot["y"] });
+        currentStage.rotations.push_back({ rot["x"], rot["y"], rot["z"]});
     }
 
     currentStage.scales.clear();
@@ -60,7 +60,7 @@ void UWaveController::Update(float deltaTime, UPlayer * player) {
 
         FTransform transform;
         transform.Location = FVector(pos.x, pos.y, 0.0f);
-        transform.Rotation = FVector(rot.x, rot.y, 0.0f);
+        transform.Rotation = FVector(rot.x, rot.y, rot.z);
         transform.Scale = FVector(scale.x, scale.y, 1.0f);
         SpawnEnemy(transform, player);
 

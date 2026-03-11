@@ -2,6 +2,7 @@
 #include "CollisionSystem.h"
 #include "Random.h"
 #include <algorithm>
+#include <string>
 
 LinearMovement::LinearMovement(FVector direction, float speed, float movementRange)
     : Direction(direction.Normalize())
@@ -18,7 +19,7 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    //outRotation = std::atan2(Direction.y, Direction.x);
+    outRotation = 3.14159265; // look down
 
     CurrentRange += moveDist;
     if (CurrentRange >= MovementRange)
@@ -60,7 +61,7 @@ bool FollowPlayerMovement::Update(FVector& outPosition, float& outRotation, cons
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    outRotation = std::atan2(Direction.y, Direction.x) + 3.14159265f / 2.0f;
+    outRotation = std::atan2(Direction.y, Direction.x) - 3.14159265f / 2.0f;
 
     return false;
 }

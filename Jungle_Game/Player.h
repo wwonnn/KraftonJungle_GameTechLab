@@ -46,6 +46,6 @@ private:
     float InvincibilityTime = 0.0f;
     float TotalInvincibleDuration = 1.0f;
 
-    const float ShootCooldown = 0.2f;
+    static constexpr float ShootCooldown = 0.2f;
     float ShootCooldownTimer = 0.0f;
 };
