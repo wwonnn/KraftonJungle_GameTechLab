@@ -35,6 +35,8 @@ void InGameScene::Initialize()
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InGameScene::OnEnemyDied, this));
     EventSystem::Get().Subscribe("AllStageCleared", std::bind(&InGameScene::OnAllStageCleared, this));
 
+    ScoreManager::Get().Initialize();
+
     WaveController->GoNextStage();
 
     LifeInitialize();

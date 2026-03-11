@@ -91,9 +91,6 @@ void UPlayer::FireProjectile()
     }
 }
 
-int UPlayer::GetHP() { return HP; }
-
-
 void UPlayer::TakeDamage() {
     if (bIsDead || bIsInvincible) return;
 
