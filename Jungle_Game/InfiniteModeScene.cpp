@@ -27,22 +27,13 @@ void InfiniteModeScene::Initialize() {
 
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InfiniteModeScene::OnEnemyDied, this));
 
-    for (int i = 0; i < 2; ++i)
-    {
-        float xPos = -0.9f + (i * 0.1f);
-        UGameObject* life = CreateGameObject(new LifeObject(
-            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
-
-        LifeObjects.push_back(life);
-    }
-
-    Player->OnHPChanged = std::bind(&InfiniteModeScene::ChangedHP, this, std::placeholders::_1);
-
     Logic->Initialize(Player);
 
     ScoreManager::Get().Initialize();
 
     UAudioSystem::Get().PlayBGM("bgm");
+
+    LifeInitialize();
 
     Logic->LoadRandomWave();
 
@@ -138,4 +129,17 @@ void InfiniteModeScene::ChangedHP(int newHP)
 
         LifeObjects.push_back(life);
     }
+}
+
+void InfiniteModeScene::LifeInitialize() {
+    for (int i = 0; i < 2; ++i)
+    {
+        float xPos = -0.9f + (i * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        LifeObjects.push_back(life);
+    }
+
+    Player->OnHPChanged = std::bind(&InfiniteModeScene::ChangedHP, this, std::placeholders::_1);
 }

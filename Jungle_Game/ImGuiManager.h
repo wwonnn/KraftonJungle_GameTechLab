@@ -30,5 +30,5 @@ public:
 	void DrawMyText(const char* format, ...);
 
 private:
-	char buffer[256] = "test";
+    char buffer[256];
 };

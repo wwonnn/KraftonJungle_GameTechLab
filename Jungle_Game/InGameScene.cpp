@@ -37,20 +37,9 @@ void InGameScene::Initialize()
 
     WaveController->GoNextStage();
 
-    for (int i = 0; i < 2; i++) {
-        float xPos = -0.9f + (i * 0.1f);
-        UGameObject* life = CreateGameObject(new LifeObject(
-            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
-
-        lifeObjects.push_back(life);
-    }
-
-    Player->OnHPChanged = std::bind(&InGameScene::ChangedHP, this, std::placeholders::_1);
+    LifeInitialize();
 
     UAudioSystem::Get().PlayBGM("bgm");
-
-    UGameObject* itemobj = CreateGameObject(new UItemObject(
-        FTransform(FVector(0.0f, 1.0f, 0.0f), FVector(), FVector(0.08f, 0.08f, 1.0f))));
 }
 
 void InGameScene::Update(float deltaTime) {
@@ -82,7 +71,7 @@ void InGameScene::Render() {
         Renderer->DrawString(L"Stage Clear!", 400.0f, 300.0f, FVector(1.0f, 1.0f, 0.0f));
     }
 
-    // UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
+    UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
 
     // After all loop logic is done, check it should change the scene or not
     if (Player->IsDead() || bAllStageCleared)
@@ -136,25 +125,6 @@ void InGameScene::OnAllStageCleared()
     GlobalState::Get().bAllStageCleared = true;
 }
 
-//void InGameScene::ChangedHP(int newHP)
-//{
-//    if (newHP <= 0) return;
-//
-//    int HPCount = newHP - 1;
-//    if (HPCount < lifeObjects.size()) {
-//        lifeObjects[HPCount]->SetPendingDestroy(true);
-//        lifeObjects.pop_back();
-//    }
-//    else {
-//        float xPos = -0.9f + (lifeObjects.size() * 0.1f);
-//        UGameObject* life = CreateGameObject(new LifeObject(
-//            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
-//
-//        lifeObjects.push_back(life);
-//    }
-//    UImGuiManager::Get().DrawMyText("Player HP: %d\n", lifeObjects.size());
-//}
-
 void InGameScene::ChangedHP(int newHP)
 {
     if (newHP < 0) newHP = 0;
@@ -176,4 +146,16 @@ void InGameScene::ChangedHP(int newHP)
 
         lifeObjects.push_back(life);
     }
+}
+
+void InGameScene::LifeInitialize() {
+    for (int i = 0; i < 2; i++) {
+        float xPos = -0.9f + (i * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        lifeObjects.push_back(life);
+    }
+
+    Player->OnHPChanged = std::bind(&InGameScene::ChangedHP, this, std::placeholders::_1);
 }
