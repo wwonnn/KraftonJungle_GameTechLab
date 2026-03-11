@@ -49,11 +49,6 @@ void InGameScene::Update(float deltaTime) {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
     }
-
-    if (Player->GetHP() <= 0)
-    {
-        Player->SetDead(true);
-    }
 }
 
 void InGameScene::Render() {
@@ -127,7 +122,10 @@ void InGameScene::OnAllStageCleared()
 
 void InGameScene::ChangedHP(int newHP)
 {
-    if (newHP < 0) newHP = 0;
+    if (newHP < 0) {
+        Player->SetDead(true);
+        return;
+    }
 
     while (lifeObjects.size() > newHP)
     {
