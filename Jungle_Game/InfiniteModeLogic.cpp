@@ -82,7 +82,7 @@ void InfiniteModeLogic::LoadRandomWave()
     CurrentStageInfo.rotations.clear();
     for (auto& rot : j["spawn_rotations"])
     {
-        CurrentStageInfo.rotations.push_back({ rot["x"], rot["y"] });
+        CurrentStageInfo.rotations.push_back({ rot["x"], rot["y"], rot["z"]});
     }
 
     CurrentStageInfo.scales.clear();
@@ -112,7 +112,7 @@ void InfiniteModeLogic::SpawnSequentially()
              auto& scale = CurrentStageInfo.scales[i % CurrentStageInfo.scales.size()];
              FTransform transform;
              transform.Location = FVector(pos.x, pos.y, 0);
-             transform.Rotation = FVector(rot.x, rot.y, 0);
+             transform.Rotation = FVector(rot.x, rot.y, rot.z);
              transform.Scale = FVector(scale.x, scale.y, 1);
              SpawnEnemy(transform, Player, i);
             });
