@@ -29,8 +29,9 @@ void InputNameScene::Update(float deltaTime) {
         AnimationElapsedTime += deltaTime;
 
         float progress = std::min<float>(AnimationElapsedTime / ScoreAnimDuration, 1.0f);
+        float easedProgress = 1.0f - std::powf(1.0f - progress, 3.0f);
 
-        Score = static_cast<int>(ScoreManager::Get().GetScore() * progress);
+        Score = static_cast<int>(ScoreManager::Get().GetScore() * easedProgress);
 
         if (progress >= 1.0f)
         {
