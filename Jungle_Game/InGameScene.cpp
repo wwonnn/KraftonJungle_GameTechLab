@@ -51,6 +51,11 @@ void InGameScene::Update(float deltaTime) {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
     }
+
+    if (UInputManager::Get().GetKeyDown(VK_ESCAPE))
+    {
+        SceneManager::Get().ChangeScene(SceneType::Init);
+    }
 }
 
 void InGameScene::Render() {

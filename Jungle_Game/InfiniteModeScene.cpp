@@ -57,6 +57,11 @@ void InfiniteModeScene::Update(float deltaTime) {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
     }
+
+    if (UInputManager::Get().GetKeyDown(VK_ESCAPE))
+    {
+        SceneManager::Get().ChangeScene(SceneType::Init);
+    }
 }
 
 void InfiniteModeScene::Render() {
@@ -74,9 +79,6 @@ void InfiniteModeScene::Render() {
     Renderer->DrawString(std::to_wstring(ScoreManager::Get().GetScore()), 50.0f, 50.0f, FVector(1.0f, 1.0f, 1.0f), ETextAlign::Left);
     Renderer->DrawString(CurrWaveText, 750.0f, 50.0f, FVector(1.0f, 1.0f, 1.0f), ETextAlign::Right);
 
-    // Renderer->SwapBuffer();
-
-    // After all loop logic is done, check it should change the scene or not
     if (Player->IsDead())
     {
         SceneManager::Get().ChangeScene(SceneType::InputName);

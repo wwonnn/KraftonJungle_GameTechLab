@@ -6,6 +6,13 @@ void UScene::Refresh()
     for (auto it = GameObjects.begin(); it != GameObjects.end();)
     {
         UGameObject* obj = *it;
+
+        if (!obj)
+        {
+            it = GameObjects.erase(it);
+            continue;
+        }
+
         if (obj->IsPendingDestroy())
         {
             delete obj;
@@ -19,7 +26,10 @@ void UScene::Refresh()
 
     for (UGameObject* obj : PendingGameObjects)
     {
-        GameObjects.push_back(obj);
+        if (obj)
+        {
+            GameObjects.push_back(obj);
+        }
     }
     PendingGameObjects.clear();
 }
