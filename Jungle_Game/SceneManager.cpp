@@ -52,3 +52,17 @@ void SceneManager::Render()
 {
     if (currentScene) currentScene->Render();
 }
+
+void SceneManager::Release()
+{
+    if (currentScene) {
+        currentScene->Release();
+        delete currentScene;
+        currentScene = nullptr;
+    }
+
+    if (GameContext)
+    {
+        delete GameContext;
+    }
+}

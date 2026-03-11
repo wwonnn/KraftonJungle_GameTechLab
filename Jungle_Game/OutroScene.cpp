@@ -39,5 +39,5 @@ void OutroScene::Render() {
 }
 
 void OutroScene::Release() {
-    // Release resources, clean up, etc.
+    UScene::Release();
 }

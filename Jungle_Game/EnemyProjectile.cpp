@@ -75,16 +75,6 @@ void UEnemyProjectile::Render(URenderer& renderer)
     renderer.Render();
 }
 
-bool UEnemyProjectile::CheckCollision(UGameObject* other)
-{
-    return false;
-}
-
-void UEnemyProjectile::ApplyImpulse(const FConstantBuffer& v)
-{
-
-}
-
 void UEnemyProjectile::OnCollisionEnter()
 {
     Destroy();

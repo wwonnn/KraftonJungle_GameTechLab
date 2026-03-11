@@ -44,16 +44,6 @@ void UProjectile::Render(URenderer& renderer)
     renderer.Render();
 }
 
-bool UProjectile::CheckCollision(UGameObject* other)
-{
-    return false;
-}
-
-void UProjectile::ApplyImpulse(const FConstantBuffer& v)
-{
-
-}
-
 void UProjectile::OnCollisionEnter()
 {
     Destroy();

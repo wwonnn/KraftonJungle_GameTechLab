@@ -19,6 +19,11 @@ UEnemyObject::UEnemyObject(FTransform transform)
 
 UEnemyObject::~UEnemyObject()
 {
+    if (Animator)
+    {
+        delete Animator;
+        Animator = nullptr;
+    }
 }
 
 void UEnemyObject::Update(float DeltaTime)

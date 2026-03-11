@@ -6,7 +6,6 @@
 class SceneManager {
 private:
     UScene* currentScene = nullptr;
-    static SceneManager* instance;
     FGameContext* GameContext = nullptr;
 
 public:
@@ -23,6 +22,8 @@ public:
     void ChangeScene(SceneType type);
     void Update(float deltaTime);
     void Render();
+
+    void Release();
 
     UScene* GetcurrentScene() const { return currentScene; }
 };

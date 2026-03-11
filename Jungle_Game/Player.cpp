@@ -151,20 +151,9 @@ void UPlayer::Render(URenderer& renderer)
     renderer.UpdateEffectConstantBuffer(effectData);
 }
 
-bool UPlayer::CheckCollision(UGameObject* other)
-{
-    // 충돌 처리
-    return false;
-}
-
 void UPlayer::CheckWallCollision()
 {
     UCollisionSystem::Get().CheckWallCollision(Transform.Location, Transform.Scale);
-}
-
-void UPlayer::ApplyImpulse(const FConstantBuffer& v)
-{
-
 }
 
 void UPlayer::OnCollisionEnter(UCircleCollider* other)
@@ -188,5 +177,4 @@ void UPlayer::OnCollisionEnter(UCircleCollider* other)
 
 void UPlayer::OnCollisionExit()
 {
-    OutputDebugString(L"Player exit\n");
 }

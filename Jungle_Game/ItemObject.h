@@ -15,8 +15,6 @@ public:
 public:
     void Update(float DeltaTime) override;
     void Render(URenderer& renderer) override;
-    bool CheckCollision(UGameObject* other) override { return true; }
-    void ApplyImpulse(const FConstantBuffer& v) override {}
 
     void OnCollisionEnter(UCircleCollider* other);
 

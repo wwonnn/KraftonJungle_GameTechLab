@@ -110,9 +110,6 @@ private:
 	void CreateDefaultShader();
 	void ReleaseDefaultShader();
 
-	void CreateDefaultTexture();
-	void ReleaseDefaultTexture();
-
 	void CreateDefaultSamplerState();
 	void ReleaseDefaultSamplerState();
 
@@ -153,8 +150,6 @@ private:
 	ID3D11PixelShader* PixelShader = nullptr;
 	ID3D11InputLayout* InputLayout = nullptr;
 
-	ID3D11Texture2D* DefaultTexture = nullptr;
-	ID3D11ShaderResourceView* DefaultSRV = nullptr;
 	ID3D11SamplerState* DefaultSamplerState = nullptr;
 
 	ID3D11BlendState* BlendState = nullptr;
