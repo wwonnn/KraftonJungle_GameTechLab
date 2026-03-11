@@ -9,6 +9,9 @@
 #include "Projectile.h"
 #include "ScoreManager.h"
 #include "GameBackground.h"
+#include "ItemObject.h"
+
+#include "ImGuiManager.h"
 
 InGameScene::InGameScene(FGameContext* gameContext)
     :UScene(gameContext) {
@@ -22,7 +25,7 @@ void InGameScene::Initialize()
     UGameObject* bgObj = CreateGameObject(new UGameBackground(
         FTransform(FVector(), FVector(), FVector(2.0f, 2.0f, 1.0f))));
     Background = dynamic_cast<UGameBackground*>(bgObj);
-    
+
     UGameObject* playerObj = CreateGameObject(new UPlayer(
         FTransform(FVector(-0.2f, -0.8f, 0.0f),
             FVector(0.0f, 0.0f, 0.0f),
@@ -34,19 +37,7 @@ void InGameScene::Initialize()
 
     WaveController->GoNextStage();
 
-    for (int i = 0; i < 2; i++) {
-        float xPos = -0.9f + (i * 0.1f);
-        UGameObject* life = CreateGameObject(new LifeObject(
-            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
-
-        lifeObjects.push_back(life);
-    }
-
-    Player->OnHPChanged = [&](int newHP) {
-        if (newHP > 0) {
-            lifeObjects[newHP - 1]->Destroy();
-        }
-    };
+    LifeInitialize();
 
     UAudioSystem::Get().PlayBGM("bgm");
 }
@@ -57,11 +48,6 @@ void InGameScene::Update(float deltaTime) {
     {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
-    }
-
-    if (Player->GetHP() <= 0)
-    {
-        Player->SetDead(true);
     }
 }
 
@@ -122,7 +108,7 @@ void InGameScene::OnEnemyDied() {
             bStageClearText = false;
             Background->SetScrollSpeed(0.3f);
             WaveController->GoNextStage();
-        });
+            });
     }
 }
 
@@ -130,4 +116,42 @@ void InGameScene::OnAllStageCleared()
 {
     bAllStageCleared = true;
     GlobalState::Get().bAllStageCleared = true;
+}
+
+void InGameScene::ChangedHP(int newHP)
+{
+    if (newHP < 0) {
+        Player->SetDead(true);
+        return;
+    }
+
+    while (lifeObjects.size() > newHP)
+    {
+        if (!lifeObjects.empty())
+        {
+            lifeObjects.back()->SetPendingDestroy(true);
+            lifeObjects.pop_back();
+        }
+    }
+
+    while (lifeObjects.size() < newHP)
+    {
+        float xPos = -0.9f + (lifeObjects.size() * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        lifeObjects.push_back(life);
+    }
+}
+
+void InGameScene::LifeInitialize() {
+    for (int i = 0; i < 2; i++) {
+        float xPos = -0.9f + (i * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        lifeObjects.push_back(life);
+    }
+
+    Player->OnHPChanged = std::bind(&InGameScene::ChangedHP, this, std::placeholders::_1);
 }

@@ -1,5 +1,7 @@
 #include "ItemObject.h"
 #include "ImGuiManager.h"
+#include "ItemDatabase.h"
+#include "ImGuiManager.h"
 
 UItemObject::UItemObject()
     :UGameObject()
@@ -12,6 +14,20 @@ UItemObject::UItemObject(FTransform transform)
 {
     Initialize();
 }
+
+UItemObject::UItemObject(FTransform transform, int itemID)
+    :UGameObject(transform)
+{
+    ItemID = itemID;
+    const auto& data = UItemDatabase::Get().GetItem(itemID);
+    Transform.Scale = data.Scale;
+    Velocity = data.Veclocity;
+    SetTextureName(data.TextureName);
+    Destroy(data.DestroyDelay);
+
+    Initialize();
+}
+
 
 UItemObject::~UItemObject()
 {
@@ -35,18 +51,16 @@ void UItemObject::Render(URenderer& renderer)
 }
 
 void UItemObject::Initialize() {
-    Velocity = FVector(0.0f, -0.4f, 0.0f);
-    SetTextureName("heart");
+
     Collider->SetLayer(ECollisionLayer::Item);
     Collider->AddContactLayer(ECollisionLayer::Player);
     Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UItemObject::OnCollisionEnter, this, std::placeholders::_1));
-
-    Destroy(4.0f);
 }
 
 void UItemObject::OnCollisionEnter(UCircleCollider* other)
 {
     if (other->GetLayer() == ECollisionLayer::Player) {
+        UAudioSystem::Get().Play("heal");
         Destroy();
     }
 }

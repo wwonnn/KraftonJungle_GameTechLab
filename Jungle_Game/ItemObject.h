@@ -6,6 +6,7 @@ class UItemObject : public UGameObject
 public:
     UItemObject();
     UItemObject(FTransform transform);
+    UItemObject(FTransform transform, int ItemID);
     ~UItemObject() override;
 
 public:
@@ -19,4 +20,6 @@ private:
 
 private:
     FVector Velocity;
+    FVector Scale;
+    int ItemID;
 };

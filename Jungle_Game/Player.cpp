@@ -143,7 +143,6 @@ void UPlayer::OnCollisionEnter(UCircleCollider* other)
 {
     if (other->GetLayer() == ECollisionLayer::Item)
     {
-        UAudioSystem::Get().Play("heal");
         Heal();
     }
     else if (other->GetLayer() == ECollisionLayer::Enemy || other->GetLayer() == ECollisionLayer::EnemyProjectile)
