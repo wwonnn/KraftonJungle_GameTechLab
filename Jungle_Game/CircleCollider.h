@@ -15,7 +15,8 @@ enum class ECollisionLayer
 {
     Player,
     Enemy,
-    Projectile
+    Projectile, // TODO: Renaming to PlayerProjectile
+    EnemyProjectile,
 };
 
 class UGameObject;

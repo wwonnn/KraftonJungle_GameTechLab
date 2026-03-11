@@ -28,6 +28,7 @@ public:
     void ApplyImpulse(const FConstantBuffer& v) override {}
 
     void SetPlayer(UPlayer* player) { Player = player; }
+    UPlayer* GetPlayer() const { return Player; }
     void SetMovementStrategy(std::unique_ptr<IMovementStrategy> strategy);
     IMovementStrategy* GetMovementStrategy() const;
     void TransitionToState(EnemyState newState);
@@ -37,6 +38,7 @@ private:
     void Spawn(float DeltaTime);
     void Move(float DeltaTime);
     void Dead(UCircleCollider* other);
+    void FireEnemyProjectile();
 
 private:
     bool isSpawned = false;

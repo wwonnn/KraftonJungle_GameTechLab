@@ -3,7 +3,6 @@
 #include "Timer.h"
 #include "ImGuiManager.h"
 #include "GameObject.h"
-#include "GameObjectManager.h"
 #include "Player.h"
 #include "EnemyObject.h"
 #include "Projectile.h"
@@ -140,4 +139,5 @@ void GameApp::LoadDefaultAssets()
     Renderer->CreateTexture("asset/texture/title.png", "title");
     Renderer->CreateTexture("asset/texture/projectile.png", "projectile");
     Renderer->CreateTexture("asset/texture/game_bg.png", "game_bg");
+    Renderer->CreateTexture("asset/texture/enemy_projectile.png", "enemy_projectile");
 }
