@@ -154,6 +154,8 @@ void UEnemyObject::Dead(UCircleCollider* other)
     if (State == EnemyState::Dead)
         return;
 
+    TransitionToState(EnemyState::Dead);
+
     SetTextureName("deadAnim");
     auto anim = FAnimationClip();
     anim.TextureName = GetTextureName();
@@ -165,7 +167,6 @@ void UEnemyObject::Dead(UCircleCollider* other)
 
     Animator->SetAnimationClip(anim);
 
-    TransitionToState(EnemyState::Dead);
     if (other->GetLayer() == ECollisionLayer::Projectile)
     {
         // ignore collision with player, only projectile can kill enemy

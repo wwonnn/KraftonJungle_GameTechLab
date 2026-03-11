@@ -132,7 +132,10 @@ void InfiniteModeLogic::StartMove()
 {
     for (auto& enemy : SpawnedEnemies)
     {
-        enemy->TransitionToState(EnemyState::Move);
+        if (enemy->GetState() != EnemyState::Dead)
+        {
+            enemy->TransitionToState(EnemyState::Move);
+        }
     }
 }
 

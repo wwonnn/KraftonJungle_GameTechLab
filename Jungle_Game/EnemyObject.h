@@ -31,6 +31,7 @@ public:
     void SetMovementStrategy(std::unique_ptr<IMovementStrategy> strategy);
     IMovementStrategy* GetMovementStrategy() const;
     void TransitionToState(EnemyState newState);
+    EnemyState GetState() const { return State; }
 
     bool IsShootable() const { return bShootable; }
     void SetShootable(bool shootable) { bShootable = shootable; }
