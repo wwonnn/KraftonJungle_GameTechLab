@@ -18,6 +18,7 @@ public:
 
 private:
     void OnEnemyDied();
+    void ChangedHP(int newHP);
 
 private:
     UTimer* Timer = nullptr;

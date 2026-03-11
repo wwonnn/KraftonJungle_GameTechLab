@@ -19,7 +19,7 @@ public:
     virtual bool CheckCollision(UGameObject* other) override;
     virtual void ApplyImpulse(const FConstantBuffer& v) override;
 
-    void OnCollisionEnter();
+    void OnCollisionEnter(UCircleCollider* other);
     void OnCollisionExit();
 
     bool IsDead() const { return bIsDead; }
@@ -28,6 +28,7 @@ public:
     void FireProjectile();
     int GetHP();
     void TakeDamage();
+    void Heal();
 
     std::function<void(int)> OnHPChanged;
 
@@ -40,7 +41,7 @@ private:
     bool bIsDead = false;
     UAudioSystem* AudioSystem = nullptr;
 
-    int HP = 3;
+    int HP = 2;
 
     bool bIsInvincible = false;
     float InvincibilityTime = 0.0f;

@@ -108,6 +108,10 @@ void GameApp::Run()
             SceneManager::Get().Update(Timer->GetDeltaTime());
 
             SceneManager::Get().Render();
+
+            UImGuiManager::Get().Update();
+
+            Renderer->SwapBuffer();
         }
     }
 }
@@ -131,6 +135,7 @@ void GameApp::LoadDefaultAssets()
     UAudioSystem::Get().LoadFromFile("asset/audio/gameover.mp3", "gameover");
     UAudioSystem::Get().LoadFromFile("asset/audio/whoosh.mp3", "whoosh");
     UAudioSystem::Get().LoadFromFile("asset/audio/bgm.mp3", "bgm");
+    UAudioSystem::Get().LoadFromFile("asset/audio/heal.mp3", "heal");
 
     Renderer->CreateTexture("asset/texture/player.png", "player");
     Renderer->CreateTexture("asset/texture/enemy.png", "enemy");
@@ -140,4 +145,6 @@ void GameApp::LoadDefaultAssets()
     Renderer->CreateTexture("asset/texture/projectile.png", "projectile");
     Renderer->CreateTexture("asset/texture/game_bg.png", "game_bg");
     Renderer->CreateTexture("asset/texture/enemy_projectile.png", "enemy_projectile");
+    Renderer->CreateTexture("asset/texture/upgrade.png", "upgrade");
+    Renderer->CreateTexture("asset/texture/heart.png", "heart");
 }

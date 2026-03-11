@@ -36,8 +36,6 @@ void OutroScene::Render() {
         Renderer->DrawString(L"Game Over!", 400.0f, 300.0f, FVector(1.0f, 0.0f, 0.0f));
     }
     Renderer->DrawString(L"Press Space to Return to Main Menu", 400.0f, 350.0f, FVector(1.0f, 1.0f, 1.0f));
-
-    Renderer->SwapBuffer();
 }
 
 void OutroScene::Release() {

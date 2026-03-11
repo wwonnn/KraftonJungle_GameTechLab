@@ -36,17 +36,9 @@ void InfiniteModeScene::Initialize() {
         LifeObjects.push_back(life);
     }
 
-    Logic->Initialize(Player);
+    Player->OnHPChanged = std::bind(&InfiniteModeScene::ChangedHP, this, std::placeholders::_1);
 
-    Player->OnHPChanged = [&](int newHP) {
-        if (newHP > 0) {
-            LifeObjects[newHP - 1]->Destroy();
-        }
-        if (newHP <= 0)
-        {
-            Player->SetDead(true);
-        }
-        };
+    Logic->Initialize(Player);
 
     ScoreManager::Get().Initialize();
 
@@ -82,7 +74,7 @@ void InfiniteModeScene::Render() {
     Renderer->DrawString(std::to_wstring(ScoreManager::Get().GetScore()), 50.0f, 50.0f, FVector(1.0f, 1.0f, 1.0f), ETextAlign::Left);
     Renderer->DrawString(CurrWaveText, 750.0f, 50.0f, FVector(1.0f, 1.0f, 1.0f), ETextAlign::Right);
 
-    Renderer->SwapBuffer();
+    // Renderer->SwapBuffer();
 
     // After all loop logic is done, check it should change the scene or not
     if (Player->IsDead())
@@ -119,5 +111,31 @@ void InfiniteModeScene::OnEnemyDied()
 
             CurrWaveText = L"Wave " + std::to_wstring(Logic->GetWaveCount() + 1);
         });
+    }
+}
+
+void InfiniteModeScene::ChangedHP(int newHP)
+{
+    if (newHP < 0) {
+        Player->SetDead(true);
+        return;
+    }
+
+    while (LifeObjects.size() > newHP)
+    {
+        if (!LifeObjects.empty())
+        {
+            LifeObjects.back()->SetPendingDestroy(true);
+            LifeObjects.pop_back();
+        }
+    }
+
+    while (LifeObjects.size() < newHP)
+    {
+        float xPos = -0.9f + (LifeObjects.size() * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        LifeObjects.push_back(life);
     }
 }

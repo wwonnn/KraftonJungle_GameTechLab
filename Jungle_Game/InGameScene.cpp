@@ -9,6 +9,9 @@
 #include "Projectile.h"
 #include "ScoreManager.h"
 #include "GameBackground.h"
+#include "ItemObject.h"
+
+#include "ImGuiManager.h"
 
 InGameScene::InGameScene(FGameContext* gameContext)
     :UScene(gameContext) {
@@ -42,13 +45,12 @@ void InGameScene::Initialize()
         lifeObjects.push_back(life);
     }
 
-    Player->OnHPChanged = [&](int newHP) {
-        if (newHP > 0) {
-            lifeObjects[newHP - 1]->Destroy();
-        }
-    };
+    Player->OnHPChanged = std::bind(&InGameScene::ChangedHP, this, std::placeholders::_1);
 
     UAudioSystem::Get().PlayBGM("bgm");
+
+    UGameObject* itemobj = CreateGameObject(new UItemObject(
+        FTransform(FVector(0.0f, 1.0f, 0.0f), FVector(), FVector(0.08f, 0.08f, 1.0f))));
 }
 
 void InGameScene::Update(float deltaTime) {
@@ -80,10 +82,7 @@ void InGameScene::Render() {
         Renderer->DrawString(L"Stage Clear!", 400.0f, 300.0f, FVector(1.0f, 1.0f, 0.0f));
     }
 
-    UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
-    UImGuiManager::Get().Update();
-
-    Renderer->SwapBuffer();
+    // UImGuiManager::Get().DrawMyText("Enemy Kill Count: %d\nCurrent Stage: %d\n", EnemyKillCount, WaveController->GetCurrentStageInfo().enemyCount);
 
     // After all loop logic is done, check it should change the scene or not
     if (Player->IsDead() || bAllStageCleared)
@@ -135,4 +134,46 @@ void InGameScene::OnAllStageCleared()
 {
     bAllStageCleared = true;
     GlobalState::Get().bAllStageCleared = true;
+}
+
+//void InGameScene::ChangedHP(int newHP)
+//{
+//    if (newHP <= 0) return;
+//
+//    int HPCount = newHP - 1;
+//    if (HPCount < lifeObjects.size()) {
+//        lifeObjects[HPCount]->SetPendingDestroy(true);
+//        lifeObjects.pop_back();
+//    }
+//    else {
+//        float xPos = -0.9f + (lifeObjects.size() * 0.1f);
+//        UGameObject* life = CreateGameObject(new LifeObject(
+//            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+//
+//        lifeObjects.push_back(life);
+//    }
+//    UImGuiManager::Get().DrawMyText("Player HP: %d\n", lifeObjects.size());
+//}
+
+void InGameScene::ChangedHP(int newHP)
+{
+    if (newHP < 0) newHP = 0;
+
+    while (lifeObjects.size() > newHP)
+    {
+        if (!lifeObjects.empty())
+        {
+            lifeObjects.back()->SetPendingDestroy(true);
+            lifeObjects.pop_back();
+        }
+    }
+
+    while (lifeObjects.size() < newHP)
+    {
+        float xPos = -0.9f + (lifeObjects.size() * 0.1f);
+        UGameObject* life = CreateGameObject(new LifeObject(
+            FTransform(FVector(xPos, -0.9f, 0.0f), FVector(), FVector(0.1f, 0.1f, 1.0f))));
+
+        lifeObjects.push_back(life);
+    }
 }

@@ -277,7 +277,4 @@
   <ItemGroup>
     <FxCompile Include="DefaultShader.hlsl" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="enemies.json" />
-  </ItemGroup>
 </Project>

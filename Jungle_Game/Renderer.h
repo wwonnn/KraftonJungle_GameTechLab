@@ -96,8 +96,9 @@ private:
 	void ReleaseRasterzerState();
 
 	void CreateConstantBuffer();
-    void CreateEffectConstantBuffer();  
     void ReleaseConstantBuffer();
+
+    void CreateEffectConstantBuffer();
     void ReleaseEffectConstantBuffer();
 
     void CreateSpriteConstantBuffer();

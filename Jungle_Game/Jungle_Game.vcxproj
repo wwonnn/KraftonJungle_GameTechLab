@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -151,6 +151,7 @@
     <ClCompile Include="InputNameScene.cpp" />
     <ClCompile Include="IntroBackgroundObject.cpp" />
     <ClCompile Include="IntroScene.cpp" />
+    <ClCompile Include="ItemObject.cpp" />
     <ClCompile Include="LifeObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MovementSequence.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="InputNameScene.h" />
     <ClInclude Include="IntroBackgroundObject.h" />
     <ClInclude Include="IntroScene.h" />
+    <ClInclude Include="ItemObject.h" />
     <ClInclude Include="LifeObject.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MovementSequence.h" />
