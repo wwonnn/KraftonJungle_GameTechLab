@@ -6,7 +6,6 @@
 class SceneManager {
 private:
     UScene* currentScene = nullptr;
-    static SceneManager* instance;
     FGameContext* GameContext = nullptr;
 
 public:

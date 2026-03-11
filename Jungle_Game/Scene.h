@@ -18,7 +18,6 @@ protected:
 
     std::vector<UGameObject*> GameObjects;
     std::vector<UGameObject*> PendingGameObjects;
-    std::vector<UGameObject*> ObjectsToDestroy;
 public:
     virtual ~UScene() {}
     UScene(FGameContext* gameContext) {
@@ -32,6 +31,12 @@ public:
         for (UGameObject* obj : GameObjects) {
             delete obj;
         }
+        for (UGameObject* obj : PendingGameObjects) {
+            delete obj;
+        }
+
+        GameObjects.clear();
+        PendingGameObjects.clear();
     }
 
     virtual void Refresh();

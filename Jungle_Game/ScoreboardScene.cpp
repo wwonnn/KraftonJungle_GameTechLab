@@ -30,5 +30,5 @@ void ScoreboardScene::Render() {
 }
 
 void ScoreboardScene::Release() {
-    // Release resources, clean up, etc.
+    UScene::Release();
 }

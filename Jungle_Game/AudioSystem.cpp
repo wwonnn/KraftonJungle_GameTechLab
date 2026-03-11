@@ -81,6 +81,8 @@ void UAudioSystem::LoadFromFile(const std::string& filePath, const std::string& 
     newAudio.audioBytes = buffer.AudioBytes;
 
     SoundMap[soundName] = newAudio;
+
+    drmp3_free(sampleData, nullptr);
 }
 
 void UAudioSystem::Play(const std::string& soundName)
