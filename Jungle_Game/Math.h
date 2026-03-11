@@ -2,6 +2,12 @@
 
 #include <cmath>
 
+struct FVector2
+{
+    float x, y;
+    FVector2(float x = 0.0f, float y = 0.0f) : x(x), y(y) {}
+};
+
 struct FVector
 {
     float x, y, z;

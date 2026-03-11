@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <random>
 #include "WaveController.h"
+#include "WaveParser.h"
 #include "Timer.h"
 
 class InfiniteModeLogic
@@ -46,7 +47,6 @@ public:
 
 private:
     void ScanWaveFiles(int difficulty);
-    void ReadWaveFiles();
 
 private:
     UTimer* Timer = nullptr;
@@ -55,7 +55,7 @@ private:
     const std::string WaveDataFilePath = "asset/data/infinite";
     std::unordered_map<int, std::vector<std::string>> WaveFiles;
 
-    StageInfo CurrentStageInfo;
+    FWaveInfo CurrentWaveInfo;
     int WaveCount = 0;
 
     std::vector<UEnemyObject*> SpawnedEnemies;
@@ -65,4 +65,3 @@ private:
     std::random_device rd;
     std::mt19937 gen;
 };
-

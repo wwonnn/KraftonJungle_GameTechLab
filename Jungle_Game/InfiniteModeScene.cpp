@@ -104,7 +104,7 @@ void InfiniteModeScene::OnEnemyDied()
         Background->SetScrollSpeed(1.0f);
         bWaveClearText = true;
 
-        Timer->ExecuteAfter(1.0f, [this]() {
+        Timer->ExecuteAfter(2.0f, [this]() {
             Background->SetScrollSpeed(0.3f);
             bWaveClearText = false;
             Logic->GoNextWave();
