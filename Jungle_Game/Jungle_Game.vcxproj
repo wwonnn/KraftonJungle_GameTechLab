@@ -203,6 +203,7 @@
     <ClInclude Include="InputNameScene.h" />
     <ClInclude Include="IntroBackgroundObject.h" />
     <ClInclude Include="IntroScene.h" />
+    <ClInclude Include="ItemDatabase.h" />
     <ClInclude Include="ItemObject.h" />
     <ClInclude Include="LifeObject.h" />
     <ClInclude Include="Math.h" />
