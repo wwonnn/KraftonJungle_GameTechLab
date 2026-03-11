@@ -17,10 +17,6 @@ UBossObject::UBossObject(FTransform transform)
 
 UBossObject::~UBossObject()
 {
-    if (Animator)
-    {
-        delete Animator;
-    }
 }
 
 void UBossObject::Update(float DeltaTime)
