@@ -20,37 +20,6 @@ void InfiniteModeLogic::Initialize(UPlayer* player, UTimer* timer)
 
 void InfiniteModeLogic::Update(float deltaTime)
 {
-    //if (SpawnCount >= CurrentStageInfo.enemyCount)
-    //{
-    //    if (!SpawnFinished)
-    //    {
-    //        SpawnTimer += deltaTime;
-    //        if (SpawnTimer >= 2.0f)
-    //        {
-    //            SpawnFinished = true;
-    //            SpawnTimer = 0.0f;
-    //            StartMove();
-    //        }
-    //    }
-    //    return;
-    //}
-
-    //SpawnTimer += deltaTime;
-    //if (SpawnTimer >= CurrentStageInfo.spawnInterval)
-    //{
-    //    auto& pos = CurrentStageInfo.positions[SpawnCount % CurrentStageInfo.positions.size()];
-    //    auto& rot = CurrentStageInfo.rotations[SpawnCount % CurrentStageInfo.rotations.size()];
-    //    auto& scale = CurrentStageInfo.scales[SpawnCount % CurrentStageInfo.scales.size()];
-
-    //    FTransform transform;
-    //    transform.Location = FVector(pos.x, pos.y, 0);
-    //    transform.Rotation = FVector(rot.x, rot.y, 0);
-    //    transform.Scale = FVector(scale.x, scale.y, 1);
-    //    SpawnEnemy(transform, Player, SpawnCount);
-
-    //    SpawnCount++;
-    //    SpawnTimer = 0.0f;
-    //}
 }
 
 void InfiniteModeLogic::LoadRandomWave()
