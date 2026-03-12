@@ -109,6 +109,8 @@ void InfiniteModeLogic::StartMove()
 {
     for (auto& enemy : SpawnedEnemies)
     {
+        if (!SceneManager::Get().GetcurrentScene()->IsObjectAlive(enemy)) continue;
+
         if (enemy->GetState() != EnemyState::Dead)
         {
             enemy->TransitionToState(EnemyState::Move);

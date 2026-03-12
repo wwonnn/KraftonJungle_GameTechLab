@@ -44,6 +44,25 @@ public:
     virtual void OnEnter() {}
     virtual void OnExit() {}
 
+    virtual bool IsObjectAlive(UGameObject* obj)
+    {
+        for (UGameObject* aliveObj : GameObjects)
+        {
+            if (aliveObj == obj)
+            {
+                return true;
+            }
+        }
+        for (UGameObject* pendingObj : PendingGameObjects)
+        {
+            if (pendingObj == obj)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     UGameObject* CreateGameObject(UGameObject* obj) {
         PendingGameObjects.push_back(obj);
         return obj;
