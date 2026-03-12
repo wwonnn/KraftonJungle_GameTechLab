@@ -27,5 +27,7 @@ private:
 
     std::string PlayerName;
     const int MAX_NAME_LENGTH = 10;
+
+    bool bSwitchScene = false;
 };
 

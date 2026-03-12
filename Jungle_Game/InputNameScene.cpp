@@ -16,6 +16,8 @@ void InputNameScene::Initialize() {
     Timer->ExecuteAfter(1.0f, [this]() {
         bScoreAnimationStart = true;
         });
+
+    bSwitchScene = false;
 }
 
 void InputNameScene::Update(float deltaTime) {
@@ -50,6 +52,11 @@ void InputNameScene::Render() {
     {
         Renderer->DrawString(L"Enter Your Name: " + std::wstring(PlayerName.begin(), PlayerName.end()), 400.0f, 500.0f, FVector(1.0f, 1.0f, 1.0f));
     }
+
+    if (bSwitchScene)
+    {
+        SceneManager::Get().ChangeScene(SceneType::Scoreboard);
+    }
 }
 
 void InputNameScene::Release() {
@@ -78,7 +85,7 @@ void InputNameScene::ProcessKeyInput() {
 
     if (UInputManager::Get().GetKeyDown(VK_RETURN) && !PlayerName.empty()) {
         SaveScore();
-        SceneManager::Get().ChangeScene(SceneType::Scoreboard);
+        bSwitchScene = true;
     }
 }
 
