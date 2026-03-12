@@ -111,6 +111,8 @@ void UWaveController::StartMove()
 {
     for (auto enemy : spawnedEnemies)
     {
+        if (!SceneManager::Get().GetcurrentScene()->IsObjectAlive(enemy)) continue;
+
         if (enemy->GetState() != EnemyState::Dead)
         {
             enemy->TransitionToState(EnemyState::Move);

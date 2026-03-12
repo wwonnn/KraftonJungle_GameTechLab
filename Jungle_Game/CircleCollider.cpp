@@ -10,6 +10,7 @@ UCircleCollider::UCircleCollider(UGameObject* owner)
 
 UCircleCollider::~UCircleCollider()
 {
+    CollisionCallbacks.clear();
     UCollisionSystem::Get().ClearCollisionPair(this);
     UCollisionSystem::Get().RemoveCollider(this);
 }

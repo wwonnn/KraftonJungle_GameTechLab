@@ -157,7 +157,6 @@ private:
     stbtt_packedchar FontAtlas[96];
     stbtt_packedchar FontHangulAtlas[12];
     ID3D11ShaderResourceView* FontAtlasSRV = nullptr;
-    std::unordered_map<wchar_t, int> HangulMap;
 
     ID3D11Buffer* TextVertexBuffer = nullptr;
 

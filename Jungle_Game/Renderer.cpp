@@ -202,12 +202,6 @@ void URenderer::GetQuad(wchar_t c, float* x, float* y, stbtt_aligned_quad* q)
     {
         stbtt_GetPackedQuad(FontAtlas, 512, 512, c - 32, x, y, q, 1);
     }
-    else
-    {
-        int index = HangulMap[c];
-
-        stbtt_GetPackedQuad(FontHangulAtlas, 512, 512, index, x, y, q, 1);
-    }
 }
 
 void URenderer::DrawString(const std::wstring& name, float x, float y, const FVector& color, ETextAlign align)
@@ -341,8 +335,6 @@ void URenderer::ReleaseDeviceAndSwapChain()
     if (DeviceContext)
     {
         DeviceContext->Flush();
-        DeviceContext->Release();
-        DeviceContext = nullptr;
     }
 
     if (SwapChain)
@@ -355,6 +347,12 @@ void URenderer::ReleaseDeviceAndSwapChain()
     {
         Device->Release();
         Device = nullptr;
+    }
+
+    if (DeviceContext)
+    {
+        DeviceContext->Release();
+        DeviceContext = nullptr;
     }
 }
 
@@ -685,19 +683,8 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
     ranges[0].chardata_for_range = FontAtlas;
     ranges[0].array_of_unicode_codepoints = nullptr;
 
-    static const wchar_t* hangulChars = L"성원희김기홍오준혁국동진";
-    ranges[1].font_size = 32.0f;
-    ranges[1].first_unicode_codepoint_in_range = 0;
-    ranges[1].num_chars = 12;
-    ranges[1].chardata_for_range = FontHangulAtlas;
-    ranges[1].array_of_unicode_codepoints = (int*)hangulChars;
-
-    stbtt_PackFontRanges(&pc, fontBuffer, 0, ranges, 2);
+    stbtt_PackFontRanges(&pc, fontBuffer, 0, ranges, 1);
     stbtt_PackEnd(&pc);
-
-    for (int i = 0; i < 12; ++i) {
-        HangulMap[hangulChars[i]] = i;
-    }
 
     D3D11_TEXTURE2D_DESC texDesc = {};
     texDesc.Width = 512;
