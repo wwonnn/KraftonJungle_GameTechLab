@@ -65,3 +65,8 @@ public:
         return a + t * (b - a);
     }
 };
+
+namespace Math
+{
+    constexpr float PI = 3.14159265358979323846f;
+}

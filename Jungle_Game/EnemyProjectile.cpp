@@ -1,7 +1,7 @@
 #include "EnemyProjectile.h"
 #include "GameObject.h"
 #include "CircleCollider.h"
-#include "SceneManager.h"
+#include "Math.h"
 #include <functional>
 #include <algorithm>
 
@@ -40,14 +40,14 @@ void UEnemyProjectile::Update(float DeltaTime)
         }
 
         //FVector targetDirection = (player->GetTransform().Location - Transform.Location).Normalize();
-        float targetRotation = std::atan2f(TargetDirection.y, TargetDirection.x) - 3.14159265f / 2.0f;
+        float targetRotation = std::atan2f(TargetDirection.y, TargetDirection.x) - Math::PI / 2.0f;
 
         // 각도 차이 계산
         float angleDiff = targetRotation - Transform.Rotation.z;
-
-        angleDiff = std::fmod(angleDiff + 3.14159265f, 2.0f * 3.14159265f);
-        if (angleDiff < 0) angleDiff += 2.0f * 3.14159265f;
-        angleDiff -= 3.14159265f;
+        Math::PI;
+        angleDiff = std::fmod(angleDiff + Math::PI, 2.0f * Math::PI);
+        if (angleDiff < 0) angleDiff += 2.0f * Math::PI;
+        angleDiff -= Math::PI;
 
         // 각속도 제한
         constexpr float rotationSpeed = 0.3f;
@@ -58,8 +58,8 @@ void UEnemyProjectile::Update(float DeltaTime)
     }
 
     constexpr float speed = 1.5f;
-    Velocity.x = std::cosf(Transform.Rotation.z + 3.14159265f / 2.0f) * speed;
-    Velocity.y = std::sinf(Transform.Rotation.z + 3.14159265f / 2.0f) * speed;
+    Velocity.x = std::cosf(Transform.Rotation.z + Math::PI / 2.0f) * speed;
+    Velocity.y = std::sinf(Transform.Rotation.z + Math::PI / 2.0f) * speed;
     Transform.Location = Transform.Location + Velocity * DeltaTime;
 }
 
@@ -78,7 +78,6 @@ void UEnemyProjectile::Render(URenderer& renderer)
 void UEnemyProjectile::OnCollisionEnter()
 {
     Destroy();
-    //SetPendingDestroy(true); // same effect
 }
 
 void UEnemyProjectile::SetTargetDirection(FVector direction, FVector offset)

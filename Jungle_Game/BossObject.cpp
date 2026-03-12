@@ -4,6 +4,8 @@
 #include "EnemyProjectile.h"
 #include "SceneManager.h"
 #include "Random.h"
+#include "Math.h"
+#include <functional>
 
 UBossObject::UBossObject()
     : UEnemyObject()
@@ -163,7 +165,7 @@ void UBossObject::FireBossProjectile()
         FVector offset(i * 0.5f, 0, 0);
 
         UGameObject* enemyProjectile = SceneManager::Get().GetcurrentScene()->CreateGameObject(new UEnemyProjectile(
-            FTransform(Transform.Location + spawnOffset, { 0.0f, 0.0f, 3.14f }, FVector(0.1f, 0.1f, 0.1f))));
+            FTransform(Transform.Location + spawnOffset, { 0.0f, 0.0f, Math::PI }, FVector(0.1f, 0.1f, 0.1f))));
         dynamic_cast<UEnemyProjectile*>(enemyProjectile)->SetPlayer(GetPlayer());
         dynamic_cast<UEnemyProjectile*>(enemyProjectile)->SetTargetDirection(FVector(0.0f, -1.0f, 0.0f), offset);
         enemyProjectile->Destroy(2.0f);
