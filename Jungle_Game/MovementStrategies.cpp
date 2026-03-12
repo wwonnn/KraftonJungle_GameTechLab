@@ -116,7 +116,7 @@ bool ZigZagMovement::Update(FVector& outPosition, float& outRotation, const FVec
 
     if (outPosition.y < -1.0f)
     {
-        outPosition.x = rand() % 100 / 100.0f * 1.5f - 0.75f;
+        outPosition.x = Random::Range(-0.75f, 0.75f);
         outPosition.y = 1.0f;
     }
 
