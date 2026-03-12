@@ -72,10 +72,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
         return false;
     }
 
-    if (!UAudioSystem::Get().Create())
-    {
-        return false;
-    }
+    UAudioSystem::Get().Create();
 
     UImGuiManager::Get().Create(hWnd, Renderer);
 
@@ -139,9 +136,13 @@ void GameApp::LoadDefaultAssets()
     UAudioSystem::Get().LoadFromFile("asset/audio/bgm.mp3", "bgm");
     UAudioSystem::Get().LoadFromFile("asset/audio/heal.mp3", "heal");
     UAudioSystem::Get().LoadFromFile("asset/audio/bossDamage.mp3", "bossDamage");
+    UAudioSystem::Get().LoadFromFile("asset/audio/playerHit.mp3", "playerHit");
 
     Renderer->CreateTexture("asset/texture/player.png", "player");
     Renderer->CreateTexture("asset/texture/enemy.png", "enemy");
+    Renderer->CreateTexture("asset/texture/enemy2.png", "enemy2");
+    Renderer->CreateTexture("asset/texture/enemy3.png", "enemy3");
+    Renderer->CreateTexture("asset/texture/enemy4.png", "enemy4");
     Renderer->CreateTexture("asset/texture/deadAnim.png", "deadAnim");
     Renderer->CreateTexture("asset/texture/boss.png", "boss");
     Renderer->CreateTexture("asset/texture/bossHurt.png", "bossHurt");
@@ -152,4 +153,5 @@ void GameApp::LoadDefaultAssets()
     Renderer->CreateTexture("asset/texture/enemy_projectile.png", "enemy_projectile");
     Renderer->CreateTexture("asset/texture/upgrade.png", "upgrade");
     Renderer->CreateTexture("asset/texture/heart.png", "heart");
+    Renderer->CreateTexture("asset/texture/boss_hp_bar.png", "boss_hp_bar");
 }

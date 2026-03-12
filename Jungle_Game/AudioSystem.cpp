@@ -6,10 +6,20 @@
 
 bool UAudioSystem::Create()
 {
-    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    XAudio2Create(&XAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
-    HRESULT hr = XAudio2->CreateMasteringVoice(&MasteringVoice);
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hr))
+    {
+        return false;
+    }
+    
+    hr = XAudio2Create(&XAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+    if (FAILED(hr))
+    {
+        XAudio2 = nullptr;
+        return false;
+    }
 
+    hr = XAudio2->CreateMasteringVoice(&MasteringVoice);
     if (FAILED(hr))
     {
         MasteringVoice = nullptr;
@@ -20,6 +30,8 @@ bool UAudioSystem::Create()
     {
         SFXSubmixVoice = nullptr;
     }
+
+    InitializeSFXVoicePool(16);
 
     SetBGMVolume(GlobalSettings::Get().GetData().BGMVolume);
     SetSFXVolume(GlobalSettings::Get().GetData().SFXVolume);
@@ -32,6 +44,18 @@ void UAudioSystem::Release()
     for (auto& pair : SoundMap)
     {
         pair.second.AudioData.clear();
+    }
+
+    if (Callback)
+    {
+        delete Callback;
+        Callback = nullptr;
+    }
+
+    if (SFXSubmixVoice)
+    {
+        SFXSubmixVoice->DestroyVoice();
+        SFXSubmixVoice = nullptr;
     }
 
     if (MasteringVoice)
@@ -87,6 +111,11 @@ void UAudioSystem::LoadFromFile(const std::string& filePath, const std::string& 
 
 void UAudioSystem::Play(const std::string& soundName)
 {
+    if (!XAudio2)
+    {
+        return;
+    }
+
     if (MasteringVoice == nullptr)
     {
         if (FAILED(XAudio2->CreateMasteringVoice(&MasteringVoice)))
@@ -104,30 +133,33 @@ void UAudioSystem::Play(const std::string& soundName)
         }
     }
 
+    IXAudio2SourceVoice* voice = GetAvailableSFXVoice();
+    if (!voice)
+    {
+        return;
+    }
+
 	auto iter = SoundMap.find(soundName);
 	if (iter != SoundMap.end())
 	{
-        XAUDIO2_SEND_DESCRIPTOR sendDesc = { 0, SFXSubmixVoice };
-        XAUDIO2_VOICE_SENDS sendList = { 1, &sendDesc };
-
-        IXAudio2SourceVoice* sourceVoice;
-        if (FAILED(XAudio2->CreateSourceVoice(&sourceVoice, &iter->second.wfx, 0, 2.0f, nullptr, &sendList)))
-        {
-            return;
-        }
-
         XAUDIO2_BUFFER buffer = { 0 };
         buffer.pAudioData = iter->second.AudioData.data();
         buffer.AudioBytes = iter->second.audioBytes;
         buffer.Flags = XAUDIO2_END_OF_STREAM;
+        buffer.pContext = voice;
 
-        sourceVoice->SubmitSourceBuffer(&buffer);
-        sourceVoice->Start();
+        voice->SubmitSourceBuffer(&buffer);
+        voice->Start();
 	}
 }
 
 void UAudioSystem::PlayBGM(const std::string& soundName)
 {
+    if (!XAudio2)
+    {
+        return;
+    }
+
     if (BGMSourceVoice)
     {
         BGMSourceVoice->Stop();
@@ -140,6 +172,7 @@ void UAudioSystem::PlayBGM(const std::string& soundName)
     {
         if (FAILED(XAudio2->CreateSourceVoice(&BGMSourceVoice, &iter->second.wfx)))
         {
+            BGMSourceVoice = nullptr;
             return;
         }
 
@@ -177,4 +210,54 @@ void UAudioSystem::SetSFXVolume(float volume)
     {
         SFXSubmixVoice->SetVolume(volume);
     }
+}
+
+void UAudioSystem::InitializeSFXVoicePool(size_t poolSize)
+{
+    if (!XAudio2 || !SFXSubmixVoice)
+    {
+        return;
+    }
+
+    Callback = new VoiceCallback(&SFXVoicePool);
+
+    WAVEFORMATEX wfx = { 0 };
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 2;
+    wfx.nSamplesPerSec = 44100;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = (wfx.nChannels * wfx.wBitsPerSample) / 8;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+
+    XAUDIO2_SEND_DESCRIPTOR sendDesc = { 0, SFXSubmixVoice };
+    XAUDIO2_VOICE_SENDS sendList = { 1, &sendDesc };
+
+    for (size_t i = 0; i < poolSize; ++i)
+    {
+        IXAudio2SourceVoice* voice = nullptr;
+
+        HRESULT hr = XAudio2->CreateSourceVoice(&voice, &wfx, 0, 2.0f, Callback, &sendList);
+
+        if (SUCCEEDED(hr) && voice)
+        {
+            SFXVoicePool.push(voice);
+            AllSFXVoices.push_back(voice);
+        }
+    }
+}
+
+IXAudio2SourceVoice* UAudioSystem::GetAvailableSFXVoice()
+{
+    if (SFXVoicePool.empty())
+    {
+        return nullptr;
+    }
+
+    IXAudio2SourceVoice* voice = SFXVoicePool.front();
+    SFXVoicePool.pop();
+
+    voice->FlushSourceBuffers();
+    voice->Stop(0);
+
+    return voice;
 }

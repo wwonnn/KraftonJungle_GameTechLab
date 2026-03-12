@@ -30,16 +30,16 @@ public:
     bool IsDead() const { return bIsDead; }
     void SetDead(bool dead) { bIsDead = dead; }
 
-    void FireProjectile();
-    int GetHP();
-    void TakeDamage();
-    void Heal();
-    void PowerUp();
-
     std::function<void(int)> OnHPChanged;
 
 private:
     void CheckWallCollision();
+
+    void FireProjectile();
+    int GetHP() { return HP; }
+    void TakeDamage();
+    void Heal();
+    void PowerUp();
 
 private:
     FVector Velocity;

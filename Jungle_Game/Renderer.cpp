@@ -217,6 +217,12 @@ void URenderer::DrawString(const std::wstring& name, float x, float y, const FVe
     float viewportWidth = Viewport.Width;
     float viewportHeight = Viewport.Height;
 
+    float scaleX = viewportWidth / 800.0f;
+    float scaleY = viewportHeight / 1024.0f;
+
+    float pixelX = x * scaleX;
+    float pixelY = y * scaleY;
+
     float totalWidth = 0.0f;
     float tempX = 0.0f;
     float tempY = 0.0f;
@@ -228,19 +234,19 @@ void URenderer::DrawString(const std::wstring& name, float x, float y, const FVe
     }
     totalWidth = tempX;
 
-    float currX = x;
-    float currY = y;
+    float currX = pixelX;
+    float currY = pixelY;
     switch (align)
     {
     case ETextAlign::Center:
-        currX = x - (totalWidth / 2.0f);
+        currX = pixelX - (totalWidth / 2.0f);
         break;
     case ETextAlign::Right:
-        currX = x - totalWidth;
+        currX = pixelX - totalWidth;
         break;
     case ETextAlign::Left:
     default:
-        currX = x;
+        currX = pixelX;
     }
 
     for (wchar_t c : name)
@@ -335,6 +341,8 @@ void URenderer::ReleaseDeviceAndSwapChain()
     if (DeviceContext)
     {
         DeviceContext->Flush();
+        DeviceContext->Release();
+        DeviceContext = nullptr;
     }
 
     if (SwapChain)
@@ -347,12 +355,6 @@ void URenderer::ReleaseDeviceAndSwapChain()
     {
         Device->Release();
         Device = nullptr;
-    }
-
-    if (DeviceContext)
-    {
-        DeviceContext->Release();
-        DeviceContext = nullptr;
     }
 }
 
@@ -419,7 +421,7 @@ void URenderer::ReleaseRasterzerState()
 void URenderer::CreateConstantBuffer()
 {
     D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.ByteWidth = sizeof(FConstantBuffer) + 0xf & ~0xf;
+    bufferDesc.ByteWidth = (sizeof(FConstantBuffer) + 0xf) & ~0xf;
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -429,7 +431,7 @@ void URenderer::CreateConstantBuffer()
 void URenderer::CreateEffectConstantBuffer()
 {
     D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.ByteWidth = sizeof(FEffectConstantBuffer) + 0xf & ~0xf;
+    bufferDesc.ByteWidth = (sizeof(FEffectConstantBuffer) + 0xf) & ~0xf;
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -459,7 +461,7 @@ void URenderer::CreateSpriteConstantBuffer()
     FSpriteUVBuffer initData = { 0.f, 0.f, 1.f, 1.f }; // 기본값: 전체 텍스처
 
     D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.ByteWidth = sizeof(FSpriteUVBuffer);
+    bufferDesc.ByteWidth = (sizeof(FSpriteUVBuffer) + 0xf) & ~0xf;
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -724,8 +726,8 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
 
     Device->CreateBuffer(&vertexBufferDesc, nullptr, &TextVertexBuffer);
 
-    free(fontBuffer);
     delete[] alphaPixels;
+    delete[] fontBuffer;
 }
 
 void URenderer::ReleaseDefaultFontAtlasAndVertexBuffer()

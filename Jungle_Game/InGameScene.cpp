@@ -35,6 +35,8 @@ void InGameScene::Initialize()
     EventSystem::Get().Subscribe("EnemyDied", std::bind(&InGameScene::OnEnemyDied, this));
     EventSystem::Get().Subscribe("AllStageCleared", std::bind(&InGameScene::OnAllStageCleared, this));
 
+    ScoreManager::Get().Initialize();
+
     WaveController->GoNextStage();
 
     LifeInitialize();
@@ -48,6 +50,11 @@ void InGameScene::Update(float deltaTime) {
     {
         obj->TickDestroyTimer(deltaTime);
         obj->Update(deltaTime);
+    }
+
+    if (UInputManager::Get().GetKeyDown(VK_ESCAPE))
+    {
+        SceneManager::Get().ChangeScene(SceneType::Init);
     }
 }
 

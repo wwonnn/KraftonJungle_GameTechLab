@@ -18,6 +18,7 @@ public:
     void Update(float DeltaTime) override;
     void Initialize() override;
     void Render(URenderer& renderer) override;
+    float GetHPRatio() const { return HP / MaxHP; }
 
 private:
     void Hurt(UCircleCollider* other);
@@ -26,7 +27,8 @@ private:
     void FireBossProjectile();
 
 private:
-    float HP = 30.0f;
+    static constexpr float MaxHP = 30.0f;
+    float HP = MaxHP;
     bool bIsHurt = false;
     float HurtTime = 0.0f;
     float TotalHurtEffectDuration = 1.0f;

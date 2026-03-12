@@ -67,6 +67,11 @@ void UPlayer::Update(float DeltaTime)
         }
     }
 
+    if (Input.GetKeyDown('A'))
+    {
+        Heal();
+    }
+
     CheckWallCollision();
 }
 
@@ -87,15 +92,14 @@ void UPlayer::FireProjectile()
         );
         projectile->SetVelocity(currentStats.ProjectileVelocity);
         SceneManager::Get().GetcurrentScene()->CreateGameObject(projectile);
-        projectile->Destroy(1.5f);
+        projectile->Destroy(2.0f);
     }
 }
 
-int UPlayer::GetHP() { return HP; }
-
-
 void UPlayer::TakeDamage() {
     if (bIsDead || bIsInvincible) return;
+
+    UAudioSystem::Get().Play("playerHit");
 
     HP--;
     if (OnHPChanged) {

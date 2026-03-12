@@ -44,16 +44,16 @@ void InputNameScene::Update(float deltaTime) {
 
 void InputNameScene::Render() {
     Renderer->BeginFrame();
-    Renderer->DrawString(L"Your Score: " + std::to_wstring(Score), 400.0f, 250.0f, FVector(1.0f, 1.0f, 1.0f));
+    Renderer->DrawString(L"Your Score: " + std::to_wstring(Score), 400.0f, 400.0f, FVector(1.0f, 1.0f, 1.0f));
 
     if (bCanInput)
     {
-        Renderer->DrawString(L"Enter Your Name: " + std::wstring(PlayerName.begin(), PlayerName.end()), 400.0f, 300.0f, FVector(1.0f, 1.0f, 1.0f));
+        Renderer->DrawString(L"Enter Your Name: " + std::wstring(PlayerName.begin(), PlayerName.end()), 400.0f, 500.0f, FVector(1.0f, 1.0f, 1.0f));
     }
 }
 
 void InputNameScene::Release() {
-    // Release resources, clean up, etc.
+    UScene::Release();
 }
 
 void InputNameScene::ProcessKeyInput() {
