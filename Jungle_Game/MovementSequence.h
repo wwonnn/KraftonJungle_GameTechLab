@@ -29,6 +29,7 @@ public:
     void SetLoop(bool loop) { bLoop = loop; }
     int  GetCurrentIndex() const { return CurrentIndex; }
     bool IsFinished()      const { return bFinished; }
+    bool CheckCanShoot()     const { return canShoot; }
 
 private:
     void AdvanceToNext();
@@ -38,4 +39,5 @@ private:
     float ElapsedInSlot = 0.f;   // 현재 슬롯에서 경과한 시간
     bool  bLoop = false;
     bool  bFinished = false;
+    bool canShoot = true;
 };

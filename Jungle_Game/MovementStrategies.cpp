@@ -257,6 +257,7 @@ void DiveToPlayerMovement::Reset()
     MoveDist = 0.0f;
     bInit = false;
     bBack = false;
+    canShoot = false;
 }
 
 void DiveToPlayerMovement::SetDirection(FVector newDir)

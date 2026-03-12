@@ -144,6 +144,15 @@ void UBossObject::Dead(UCircleCollider* other)
 
 void UBossObject::BossAttack(float deltaTime)
 {
+    if (dynamic_cast<MovementSequence*>(MovementStrategy.get()) == nullptr)
+        return;
+
+    if (dynamic_cast<MovementSequence*>(MovementStrategy.get())->CheckCanShoot() == false) {
+        if (bShootable) bShootable = false;
+        return;
+    }
+        
+    bShootable = true;
     // 발사체 발사
     if (Transform.Location.y > -0.2f) {
         constexpr float chancePerSecond = 0.8f;

@@ -97,6 +97,7 @@ private:
     float MoveDist = 0.0f;
     bool bInit = false;
     bool bBack = false;
+    bool canShoot = false;
 };
 
 /// <summary>

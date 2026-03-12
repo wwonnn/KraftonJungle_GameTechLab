@@ -67,6 +67,7 @@ void MovementSequence::Reset()
     CurrentIndex = 0;
     ElapsedInSlot = 0.f;
     bFinished = false;
+    canShoot = true;
 
     for (auto& slot : Slots)
         if (slot.Strategy) slot.Strategy->Reset();
@@ -80,7 +81,12 @@ void MovementSequence::AdvanceToNext()
     // 다음 슬롯의 전략을 초기 상태로 준비
     if (CurrentIndex < static_cast<int>(Slots.size()))
     {
-        if (Slots[CurrentIndex].Strategy)
+        if (Slots[CurrentIndex].Strategy) {
             Slots[CurrentIndex].Strategy->Reset();
+            if (dynamic_cast<DiveToPlayerMovement*>(Slots[CurrentIndex].Strategy.get()))
+                canShoot = false;
+            else
+                canShoot = true;
+        }
     }
 }
