@@ -96,8 +96,8 @@ void UEnemyObject::Initialize()
     Collider->AddCollisionCallback(ECollisionEvent::Enter, std::bind(&UEnemyObject::Dead, this, std::placeholders::_1));
 
     SpawnedTransform = Transform;
-    Transform.Location.x = rand() % 100 / 100.0f * 2.0f - 1.0f; // -1.0 ~ 1.0 
-    Transform.Location.y = rand() % 100 / 100.0f * 1.3f - 0.3f; // -0.3 ~ 1.0 
+    Transform.Location.x = Random::Range(-1.0f, 1.0f);
+    Transform.Location.y = Random::Range(-0.3f, 1.0f);
 
     StartPos = Transform.Location;
     TargetPos = SpawnedTransform.Location;

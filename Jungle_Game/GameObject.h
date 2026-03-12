@@ -42,7 +42,6 @@ public:
     UCircleCollider* GetCollider() const { return Collider; }
 
     bool IsPendingDestroy() const { return bIsPendingDestroy; }
-    void SetPendingDestroy(bool bPending) { bIsPendingDestroy = bPending; }
 
 protected:
     FTransform Transform;

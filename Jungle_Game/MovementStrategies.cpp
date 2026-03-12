@@ -1,8 +1,6 @@
 #include "MovementStrategies.h"
-#include "CollisionSystem.h"
+#include "Math.h"
 #include "Random.h"
-#include <algorithm>
-#include <string>
 
 LinearMovement::LinearMovement(FVector direction, float speed, float movementRange)
     : Direction(direction.Normalize())
@@ -19,7 +17,7 @@ bool LinearMovement::Update(FVector& outPosition, float& outRotation, const FVec
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    outRotation = 3.14159265f; // look down
+    outRotation = Math::PI; // look down
 
     CurrentRange += moveDist;
     if (abs(CurrentRange) > MovementRange)
@@ -66,7 +64,7 @@ bool FollowPlayerMovement::Update(FVector& outPosition, float& outRotation, cons
         currentPos.x + Direction.x * moveDist,
         currentPos.y + Direction.y * moveDist
     };
-    outRotation = std::atan2(Direction.y, Direction.x) - 3.14159265f / 2.0f;
+    outRotation = std::atan2(Direction.y, Direction.x) - Math::PI / 2.0f;
 
     return false;
 }
@@ -95,7 +93,7 @@ bool ZigZagMovement::Update(FVector& outPosition, float& outRotation, const FVec
         currentPos.x + CurrentDirection.x * moveDist,
         currentPos.y + CurrentDirection.y * moveDist
     );
-    outRotation = std::atan2(CurrentDirection.y, CurrentDirection.x) - 3.14159265f / 2.0f;
+    outRotation = std::atan2(CurrentDirection.y, CurrentDirection.x) - Math::PI / 2.0f;
 
     CurrentDistance += moveDist;
 
@@ -118,7 +116,7 @@ bool ZigZagMovement::Update(FVector& outPosition, float& outRotation, const FVec
 
     if (outPosition.y < -1.0f)
     {
-        outPosition.x = rand() % 100 / 100.0f * 1.5f - 0.75f;
+        outPosition.x = Random::Range(-0.75f, 0.75f);
         outPosition.y = 1.0f;
     }
 
@@ -155,7 +153,7 @@ bool CircularMovement::Update(FVector& outPosition, float& outRotation, const FV
     if (!bInCircle)
     {
         outPosition = currentPos + CurrentDirection * Speed * dt;
-        outRotation = std::atan2(CurrentDirection.y, CurrentDirection.x) - 3.14159265f / 2.0f;
+        outRotation = std::atan2(CurrentDirection.y, CurrentDirection.x) - Math::PI / 2.0f;
 
         CurrentDistance += Speed * dt;
         if (CurrentDistance >= CircleDistance)
@@ -184,7 +182,7 @@ bool CircularMovement::Update(FVector& outPosition, float& outRotation, const FV
             bInCircle = false;
             CircleAngle = 0.0f;
 
-            float angle = 3.1415926535f / 6.0f;
+            float angle = Math::PI / 6.0f;
             float cosAngle = std::cos(angle);
             float sinAngle = std::sin(angle);
 
