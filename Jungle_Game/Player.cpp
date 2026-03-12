@@ -48,6 +48,11 @@ void UPlayer::Update(float DeltaTime)
         Transform.Location.x += Velocity.x * DeltaTime;
     }
 
+    if (Input.GetKeyDown('A'))
+    {
+        Heal();
+    }
+
     if (ShootCooldownTimer > 0.0f)
     {
         ShootCooldownTimer -= DeltaTime;
