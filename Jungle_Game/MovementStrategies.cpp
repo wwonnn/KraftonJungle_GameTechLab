@@ -311,8 +311,9 @@ bool ItemLinearMovement::Update(FVector& outPosition, float& outRotation, const 
     outPosition.y = currentPos.y + Direction.y * moveDist;
 
     bool bReflected = false;
+    const float Limit = 0.98f;
 
-    if (outPosition.x >= 0.95f || outPosition.x <= -0.95f)
+    if (outPosition.x >= Limit || outPosition.x <= -Limit)
     {
         FVector Normal = (outPosition.x >= 0.95f) ? FVector(-1, 0, 0) : FVector(1, 0, 0);
 
@@ -320,13 +321,13 @@ bool ItemLinearMovement::Update(FVector& outPosition, float& outRotation, const 
         Direction.x = Direction.x - 2.0f * dotProduct * Normal.x;
         Direction.y = Direction.y - 2.0f * dotProduct * Normal.y;
 
-        outPosition.x = (outPosition.x >= 0.95f) ? 0.95f : -0.95f;
+        outPosition.x = (outPosition.x >= Limit) ? Limit : -Limit;
         bReflected = true;
     }
 
-    if (outPosition.y >= 1.0f || outPosition.y <= -1.0f)
+    if (outPosition.y >= Limit || outPosition.y <= -Limit)
     {
-        FVector Normal = (outPosition.y >= 1.0f) ? FVector(0, -1, 0) : FVector(0, 1, 0);
+        FVector Normal = (outPosition.y >= Limit) ? FVector(0, -1, 0) : FVector(0, 1, 0);
         float dotProduct = Direction.x * Normal.x + Direction.y * Normal.y;
         Direction.x = Direction.x - 2.0f * dotProduct * Normal.x;
         Direction.y = Direction.y - 2.0f * dotProduct * Normal.y;
