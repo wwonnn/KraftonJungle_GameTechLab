@@ -18,8 +18,8 @@ UGameObject::UGameObject(FTransform transform)
 UGameObject::~UGameObject()
 {
     if (Collider) {
-        UCollisionSystem::Get().ClearCollisionPair(this);
         delete Collider;
+        Collider = nullptr;
     }
 }
 
