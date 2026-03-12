@@ -72,10 +72,7 @@ bool GameApp::Initialize(HINSTANCE hInstance)
         return false;
     }
 
-    if (!UAudioSystem::Get().Create())
-    {
-        return false;
-    }
+    UAudioSystem::Get().Create();
 
     UImGuiManager::Get().Create(hWnd, Renderer);
 
