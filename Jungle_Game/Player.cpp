@@ -67,6 +67,11 @@ void UPlayer::Update(float DeltaTime)
         }
     }
 
+    if (Input.GetKeyDown('A'))
+    {
+        Heal();
+    }
+
     CheckWallCollision();
 }
 
