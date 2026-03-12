@@ -1,6 +1,9 @@
 #pragma once
+#include <memory>
+
 #include "GameObject.h"
 #include "ItemDatabase.h"
+#include "MovementStrategies.h"
 
 class UItemObject : public UGameObject
 {
@@ -20,9 +23,11 @@ public:
 
 private:
     void Initialize();
+    std::unique_ptr<IMovementStrategy> CreateStrategy(const FItemTemplate& data);
 
 private:
     FVector Velocity;
     FVector Scale;
     EItemType Itemtype;
+    std::unique_ptr<IMovementStrategy> MovementStrategy;
 };

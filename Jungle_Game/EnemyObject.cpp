@@ -174,11 +174,11 @@ void UEnemyObject::Dead(UCircleCollider* other)
         ScoreManager::Get().AddScore(100);
 
         float random = Random::Range(0.0f, 100.0f);
-        if (random < 5.0f) {
+        if (random < 10.0f) {
            UGameObject* itemobj = new UItemObject(FTransform(Transform.Location), EItemType::Heal);
            SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
         }
-        else if (random < 8.0f) {
+        else if (random < 15.0f) {
             UGameObject* itemobj = new UItemObject(FTransform(Transform.Location), EItemType::Upgrade);
             SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
         }

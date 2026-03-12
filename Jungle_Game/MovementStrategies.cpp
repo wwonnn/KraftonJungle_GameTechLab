@@ -264,3 +264,87 @@ void DiveToPlayerMovement::Reset()
 void DiveToPlayerMovement::SetDirection(FVector newDir)
 {
 }
+
+ItemZigZagMovement::ItemZigZagMovement(FVector direction, float speed, float amplitude, float frequency, float elapsedTime)
+    : Direction(direction.Normalize())
+    , Speed(speed)
+    , Amplitude(amplitude)
+    , Frequency(frequency)
+    , ElapsedTime(elapsedTime)
+{}
+
+bool ItemZigZagMovement::Update(FVector& outPosition, float& outRotation, const FVector& currentPos, const FVector& playerPos, float dt)
+{
+    ElapsedTime += dt;
+
+    FVector baseMove = Direction * Speed * dt;
+
+    FVector sideDir = FVector(-Direction.y, Direction.x);
+    float horizontalOffset = std::sin(ElapsedTime * Frequency) * Amplitude;
+
+    float waveVariation = std::cos(ElapsedTime * Frequency) * Amplitude * Frequency * dt;
+
+    outPosition.x = currentPos.x + baseMove.x + (sideDir.x * waveVariation);
+    outPosition.y = currentPos.y + baseMove.y + (sideDir.y * waveVariation);
+
+    outRotation = 0.0f;
+
+    return false;
+}
+
+void ItemZigZagMovement::Reset()
+{
+    ElapsedTime = 0.0f;
+}
+
+ItemLinearMovement::ItemLinearMovement(FVector direction, float speed)
+    : Direction(direction.Normalize())
+    , Speed(speed)
+{
+}
+
+bool ItemLinearMovement::Update(FVector& outPosition, float& outRotation, const FVector& currentPos, const FVector& playerPos, float dt)
+{
+    float moveDist = Speed * dt;
+
+    outPosition.x = currentPos.x + Direction.x * moveDist;
+    outPosition.y = currentPos.y + Direction.y * moveDist;
+
+    bool bReflected = false;
+    const float Limit = 0.98f;
+
+    if (outPosition.x >= Limit || outPosition.x <= -Limit)
+    {
+        FVector Normal = (outPosition.x >= 0.95f) ? FVector(-1, 0, 0) : FVector(1, 0, 0);
+
+        float dotProduct = Direction.x * Normal.x + Direction.y * Normal.y;
+        Direction.x = Direction.x - 2.0f * dotProduct * Normal.x;
+        Direction.y = Direction.y - 2.0f * dotProduct * Normal.y;
+
+        outPosition.x = (outPosition.x >= Limit) ? Limit : -Limit;
+        bReflected = true;
+    }
+
+    if (outPosition.y >= Limit || outPosition.y <= -Limit)
+    {
+        FVector Normal = (outPosition.y >= Limit) ? FVector(0, -1, 0) : FVector(0, 1, 0);
+        float dotProduct = Direction.x * Normal.x + Direction.y * Normal.y;
+        Direction.x = Direction.x - 2.0f * dotProduct * Normal.x;
+        Direction.y = Direction.y - 2.0f * dotProduct * Normal.y;
+        bReflected = true;
+    }
+
+    if (bReflected) {
+        Direction.x += Random::Range(-0.1f, 0.1f);
+        Direction.y += Random::Range(-0.1f, 0.1f);
+        Direction.Normalize();
+    }
+
+    outRotation = 0.0f;
+    return false;
+}
+
+void ItemLinearMovement::Reset()
+{
+
+}
