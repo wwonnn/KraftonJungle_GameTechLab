@@ -315,7 +315,7 @@ bool ItemLinearMovement::Update(FVector& outPosition, float& outRotation, const 
 
     if (outPosition.x >= Limit || outPosition.x <= -Limit)
     {
-        FVector Normal = (outPosition.x >= 0.95f) ? FVector(-1, 0, 0) : FVector(1, 0, 0);
+        FVector Normal = (outPosition.x >= Limit) ? FVector(-1, 0, 0) : FVector(1, 0, 0);
 
         float dotProduct = Direction.x * Normal.x + Direction.y * Normal.y;
         Direction.x = Direction.x - 2.0f * dotProduct * Normal.x;
