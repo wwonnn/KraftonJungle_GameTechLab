@@ -17,6 +17,7 @@ struct FItemTemplate {
     FVector Veclocity;
     FVector Scale;
     float DestroyDelay;
+    std::string MovementStrategyType;
 };
 
 class UItemDatabase {
@@ -41,7 +42,8 @@ public:
             "heart",
             FVector(0.0f, -0.4f, 0.0f),
             FVector(0.05f, 0.05f, 1.0f),
-            5.0f
+            5.0f,
+            "ItemZigZag"
         };
 
         Data[EItemType::Upgrade] = {
@@ -50,7 +52,8 @@ public:
             "upgrade",
             FVector(0.0f, -0.6f, 0.0f),
             FVector(0.04f, 0.04f, 1.0f),
-            3.0f
+            20.0f,
+            "ItemRandom"
         };
     }
 

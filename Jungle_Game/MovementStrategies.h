@@ -156,3 +156,49 @@ private:
     float CurrentDistance = 0.0f;
     float CircleDistance;
 };
+
+class ItemZigZagMovement : public IMovementStrategy
+{
+public:
+    explicit ItemZigZagMovement(FVector direction = FVector(0, -1, 0),
+        float speed = 0.6f,
+        float amplitude = 0.4f,
+        float frequency = 3.0f,
+        float elapsedTime = 0.0f
+    );
+
+    bool Update(FVector& outPosition,
+        float& outRotation,
+        const FVector& currentPos,
+        const FVector& playerPos,
+        float            dt) override;
+
+    void Reset() override;
+
+private:
+    FVector Direction;
+    float Speed;
+    float Amplitude;
+    float Frequency;
+    float ElapsedTime;
+};
+
+class ItemLinearMovement : public IMovementStrategy
+{
+public:
+    explicit ItemLinearMovement(FVector direction = FVector(0, -1, 0),
+        float speed = 0.5f
+    );
+
+    bool Update(FVector& outPosition,
+        float& outRotation,
+        const FVector& currentPos,
+        const FVector& playerPos,
+        float dt) override;
+
+    void Reset() override;
+
+private:
+    FVector Direction;
+    float Speed;
+};

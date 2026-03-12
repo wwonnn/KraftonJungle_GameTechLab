@@ -153,6 +153,9 @@ void UEnemyObject::Dead(UCircleCollider* other)
 {
     if (State == EnemyState::Dead)
         return;
+    TransitionToState(EnemyState::Dead);
+
+    TransitionToState(EnemyState::Dead);
 
     SetTextureName("deadAnim");
     auto anim = FAnimationClip();
@@ -165,18 +168,17 @@ void UEnemyObject::Dead(UCircleCollider* other)
 
     Animator->SetAnimationClip(anim);
 
-    TransitionToState(EnemyState::Dead);
     if (other->GetLayer() == ECollisionLayer::Projectile)
     {
         // ignore collision with player, only projectile can kill enemy
         ScoreManager::Get().AddScore(100);
 
-        float random = rand() % 100;
-        if (random < 5) {
+        float random = Random::Range(0.0f, 100.0f);
+        if (random < 10.0f) {
            UGameObject* itemobj = new UItemObject(FTransform(Transform.Location), EItemType::Heal);
            SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
         }
-        else if (random < 8) {
+        else if (random < 15.0f) {
             UGameObject* itemobj = new UItemObject(FTransform(Transform.Location), EItemType::Upgrade);
             SceneManager::Get().GetcurrentScene()->CreateGameObject(itemobj);
         }

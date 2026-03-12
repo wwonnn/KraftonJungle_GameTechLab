@@ -2,6 +2,7 @@
 #include "ImGuiManager.h"
 #include "ItemDatabase.h"
 #include "ImGuiManager.h"
+#include "Random.h"
 
 UItemObject::UItemObject()
     :UGameObject()
@@ -25,6 +26,9 @@ UItemObject::UItemObject(FTransform transform, EItemType itemtype)
     SetTextureName(data.TextureName);
     Destroy(data.DestroyDelay);
 
+    auto strategy = CreateStrategy(data);
+    MovementStrategy = std::move(strategy);
+
     Initialize();
 }
 
@@ -35,7 +39,22 @@ UItemObject::~UItemObject()
 
 void UItemObject::Update(float DeltaTime)
 {
-    Transform.Location = Transform.Location + Velocity * DeltaTime;
+    if (MovementStrategy)
+    {
+        FVector newPos;
+        float newRot;
+        if (MovementStrategy->Update(newPos, newRot, Transform.Location, FVector(0, 0, 0), DeltaTime))
+        {
+            // 이동 완료
+        }
+        else
+        {
+            // 이동 진행 중
+            Transform.Location = newPos;
+            Transform.Rotation.z = newRot;
+        }
+    }
+    // Transform.Location = Transform.Location + Velocity * DeltaTime;
 }
 
 void UItemObject::Render(URenderer& renderer)
@@ -63,4 +82,12 @@ void UItemObject::OnCollisionEnter(UCircleCollider* other)
         UAudioSystem::Get().Play("heal");
         Destroy();
     }
+}
+
+std::unique_ptr<IMovementStrategy> UItemObject::CreateStrategy(const FItemTemplate& data) {
+    if (data.MovementStrategyType == "ItemZigZag")
+        return std::make_unique<ItemZigZagMovement>(FVector(0, 1, 0), data.Veclocity.y,0.3f, 1.0f);
+    else if (data.MovementStrategyType == "ItemRandom")
+        return std::make_unique<ItemLinearMovement>(FVector(Random::Range(-0.5f, 0.5f), Random::Range(-1.0f, 1.0f), 0), Random::Range(0.4f, 0.7f));
+    return nullptr;
 }
