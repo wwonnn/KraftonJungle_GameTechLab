@@ -127,7 +127,7 @@ void InfiniteModeScene::ChangedHP(int newHP)
     {
         if (!LifeObjects.empty())
         {
-            LifeObjects.back()->SetPendingDestroy(true);
+            LifeObjects.back()->Destroy();
             LifeObjects.pop_back();
         }
     }

@@ -105,7 +105,7 @@ void InGameScene::OnEnemyDied() {
         {
             if (dynamic_cast<UProjectile*>(obj))
             {
-                obj->SetPendingDestroy(true);
+                obj->Destroy();
             }
         }
 
@@ -136,7 +136,7 @@ void InGameScene::ChangedHP(int newHP)
     {
         if (!lifeObjects.empty())
         {
-            lifeObjects.back()->SetPendingDestroy(true);
+            lifeObjects.back()->Destroy();
             lifeObjects.pop_back();
         }
     }
