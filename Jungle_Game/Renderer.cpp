@@ -341,6 +341,8 @@ void URenderer::ReleaseDeviceAndSwapChain()
     if (DeviceContext)
     {
         DeviceContext->Flush();
+        DeviceContext->Release();
+        DeviceContext = nullptr;
     }
 
     if (SwapChain)
@@ -353,12 +355,6 @@ void URenderer::ReleaseDeviceAndSwapChain()
     {
         Device->Release();
         Device = nullptr;
-    }
-
-    if (DeviceContext)
-    {
-        DeviceContext->Release();
-        DeviceContext = nullptr;
     }
 }
 
@@ -425,7 +421,7 @@ void URenderer::ReleaseRasterzerState()
 void URenderer::CreateConstantBuffer()
 {
     D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.ByteWidth = sizeof(FConstantBuffer) + 0xf & ~0xf;
+    bufferDesc.ByteWidth = (sizeof(FConstantBuffer) + 0xf) & ~0xf;
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -435,7 +431,7 @@ void URenderer::CreateConstantBuffer()
 void URenderer::CreateEffectConstantBuffer()
 {
     D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.ByteWidth = sizeof(FEffectConstantBuffer) + 0xf & ~0xf;
+    bufferDesc.ByteWidth = (sizeof(FEffectConstantBuffer) + 0xf) & ~0xf;
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -465,7 +461,7 @@ void URenderer::CreateSpriteConstantBuffer()
     FSpriteUVBuffer initData = { 0.f, 0.f, 1.f, 1.f }; // 기본값: 전체 텍스처
 
     D3D11_BUFFER_DESC bufferDesc = {};
-    bufferDesc.ByteWidth = sizeof(FSpriteUVBuffer);
+    bufferDesc.ByteWidth = (sizeof(FSpriteUVBuffer) + 0xf) & ~0xf;
     bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -730,8 +726,8 @@ void URenderer::CreateDefaultFontAtlasAndVertexBuffer()
 
     Device->CreateBuffer(&vertexBufferDesc, nullptr, &TextVertexBuffer);
 
-    free(fontBuffer);
     delete[] alphaPixels;
+    delete[] fontBuffer;
 }
 
 void URenderer::ReleaseDefaultFontAtlasAndVertexBuffer()
