@@ -46,6 +46,12 @@ void UAudioSystem::Release()
         pair.second.AudioData.clear();
     }
 
+    if (Callback)
+    {
+        delete Callback;
+        Callback = nullptr;
+    }
+
     if (SFXSubmixVoice)
     {
         SFXSubmixVoice->DestroyVoice();

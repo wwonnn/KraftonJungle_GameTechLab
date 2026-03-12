@@ -53,7 +53,7 @@ public:
     void CheckCollisions();
     bool CheckWallCollision(FVector& location, FVector& scale);
 
-    void ClearCollisionPair(UGameObject* target);
+    void ClearCollisionPair(UCircleCollider* target);
 
 private:
     bool CheckCollision(UCircleCollider* colliderA, UCircleCollider* colliderB);
