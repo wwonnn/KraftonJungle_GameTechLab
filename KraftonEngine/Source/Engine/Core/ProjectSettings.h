@@ -37,6 +37,11 @@ class FProjectSettings : public TSingleton<FProjectSettings>
 		FString StartLevelName;     // Scene 파일 이름 (확장자 제외)
 		FString GameModeClassName;  // ""면 GameEngine이 코드로 지정한 디폴트 사용.
 		                            // 잘못된 이름이거나 AGameModeBase 파생이 아니면 디폴트 fallback.
+
+		// 게임 시작 시 미리 동기 로드해 둘 .obj 경로들 (ProjectDir 기준 상대).
+		// 첫 SpawnActor 시 큰 mesh 로딩이 frame hitch 를 일으키고, 그 hitch dt 한 번에 PhysX 가
+		// 적분해 차량이 지면을 뚫는 등의 tunneling 이 생길 수 있어, 게임별로 prewarm 대상을 명시한다.
+		TArray<FString> PreloadMeshes;
 	};
 
 public:

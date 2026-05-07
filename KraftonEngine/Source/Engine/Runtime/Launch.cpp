@@ -11,7 +11,7 @@
 #elif WITH_EDITOR
 #include "Editor/EditorEngine.h"
 #elif WITH_STANDALONE
-#include "Game/GameEngine.h"
+#include "Engine/Runtime/GameEngine.h"
 #endif
 
 namespace

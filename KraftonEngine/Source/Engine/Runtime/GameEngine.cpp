@@ -1,7 +1,6 @@
-﻿#include "Game/GameEngine.h"
+﻿#include "Engine/Runtime/GameEngine.h"
 
-#include "Game/GameRenderPipeline.h"
-#include "Game/GameMode/GameModeCarGame.h"
+#include "Engine/Runtime/GameRenderPipeline.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "Engine/Runtime/WindowsWindow.h"
 #include "Lua/LuaScriptManager.h"
@@ -16,7 +15,6 @@
 #include "Object/UClass.h"
 #include "Core/ProjectSettings.h"
 #include "Core/Log.h"
-#include "Lua/GameLuaBindings.h"
 
 #include <chrono>
 
@@ -24,29 +22,24 @@ IMPLEMENT_CLASS(UGameEngine, UEngine)
 
 namespace
 {
-	// 첫 SpawnActor<APoliceCar> 시 19MB OBJ 를 동기 로딩하면서 프레임 hitch 가 생겨,
-	// 그 사이 PhysX 가 큰 dt 한 번에 적분 → 차량이 지면을 뚫는 가설 검증용 prewarm.
-	// LoadObjStaticMesh 는 path 별 캐시를 가지므로, 여기서 미리 한 번 로드해 두면
-	// 런타임 SpawnActor 경로의 mesh 로딩이 캐시 hit 으로 즉시 반환된다.
+	// 게임별 prewarm — ProjectSettings.Game.PreloadMeshes 에 명시된 .obj 들을 시작 시점에
+	// 동기 로드해 둔다. 첫 SpawnActor 가 큰 mesh 를 처음 만나면 frame hitch → 그 hitch dt 한 번에
+	// PhysX 가 적분해 차량이 지면을 뚫는 등의 tunneling 이 발생해서, 프로젝트가 자기 무거운
+	// 동적 spawn mesh 를 declare 하도록 한다. LoadObjStaticMesh 는 path 별 캐시를 가지므로,
+	// 이후 런타임 SpawnActor 는 캐시 hit 으로 즉시 반환된다.
 	void PreloadGameMeshes(ID3D11Device* Device)
 	{
 		if (!Device) return;
 
-		const char* MeshPaths[] = {
-			"Data/Map/PoliceCar/PoliceCar.obj",  // 19MB — 첫 spawn 시 가장 큰 hitch 의심
-			"Data/Map/Person/model_mesh.obj",    // WalkingPerson
-			"Data/Truck/TruckBody.obj",
-			"Data/Truck/TruckHandle.obj",
-			"Data/Truck/TruckTire.obj",
-		};
-
-		for (const char* Path : MeshPaths)
+		for (const FString& Path : FProjectSettings::Get().Game.PreloadMeshes)
 		{
+			if (Path.empty()) continue;
+
 			const auto T0 = std::chrono::steady_clock::now();
 			UStaticMesh* Mesh = FObjManager::LoadObjStaticMesh(std::string(Path), Device);
 			const auto T1 = std::chrono::steady_clock::now();
 			const double Ms = std::chrono::duration<double, std::milli>(T1 - T0).count();
-			UE_LOG("[Preload] %s -> %s (%.1f ms)", Path, Mesh ? "OK" : "FAILED", Ms);
+			UE_LOG("[Preload] %s -> %s (%.1f ms)", Path.c_str(), Mesh ? "OK" : "FAILED", Ms);
 		}
 	}
 }
@@ -272,7 +265,9 @@ bool UGameEngine::LoadSceneFromPath(const FString& InScenePath)
 	}
 	if (!GMClass)
 	{
-		GMClass = AGameModeBase::ResolveClassFromProjectSettings(AGameModeCarGame::StaticClass());
+		// ProjectSettings.GameModeClassName 우선 — 없거나 잘못된 이름이면 베이스 AGameModeBase 로 fallback.
+		// 게임 특화 클래스(예: AGameModeCarGame) 는 .Scene 의 WorldSettings 또는 ProjectSettings 에서만 지정.
+		GMClass = AGameModeBase::ResolveClassFromProjectSettings(AGameModeBase::StaticClass());
 	}
 	LoadContext.World->SetGameModeClass(GMClass);
 

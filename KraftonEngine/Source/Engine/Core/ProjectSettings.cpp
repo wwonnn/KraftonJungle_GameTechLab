@@ -20,6 +20,7 @@ namespace PSKey
 	constexpr const char* GameSection = "Game";
 	constexpr const char* StartLevelName = "StartLevelName";
 	constexpr const char* GameModeClassName = "GameModeClassName";
+	constexpr const char* PreloadMeshes = "PreloadMeshes";
 }
 
 void FProjectSettings::SaveToFile(const FString& Path) const
@@ -44,6 +45,12 @@ void FProjectSettings::SaveToFile(const FString& Path) const
 	JSON GameObj = Object();
 	GameObj[PSKey::StartLevelName] = Game.StartLevelName;
 	GameObj[PSKey::GameModeClassName] = Game.GameModeClassName;
+	JSON PreloadArr = Array();
+	for (const FString& Path : Game.PreloadMeshes)
+	{
+		PreloadArr.append(Path);
+	}
+	GameObj[PSKey::PreloadMeshes] = PreloadArr;
 	Root[PSKey::GameSection] = GameObj;
 
 	std::filesystem::path FilePath(FPaths::ToWide(Path));
@@ -88,6 +95,18 @@ void FProjectSettings::LoadFromFile(const FString& Path)
 			Game.StartLevelName = G[PSKey::StartLevelName].ToString();
 		if (G.hasKey(PSKey::GameModeClassName))
 			Game.GameModeClassName = G[PSKey::GameModeClassName].ToString();
+		Game.PreloadMeshes.clear();
+		if (G.hasKey(PSKey::PreloadMeshes))
+		{
+			JSON Arr = G[PSKey::PreloadMeshes];
+			if (Arr.JSONType() == JSON::Class::Array)
+			{
+				for (int i = 0; i < Arr.length(); ++i)
+				{
+					Game.PreloadMeshes.push_back(Arr[i].ToString());
+				}
+			}
+		}
 	}
 
 	if (Root.hasKey(PSKey::Shadow))
