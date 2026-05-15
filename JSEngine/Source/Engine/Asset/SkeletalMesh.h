@@ -21,6 +21,7 @@ public:
     const TArray<uint32>& GetIndices() const;
 
     const TArray<FBoneInfo>& GetBones() const;
+    const TArray<UAnimSequence*>& GetAnimationSequences() const;
 
 	const FBoneInfo* GetBoneInfo(int32 BoneIndex) const;
 

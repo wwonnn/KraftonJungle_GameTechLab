@@ -2,12 +2,15 @@
 #include "Asset/StaticMeshTypes.h"
 #include "Core/Logging/Log.h"
 #include "Core/PlatformTime.h"
+#include "Animation/AnimData/AnimDataModel.h"
+#include "Animation/AnimData/AnimSequence.h"
 
 #include <fbxsdk.h>
 
 #include <algorithm>
 #include <cfloat>
 #include <cctype>
+#include <cmath>
 
 using namespace fbxsdk;
 
@@ -504,6 +507,151 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
                 BoneNodeToIndex,
                 bHasImportedSkinnedMesh);
         }
+    }
+
+    TArray<FbxNode*> IndexToBoneNode;
+    IndexToBoneNode.resize(SkeletalMesh->Bones.size());
+    for (const auto& Pair : BoneNodeToIndex)
+    {
+        const int32 BoneIndex = Pair.second;
+        if (BoneIndex >= 0 && BoneIndex < static_cast<int32>(IndexToBoneNode.size()))
+        {
+            IndexToBoneNode[BoneIndex] = Pair.first;
+        }
+    }
+
+    const int32 AnimStackCount = Scene->GetSrcObjectCount<FbxAnimStack>();
+    for (int32 AnimStackIndex = 0; AnimStackIndex < AnimStackCount; AnimStackIndex++)
+    {
+        FbxAnimStack* CurAnimStack = Scene->GetSrcObject<FbxAnimStack>(AnimStackIndex);
+        if (!CurAnimStack)
+        {
+            continue;
+        }
+
+        Scene->SetCurrentAnimationStack(CurAnimStack);
+
+        FbxTakeInfo* TakeInfo = Scene->GetTakeInfo(CurAnimStack->GetName());
+        FbxTimeSpan TimeSpan = TakeInfo ? TakeInfo->mLocalTimeSpan : CurAnimStack->GetLocalTimeSpan();
+
+        const FbxTime Start = TimeSpan.GetStart();
+        const FbxTime End = TimeSpan.GetStop();
+        const double StartSeconds = Start.GetSecondDouble();
+        const double EndSeconds = End.GetSecondDouble();
+        const double DurationSeconds = EndSeconds - StartSeconds;
+
+        FbxTime::EMode TimeMode = Scene->GetGlobalSettings().GetTimeMode();
+        double FPS = FbxTime::GetFrameRate(TimeMode);
+        if (!std::isfinite(FPS) || FPS <= 0.0)
+        {
+            FPS = 30.0;
+        }
+
+        if (!std::isfinite(DurationSeconds) || DurationSeconds <= 0.0)
+        {
+            UE_LOG_WARNING("[FbxImporter] Skip animation stack with invalid duration | Path=%s | Stack=%s | Duration=%.6f",
+                           Path.c_str(),
+                           CurAnimStack->GetName(),
+                           DurationSeconds);
+            continue;
+        }
+
+        const int32 FrameCount = static_cast<int32>(DurationSeconds * FPS) + 1;
+        if (FrameCount <= 0)
+        {
+            UE_LOG_WARNING("[FbxImporter] Skip animation stack with invalid frame count | Path=%s | Stack=%s | Frames=%d",
+                           Path.c_str(),
+                           CurAnimStack->GetName(),
+                           FrameCount);
+            continue;
+        }
+
+		UE_LOG("[FbxImporter] Animation stack info | Path=%s | Stack=%s | Duration=%.3f sec | Frames=%d | FPS=%.3f",
+               Path.c_str(),
+               CurAnimStack->GetName(),
+               DurationSeconds,
+               FrameCount,
+               FPS);
+
+        UAnimSequence* AnimSequence = new UAnimSequence();
+        UAnimDataModel* AnimDataModel = new UAnimDataModel();
+        AnimSequence->DataModel = AnimDataModel;
+
+        const FString StackName = CurAnimStack->GetName() && CurAnimStack->GetName()[0] != '\0'
+            ? FString(CurAnimStack->GetName())
+            : FString("AnimStack_") + std::to_string(AnimStackIndex);
+        AnimSequence->SetFName(FName(StackName));
+        AnimDataModel->SetFName(FName(StackName + "_Data"));
+        AnimDataModel->FrameRate = FFrameRate(static_cast<int32>(std::round(FPS * 1000.0)), 1000);
+        AnimDataModel->NumberOfFrames = FrameCount;
+        AnimDataModel->NumberOfKeys = FrameCount;
+
+        for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(IndexToBoneNode.size()); ++BoneIndex)
+        {
+            FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
+            if (!BoneNode)
+            {
+                continue;
+            }
+
+            FBoneAnimationTrack Track;
+            Track.BoneTreeIndex = BoneIndex;
+            Track.Name = FName(BoneNode->GetName());
+
+            Track.InternalTrackData.PosKeys.reserve(FrameCount);
+            Track.InternalTrackData.RotKeys.reserve(FrameCount);
+            Track.InternalTrackData.ScaleKeys.reserve(FrameCount);
+
+            for (int32 Frame = 0; Frame < FrameCount; ++Frame)
+            {
+                FbxTime Time;
+                Time.SetSecondDouble(StartSeconds + static_cast<double>(Frame) / FPS);
+
+                const FMatrix Global = ToFMatrix(BoneNode->EvaluateGlobalTransform(Time));
+
+                FMatrix Local = Global;
+                const int32 ParentIndex = SkeletalMesh->Bones[BoneIndex].ParentIndex;
+                if (ParentIndex >= 0 && ParentIndex < static_cast<int32>(IndexToBoneNode.size()))
+                {
+                    if (FbxNode* ParentNode = IndexToBoneNode[ParentIndex])
+                    {
+                        const FMatrix ParentGlobal = ToFMatrix(ParentNode->EvaluateGlobalTransform(Time));
+                        Local = Global * ParentGlobal.GetInverse();
+                    }
+                }
+
+                const FTransform LocalTransform(Local);
+
+                Track.InternalTrackData.PosKeys.push_back(LocalTransform.GetTranslation());
+                Track.InternalTrackData.RotKeys.push_back(LocalTransform.GetRotation().GetNormalized());
+                Track.InternalTrackData.ScaleKeys.push_back(LocalTransform.GetScale3D());
+                UE_LOG("[FbxImporter] Anim Key | Stack=%s | Bone=%s | Frame=%d | Time=%.3f sec | Pos=(%.3f, %.3f, %.3f) | Rot=(%.3f, %.3f, %.3f, %.3f) | Scale=(%.3f, %.3f, %.3f)",
+					   StackName.c_str(),
+					   BoneNode->GetName(),
+					   Frame,
+					   Time.GetSecondDouble(),
+					   LocalTransform.GetTranslation().X,
+					   LocalTransform.GetTranslation().Y,
+					   LocalTransform.GetTranslation().Z,
+					   LocalTransform.GetRotation().X,
+					   LocalTransform.GetRotation().Y,
+					   LocalTransform.GetRotation().Z,
+					   LocalTransform.GetRotation().W,
+					   LocalTransform.GetScale3D().X,
+					   LocalTransform.GetScale3D().Y,
+                       LocalTransform.GetScale3D().Z);
+            }
+
+            AnimDataModel->BoneAnimationTracks.push_back(Track);
+        }
+
+        if (AnimDataModel->BoneAnimationTracks.empty())
+        {
+            delete AnimSequence;
+            continue;
+        }
+
+        SkeletalMesh->AnimationSequences.push_back(AnimSequence);
     }
 
     Manager->Destroy();

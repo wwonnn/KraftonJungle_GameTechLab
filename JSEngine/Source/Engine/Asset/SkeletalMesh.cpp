@@ -1,9 +1,25 @@
 ﻿#include "SkeletalMesh.h"
 
+#include "Animation/AnimData/AnimSequence.h"
 #include "Core/Logging/Log.h"
 #include "Engine/Geometry/Transform.h"
 
 DEFINE_CLASS(USkeletalMesh, UObject)
+
+FSkeletalMesh::~FSkeletalMesh()
+{
+    ClearAnimationSequences();
+}
+
+void FSkeletalMesh::ClearAnimationSequences()
+{
+    for (UAnimSequence* Sequence : AnimationSequences)
+    {
+        delete Sequence;
+    }
+
+    AnimationSequences.clear();
+}
 
 FMatrix FSkeletalMeshSocket::GetRelativeTransform() const
 {
@@ -65,6 +81,12 @@ const TArray<FBoneInfo>& USkeletalMesh::GetBones() const
 {
     static const TArray<FBoneInfo> Empty = {};
     return MeshData ? MeshData->Bones : Empty;
+}
+
+const TArray<UAnimSequence*>& USkeletalMesh::GetAnimationSequences() const
+{
+    static const TArray<UAnimSequence*> Empty = {};
+    return MeshData ? MeshData->AnimationSequences : Empty;
 }
 
 const FBoneInfo* USkeletalMesh::GetBoneInfo(int32 BoneIndex) const
