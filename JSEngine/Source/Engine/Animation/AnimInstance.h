@@ -19,12 +19,16 @@ public:
 	DECLARE_CLASS(UAnimInstance, UObject)
 
 public:
-    virtual void UpdateAnimation(float DeltaTime);	// 재생 시간 관리
+    virtual void UpdateAnimation(float DeltaTime);		// 재생 시간 관리
     virtual void EvaluatePose(FSkeletonPose& OutPose);	// 시간 t에서 Bone의 Pose 계산
 
+	void SetNextSequence(UAnimSequence* InNext, float InBlendSpeed);
+
 protected:
-    void InitializeReferencePose();
-    void EvaluatePoseAtTime(float DeltaTime, TArray<FTransform>& OutLocalTransforms);
+    void InitializeReferencePose(FSkeletonPose& OutPose);
+    void EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms);
+    FVector InterpolateKeys(const TArray<FAnimKeyVector>& Keys, float Time);
+    FQuat InterpolateKeys(const TArray<FAnimKeyQuat>& Keys, float Time);
 
 	// PoseA와 PoseB를 블렌딩하여 OutPose에 저장 -> Transition 용도
     void BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose);
@@ -39,12 +43,15 @@ protected:
 private:
     USkinnedMeshComponent* Owner = nullptr;
 
-    UAnimSequence* CurrSequence = nullptr;
+    UAnimSequence* CurrentSequence = nullptr;
     UAnimSequence* NextSequence = nullptr;
 
 	float CurrentTime = 0.0f;
+    float NextTime = 0.0f;
+
     float PlayRate = 1.0f;
     bool bLoop = true;
     bool bPlaying = true;
     float BlendFactor = 0.0f; // 0.0f: CurrSequence, 1.0f: NextSequence
+    float BlendSpeed = 1.0f;
 };
