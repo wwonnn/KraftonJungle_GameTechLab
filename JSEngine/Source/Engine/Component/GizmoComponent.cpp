@@ -302,26 +302,17 @@ void UGizmoComponent::RotateTarget(float DragAmount)
     if (!Proxy)
         return;
 
-    FVector RotationAxis = GetVectorForAxis(SelectedAxis);
-    RotationAxis.NormalizeSafe();
-
     FMatrix M = Proxy->GetTransform();
     FVector Translation, Scale;
     FMatrix RotationMat;
     M.Decompose(Translation, RotationMat, Scale);
 
     FQuat CurQuat = FQuat(RotationMat);
-    FQuat DeltaQuat(RotationAxis, DragAmount);
-    FQuat NewQuat;
-
-    if (bIsWorldSpace)
-    {
-        NewQuat = DeltaQuat * CurQuat;
-    }
-    else
-    {
-        NewQuat = CurQuat * DeltaQuat;
-    }
+    
+    // Both World and Local modes use Post-multiplication (Cur * Delta) 
+    // because DraggingRotationAxis is a World-space axis.
+    FQuat DeltaQuat(DraggingRotationAxis, DragAmount);
+    FQuat NewQuat = CurQuat * DeltaQuat;
     NewQuat.Normalize();
 
     Proxy->SetTransform(FMatrix::MakeTRS(Translation, NewQuat.ToMatrix(), Scale));
@@ -612,6 +603,12 @@ void UGizmoComponent::UpdateDrag(const FRay& Ray)
 		}
 		return;
 	}
+
+    if (bIsFirstFrameOfDrag)
+    {
+        DraggingRotationAxis = GetVectorForAxis(SelectedAxis);
+        DraggingRotationAxis.NormalizeSafe();
+    }
 
 	if (CurMode == EGizmoMode::Rotate)
 	{

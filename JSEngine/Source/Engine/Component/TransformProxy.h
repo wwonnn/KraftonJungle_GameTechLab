@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Math/Matrix.h"
@@ -39,7 +39,9 @@ public:
 
         FQuat OldQuat = FQuat(OldR);
         FQuat NewQuat = FQuat(NewR);
-        FQuat DeltaQuat = NewQuat * OldQuat.Inverse();
+        
+        // World Delta: Old * Delta = New => Delta = Old^-1 * New
+        FQuat DeltaQuat = OldQuat.Inverse() * NewQuat;
         DeltaQuat.Normalize();
 
         FVector DeltaT = NewT - OldT;
@@ -64,7 +66,8 @@ public:
             // 회전: DeltaQuat가 Identity에 가까우면 적용 안 함 (오차 방지)
             if (!DeltaQuat.IsIdentity(1e-6f))
             {
-                FQuat ActorNewQuat = DeltaQuat * Actor->GetActorRotationQuat();
+                // World rotation: Cur * Delta
+                FQuat ActorNewQuat = Actor->GetActorRotationQuat() * DeltaQuat;
                 ActorNewQuat.Normalize();
                 Actor->SetActorRotationQuat(ActorNewQuat);
             }
@@ -105,32 +108,26 @@ public:
     {
         if (!Component)
             return;
-        FVector Translation, Scale;
-        FMatrix Rotation;
-        if (!M.Decompose(Translation, Rotation, Scale))
-            return;
+
+        FTransform NewWorldTransform(M);
+        NewWorldTransform.NormalizeRotation();
 
         USceneComponent* Parent = Component->GetParent();
         if (!Parent)
         {
-            // 루트 컴포넌트면 World = Relative
-            Component->SetWorldLocation(Translation);
-            Component->SetRelativeRotationQuat(FQuat(Rotation));
-            Component->SetRelativeScale(Scale);
+            Component->SetRelativeLocation(NewWorldTransform.GetLocation());
+            Component->SetRelativeRotationQuat(NewWorldTransform.GetRotation());
+            Component->SetRelativeScale(NewWorldTransform.GetScale3D());
         }
         else
         {
-            // 부모의 World 역행렬로 Relative 변환
-            FMatrix ParentWorld = Parent->GetWorldMatrix();
-            FMatrix RelativeM = M * ParentWorld.GetInverse();
-
-            FVector RelT, RelS;
-            FMatrix RelR;
-            RelativeM.Decompose(RelT, RelR, RelS);
-
-            Component->SetRelativeLocation(RelT);
-            Component->SetRelativeRotationQuat(FQuat(RelR));
-            Component->SetRelativeScale(RelS);
+            FTransform ParentWorldTransform = Parent->GetWorldTransform();
+            // World = Relative * Parent => Relative = World * Parent^-1
+            FTransform RelativeTransform = NewWorldTransform * ParentWorldTransform.Inverse();
+            
+            Component->SetRelativeLocation(RelativeTransform.GetLocation());
+            Component->SetRelativeRotationQuat(RelativeTransform.GetRotation());
+            Component->SetRelativeScale(RelativeTransform.GetScale3D());
         }
     }
 };
