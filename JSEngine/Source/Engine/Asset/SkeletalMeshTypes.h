@@ -4,6 +4,8 @@
 #include "Object/FName.h"
 #include "StaticMeshTypes.h"
 
+class UAnimSequence;
+
 struct FBoneInfo
 {
     FString Name;
@@ -31,11 +33,16 @@ struct FSkeletalMeshSocket
 
 struct FSkeletalMesh
 {
+    ~FSkeletalMesh();
+
+    void ClearAnimationSequences();
+
     FString PathFileName;
     TArray<FSkeletalMeshVertex> Vertices;
     TArray<uint32> Indices;
 
     TArray<FBoneInfo> Bones;
+    TArray<UAnimSequence*> AnimationSequences;
 
     // 변환 행렬의 경우 FBoneInfo에만 두도록 처리
 

@@ -3,6 +3,7 @@
 #include "Core/EngineTypes.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
+#include "Math/Quat.h"
 #include "Object/FName.h"
 
 struct FArchive
@@ -39,6 +40,22 @@ struct FArchive
 	virtual FArchive& operator<<(FColor& Value) = 0;
 	virtual FArchive& operator<<(FMatrix& Value) = 0;
 };
+
+inline FArchive& operator<<(FArchive& Ar, FQuat& Value)
+{
+	FVector4 QuatVector(Value.X, Value.Y, Value.Z, Value.W);
+	Ar << QuatVector;
+
+	if (Ar.IsLoading())
+	{
+		Value.X = QuatVector.X;
+		Value.Y = QuatVector.Y;
+		Value.Z = QuatVector.Z;
+		Value.W = QuatVector.W;
+	}
+
+	return Ar;
+}
 
 template <typename T>
 FArchive& operator<<(FArchive& Ar, TArray<T>& Array)

@@ -1,5 +1,7 @@
 ﻿#include "BinarySerializer.h"
 
+#include "Animation/AnimData/AnimDataModel.h"
+#include "Animation/AnimData/AnimSequence.h"
 #include "Asset/StaticMeshTypes.h"
 #include "Asset/SkeletalMeshTypes.h"
 #include "Core/Paths.h"
@@ -38,7 +40,7 @@ constexpr uint32 STATIC_MESH_BINARY_MAGIC = 0x4853454D; // 'MESH'
 constexpr uint32 STATIC_MESH_BINARY_VERSION = 1;
 
 constexpr uint32 SKELETAL_MESH_BINARY_MAGIC   = 0x534D4B53; // 'SKMS'
-constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 2;          // v2: Sockets 블록 추가
+constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 3;          // v3: AnimationSequences 블록 추가
 
 //	Vailidation Checkers
 constexpr uint32 MAX_STATIC_MESH_VERTEX_COUNT   = 10'000'000;
@@ -53,6 +55,9 @@ constexpr uint32 MAX_SKELETAL_MESH_SECTION_COUNT  = 100'000;
 constexpr uint32 MAX_SKELETAL_MESH_SLOTNAME_COUNT = 1024;
 constexpr uint32 MAX_SKELETAL_MESH_BONE_COUNT     = 65'536;
 constexpr uint32 MAX_SKELETAL_MESH_SOCKET_COUNT   = 1024;
+constexpr uint32 MAX_SKELETAL_MESH_ANIMATION_COUNT = 1024;
+constexpr uint32 MAX_ANIMATION_TRACK_COUNT         = 65'536;
+constexpr uint32 MAX_ANIMATION_KEY_COUNT           = 1'000'000;
 
 static bool IsValidStaticMeshHeader(const FStaticMeshBinaryHeader& Header)
 {
@@ -96,8 +101,8 @@ static bool IsValidSkeletalMeshHeader(const FSkeletalMeshBinaryHeader& Header)
 		return false;
 	}
 
-	// v1과 v2 모두 수용. v1은 SocketCount가 0인 것으로 간주.
-	if (Header.Version != 1 && Header.Version != SKELETAL_MESH_BINARY_VERSION)
+	// 포맷 변경 시 캐시를 재생성하기 위해 현재 버전만 유효한 캐시로 수용.
+	if (Header.Version != SKELETAL_MESH_BINARY_VERSION)
 	{
 		return false;
 	}
@@ -128,6 +133,11 @@ static bool IsValidSkeletalMeshHeader(const FSkeletalMeshBinaryHeader& Header)
 	}
 
 	if (Header.SocketCount > MAX_SKELETAL_MESH_SOCKET_COUNT)
+	{
+		return false;
+	}
+
+	if (Header.AnimationCount > MAX_SKELETAL_MESH_ANIMATION_COUNT)
 	{
 		return false;
 	}
@@ -699,7 +709,7 @@ bool FBinarySerializer::ReadStaticMeshHeader(const FString& BinaryPath, FStaticM
 
 void FBinarySerializer::WriteSkeletalHeader(std::ofstream& Out, const FSkeletalMeshBinaryHeader& Header)
 {
-	// Save는 항상 v2 포맷으로 기록 (SocketCount 포함).
+	// Save는 항상 최신 포맷으로 기록.
 	WriteUInt32LE(Out, Header.MagicNumber);
 	WriteUInt32LE(Out, Header.Version);
 	WriteUInt32LE(Out, Header.VertexCount);
@@ -708,12 +718,13 @@ void FBinarySerializer::WriteSkeletalHeader(std::ofstream& Out, const FSkeletalM
 	WriteUInt32LE(Out, Header.SlotCount);
 	WriteUInt32LE(Out, Header.BoneCount);
 	WriteUInt32LE(Out, Header.SocketCount);
+	WriteUInt32LE(Out, Header.AnimationCount);
 	WriteUInt64LE(Out, Header.SourceFileWriteTime);
 }
 
 bool FBinarySerializer::ReadSkeletalHeader(std::ifstream& In, FSkeletalMeshBinaryHeader& OutHeader) const
 {
-	// v1: SocketCount 필드 없음. v2부터 SocketCount 포함.
+	// v1: SocketCount 필드 없음. v2: SocketCount 포함. v3: AnimationCount 포함.
 	if (!ReadUInt32LE(In, OutHeader.MagicNumber))   return false;
 	if (!ReadUInt32LE(In, OutHeader.Version))       return false;
 	if (!ReadUInt32LE(In, OutHeader.VertexCount))   return false;
@@ -729,6 +740,15 @@ bool FBinarySerializer::ReadSkeletalHeader(std::ifstream& In, FSkeletalMeshBinar
 	else
 	{
 		OutHeader.SocketCount = 0;
+	}
+
+	if (OutHeader.Version >= 3)
+	{
+		if (!ReadUInt32LE(In, OutHeader.AnimationCount)) return false;
+	}
+	else
+	{
+		OutHeader.AnimationCount = 0;
 	}
 
 	if (!ReadUInt64LE(In, OutHeader.SourceFileWriteTime)) return false;
@@ -1063,6 +1083,210 @@ bool FBinarySerializer::ReadSockets(std::ifstream& In, FSkeletalMesh& OutData, u
 	return In.good();
 }
 
+void FBinarySerializer::WriteAnimationSequences(std::ofstream& Out, const FSkeletalMesh& Data)
+{
+	const uint32 SequenceCount = static_cast<uint32>(Data.AnimationSequences.size());
+	WriteUInt32LE(Out, SequenceCount);
+
+	for (const UAnimSequence* Sequence : Data.AnimationSequences)
+	{
+		const UAnimDataModel* DataModel = Sequence ? Sequence->DataModel : nullptr;
+		const FString SequenceName = Sequence ? FString(Sequence->GetName()) : FString();
+
+		WriteString(Out, SequenceName);
+		WriteInt32LE(Out, DataModel ? DataModel->FrameRate.Numerator : 30);
+		WriteInt32LE(Out, DataModel ? DataModel->FrameRate.Denominator : 1);
+		WriteInt32LE(Out, DataModel ? DataModel->NumberOfFrames : 0);
+		WriteInt32LE(Out, DataModel ? DataModel->NumberOfKeys : 0);
+
+		const uint32 TrackCount = DataModel ? static_cast<uint32>(DataModel->BoneAnimationTracks.size()) : 0;
+		WriteUInt32LE(Out, TrackCount);
+
+		if (!DataModel)
+		{
+			continue;
+		}
+
+		for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
+		{
+			const FString TrackName = Track.Name.ToString();
+			WriteString(Out, TrackName);
+			WriteInt32LE(Out, Track.BoneTreeIndex);
+
+			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.PosKeys.size()));
+			for (const FVector& Key : Track.InternalTrackData.PosKeys)
+			{
+				WriteFloatLE(Out, Key.X);
+				WriteFloatLE(Out, Key.Y);
+				WriteFloatLE(Out, Key.Z);
+			}
+
+			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.RotKeys.size()));
+			for (const FQuat& Key : Track.InternalTrackData.RotKeys)
+			{
+				WriteFloatLE(Out, Key.X);
+				WriteFloatLE(Out, Key.Y);
+				WriteFloatLE(Out, Key.Z);
+				WriteFloatLE(Out, Key.W);
+			}
+
+			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.ScaleKeys.size()));
+			for (const FVector& Key : Track.InternalTrackData.ScaleKeys)
+			{
+				WriteFloatLE(Out, Key.X);
+				WriteFloatLE(Out, Key.Y);
+				WriteFloatLE(Out, Key.Z);
+			}
+		}
+	}
+}
+
+bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh& OutData, uint32 AnimationCount) const
+{
+	uint32 SequenceCount = 0;
+	if (!ReadUInt32LE(In, SequenceCount))
+	{
+		return false;
+	}
+
+	if (SequenceCount != AnimationCount || SequenceCount > MAX_SKELETAL_MESH_ANIMATION_COUNT)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	OutData.ClearAnimationSequences();
+	OutData.AnimationSequences.reserve(SequenceCount);
+
+	for (uint32 SequenceIndex = 0; SequenceIndex < SequenceCount; ++SequenceIndex)
+	{
+		FString SequenceName;
+		if (!ReadString(In, SequenceName))
+		{
+			return false;
+		}
+
+		int32 FrameRateNumerator = 30;
+		int32 FrameRateDenominator = 1;
+		int32 NumberOfFrames = 0;
+		int32 NumberOfKeys = 0;
+		if (!ReadInt32LE(In, FrameRateNumerator) ||
+			!ReadInt32LE(In, FrameRateDenominator) ||
+			!ReadInt32LE(In, NumberOfFrames) ||
+			!ReadInt32LE(In, NumberOfKeys))
+		{
+			return false;
+		}
+
+		uint32 TrackCount = 0;
+		if (!ReadUInt32LE(In, TrackCount))
+		{
+			return false;
+		}
+
+		if (TrackCount > MAX_ANIMATION_TRACK_COUNT)
+		{
+			In.setstate(std::ios::failbit);
+			return false;
+		}
+
+		UAnimSequence* Sequence = new UAnimSequence();
+		Sequence->SetFName(FName(SequenceName));
+
+		UAnimDataModel* DataModel = new UAnimDataModel();
+		DataModel->SetFName(FName(SequenceName + "_Data"));
+		DataModel->FrameRate = FFrameRate(FrameRateNumerator, FrameRateDenominator);
+		DataModel->NumberOfFrames = NumberOfFrames;
+		DataModel->NumberOfKeys = NumberOfKeys;
+		DataModel->BoneAnimationTracks.reserve(TrackCount);
+
+		Sequence->DataModel = DataModel;
+
+		for (uint32 TrackIndex = 0; TrackIndex < TrackCount; ++TrackIndex)
+		{
+			FBoneAnimationTrack Track;
+
+			FString TrackName;
+			if (!ReadString(In, TrackName))
+			{
+				delete Sequence;
+				return false;
+			}
+			Track.Name = FName(TrackName);
+
+			if (!ReadInt32LE(In, Track.BoneTreeIndex))
+			{
+				delete Sequence;
+				return false;
+			}
+
+			uint32 PosKeyCount = 0;
+			if (!ReadUInt32LE(In, PosKeyCount) || PosKeyCount > MAX_ANIMATION_KEY_COUNT)
+			{
+				delete Sequence;
+				In.setstate(std::ios::failbit);
+				return false;
+			}
+			Track.InternalTrackData.PosKeys.resize(PosKeyCount);
+			for (FVector& Key : Track.InternalTrackData.PosKeys)
+			{
+				if (!ReadFloatLE(In, Key.X) ||
+					!ReadFloatLE(In, Key.Y) ||
+					!ReadFloatLE(In, Key.Z))
+				{
+					delete Sequence;
+					return false;
+				}
+			}
+
+			uint32 RotKeyCount = 0;
+			if (!ReadUInt32LE(In, RotKeyCount) || RotKeyCount > MAX_ANIMATION_KEY_COUNT)
+			{
+				delete Sequence;
+				In.setstate(std::ios::failbit);
+				return false;
+			}
+			Track.InternalTrackData.RotKeys.resize(RotKeyCount);
+			for (FQuat& Key : Track.InternalTrackData.RotKeys)
+			{
+				if (!ReadFloatLE(In, Key.X) ||
+					!ReadFloatLE(In, Key.Y) ||
+					!ReadFloatLE(In, Key.Z) ||
+					!ReadFloatLE(In, Key.W))
+				{
+					delete Sequence;
+					return false;
+				}
+			}
+
+			uint32 ScaleKeyCount = 0;
+			if (!ReadUInt32LE(In, ScaleKeyCount) || ScaleKeyCount > MAX_ANIMATION_KEY_COUNT)
+			{
+				delete Sequence;
+				In.setstate(std::ios::failbit);
+				return false;
+			}
+			Track.InternalTrackData.ScaleKeys.resize(ScaleKeyCount);
+			for (FVector& Key : Track.InternalTrackData.ScaleKeys)
+			{
+				if (!ReadFloatLE(In, Key.X) ||
+					!ReadFloatLE(In, Key.Y) ||
+					!ReadFloatLE(In, Key.Z))
+				{
+					delete Sequence;
+					return false;
+				}
+			}
+
+			DataModel->BoneAnimationTracks.push_back(Track);
+		}
+
+		OutData.AnimationSequences.push_back(Sequence);
+	}
+
+	return In.good();
+}
+
 void FBinarySerializer::WriteSkeletalBounds(std::ofstream& Out, const FSkeletalMesh& Data)
 {
 	WriteFloatLE(Out, Data.LocalBounds.Min.X);
@@ -1101,6 +1325,7 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 	Header.SlotCount    = static_cast<uint32>(Data.MaterialSlots.size());
 	Header.BoneCount    = static_cast<uint32>(Data.Bones.size());
 	Header.SocketCount  = static_cast<uint32>(Data.Sockets.size());
+	Header.AnimationCount = static_cast<uint32>(Data.AnimationSequences.size());
 	Header.SourceFileWriteTime = GetFileWriteTimeTicks(SourcePath);
 
 	if (!IsValidSkeletalMeshHeader(Header))
@@ -1125,6 +1350,7 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 
 	WriteBones(Out, Data);
 	WriteSockets(Out, Data);
+	WriteAnimationSequences(Out, Data);
 	WriteSkeletalBounds(Out, Data);
 
 	return Out.good();
@@ -1209,6 +1435,18 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 		OutData.Sockets.clear();
 	}
 
+	if (Header.Version >= 3)
+	{
+		if (!ReadAnimationSequences(In, OutData, Header.AnimationCount))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		OutData.ClearAnimationSequences();
+	}
+
 	if (!ReadSkeletalBounds(In, OutData))
 	{
 		return false;
@@ -1225,7 +1463,8 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 	      OutData.Sections.size()      == Header.SectionCount &&
 	      OutData.MaterialSlots.size() == Header.SlotCount    &&
 	      OutData.Bones.size()         == Header.BoneCount    &&
-	      OutData.Sockets.size()       == Header.SocketCount))
+	      OutData.Sockets.size()       == Header.SocketCount  &&
+	      OutData.AnimationSequences.size() == Header.AnimationCount))
 	{
 		return false;
 	}
