@@ -144,17 +144,13 @@ void UTextRenderComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Ou
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
 
-	OutProps.push_back({ "Text", EPropertyType::String, &Text });
-	OutProps.push_back({ "Font", EPropertyType::Name, &FontName });
-	// OutProps.push_back({ "Color", EPropertyType::Vec4, &Color });
-	OutProps.push_back({ "Font Size", EPropertyType::Float, &FontSize, 0.1f, 100.0f, 0.1f });
 }
 
 void UTextRenderComponent::PostEditProperty(const char* PropertyName)
 {
 	UPrimitiveComponent::PostEditProperty(PropertyName);
 
-	if (strcmp(PropertyName, "Font") == 0)
+	if (strcmp(PropertyName, "FontName") == 0)
 	{
 		SetFont(FontName);
 	}

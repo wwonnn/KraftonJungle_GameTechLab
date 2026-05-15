@@ -55,21 +55,6 @@ namespace
     }
 }
 
-void USequenceCameraShakePattern::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
-{
-    UCameraShakePattern::GetEditableProperties(OutProps);
-
-    OutProps.push_back({ "CurveAssetPath", EPropertyType::String, &CurveAssetPath });
-    OutProps.push_back({ "PlayRate", EPropertyType::Float, &PlayRate });
-    OutProps.push_back({ "Scale", EPropertyType::Float, &Scale });
-    OutProps.push_back({ "RandomSegmentDuration", EPropertyType::Float, &RandomSegmentDuration });
-    OutProps.push_back({ "bRandomSegment", EPropertyType::Bool, &bRandomSegment });
-    OutProps.push_back({ "bLoop", EPropertyType::Bool, &bLoop });
-    OutProps.push_back({ "LocationAmplitude", EPropertyType::Vec3, &LocationAmplitude });
-    OutProps.push_back({ "RotationAmplitudeDeg", EPropertyType::Vec3, &RotationAmplitudeDeg });
-    OutProps.push_back({ "FOVAmplitude", EPropertyType::Float, &FOVAmplitude });
-}
-
 void USequenceCameraShakePattern::GetCameraShakeInfo(FCameraShakeInfo& OutCameraInfo) const
 {
     UCameraShakePattern::GetCameraShakeInfo(OutCameraInfo);

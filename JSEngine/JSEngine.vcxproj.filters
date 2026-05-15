@@ -13,6 +13,9 @@
     <Filter Include="Source">
       <UniqueIdentifier>{a2c655c5-b907-4abe-9c4e-0ae260b05ced}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Generated">
+      <UniqueIdentifier>{4a6805a0-9a1f-4f64-8af2-7507b8eb5160}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Game">
       <UniqueIdentifier>{41726a56-b1ce-4c90-aef5-1d55cf8fbb13}</UniqueIdentifier>
     </Filter>
@@ -707,6 +710,12 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Object\Object.cpp">
       <Filter>Source\Engine\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Object\Reflection.cpp">
+      <Filter>Source\Engine\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Generated\Reflection.generated.cpp">
+      <Filter>Source\Generated</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Render\FontBatcher.cpp">
       <Filter>Source\Engine\Render</Filter>
@@ -1602,6 +1611,9 @@
       <Filter>Source\Engine\Object</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Object\ObjectIterator.h">
+      <Filter>Source\Engine\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Object\Reflection.h">
       <Filter>Source\Engine\Object</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Render\FontBatcher.h">

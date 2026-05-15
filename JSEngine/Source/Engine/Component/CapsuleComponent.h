@@ -27,7 +27,9 @@ public:
     void Serialize(FArchive& Ar) override;
 
 private:
+    UPROPERTY(EditAnywhere, DisplayName="CapsuleHalfHeight")
     float CapsuleHalfHeight = 0.5f;
+    UPROPERTY(EditAnywhere, DisplayName="CapsuleRadius")
     float CapsuleRadius = 0.5f;
 
     bool RaycastMesh(const FRay& Ray, FHitResult& OutHitResult) override;

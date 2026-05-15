@@ -9,10 +9,6 @@ void UProjectileMovementComponent::GetEditableProperties(TArray<FPropertyDescrip
 {
     UMovementComponent::GetEditableProperties(OutProps);
     // "Velocity" 는 UMovementComponent::GetEditableProperties 에서 이미 추가됩니다.
-    OutProps.push_back({ "Initial Speed",             EPropertyType::Float, &InitialSpeed, 0.0f, 0.0f, 1.0f });
-    OutProps.push_back({ "Max Speed",                 EPropertyType::Float, &MaxSpeed,     0.0f, 0.0f, 1.0f });
-    OutProps.push_back({ "Gravity Scale",             EPropertyType::Float, &GravityScale, 0.0f, 5.0f, 0.01f });
-    OutProps.push_back({ "Rotation Follows Velocity", EPropertyType::Bool,  &bRotationFollowsVelocity });
 }
 
 void UProjectileMovementComponent::BeginPlay()

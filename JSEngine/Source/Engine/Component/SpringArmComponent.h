@@ -43,9 +43,13 @@ private:
 	void ResetCameraLag();
 
 private:
+	UPROPERTY(EditAnywhere, DisplayName="Target Arm Length", Min=0.0, Max=100.0, Speed=0.1)
 	float TargetArmLength = 5.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Socket Offset", Speed=0.1)
 	FVector SocketOffset = FVector(0.0f, 0.0f, 0.25f);
+	UPROPERTY(EditAnywhere, DisplayName="Enable Camera Lag")
 	bool bEnableCameraLag = false;
+	UPROPERTY(EditAnywhere, DisplayName="Camera Lag Speed", Min=0.01, Max=100.0, Speed=0.1)
 	float CameraLagSpeed = 10.0f;
 
 	mutable FVector LagLocation = FVector::ZeroVector;

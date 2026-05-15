@@ -68,7 +68,6 @@ void USkinnedMeshComponent::Serialize(FArchive& Ar)
 void USkinnedMeshComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UMeshComponent::GetEditableProperties(OutProps);
-    OutProps.push_back({ "SkeletalMesh", EPropertyType::String, &SkeletalMeshPath });
     OutProps.push_back({ "Materials", EPropertyType::Material, &Materials });
 }
 
@@ -76,7 +75,7 @@ void USkinnedMeshComponent::PostEditProperty(const char* PropertyName)
 {
     UMeshComponent::PostEditProperty(PropertyName);
 
-    if (std::strcmp(PropertyName, "SkeletalMesh") == 0)
+    if (std::strcmp(PropertyName, "SkeletalMeshPath") == 0)
     {
         if (SkeletalMeshPath.empty())
         {

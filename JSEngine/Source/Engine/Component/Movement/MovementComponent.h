@@ -18,8 +18,6 @@ public:
     void SetUpdatedComponent(USceneComponent* InComponent);
     USceneComponent* GetUpdatedComponent() const { return UpdatedComponent; }
 
-    virtual void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
-
 	// 충돌을 고려하며 UpdatedComponent를 Delta만큼 이동시킨다.
 	// bool SafeMoveUpdatedComponent(const FVector& Delta, FHitResult& OutHit);
 
@@ -60,11 +58,16 @@ protected:
     void MoveUpdatedComponent(const FVector& Delta);
 
 protected:
+    UPROPERTY(EditAnywhere, DisplayName="Updated Component", Type=SceneComponentRef)
     USceneComponent* UpdatedComponent = nullptr;
+	UPROPERTY(EditAnywhere, DisplayName="Velocity")
 	FVector Velocity = FVector(-1.0f, 0.0f, 1.0f);
     FVector PendingInputVector = FVector::ZeroVector;          // 추후 플레이어 입력을 처리할 때 사용되는 벡터
+	UPROPERTY(EditAnywhere, DisplayName="Plane Constraint Normal")
     FVector PlaneConstraintNormal = FVector(0.0f, 0.0f, 1.0f); // 이동을 특정 평면으로 제한하는 법선 벡터
 
+	UPROPERTY(EditAnywhere, DisplayName="Update Only If Rendered")
     bool bUpdateOnlyIfRendered = false; // 화면에 보일 때만 이동 계산을 수행할지 결정
+	UPROPERTY(EditAnywhere, DisplayName="Constrain To Plane")
     bool bConstrainToPlane = false;     // 이동을 지정된 평면 내로 제한할 지 결정
 };

@@ -29,10 +29,6 @@ void UFireballComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutP
 {
     UPrimitiveComponent::GetEditableProperties(OutProps);
 
-    OutProps.push_back({ "Radius",		   EPropertyType::Float, &Radius });
-    OutProps.push_back({ "Radius Falloff", EPropertyType::Float, &RadiusFallOff });
-    OutProps.push_back({ "Intensity",	   EPropertyType::Float, &Intensity });
-    OutProps.push_back({ "Color",		   EPropertyType::Color, &Color });
 }
 
 void UFireballComponent::PostEditProperty(const char* PropertyName)

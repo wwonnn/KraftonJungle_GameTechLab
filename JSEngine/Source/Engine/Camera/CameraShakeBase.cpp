@@ -167,15 +167,6 @@ void UCameraShakePattern::GetCameraShakeInfo(FCameraShakeInfo& OutCameraInfo) co
     OutCameraInfo.BlendOutTime = BlendOutTime;
 }
 
-void UCameraShakePattern::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
-{
-    UObject::GetEditableProperties(OutProps);
-
-    OutProps.push_back({ "Duration", EPropertyType::Float, &Duration });
-    OutProps.push_back({ "BlendInTime", EPropertyType::Float, &BlendInTime });
-    OutProps.push_back({ "BlendOutTime", EPropertyType::Float, &BlendOutTime });
-}
-
 //---------UPerlinCameraShakePattern---------
 
 UCameraShakeBase::UCameraShakeBase()

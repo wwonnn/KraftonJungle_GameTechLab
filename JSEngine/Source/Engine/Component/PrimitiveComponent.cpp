@@ -42,10 +42,6 @@ void UPrimitiveComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Out
 {
 	USceneComponent::GetEditableProperties(OutProps);
 	
-	OutProps.push_back({"Visible", EPropertyType::Bool, &bIsVisible});
-	OutProps.push_back({"Enable Cull", EPropertyType::Bool, &bEnableCull});
-    OutProps.push_back({ "Cast Decal", EPropertyType::Bool, &bCastDecal });
-    OutProps.push_back({ "GenerateOverlapEvents", EPropertyType::Bool, &bGenerateOverlapEvents });
 }
 
 void UPrimitiveComponent::PostEditProperty(const char* PropertyName)
@@ -219,13 +215,6 @@ void UPrimitiveComponent::NotifySpatialIndexDirty() const
 // REGISTER_FACTORY(UCubeComponent)
 // REGISTER_FACTORY(USphereComponent)
 // REGISTER_FACTORY(UPlaneComponent)
-//
-// void UPrimitiveComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
-// {
-// 	USceneComponent::GetEditableProperties(OutProps);
-// 	OutProps.push_back({ "Visible", EPropertyType::Bool, &bIsVisible });
-// }
-//
 // void UPrimitiveComponent::UpdateWorldAABB() const
 // {
 // 	FVector LExt = LocalExtents;

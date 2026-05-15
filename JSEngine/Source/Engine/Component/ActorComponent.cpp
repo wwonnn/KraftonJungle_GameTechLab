@@ -168,12 +168,6 @@ void UActorComponent::PostDuplicate(UObject* Original)
 void UActorComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     TagsText = GetTagsText();
-    // OutProps.push_back({"Active", EPropertyType::Bool, &bIsActive});
-    // OutProps.push_back({"Auto Activate", EPropertyType::Bool, &bAutoActivate});
-    OutProps.push_back({"Enable Tick", EPropertyType::Bool, &bCanEverTick});
-    OutProps.push_back({"Be Serialized", EPropertyType::Bool, &bTransient});
-    OutProps.push_back({"Editor Only", EPropertyType::Bool, &bIsEditorOnly});
-    OutProps.push_back({"Tags", EPropertyType::String, &TagsText});
 }
 
 void UActorComponent::PostEditProperty(const char* PropertyName)

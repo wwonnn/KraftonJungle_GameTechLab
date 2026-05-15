@@ -104,7 +104,6 @@ bool UStaticMeshComponent::HasValidMesh() const
 void UStaticMeshComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UMeshComponent::GetEditableProperties(OutProps);
-    OutProps.push_back({ "StaticMesh", EPropertyType::String, &StaticMeshAssetPath });
 	OutProps.push_back({ "Materials", EPropertyType::Material, &Materials });
 }
 
@@ -113,7 +112,7 @@ void UStaticMeshComponent::PostEditProperty(const char* PropertyName)
     UMeshComponent::PostEditProperty(PropertyName);
 
     //	추후에 FNAme으로 바꿔도 될 듯 싶긴한데 보류
-    if (std::strcmp(PropertyName, "StaticMesh") == 0)
+    if (std::strcmp(PropertyName, "StaticMeshAssetPath") == 0)
     {
 		if (StaticMeshAssetPath.empty())
 		{

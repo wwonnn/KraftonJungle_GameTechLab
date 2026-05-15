@@ -9,9 +9,6 @@ void URotatingMovementComponent::GetEditableProperties(TArray<FPropertyDescripto
 {
     UMovementComponent::GetEditableProperties(OutProps);
 
-    OutProps.push_back({"Rotation Rate", EPropertyType::Vec3, &RotationRate.X, -360.0f, 360.0f, 1.0f});
-    OutProps.push_back({"Pivot Translation", EPropertyType::Vec3, &PivotTranslation.X, 0.0f, 0.0f, 0.1f});
-    OutProps.push_back({"Local Space Rotation", EPropertyType::Bool, &bRotationInLocalSpace});
 }
 
 void URotatingMovementComponent::TickComponent(float DeltaTime)

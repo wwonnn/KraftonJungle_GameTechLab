@@ -7,8 +7,6 @@ REGISTER_FACTORY(UCapsuleComponent)
 void UCapsuleComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UShapeComponent::GetEditableProperties(OutProps);
-    OutProps.push_back({ "CapsuleHalfHeight", EPropertyType::Float, &CapsuleHalfHeight });
-    OutProps.push_back({ "CapsuleRadius", EPropertyType::Float, &CapsuleRadius });
 }
 
 void UCapsuleComponent::PostDuplicate(UObject* Original)

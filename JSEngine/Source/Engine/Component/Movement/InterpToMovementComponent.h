@@ -74,14 +74,17 @@ private:
 	TArray<FVector>		ControlPoints;
 	uint32				CurrentPointID		= 0;
 	uint32				NextPointID			= 0;
+	UPROPERTY(EditAnywhere, DisplayName="Interp Duration", Min=0.1, Max=2048.0, Speed=0.1)
 	float				Duration			= 5.0f;		// Does not store an "array" of duration
 	float				RotateDuration		= 0.f;
 	float				Elapsed				= 0.f;
 	float				TotalDistance		= 0;
 	float				NextDistRatio		= 0;
 	bool				bisLerping			= true;
+	UPROPERTY(EditAnywhere, DisplayName="Auto Activate")
 	bool				bAutoActivate		= true;
 	bool				bPing				= true;
+	UPROPERTY(EditAnywhere, DisplayName="Orient To Movement")
 	bool				bFaceTargetDir		= true;
 
 	float				TargetPitch			= 0.f;

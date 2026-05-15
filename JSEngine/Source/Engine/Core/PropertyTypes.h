@@ -6,8 +6,12 @@
 #include "CoreTypes.h"      // int32, uint8, …
 #include "Math/Vector.h"    // FVector  (for sizeof in GetPropertySize)
 #include "Math/Vector4.h"   // FVector4 (for sizeof in GetPropertySize)
+#include "Math/Color.h"     // FColor
+
+struct FTypeInfo;
 
 // 에디터에서 자동 위젯 매핑에 사용되는 프로퍼티 타입
+// UPROPERTY() 매크로로 지정할 수 없는 타입: Vec3Array, Enum, Material, SRV, CubeSRV, Struct 멤버
 enum class EPropertyType : uint8_t
 {
     Bool,
@@ -17,6 +21,7 @@ enum class EPropertyType : uint8_t
     Vec4,
     String,
     Name,              // FName — 문자열 풀 기반 이름 (리소스 키 등)
+    ObjectRef,         // UObject* 변수의 주소
     SceneComponentRef, // USceneComponent* 변수의 주소 (MovementComponent를 위한 Enum값
     Vec3Array,         // TArray<FVector>* - variable-length array of FVector
                        // 필요 시 Enum, Color 등 추가
@@ -33,6 +38,7 @@ enum class EPropertyUsageFlags : uint8_t
     None = 0,
     Editable = 1 << 0,
     Animatable = 1 << 1,
+    Visible = 1 << 2,
 };
 
 constexpr EPropertyUsageFlags operator|(EPropertyUsageFlags Lhs, EPropertyUsageFlags Rhs)
@@ -91,6 +97,28 @@ struct FPropertyDescriptor
     void* ExtraData = nullptr;
 
     EPropertyUsageFlags UsageFlags = EPropertyUsageFlags::Editable;
+    const FTypeInfo* ObjectType = nullptr;
+    const char* DisplayName = nullptr;
+};
+
+enum class EPropertyAccess : uint8_t
+{
+    EditAnywhere,
+    VisibleAnywhere,
+};
+
+struct FPropertyMeta
+{
+    const char* Name = nullptr;
+    const char* DisplayName = nullptr;
+    EPropertyType Type = EPropertyType::Float;
+    size_t Offset = 0;
+    EPropertyAccess Access = EPropertyAccess::EditAnywhere;
+    const FTypeInfo* ObjectType = nullptr;
+    float Min = 0.0f;
+    float Max = 0.0f;
+    float Speed = 0.1f;
+    EPropertyUsageFlags UsageFlags = EPropertyUsageFlags::None;
 };
 
 /** 각 프로퍼티의 Size 값을 반환합니다. 0을 반환하는 경우 특수 케이스입니다.
@@ -109,6 +137,7 @@ inline size_t GetPropertySize(EPropertyType Type)
     // String, Name 은 ValuePtr 기반 특수 처리
     case EPropertyType::String: return 0;
     case EPropertyType::Name:   return 0;
+    case EPropertyType::ObjectRef: return sizeof(void*);
     // 포인터 — Duplicate 호출 측에서 직접 처리
     case EPropertyType::SceneComponentRef: return 0;
     default: return 0;

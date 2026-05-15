@@ -60,6 +60,7 @@ protected:
 
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
+    UPROPERTY(EditAnywhere, DisplayName="SkeletalMesh")
     FString SkeletalMeshPath;
 
     TArray<FMatrix> CurrentLocalPose;

@@ -8,6 +8,8 @@ Usage:
 
 import hashlib
 import os
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -461,6 +463,11 @@ def generate_sln():
 # Main
 # ──────────────────────────────────────────────
 def main():
+    reflection_script = ROOT / "Scripts" / "GenerateReflection.py"
+    if reflection_script.exists():
+        print("Generating reflection files...")
+        subprocess.run([sys.executable, str(reflection_script)], check=True)
+
     print(f"Scanning project files in {PROJECT_DIR}...")
 
     files = scan_files(PROJECT_DIR)

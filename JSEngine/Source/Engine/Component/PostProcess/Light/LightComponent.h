@@ -39,9 +39,13 @@ protected:
 	~ULightComponent() = default;
 
 public:
+	UPROPERTY(EditAnywhere, DisplayName="Shadow Resolution Scale")
 	int32 ShadowResolutionScale = 2048;
+	UPROPERTY(EditAnywhere, DisplayName="Constant Bias ( DepthBias ^ (1 / TextureBit))", Min=0.0, Max=0.01, Speed=0.001)
 	float ConstantBias = { 0.003f };
+	UPROPERTY(EditAnywhere, DisplayName="Slope-Scaled Bias", Min=0.0, Max=1.0, Speed=0.01)
 	float SlopeScaledBias = { 0.12f } ;
+	UPROPERTY(EditAnywhere, DisplayName="Shadow Sharpen")
 	float ShadowSharpen = 0.5f;
 
 	// 디버그용으로 Shadow Atlas에서 해당 라이트의 타일 위치와 크기를 저장하는 변수, 현재 지워도됩니다

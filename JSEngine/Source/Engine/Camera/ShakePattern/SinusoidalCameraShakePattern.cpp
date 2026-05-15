@@ -12,21 +12,6 @@ void USinusoidalCameraShakePattern::OnStartShakePattern(const FCameraShakeStartP
 {
 }
 
-void USinusoidalCameraShakePattern::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
-{
-    UCameraShakePattern::GetEditableProperties(OutProps);
-
-    OutProps.push_back({ "LocationAmplitude", EPropertyType::Vec3, &LocationAmplitude });
-    OutProps.push_back({ "LocationFrequency", EPropertyType::Vec3, &LocationFrequency });
-    OutProps.push_back({ "LocationPhase", EPropertyType::Vec3, &LocationPhase });
-    OutProps.push_back({ "RotationAmplitudeDeg", EPropertyType::Vec3, &RotationAmplitudeDeg });
-    OutProps.push_back({ "RotationFrequency", EPropertyType::Vec3, &RotationFrequency });
-    OutProps.push_back({ "RotationPhase", EPropertyType::Vec3, &RotationPhase });
-    OutProps.push_back({ "FOVAmplitude", EPropertyType::Float, &FOVAmplitude });
-    OutProps.push_back({ "FOVFrequency", EPropertyType::Float, &FOVFrequency });
-    OutProps.push_back({ "FOVPhase", EPropertyType::Float, &FOVPhase });
-}
-
 void USinusoidalCameraShakePattern::OnUpdateShakePattern(
     const FCameraShakeUpdateParams& Params,
     FCameraShakeUpdateResult& OutResult)

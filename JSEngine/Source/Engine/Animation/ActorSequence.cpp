@@ -799,7 +799,7 @@ bool UActorSequencePlayer::ResolveProperty(
     }
 
     TArray<FPropertyDescriptor> Properties;
-    Object->GetEditableProperties(Properties);
+    Object->GetAllEditableProperties(Properties);
 
     for (const FPropertyDescriptor& Property : Properties)
     {
