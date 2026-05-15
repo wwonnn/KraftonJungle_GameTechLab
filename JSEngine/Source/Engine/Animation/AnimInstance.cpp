@@ -27,7 +27,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     }
 
 	// Current Sequence Time
-    const float Length = CurrentSequence->DataModel->SequenceLength;
+    const UAnimDataModel* Model = CurrentSequence->DataModel;
+    const float Length = (float)(Model->NumberOfKeys - 1) / Model->FrameRate.AsDecimal();
 
 	CurrentTime += DeltaTime * PlayRate;
 
@@ -50,7 +51,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
 	// Next Sequence Time (Blending)
     if (NextSequence && NextSequence->DataModel)
     {
-        const float NextLength = NextSequence->DataModel->SequenceLength;
+        const UAnimDataModel* Model = NextSequence->DataModel;
+        const float NextLength = (float)(Model->NumberOfKeys - 1) / Model->FrameRate.AsDecimal();
 
         NextTime += DeltaTime * PlayRate;
 
@@ -126,18 +128,20 @@ void UAnimInstance::InitializeReferencePose(FSkeletonPose& OutPose)
 void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms)
 {
     const UAnimDataModel* Model = Sequence->DataModel;
-    const int32 BoneCount = Model->BoneTracks.size();
+    const float FrameRate = Model->FrameRate.AsDecimal();
+    const int32 BoneCount = Model->BoneAnimationTracks.size();
 
     OutLocalTransforms.resize(BoneCount);
 
 	for (int32 i = 0; i < BoneCount; ++i)
     {
-        const FBoneAnimationTrack& Track = Model->BoneTracks[i];
-        int32 BoneIndex = Track.BoneIndex;
+        const FBoneAnimationTrack& Track = Model->BoneAnimationTracks[i];
+        const FRawAnimSequenceTrack& RawTrack = Track.InternalTrackData;
+        int32 BoneIndex = Track.BoneTreeIndex;
 
-        FVector Position = InterpolateKeys(Track.PosKeys, CurrentTime);
-        FQuat Rotation = InterpolateKeys(Track.RotKeys, CurrentTime);
-        FVector Scale = InterpolateKeys(Track.ScaleKeys, CurrentTime);
+        FVector Position = InterpolateKeys(RawTrack.PosKeys, CurrentTime, FrameRate);
+        FQuat Rotation = InterpolateKeys(RawTrack.RotKeys, CurrentTime, FrameRate);
+        FVector Scale = InterpolateKeys(RawTrack.ScaleKeys, CurrentTime, FrameRate);
 
         Rotation.Normalize(); // 보간 후 정규화 필수
 
@@ -145,66 +149,47 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
     }
 }
 
-FVector UAnimInstance::InterpolateKeys(const TArray<FAnimKeyVector>& Keys, float Time)
+FVector UAnimInstance::InterpolateKeys(const TArray<FVector>& Keys, float Time, float FrameRate)
 {
     if (Keys.empty())
         return FVector::ZeroVector;
     if (Keys.size() == 1)
-        return Keys[0].Value;
+        return Keys[0];
 
-    // Time이 범위 밖이면 클램프
-    if (Time <= Keys[0].Time)
-        return Keys[0].Value;
-    if (Time >= Keys.back().Time)
-        return Keys.back().Value;
+	float KeyIndex = Time * FrameRate;
+    int32 Lo = (int32)KeyIndex;
+    int32 Hi = Lo + 1;
 
-    // 이진 탐색으로 구간 [Lo, Hi] 찾기
-    int32 Lo = 0, Hi = Keys.size() - 1;
-    while (Hi - Lo > 1)
-    {
-        int32 Mid = (Lo + Hi) / 2;
-        if (Keys[Mid].Time <= Time)
-            Lo = Mid;
-        else
-            Hi = Mid;
-    }
+    // 범위 클램프
+    Lo = std::clamp(Lo, 0, (int32)Keys.size() - 1);
+    Hi = std::clamp(Hi, 0, (int32)Keys.size() - 1);
 
-    float Diff = Keys[Hi].Time - Keys[Lo].Time;
-    if (Diff < 1e-4f)
-        return Keys[Lo].Value;
+    if (Lo == Hi)
+        return Keys[Lo];
 
-    float Alpha = (Time - Keys[Lo].Time) / Diff;
-    return FVector::Lerp(Keys[Lo].Value, Keys[Hi].Value, Alpha);
+    float Alpha = KeyIndex - (float)Lo;
+    return FVector::Lerp(Keys[Lo], Keys[Hi], Alpha);
 }
 
-FQuat UAnimInstance::InterpolateKeys(const TArray<FAnimKeyQuat>& Keys, float Time)
+FQuat UAnimInstance::InterpolateKeys(const TArray<FQuat>& Keys, float Time, float FrameRate)
 {
     if (Keys.empty())
         return FQuat::Identity;
     if (Keys.size() == 1)
-        return Keys[0].Value;
+        return Keys[0];
 
-    if (Time <= Keys[0].Time)
-        return Keys[0].Value;
-    if (Time >= Keys.back().Time)
-        return Keys.back().Value;
+    float KeyIndex = Time * FrameRate;
+    int32 Lo = (int32)KeyIndex;
+    int32 Hi = Lo + 1;
 
-    int32 Lo = 0, Hi = Keys.size() - 1;
-    while (Hi - Lo > 1)
-    {
-        int32 Mid = (Lo + Hi) / 2;
-        if (Keys[Mid].Time <= Time)
-            Lo = Mid;
-        else
-            Hi = Mid;
-    }
+    Lo = std::clamp(Lo, 0, (int32)Keys.size() - 1);
+    Hi = std::clamp(Hi, 0, (int32)Keys.size() - 1);
 
-    float Diff = Keys[Hi].Time - Keys[Lo].Time;
-    if (Diff < 1e-4f)
-        return Keys[Lo].Value;
+    if (Lo == Hi)
+        return Keys[Lo];
 
-    float Alpha = (Time - Keys[Lo].Time) / Diff;
-    return FQuat::Slerp(Keys[Lo].Value, Keys[Hi].Value, Alpha);
+    float Alpha = KeyIndex - (float)Lo;
+    return FQuat::Slerp(Keys[Lo], Keys[Hi], Alpha);
 }
 
 void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose)

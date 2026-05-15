@@ -3,7 +3,7 @@
 #include "Core/CoreMinimal.h"
 #include "Object/Object.h"
 #include "Core/PropertyTypes.h"
-#include "Animation/AnimSequence.h"
+#include "Animation/AnimData/AnimSequence.h"
 #include "Component/SkinnedMeshComponent.h"
 
 // 시간 t에서의 Skeleton Pose (매 프레임 계산)
@@ -28,8 +28,8 @@ public:
 protected:
     void InitializeReferencePose(FSkeletonPose& OutPose);
     void EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms);
-    FVector InterpolateKeys(const TArray<FAnimKeyVector>& Keys, float Time);
-    FQuat InterpolateKeys(const TArray<FAnimKeyQuat>& Keys, float Time);
+    FVector InterpolateKeys(const TArray<FVector>& Keys, float Time, float FrameRate);
+    FQuat InterpolateKeys(const TArray<FQuat>& Keys, float Time, float FrameRate);
 
 	// PoseA와 PoseB를 블렌딩하여 OutPose에 저장 -> Transition 용도
     void BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose);

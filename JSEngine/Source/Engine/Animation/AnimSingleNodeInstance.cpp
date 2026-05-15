@@ -7,7 +7,8 @@ void UAnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
         return;
     }
 
-    const float Length = CurrentSequence->DataModel->SequenceLength;
+    const UAnimDataModel* Model = CurrentSequence->DataModel;
+    const float Length = (float)(Model->NumberOfKeys - 1) / Model->FrameRate.AsDecimal();
 
     CurrentTime += DeltaTime * PlayRate;
 
