@@ -1,5 +1,15 @@
 ﻿#include "AnimInstance.h"
 
+#include "Object/ObjectFactory.h"
+
+DEFINE_CLASS(UAnimInstance, UObject)
+REGISTER_FACTORY(UAnimInstance)
+
+void UAnimInstance::SetOwningComponent(USkinnedMeshComponent* InOwner)
+{
+    Owner = InOwner;
+}
+
 void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 {
 	CurrentSequence = InSequence;
@@ -127,17 +137,42 @@ void UAnimInstance::InitializeReferencePose(FSkeletonPose& OutPose)
 
 void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms)
 {
+    if (!Sequence || !Sequence->DataModel)
+    {
+        return;
+    }
+
+    if (Owner && Owner->GetSkeletalMesh() && Owner->GetSkeletalMesh()->HasValidMeshData())
+    {
+        const TArray<FBoneInfo>& Bones = Owner->GetSkeletalMesh()->GetBones();
+        OutLocalTransforms.resize(Bones.size());
+        for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(Bones.size()); ++BoneIndex)
+        {
+            OutLocalTransforms[BoneIndex] = FTransform(Bones[BoneIndex].LocalBindTransform);
+        }
+    }
+
     const UAnimDataModel* Model = Sequence->DataModel;
     const float FrameRate = Model->FrameRate.AsDecimal();
-    const int32 BoneCount = Model->BoneAnimationTracks.size();
+    if (FrameRate <= 0.0f)
+    {
+        return;
+    }
 
-    OutLocalTransforms.resize(BoneCount);
-
-	for (int32 i = 0; i < BoneCount; ++i)
+	for (int32 i = 0; i < static_cast<int32>(Model->BoneAnimationTracks.size()); ++i)
     {
         const FBoneAnimationTrack& Track = Model->BoneAnimationTracks[i];
         const FRawAnimSequenceTrack& RawTrack = Track.InternalTrackData;
         int32 BoneIndex = Track.BoneTreeIndex;
+        if (BoneIndex < 0)
+        {
+            continue;
+        }
+
+        if (BoneIndex >= static_cast<int32>(OutLocalTransforms.size()))
+        {
+            OutLocalTransforms.resize(BoneIndex + 1);
+        }
 
         FVector Position = InterpolateKeys(RawTrack.PosKeys, CurrentTime, FrameRate);
         FQuat Rotation = InterpolateKeys(RawTrack.RotKeys, CurrentTime, FrameRate);

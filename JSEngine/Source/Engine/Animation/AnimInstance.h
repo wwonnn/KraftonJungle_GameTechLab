@@ -19,8 +19,11 @@ public:
 	DECLARE_CLASS(UAnimInstance, UObject)
 
 public:
+    void SetOwningComponent(USkinnedMeshComponent* InOwner);
     void SetSequence(UAnimSequence* InSequence);
     void SetNextSequence(UAnimSequence* InNext, float InBlendSpeed);
+    void SetLooping(bool bInLoop) { bLoop = bInLoop; }
+    bool IsLooping() const { return bLoop; }
 
     virtual void UpdateAnimation(float DeltaTime);		// 재생 시간 관리
     virtual void EvaluatePose(FSkeletonPose& OutPose);	// 시간 t에서 Bone의 Pose 계산
