@@ -13,8 +13,6 @@ void UPointLightComponent::PostDuplicate(UObject* Original)
 void UPointLightComponent::Serialize(FArchive& Ar)
 {
 	ULightComponent::Serialize(Ar);
-	Ar << "AttenuationRadius" << AttenuationRadius;
-	Ar << "LightFalloffExponent" << LightFalloffExponent;
 }
 
 FMatrix UPointLightComponent::ComputePerspectiveShadowMatrix(const FMatrix& CamView, const FMatrix& CamProj,

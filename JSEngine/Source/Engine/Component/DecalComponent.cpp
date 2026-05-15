@@ -66,13 +66,6 @@ void UDecalComponent::Serialize(FArchive& Ar)
 	}
 
 	Ar << "Material" << MaterialIdentifier;
-	Ar << "Size" << DecalSize;
-	Ar << "Color" << DecalColor;
-	Ar << "Fade Start Delay" << FadeStartDelay;
-	Ar << "Fade Duration" << FadeDuration;
-	Ar << "Fade In Start Delay" << FadeInStartDelay;
-	Ar << "Fade In Duration" << FadeInDuration;
-	Ar << "Destroy Owner After Fade" << bDestroyOwnerAfterFade;
 
 	if (Ar.IsLoading())
 	{

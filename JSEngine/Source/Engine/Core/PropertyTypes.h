@@ -11,7 +11,7 @@
 struct FTypeInfo;
 
 // 에디터에서 자동 위젯 매핑에 사용되는 프로퍼티 타입
-// UPROPERTY() 매크로로 지정할 수 없는 타입: Vec3Array, Enum, Material, SRV, CubeSRV, Struct 멤버
+// UPROPERTY() 매크로로 지정할 수 없는 타입: Vec3Array, Enum, Material, SRV, CubeSRV, Struct 멤버, Lua
 enum class EPropertyType : uint8_t
 {
     Bool,
@@ -39,6 +39,7 @@ enum class EPropertyUsageFlags : uint8_t
     Editable = 1 << 0,
     Animatable = 1 << 1,
     Visible = 1 << 2,
+    NonSerialized = 1 << 3,
 };
 
 constexpr EPropertyUsageFlags operator|(EPropertyUsageFlags Lhs, EPropertyUsageFlags Rhs)
@@ -111,6 +112,7 @@ struct FPropertyMeta
 {
     const char* Name = nullptr;
     const char* DisplayName = nullptr;
+    const char* SerializeName = nullptr;
     EPropertyType Type = EPropertyType::Float;
     size_t Offset = 0;
     EPropertyAccess Access = EPropertyAccess::EditAnywhere;

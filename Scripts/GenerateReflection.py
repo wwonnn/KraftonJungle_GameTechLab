@@ -153,6 +153,7 @@ def parse_metadata(args_text: str, path: Path, line_number: int) -> dict[str, st
     metadata = {
         "access": access,
         "display_name": "nullptr",
+        "serialize_name": "nullptr",
         "min": "0.0f",
         "max": "0.0f",
         "speed": "0.1f",
@@ -165,6 +166,9 @@ def parse_metadata(args_text: str, path: Path, line_number: int) -> dict[str, st
         if arg == "Animatable":
             usage_flags.append("EPropertyUsageFlags::Animatable")
             continue
+        if arg in {"Transient", "NonSerialized"}:
+            usage_flags.append("EPropertyUsageFlags::NonSerialized")
+            continue
 
         if "=" not in arg:
             raise ValueError(f"{path}:{line_number}: unsupported UPROPERTY metadata '{arg}'")
@@ -174,6 +178,10 @@ def parse_metadata(args_text: str, path: Path, line_number: int) -> dict[str, st
             if not (value.startswith('"') and value.endswith('"')):
                 raise ValueError(f"{path}:{line_number}: DisplayName must be a quoted string")
             metadata["display_name"] = value
+        elif key == "SerializeName":
+            if not (value.startswith('"') and value.endswith('"')):
+                raise ValueError(f"{path}:{line_number}: SerializeName must be a quoted string")
+            metadata["serialize_name"] = value
         elif key == "Min":
             metadata["min"] = value
         elif key == "Max":
@@ -292,6 +300,7 @@ def parse_header(path: Path) -> dict[str, list[dict[str, str]]]:
                 "property_type": property_type,
                 "object_type": object_type,
                 "display_name": pending_metadata["display_name"],
+                "serialize_name": pending_metadata["serialize_name"],
                 "min": pending_metadata["min"],
                 "max": pending_metadata["max"],
                 "speed": pending_metadata["speed"],
@@ -357,7 +366,7 @@ def main() -> None:
         lines.append("    {")
         for prop in properties:  # type: ignore[assignment]
             lines.append(
-                f"        {{ \"{prop['name']}\", {prop['display_name']}, {prop['property_type']}, "
+                f"        {{ \"{prop['name']}\", {prop['display_name']}, {prop['serialize_name']}, {prop['property_type']}, "
                 f"offsetof({class_name}, {prop['name']}), "
                 f"EPropertyAccess::{prop['access']}, {prop['object_type']}, "
                 f"{make_float_literal(prop['min'])}, "

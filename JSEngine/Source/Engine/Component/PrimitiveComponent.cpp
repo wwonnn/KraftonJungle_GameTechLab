@@ -53,13 +53,6 @@ void UPrimitiveComponent::PostEditProperty(const char* PropertyName)
 void UPrimitiveComponent::Serialize(FArchive& Ar)
 {
 	USceneComponent::Serialize(Ar);
-	Ar << "Visible" << bIsVisible;
-	Ar << "Enable Cull" << bEnableCull;
-    if (Ar.IsSaving() || Ar.HasKey("Cast Decal"))
-    {
-        Ar << "Cast Decal" << bCastDecal;
-    }
-    Ar << "GenerateOverlapEvents" << bGenerateOverlapEvents;
 }
 
 void UPrimitiveComponent::SetVisibility(bool bVisible)

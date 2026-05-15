@@ -27,17 +27,6 @@ void USoundComponent::EndPlay()
 void USoundComponent::Serialize(FArchive& Ar)
 {
     USceneComponent::Serialize(Ar);
-    Ar << "Sound" << SoundKeyOrPath;
-    Ar << "Play On BeginPlay" << bPlayOnBeginPlay;
-    Ar << "Loop" << bLoop;
-    Ar << "Spatialized" << bSpatialized;
-    Ar << "Volume Scale" << VolumeScale;
-    Ar << "Fade In" << FadeInSeconds;
-    Ar << "Fade Out" << FadeOutSeconds;
-    Ar << "3D Min Distance" << MinDistance;
-    Ar << "3D Max Distance" << MaxDistance;
-    Ar << "3D Attenuation Model" << AttenuationModel;
-    Ar << "3D Rolloff Factor" << RolloffFactor;
 }
 
 void USoundComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

@@ -17,6 +17,6 @@ public:
 	UPROPERTY(EditAnywhere, DisplayName="Intensity", Speed=0.1, Animatable)
 	float Intensity = 1.0f;
 
-	UPROPERTY(EditAnywhere, DisplayName="Cast Shadows")
+	UPROPERTY(EditAnywhere, DisplayName="Cast Shadows", SerializeName="CastShadows")
 	bool bCastShadows = true;
 };

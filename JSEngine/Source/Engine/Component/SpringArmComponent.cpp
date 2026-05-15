@@ -16,10 +16,6 @@ USpringArmComponent::USpringArmComponent()
 void USpringArmComponent::Serialize(FArchive& Ar)
 {
 	USceneComponent::Serialize(Ar);
-	Ar << "TargetArmLength" << TargetArmLength;
-	Ar << "SocketOffset" << SocketOffset;
-	Ar << "EnableCameraLag" << bEnableCameraLag;
-	Ar << "CameraLagSpeed" << CameraLagSpeed;
 }
 
 void USpringArmComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

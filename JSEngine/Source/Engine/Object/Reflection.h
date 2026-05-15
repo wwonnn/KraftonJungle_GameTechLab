@@ -6,6 +6,7 @@
 #include <utility>
 
 class UObject;
+struct FArchive;
 
 #define UPROPERTY(...)
 
@@ -23,6 +24,11 @@ public:
         const FTypeInfo* Type,
         UObject* Object,
         TArray<FPropertyDescriptor>& OutProps) const;
+
+    void SerializeProperties(
+        const FTypeInfo* Type,
+        UObject* Object,
+        FArchive& Ar) const;
 
 private:
     struct FRegisteredProperties

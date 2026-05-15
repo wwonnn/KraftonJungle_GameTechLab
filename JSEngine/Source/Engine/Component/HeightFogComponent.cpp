@@ -12,13 +12,6 @@ UHeightFogComponent::UHeightFogComponent()
 void UHeightFogComponent::Serialize(FArchive& Ar)
 {
 	UPrimitiveComponent::Serialize(Ar);
-	Ar << "FogDensity" << FogDensity;
-	Ar << "HeightFalloff" << HeightFalloff;
-	Ar << "FogInscatteringColor" << FogInscatteringColor;
-	Ar << "FogHeight" << FogHeight;
-	Ar << "FogStartDistance" << FogStartDistance;
-	Ar << "FogCutoffDistance" << FogCutoffDistance;
-	Ar << "FogMaxOpacity" << FogMaxOpacity;
 }
 
 void UHeightFogComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

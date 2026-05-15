@@ -50,19 +50,17 @@ static void ComputeGlobalPoseRecursive(
 
 void USkinnedMeshComponent::Serialize(FArchive& Ar)
 {
-    if (Ar.IsLoading())
-    {
-        Ar << "SkeletalMeshAsset" << SkeletalMeshPath;
-        if (!SkeletalMeshPath.empty())
-        {
-            SetSkeletalMesh(FResourceManager::Get().LoadSkeletalMesh(SkeletalMeshPath));
-        }
-        UMeshComponent::Serialize(Ar);
-        return;
-    }
-
     UMeshComponent::Serialize(Ar);
-    Ar << "SkeletalMeshAsset" << SkeletalMeshPath;
+
+    if (Ar.IsLoading() && !SkeletalMeshPath.empty())
+    {
+        TArray<UMaterialInterface*> LoadedMaterials = Materials;
+        SetSkeletalMesh(FResourceManager::Get().LoadSkeletalMesh(SkeletalMeshPath));
+        if (!LoadedMaterials.empty())
+        {
+            Materials = LoadedMaterials;
+        }
+    }
 }
 
 void USkinnedMeshComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

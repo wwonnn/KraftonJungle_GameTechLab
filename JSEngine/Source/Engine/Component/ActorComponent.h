@@ -68,7 +68,7 @@ protected:
 protected:
 	AActor* Owner = nullptr;
 	TArray<FString> Tags;
-	UPROPERTY(EditAnywhere, DisplayName="Tags")
+	UPROPERTY(EditAnywhere, DisplayName="Tags", Transient)
 	FString TagsText;
 	FGuid PersistentGuid;
 

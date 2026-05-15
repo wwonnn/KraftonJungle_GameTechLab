@@ -167,10 +167,6 @@ void ULightComponent::Serialize(FArchive& Ar)
 	
 	uint32 ShadowMapTypeValue = static_cast<uint32>(eShadowMapType);
 	Ar << "ShadowMapType" << ShadowMapTypeValue;
-	Ar << "ShadowResolutionScale" << ShadowResolutionScale;
-	Ar << "ConstantBias" << ConstantBias;
-	Ar << "SlopeScaledBias" << SlopeScaledBias;
-	Ar << "ShadowSharpen" << ShadowSharpen;
 
 	if (Ar.IsLoading())
 	{

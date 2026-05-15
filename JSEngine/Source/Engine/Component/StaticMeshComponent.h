@@ -37,7 +37,7 @@ private:
 
 private:
 	UStaticMesh* StaticMeshAsset = nullptr;
-	UPROPERTY(EditAnywhere, DisplayName="StaticMesh")
+	UPROPERTY(EditAnywhere, DisplayName="StaticMesh", SerializeName="ObjStaticMeshAsset")
 	FString StaticMeshAssetPath;
 
 	mutable bool bBoundsDirty = true;

@@ -523,8 +523,6 @@ void UScriptComponent::Serialize(FArchive& Ar)
 {
     UActorComponent::Serialize(Ar);
 
-    Ar << "ScriptName" << ScriptName;
-
     if (Ar.IsSaving() && !ScriptName.empty() && !bLuaPropertiesScanned)
     {
         ReloadLuaProperties();

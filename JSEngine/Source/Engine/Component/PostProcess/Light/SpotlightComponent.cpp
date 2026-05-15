@@ -32,8 +32,6 @@ void USpotlightComponent::GetEditableProperties(TArray<FPropertyDescriptor>& Out
 void USpotlightComponent::Serialize(FArchive& Ar)
 {
 	UPointLightComponent::Serialize(Ar);
-	Ar << "InnerConeAngle" << InnerConeAngle;
-	Ar << "OuterConeAngle" << OuterConeAngle;
 }
 
 FMatrix USpotlightComponent::ComputeCascadeShadowMatrix(const FMatrix& CamView, const FMatrix& CamProj,

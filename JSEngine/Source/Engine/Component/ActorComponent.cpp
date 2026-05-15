@@ -189,7 +189,9 @@ void UActorComponent::Serialize(FArchive& Ar)
         PersistentGuid = FGuid::FromString(PersistentGuidText);
         EnsurePersistentGuid();
     }
-	Ar << "Enable Tick" << bCanEverTick;
-	Ar << "Editor Only" << bIsEditorOnly;
 	Ar << "Tags" << Tags;
+    if (Ar.IsLoading())
+    {
+        TagsText = GetTagsText();
+    }
 }

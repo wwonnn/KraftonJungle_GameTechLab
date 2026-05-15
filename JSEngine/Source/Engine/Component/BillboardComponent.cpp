@@ -25,12 +25,6 @@ void UBillboardComponent::PostDuplicate(UObject* Original)
 void UBillboardComponent::Serialize(FArchive& Ar)
 {
 	UPrimitiveComponent::Serialize(Ar);
-	Ar << "Particle" << TextureName;
-	Ar << "Width" << Width;
-	Ar << "Height" << Height;
-	Ar << "PlayRate" << PlayRate;
-	Ar << "bLoop" << bLoop;
-    Ar << "bInheritOwnerScale" << bInheritOwnerScale;
 }
 
 bool UBillboardComponent::TryGetActiveCamera(const FViewportCamera*& OutCamera) const

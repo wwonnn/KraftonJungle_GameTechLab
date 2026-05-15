@@ -30,10 +30,6 @@ void UTextRenderComponent::PostDuplicate(UObject* Original)
 void UTextRenderComponent::Serialize(FArchive& Ar)
 {
 	UPrimitiveComponent::Serialize(Ar);
-
-	Ar << "Text" << Text;
-	Ar << "Font" << FontName;
-	Ar << "Font Size" << FontSize;
 }
 
 void UTextRenderComponent::SetFont(const FName& InFontName)

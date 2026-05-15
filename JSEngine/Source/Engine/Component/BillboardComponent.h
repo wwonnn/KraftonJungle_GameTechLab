@@ -11,7 +11,7 @@ class UBillboardComponent : public UPrimitiveComponent
 {
 protected:
 	bool bIsBillboard = true;
-	UPROPERTY(EditAnywhere, DisplayName="Inherit Owner Scale")
+	UPROPERTY(EditAnywhere, DisplayName="Inherit Owner Scale", SerializeName="bInheritOwnerScale")
 	bool bInheritOwnerScale = false;
 	bool TryGetActiveCamera(const FViewportCamera*& OutCamera) const;
 	
@@ -68,7 +68,7 @@ protected:
 	float  Width = 1.0f;
 	UPROPERTY(EditAnywhere, DisplayName="Height", Min=0.1, Max=100.0, Speed=0.1)
 	float  Height = 1.0f;
-	UPROPERTY(EditAnywhere, DisplayName="Play Rate", Min=1.0, Max=120.0, Speed=1.0)
+	UPROPERTY(EditAnywhere, DisplayName="Play Rate", SerializeName="PlayRate", Min=1.0, Max=120.0, Speed=1.0)
 	float  PlayRate = 30.0f; // 초당 프레임 수
 	float  TimeAccumulator = 0.0f;
 	UPROPERTY(EditAnywhere, DisplayName="bLoop")

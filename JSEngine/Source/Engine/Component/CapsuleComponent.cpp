@@ -21,8 +21,6 @@ void UCapsuleComponent::PostDuplicate(UObject* Original)
 void UCapsuleComponent::Serialize(FArchive& Ar)
 {
     UShapeComponent::Serialize(Ar);
-    Ar << "CapsuleHalfHeight" << CapsuleHalfHeight;
-    Ar << "CapsuleRadius" << CapsuleRadius;
 }
 
 void UCapsuleComponent::UpdateWorldAABB() const

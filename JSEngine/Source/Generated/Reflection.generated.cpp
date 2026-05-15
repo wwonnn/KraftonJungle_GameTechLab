@@ -373,9 +373,9 @@ void RegisterGeneratedReflection_UCameraShakePattern()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "Duration", "Duration", EPropertyType::Float, offsetof(UCameraShakePattern, Duration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "BlendInTime", "BlendInTime", EPropertyType::Float, offsetof(UCameraShakePattern, BlendInTime), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "BlendOutTime", "BlendOutTime", EPropertyType::Float, offsetof(UCameraShakePattern, BlendOutTime), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Duration", "Duration", nullptr, EPropertyType::Float, offsetof(UCameraShakePattern, Duration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "BlendInTime", "BlendInTime", nullptr, EPropertyType::Float, offsetof(UCameraShakePattern, BlendInTime), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "BlendOutTime", "BlendOutTime", nullptr, EPropertyType::Float, offsetof(UCameraShakePattern, BlendOutTime), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UCameraShakePattern::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -385,15 +385,15 @@ void RegisterGeneratedReflection_USequenceCameraShakePattern()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "PlayRate", "PlayRate", EPropertyType::Float, offsetof(USequenceCameraShakePattern, PlayRate), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "Scale", "Scale", EPropertyType::Float, offsetof(USequenceCameraShakePattern, Scale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "RandomSegmentDuration", "RandomSegmentDuration", EPropertyType::Float, offsetof(USequenceCameraShakePattern, RandomSegmentDuration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bRandomSegment", "bRandomSegment", EPropertyType::Bool, offsetof(USequenceCameraShakePattern, bRandomSegment), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bLoop", "bLoop", EPropertyType::Bool, offsetof(USequenceCameraShakePattern, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "CurveAssetPath", "CurveAssetPath", EPropertyType::String, offsetof(USequenceCameraShakePattern, CurveAssetPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "LocationAmplitude", "LocationAmplitude", EPropertyType::Vec3, offsetof(USequenceCameraShakePattern, LocationAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "RotationAmplitudeDeg", "RotationAmplitudeDeg", EPropertyType::Vec3, offsetof(USequenceCameraShakePattern, RotationAmplitudeDeg), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FOVAmplitude", "FOVAmplitude", EPropertyType::Float, offsetof(USequenceCameraShakePattern, FOVAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "PlayRate", "PlayRate", nullptr, EPropertyType::Float, offsetof(USequenceCameraShakePattern, PlayRate), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Scale", "Scale", nullptr, EPropertyType::Float, offsetof(USequenceCameraShakePattern, Scale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RandomSegmentDuration", "RandomSegmentDuration", nullptr, EPropertyType::Float, offsetof(USequenceCameraShakePattern, RandomSegmentDuration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bRandomSegment", "bRandomSegment", nullptr, EPropertyType::Bool, offsetof(USequenceCameraShakePattern, bRandomSegment), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bLoop", "bLoop", nullptr, EPropertyType::Bool, offsetof(USequenceCameraShakePattern, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "CurveAssetPath", "CurveAssetPath", nullptr, EPropertyType::String, offsetof(USequenceCameraShakePattern, CurveAssetPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "LocationAmplitude", "LocationAmplitude", nullptr, EPropertyType::Vec3, offsetof(USequenceCameraShakePattern, LocationAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RotationAmplitudeDeg", "RotationAmplitudeDeg", nullptr, EPropertyType::Vec3, offsetof(USequenceCameraShakePattern, RotationAmplitudeDeg), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FOVAmplitude", "FOVAmplitude", nullptr, EPropertyType::Float, offsetof(USequenceCameraShakePattern, FOVAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USequenceCameraShakePattern::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -403,15 +403,15 @@ void RegisterGeneratedReflection_USinusoidalCameraShakePattern()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "LocationAmplitude", "LocationAmplitude", EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, LocationAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "LocationFrequency", "LocationFrequency", EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, LocationFrequency), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "LocationPhase", "LocationPhase", EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, LocationPhase), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "RotationAmplitudeDeg", "RotationAmplitudeDeg", EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, RotationAmplitudeDeg), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "RotationFrequency", "RotationFrequency", EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, RotationFrequency), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "RotationPhase", "RotationPhase", EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, RotationPhase), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FOVAmplitude", "FOVAmplitude", EPropertyType::Float, offsetof(USinusoidalCameraShakePattern, FOVAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FOVFrequency", "FOVFrequency", EPropertyType::Float, offsetof(USinusoidalCameraShakePattern, FOVFrequency), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FOVPhase", "FOVPhase", EPropertyType::Float, offsetof(USinusoidalCameraShakePattern, FOVPhase), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "LocationAmplitude", "LocationAmplitude", nullptr, EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, LocationAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "LocationFrequency", "LocationFrequency", nullptr, EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, LocationFrequency), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "LocationPhase", "LocationPhase", nullptr, EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, LocationPhase), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RotationAmplitudeDeg", "RotationAmplitudeDeg", nullptr, EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, RotationAmplitudeDeg), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RotationFrequency", "RotationFrequency", nullptr, EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, RotationFrequency), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RotationPhase", "RotationPhase", nullptr, EPropertyType::Vec3, offsetof(USinusoidalCameraShakePattern, RotationPhase), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FOVAmplitude", "FOVAmplitude", nullptr, EPropertyType::Float, offsetof(USinusoidalCameraShakePattern, FOVAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FOVFrequency", "FOVFrequency", nullptr, EPropertyType::Float, offsetof(USinusoidalCameraShakePattern, FOVFrequency), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FOVPhase", "FOVPhase", nullptr, EPropertyType::Float, offsetof(USinusoidalCameraShakePattern, FOVPhase), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USinusoidalCameraShakePattern::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -421,10 +421,10 @@ void RegisterGeneratedReflection_UActorComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "TagsText", "Tags", EPropertyType::String, offsetof(UActorComponent, TagsText), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bCanEverTick", "Enable Tick", EPropertyType::Bool, offsetof(UActorComponent, bCanEverTick), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bTransient", "Be Serialized", EPropertyType::Bool, offsetof(UActorComponent, bTransient), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bIsEditorOnly", "Editor Only", EPropertyType::Bool, offsetof(UActorComponent, bIsEditorOnly), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "TagsText", "Tags", nullptr, EPropertyType::String, offsetof(UActorComponent, TagsText), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized },
+        { "bCanEverTick", "Enable Tick", nullptr, EPropertyType::Bool, offsetof(UActorComponent, bCanEverTick), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bTransient", "Be Serialized", nullptr, EPropertyType::Bool, offsetof(UActorComponent, bTransient), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bIsEditorOnly", "Editor Only", nullptr, EPropertyType::Bool, offsetof(UActorComponent, bIsEditorOnly), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UActorComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -434,12 +434,12 @@ void RegisterGeneratedReflection_UBillboardComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "bInheritOwnerScale", "Inherit Owner Scale", EPropertyType::Bool, offsetof(UBillboardComponent, bInheritOwnerScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "TextureName", "Particle", EPropertyType::Name, offsetof(UBillboardComponent, TextureName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "Width", "Width", EPropertyType::Float, offsetof(UBillboardComponent, Width), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None },
-        { "Height", "Height", EPropertyType::Float, offsetof(UBillboardComponent, Height), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None },
-        { "PlayRate", "Play Rate", EPropertyType::Float, offsetof(UBillboardComponent, PlayRate), EPropertyAccess::EditAnywhere, nullptr, 1.0f, 120.0f, 1.0f, EPropertyUsageFlags::None },
-        { "bLoop", "bLoop", EPropertyType::Bool, offsetof(UBillboardComponent, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bInheritOwnerScale", "Inherit Owner Scale", "bInheritOwnerScale", EPropertyType::Bool, offsetof(UBillboardComponent, bInheritOwnerScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "TextureName", "Particle", nullptr, EPropertyType::Name, offsetof(UBillboardComponent, TextureName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Width", "Width", nullptr, EPropertyType::Float, offsetof(UBillboardComponent, Width), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Height", "Height", nullptr, EPropertyType::Float, offsetof(UBillboardComponent, Height), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None },
+        { "PlayRate", "Play Rate", "PlayRate", EPropertyType::Float, offsetof(UBillboardComponent, PlayRate), EPropertyAccess::EditAnywhere, nullptr, 1.0f, 120.0f, 1.0f, EPropertyUsageFlags::None },
+        { "bLoop", "bLoop", nullptr, EPropertyType::Bool, offsetof(UBillboardComponent, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UBillboardComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -449,8 +449,8 @@ void RegisterGeneratedReflection_UCapsuleComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "CapsuleHalfHeight", "CapsuleHalfHeight", EPropertyType::Float, offsetof(UCapsuleComponent, CapsuleHalfHeight), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "CapsuleRadius", "CapsuleRadius", EPropertyType::Float, offsetof(UCapsuleComponent, CapsuleRadius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "CapsuleHalfHeight", "CapsuleHalfHeight", nullptr, EPropertyType::Float, offsetof(UCapsuleComponent, CapsuleHalfHeight), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "CapsuleRadius", "CapsuleRadius", nullptr, EPropertyType::Float, offsetof(UCapsuleComponent, CapsuleRadius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UCapsuleComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -460,13 +460,13 @@ void RegisterGeneratedReflection_UDecalComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "DecalSize", "Size", EPropertyType::Vec3, offsetof(UDecalComponent, DecalSize), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "DecalColor", "Color", EPropertyType::Color, offsetof(UDecalComponent, DecalColor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FadeStartDelay", "Fade Start Delay", EPropertyType::Float, offsetof(UDecalComponent, FadeStartDelay), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FadeDuration", "Fade Duration", EPropertyType::Float, offsetof(UDecalComponent, FadeDuration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FadeInDuration", "Fade In Duration", EPropertyType::Float, offsetof(UDecalComponent, FadeInDuration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FadeInStartDelay", "Fade In Start Delay", EPropertyType::Float, offsetof(UDecalComponent, FadeInStartDelay), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bDestroyOwnerAfterFade", "Destroy Owner After Fade", EPropertyType::Bool, offsetof(UDecalComponent, bDestroyOwnerAfterFade), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "DecalSize", "Size", nullptr, EPropertyType::Vec3, offsetof(UDecalComponent, DecalSize), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "DecalColor", "Color", nullptr, EPropertyType::Color, offsetof(UDecalComponent, DecalColor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FadeStartDelay", "Fade Start Delay", nullptr, EPropertyType::Float, offsetof(UDecalComponent, FadeStartDelay), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FadeDuration", "Fade Duration", nullptr, EPropertyType::Float, offsetof(UDecalComponent, FadeDuration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FadeInDuration", "Fade In Duration", nullptr, EPropertyType::Float, offsetof(UDecalComponent, FadeInDuration), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FadeInStartDelay", "Fade In Start Delay", nullptr, EPropertyType::Float, offsetof(UDecalComponent, FadeInStartDelay), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bDestroyOwnerAfterFade", "Destroy Owner After Fade", nullptr, EPropertyType::Bool, offsetof(UDecalComponent, bDestroyOwnerAfterFade), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UDecalComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -476,10 +476,10 @@ void RegisterGeneratedReflection_UFireballComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "Intensity", "Intensity", EPropertyType::Float, offsetof(UFireballComponent, Intensity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "Radius", "Radius", EPropertyType::Float, offsetof(UFireballComponent, Radius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "RadiusFallOff", "Radius Falloff", EPropertyType::Float, offsetof(UFireballComponent, RadiusFallOff), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "Color", "Color", EPropertyType::Color, offsetof(UFireballComponent, Color), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Intensity", "Intensity", nullptr, EPropertyType::Float, offsetof(UFireballComponent, Intensity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Radius", "Radius", nullptr, EPropertyType::Float, offsetof(UFireballComponent, Radius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RadiusFallOff", "Radius Falloff", nullptr, EPropertyType::Float, offsetof(UFireballComponent, RadiusFallOff), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Color", "Color", nullptr, EPropertyType::Color, offsetof(UFireballComponent, Color), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UFireballComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -489,13 +489,13 @@ void RegisterGeneratedReflection_UHeightFogComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "FogInscatteringColor", "FogInscatteringColor", EPropertyType::Color, offsetof(UHeightFogComponent, FogInscatteringColor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FogDensity", "FogDensity", EPropertyType::Float, offsetof(UHeightFogComponent, FogDensity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
-        { "HeightFalloff", "HeightFalloff", EPropertyType::Float, offsetof(UHeightFogComponent, HeightFalloff), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
-        { "FogHeight", "FogHeight", EPropertyType::Float, offsetof(UHeightFogComponent, FogHeight), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FogStartDistance", "FogStartDistance", EPropertyType::Float, offsetof(UHeightFogComponent, FogStartDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FogCutoffDistance", "FogCutoffDistance", EPropertyType::Float, offsetof(UHeightFogComponent, FogCutoffDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FogMaxOpacity", "FogMaxOpacity", EPropertyType::Float, offsetof(UHeightFogComponent, FogMaxOpacity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
+        { "FogInscatteringColor", "FogInscatteringColor", nullptr, EPropertyType::Color, offsetof(UHeightFogComponent, FogInscatteringColor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FogDensity", "FogDensity", nullptr, EPropertyType::Float, offsetof(UHeightFogComponent, FogDensity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
+        { "HeightFalloff", "HeightFalloff", nullptr, EPropertyType::Float, offsetof(UHeightFogComponent, HeightFalloff), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
+        { "FogHeight", "FogHeight", nullptr, EPropertyType::Float, offsetof(UHeightFogComponent, FogHeight), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FogStartDistance", "FogStartDistance", nullptr, EPropertyType::Float, offsetof(UHeightFogComponent, FogStartDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FogCutoffDistance", "FogCutoffDistance", nullptr, EPropertyType::Float, offsetof(UHeightFogComponent, FogCutoffDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FogMaxOpacity", "FogMaxOpacity", nullptr, EPropertyType::Float, offsetof(UHeightFogComponent, FogMaxOpacity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UHeightFogComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -505,9 +505,9 @@ void RegisterGeneratedReflection_UInterpToMovementComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "Duration", "Interp Duration", EPropertyType::Float, offsetof(UInterpToMovementComponent, Duration), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 2048.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bAutoActivate", "Auto Activate", EPropertyType::Bool, offsetof(UInterpToMovementComponent, bAutoActivate), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bFaceTargetDir", "Orient To Movement", EPropertyType::Bool, offsetof(UInterpToMovementComponent, bFaceTargetDir), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Duration", "Interp Duration", nullptr, EPropertyType::Float, offsetof(UInterpToMovementComponent, Duration), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 2048.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bAutoActivate", "Auto Activate", nullptr, EPropertyType::Bool, offsetof(UInterpToMovementComponent, bAutoActivate), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bFaceTargetDir", "Orient To Movement", nullptr, EPropertyType::Bool, offsetof(UInterpToMovementComponent, bFaceTargetDir), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UInterpToMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -517,11 +517,11 @@ void RegisterGeneratedReflection_UMovementComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "UpdatedComponent", "Updated Component", EPropertyType::SceneComponentRef, offsetof(UMovementComponent, UpdatedComponent), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "Velocity", "Velocity", EPropertyType::Vec3, offsetof(UMovementComponent, Velocity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "PlaneConstraintNormal", "Plane Constraint Normal", EPropertyType::Vec3, offsetof(UMovementComponent, PlaneConstraintNormal), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bUpdateOnlyIfRendered", "Update Only If Rendered", EPropertyType::Bool, offsetof(UMovementComponent, bUpdateOnlyIfRendered), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bConstrainToPlane", "Constrain To Plane", EPropertyType::Bool, offsetof(UMovementComponent, bConstrainToPlane), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "UpdatedComponent", "Updated Component", nullptr, EPropertyType::SceneComponentRef, offsetof(UMovementComponent, UpdatedComponent), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Velocity", "Velocity", nullptr, EPropertyType::Vec3, offsetof(UMovementComponent, Velocity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "PlaneConstraintNormal", "Plane Constraint Normal", nullptr, EPropertyType::Vec3, offsetof(UMovementComponent, PlaneConstraintNormal), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bUpdateOnlyIfRendered", "Update Only If Rendered", nullptr, EPropertyType::Bool, offsetof(UMovementComponent, bUpdateOnlyIfRendered), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bConstrainToPlane", "Constrain To Plane", nullptr, EPropertyType::Bool, offsetof(UMovementComponent, bConstrainToPlane), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -531,10 +531,10 @@ void RegisterGeneratedReflection_UProjectileMovementComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "InitialSpeed", "Initial Speed", EPropertyType::Float, offsetof(UProjectileMovementComponent, InitialSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 1.0f, EPropertyUsageFlags::None },
-        { "MaxSpeed", "Max Speed", EPropertyType::Float, offsetof(UProjectileMovementComponent, MaxSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 1.0f, EPropertyUsageFlags::None },
-        { "GravityScale", "Gravity Scale", EPropertyType::Float, offsetof(UProjectileMovementComponent, GravityScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 5.0f, 0.01f, EPropertyUsageFlags::None },
-        { "bRotationFollowsVelocity", "Rotation Follows Velocity", EPropertyType::Bool, offsetof(UProjectileMovementComponent, bRotationFollowsVelocity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "InitialSpeed", "Initial Speed", nullptr, EPropertyType::Float, offsetof(UProjectileMovementComponent, InitialSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 1.0f, EPropertyUsageFlags::None },
+        { "MaxSpeed", "Max Speed", nullptr, EPropertyType::Float, offsetof(UProjectileMovementComponent, MaxSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 1.0f, EPropertyUsageFlags::None },
+        { "GravityScale", "Gravity Scale", nullptr, EPropertyType::Float, offsetof(UProjectileMovementComponent, GravityScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 5.0f, 0.01f, EPropertyUsageFlags::None },
+        { "bRotationFollowsVelocity", "Rotation Follows Velocity", nullptr, EPropertyType::Bool, offsetof(UProjectileMovementComponent, bRotationFollowsVelocity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UProjectileMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -544,10 +544,10 @@ void RegisterGeneratedReflection_UPursuitMovementComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "UpdateLerpInterval", "Pursuit Interval", EPropertyType::Float, offsetof(UPursuitMovementComponent, UpdateLerpInterval), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 5.0f, 0.01f, EPropertyUsageFlags::None },
-        { "DetectionRadius", "Detection Radius", EPropertyType::Float, offsetof(UPursuitMovementComponent, DetectionRadius), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 4096.0f, 0.01f, EPropertyUsageFlags::None },
-        { "PursuitSpeed", "Pursuit Speed", EPropertyType::Float, offsetof(UPursuitMovementComponent, PursuitSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 100.0f, 0.01f, EPropertyUsageFlags::None },
-        { "bFaceTargetDir", "Orient To Target", EPropertyType::Bool, offsetof(UPursuitMovementComponent, bFaceTargetDir), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "UpdateLerpInterval", "Pursuit Interval", nullptr, EPropertyType::Float, offsetof(UPursuitMovementComponent, UpdateLerpInterval), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 5.0f, 0.01f, EPropertyUsageFlags::None },
+        { "DetectionRadius", "Detection Radius", nullptr, EPropertyType::Float, offsetof(UPursuitMovementComponent, DetectionRadius), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 4096.0f, 0.01f, EPropertyUsageFlags::None },
+        { "PursuitSpeed", "Pursuit Speed", nullptr, EPropertyType::Float, offsetof(UPursuitMovementComponent, PursuitSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 100.0f, 0.01f, EPropertyUsageFlags::None },
+        { "bFaceTargetDir", "Orient To Target", nullptr, EPropertyType::Bool, offsetof(UPursuitMovementComponent, bFaceTargetDir), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UPursuitMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -557,9 +557,9 @@ void RegisterGeneratedReflection_URotatingMovementComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "RotationRate", "Rotation Rate", EPropertyType::Vec3, offsetof(URotatingMovementComponent, RotationRate), EPropertyAccess::EditAnywhere, nullptr, -360.0f, 360.0f, 1.0f, EPropertyUsageFlags::None },
-        { "PivotTranslation", "Pivot Translation", EPropertyType::Vec3, offsetof(URotatingMovementComponent, PivotTranslation), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bRotationInLocalSpace", "Local Space Rotation", EPropertyType::Bool, offsetof(URotatingMovementComponent, bRotationInLocalSpace), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "RotationRate", "Rotation Rate", nullptr, EPropertyType::Vec3, offsetof(URotatingMovementComponent, RotationRate), EPropertyAccess::EditAnywhere, nullptr, -360.0f, 360.0f, 1.0f, EPropertyUsageFlags::None },
+        { "PivotTranslation", "Pivot Translation", nullptr, EPropertyType::Vec3, offsetof(URotatingMovementComponent, PivotTranslation), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bRotationInLocalSpace", "Local Space Rotation", nullptr, EPropertyType::Bool, offsetof(URotatingMovementComponent, bRotationInLocalSpace), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&URotatingMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -569,8 +569,8 @@ void RegisterGeneratedReflection_UDirectionalLightComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "CSMMaxDistance", "MaxDistance", EPropertyType::Float, offsetof(UDirectionalLightComponent, CSMMaxDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1000.0f, 10.0f, EPropertyUsageFlags::None },
-        { "CSMPractialLambda", "Lambda", EPropertyType::Float, offsetof(UDirectionalLightComponent, CSMPractialLambda), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
+        { "CSMMaxDistance", "MaxDistance", nullptr, EPropertyType::Float, offsetof(UDirectionalLightComponent, CSMMaxDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1000.0f, 10.0f, EPropertyUsageFlags::None },
+        { "CSMPractialLambda", "Lambda", nullptr, EPropertyType::Float, offsetof(UDirectionalLightComponent, CSMPractialLambda), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UDirectionalLightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -580,10 +580,10 @@ void RegisterGeneratedReflection_ULightComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "ShadowResolutionScale", "Shadow Resolution Scale", EPropertyType::Int, offsetof(ULightComponent, ShadowResolutionScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "ConstantBias", "Constant Bias ( DepthBias ^ (1 / TextureBit))", EPropertyType::Float, offsetof(ULightComponent, ConstantBias), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.01f, 0.001f, EPropertyUsageFlags::None },
-        { "SlopeScaledBias", "Slope-Scaled Bias", EPropertyType::Float, offsetof(ULightComponent, SlopeScaledBias), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
-        { "ShadowSharpen", "Shadow Sharpen", EPropertyType::Float, offsetof(ULightComponent, ShadowSharpen), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "ShadowResolutionScale", "Shadow Resolution Scale", "ShadowResolutionScale", EPropertyType::Int, offsetof(ULightComponent, ShadowResolutionScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "ConstantBias", "Constant Bias ( DepthBias ^ (1 / TextureBit))", "ConstantBias", EPropertyType::Float, offsetof(ULightComponent, ConstantBias), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.01f, 0.001f, EPropertyUsageFlags::None },
+        { "SlopeScaledBias", "Slope-Scaled Bias", "SlopeScaledBias", EPropertyType::Float, offsetof(ULightComponent, SlopeScaledBias), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
+        { "ShadowSharpen", "Shadow Sharpen", "ShadowSharpen", EPropertyType::Float, offsetof(ULightComponent, ShadowSharpen), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&ULightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -593,9 +593,9 @@ void RegisterGeneratedReflection_ULightComponentBase()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "LightColor", "Color", EPropertyType::Color, offsetof(ULightComponentBase, LightColor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
-        { "Intensity", "Intensity", EPropertyType::Float, offsetof(ULightComponentBase, Intensity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
-        { "bCastShadows", "Cast Shadows", EPropertyType::Bool, offsetof(ULightComponentBase, bCastShadows), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "LightColor", "Color", nullptr, EPropertyType::Color, offsetof(ULightComponentBase, LightColor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "Intensity", "Intensity", nullptr, EPropertyType::Float, offsetof(ULightComponentBase, Intensity), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "bCastShadows", "Cast Shadows", "CastShadows", EPropertyType::Bool, offsetof(ULightComponentBase, bCastShadows), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&ULightComponentBase::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -605,8 +605,8 @@ void RegisterGeneratedReflection_UPointLightComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "AttenuationRadius", "Attenuation Radius", EPropertyType::Float, offsetof(UPointLightComponent, AttenuationRadius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
-        { "LightFalloffExponent", "Light Falloff", EPropertyType::Float, offsetof(UPointLightComponent, LightFalloffExponent), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "AttenuationRadius", "Attenuation Radius", "AttenuationRadius", EPropertyType::Float, offsetof(UPointLightComponent, AttenuationRadius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "LightFalloffExponent", "Light Falloff", "LightFalloffExponent", EPropertyType::Float, offsetof(UPointLightComponent, LightFalloffExponent), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UPointLightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -616,8 +616,8 @@ void RegisterGeneratedReflection_USpotlightComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "InnerConeAngle", "Inner Cone Angle", EPropertyType::Float, offsetof(USpotlightComponent, InnerConeAngle), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
-        { "OuterConeAngle", "Outer Cone Angle", EPropertyType::Float, offsetof(USpotlightComponent, OuterConeAngle), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "InnerConeAngle", "Inner Cone Angle", "InnerConeAngle", EPropertyType::Float, offsetof(USpotlightComponent, InnerConeAngle), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "OuterConeAngle", "Outer Cone Angle", "OuterConeAngle", EPropertyType::Float, offsetof(USpotlightComponent, OuterConeAngle), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USpotlightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -627,10 +627,10 @@ void RegisterGeneratedReflection_UPrimitiveComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "bIsVisible", "Visible", EPropertyType::Bool, offsetof(UPrimitiveComponent, bIsVisible), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bEnableCull", "Enable Cull", EPropertyType::Bool, offsetof(UPrimitiveComponent, bEnableCull), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bCastDecal", "Cast Decal", EPropertyType::Bool, offsetof(UPrimitiveComponent, bCastDecal), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bGenerateOverlapEvents", "GenerateOverlapEvents", EPropertyType::Bool, offsetof(UPrimitiveComponent, bGenerateOverlapEvents), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bIsVisible", "Visible", nullptr, EPropertyType::Bool, offsetof(UPrimitiveComponent, bIsVisible), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bEnableCull", "Enable Cull", nullptr, EPropertyType::Bool, offsetof(UPrimitiveComponent, bEnableCull), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bCastDecal", "Cast Decal", nullptr, EPropertyType::Bool, offsetof(UPrimitiveComponent, bCastDecal), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bGenerateOverlapEvents", "GenerateOverlapEvents", nullptr, EPropertyType::Bool, offsetof(UPrimitiveComponent, bGenerateOverlapEvents), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UPrimitiveComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -640,9 +640,9 @@ void RegisterGeneratedReflection_USceneComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "RelativeLocation", "Location", EPropertyType::Vec3, offsetof(USceneComponent, RelativeLocation), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
-        { "RelativeRotation", "Rotation", EPropertyType::Vec3, offsetof(USceneComponent, RelativeRotation), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
-        { "RelativeScale3D", "Scale", EPropertyType::Vec3, offsetof(USceneComponent, RelativeScale3D), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "RelativeLocation", "Location", nullptr, EPropertyType::Vec3, offsetof(USceneComponent, RelativeLocation), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "RelativeRotation", "Rotation", nullptr, EPropertyType::Vec3, offsetof(USceneComponent, RelativeRotation), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
+        { "RelativeScale3D", "Scale", nullptr, EPropertyType::Vec3, offsetof(USceneComponent, RelativeScale3D), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USceneComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -652,7 +652,7 @@ void RegisterGeneratedReflection_USkinnedMeshComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "SkeletalMeshPath", "SkeletalMesh", EPropertyType::String, offsetof(USkinnedMeshComponent, SkeletalMeshPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "SkeletalMeshPath", "SkeletalMesh", "SkeletalMeshAsset", EPropertyType::String, offsetof(USkinnedMeshComponent, SkeletalMeshPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USkinnedMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -662,17 +662,17 @@ void RegisterGeneratedReflection_USoundComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "SoundKeyOrPath", "Sound", EPropertyType::String, offsetof(USoundComponent, SoundKeyOrPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bPlayOnBeginPlay", "Play On BeginPlay", EPropertyType::Bool, offsetof(USoundComponent, bPlayOnBeginPlay), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bLoop", "Loop", EPropertyType::Bool, offsetof(USoundComponent, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bSpatialized", "Spatialized", EPropertyType::Bool, offsetof(USoundComponent, bSpatialized), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "VolumeScale", "Volume Scale", EPropertyType::Float, offsetof(USoundComponent, VolumeScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 2.0f, 0.01f, EPropertyUsageFlags::None },
-        { "FadeInSeconds", "Fade In", EPropertyType::Float, offsetof(USoundComponent, FadeInSeconds), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
-        { "FadeOutSeconds", "Fade Out", EPropertyType::Float, offsetof(USoundComponent, FadeOutSeconds), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
-        { "MinDistance", "3D Min Distance", EPropertyType::Float, offsetof(USoundComponent, MinDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 100.0f, 0.1f, EPropertyUsageFlags::None },
-        { "MaxDistance", "3D Max Distance", EPropertyType::Float, offsetof(USoundComponent, MaxDistance), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 500.0f, 0.1f, EPropertyUsageFlags::None },
-        { "AttenuationModel", "3D Attenuation Model", EPropertyType::Int, offsetof(USoundComponent, AttenuationModel), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 3.0f, 1.0f, EPropertyUsageFlags::None },
-        { "RolloffFactor", "3D Rolloff Factor", EPropertyType::Float, offsetof(USoundComponent, RolloffFactor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 8.0f, 0.1f, EPropertyUsageFlags::None },
+        { "SoundKeyOrPath", "Sound", nullptr, EPropertyType::String, offsetof(USoundComponent, SoundKeyOrPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bPlayOnBeginPlay", "Play On BeginPlay", nullptr, EPropertyType::Bool, offsetof(USoundComponent, bPlayOnBeginPlay), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bLoop", "Loop", nullptr, EPropertyType::Bool, offsetof(USoundComponent, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bSpatialized", "Spatialized", nullptr, EPropertyType::Bool, offsetof(USoundComponent, bSpatialized), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "VolumeScale", "Volume Scale", nullptr, EPropertyType::Float, offsetof(USoundComponent, VolumeScale), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 2.0f, 0.01f, EPropertyUsageFlags::None },
+        { "FadeInSeconds", "Fade In", nullptr, EPropertyType::Float, offsetof(USoundComponent, FadeInSeconds), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
+        { "FadeOutSeconds", "Fade Out", nullptr, EPropertyType::Float, offsetof(USoundComponent, FadeOutSeconds), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
+        { "MinDistance", "3D Min Distance", nullptr, EPropertyType::Float, offsetof(USoundComponent, MinDistance), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 100.0f, 0.1f, EPropertyUsageFlags::None },
+        { "MaxDistance", "3D Max Distance", nullptr, EPropertyType::Float, offsetof(USoundComponent, MaxDistance), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 500.0f, 0.1f, EPropertyUsageFlags::None },
+        { "AttenuationModel", "3D Attenuation Model", nullptr, EPropertyType::Int, offsetof(USoundComponent, AttenuationModel), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 3.0f, 1.0f, EPropertyUsageFlags::None },
+        { "RolloffFactor", "3D Rolloff Factor", nullptr, EPropertyType::Float, offsetof(USoundComponent, RolloffFactor), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 8.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USoundComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -682,7 +682,7 @@ void RegisterGeneratedReflection_USphereComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "SphereRadius", "Sphere Radius", EPropertyType::Float, offsetof(USphereComponent, SphereRadius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "SphereRadius", "Sphere Radius", nullptr, EPropertyType::Float, offsetof(USphereComponent, SphereRadius), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USphereComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -692,10 +692,10 @@ void RegisterGeneratedReflection_USpringArmComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "TargetArmLength", "Target Arm Length", EPropertyType::Float, offsetof(USpringArmComponent, TargetArmLength), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 100.0f, 0.1f, EPropertyUsageFlags::None },
-        { "SocketOffset", "Socket Offset", EPropertyType::Vec3, offsetof(USpringArmComponent, SocketOffset), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "bEnableCameraLag", "Enable Camera Lag", EPropertyType::Bool, offsetof(USpringArmComponent, bEnableCameraLag), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "CameraLagSpeed", "Camera Lag Speed", EPropertyType::Float, offsetof(USpringArmComponent, CameraLagSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 100.0f, 0.1f, EPropertyUsageFlags::None },
+        { "TargetArmLength", "Target Arm Length", "TargetArmLength", EPropertyType::Float, offsetof(USpringArmComponent, TargetArmLength), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 100.0f, 0.1f, EPropertyUsageFlags::None },
+        { "SocketOffset", "Socket Offset", "SocketOffset", EPropertyType::Vec3, offsetof(USpringArmComponent, SocketOffset), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bEnableCameraLag", "Enable Camera Lag", "EnableCameraLag", EPropertyType::Bool, offsetof(USpringArmComponent, bEnableCameraLag), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "CameraLagSpeed", "Camera Lag Speed", "CameraLagSpeed", EPropertyType::Float, offsetof(USpringArmComponent, CameraLagSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.01f, 100.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USpringArmComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -705,7 +705,7 @@ void RegisterGeneratedReflection_UStaticMeshComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "StaticMeshAssetPath", "StaticMesh", EPropertyType::String, offsetof(UStaticMeshComponent, StaticMeshAssetPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "StaticMeshAssetPath", "StaticMesh", "ObjStaticMeshAsset", EPropertyType::String, offsetof(UStaticMeshComponent, StaticMeshAssetPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UStaticMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -715,7 +715,7 @@ void RegisterGeneratedReflection_USubUVComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "ParticleName", "Particle", EPropertyType::Name, offsetof(USubUVComponent, ParticleName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "ParticleName", "Particle", nullptr, EPropertyType::Name, offsetof(USubUVComponent, ParticleName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USubUVComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -725,9 +725,9 @@ void RegisterGeneratedReflection_UTextRenderComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "Text", "Text", EPropertyType::String, offsetof(UTextRenderComponent, Text), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FontName", "Font", EPropertyType::Name, offsetof(UTextRenderComponent, FontName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "FontSize", "Font Size", EPropertyType::Float, offsetof(UTextRenderComponent, FontSize), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None },
+        { "Text", "Text", nullptr, EPropertyType::String, offsetof(UTextRenderComponent, Text), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FontName", "Font", nullptr, EPropertyType::Name, offsetof(UTextRenderComponent, FontName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "FontSize", "Font Size", nullptr, EPropertyType::Float, offsetof(UTextRenderComponent, FontSize), EPropertyAccess::EditAnywhere, nullptr, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UTextRenderComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -737,13 +737,13 @@ void RegisterGeneratedReflection_UMainSceneDestructibleComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "bAutoStart", "Auto Start", EPropertyType::Bool, offsetof(UMainSceneDestructibleComponent, bAutoStart), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
-        { "SliceDuration", "Slice Duration", EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, SliceDuration), EPropertyAccess::EditAnywhere, nullptr, 0.05f, 10.0f, 0.05f, EPropertyUsageFlags::None },
-        { "SliceSpeed", "Slice Speed", EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, SliceSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.05f, EPropertyUsageFlags::None },
-        { "PatrolAmplitude", "Patrol Amplitude", EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, PatrolAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
-        { "PatrolSpeed", "Patrol Speed", EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, PatrolSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 20.0f, 0.05f, EPropertyUsageFlags::None },
-        { "SliceCount", "Slice Count", EPropertyType::Int, offsetof(UMainSceneDestructibleComponent, SliceCount), EPropertyAccess::EditAnywhere, nullptr, 1.0f, 12.0f, 1.0f, EPropertyUsageFlags::None },
-        { "PresentationTrigger", "Presentation Trigger", EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, PresentationTrigger), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::Animatable },
+        { "bAutoStart", "Auto Start", nullptr, EPropertyType::Bool, offsetof(UMainSceneDestructibleComponent, bAutoStart), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "SliceDuration", "Slice Duration", nullptr, EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, SliceDuration), EPropertyAccess::EditAnywhere, nullptr, 0.05f, 10.0f, 0.05f, EPropertyUsageFlags::None },
+        { "SliceSpeed", "Slice Speed", nullptr, EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, SliceSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.05f, EPropertyUsageFlags::None },
+        { "PatrolAmplitude", "Patrol Amplitude", nullptr, EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, PatrolAmplitude), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 10.0f, 0.01f, EPropertyUsageFlags::None },
+        { "PatrolSpeed", "Patrol Speed", nullptr, EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, PatrolSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 20.0f, 0.05f, EPropertyUsageFlags::None },
+        { "SliceCount", "Slice Count", nullptr, EPropertyType::Int, offsetof(UMainSceneDestructibleComponent, SliceCount), EPropertyAccess::EditAnywhere, nullptr, 1.0f, 12.0f, 1.0f, EPropertyUsageFlags::None },
+        { "PresentationTrigger", "Presentation Trigger", nullptr, EPropertyType::Float, offsetof(UMainSceneDestructibleComponent, PresentationTrigger), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::Animatable },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UMainSceneDestructibleComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -753,7 +753,7 @@ void RegisterGeneratedReflection_UScriptComponent()
 {
     static const FPropertyMeta Properties[] =
     {
-        { "ScriptName", "ScriptName", EPropertyType::String, offsetof(UScriptComponent, ScriptName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "ScriptName", "ScriptName", nullptr, EPropertyType::String, offsetof(UScriptComponent, ScriptName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UScriptComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));

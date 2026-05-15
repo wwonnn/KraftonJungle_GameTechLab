@@ -34,9 +34,6 @@ void USceneComponent::Serialize(FArchive& Ar)
 		}
 	}
 
-	Ar << "Location" << RelativeLocation;
-	Ar << "Rotation" << RelativeRotation;
-	Ar << "Scale" << RelativeScale3D;
 	Ar << "AttachSocket" << AttachSocketName;
 }
 USceneComponent::USceneComponent()

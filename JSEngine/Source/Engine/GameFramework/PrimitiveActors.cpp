@@ -1026,13 +1026,6 @@ bool UMainSceneDestructibleComponent::StartSlice()
 void UMainSceneDestructibleComponent::Serialize(FArchive& Ar)
 {
     UActorComponent::Serialize(Ar);
-    Ar << "Auto Start" << bAutoStart;
-    Ar << "Slice Duration" << SliceDuration;
-    Ar << "Slice Speed" << SliceSpeed;
-    Ar << "Patrol Amplitude" << PatrolAmplitude;
-    Ar << "Patrol Speed" << PatrolSpeed;
-    Ar << "Slice Count" << SliceCount;
-    Ar << "Presentation Trigger" << PresentationTrigger;
 
     if (Ar.IsLoading()
         && !bAutoStart

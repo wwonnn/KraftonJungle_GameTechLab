@@ -20,7 +20,6 @@ void USphereComponent::PostDuplicate(UObject* Original)
 void USphereComponent::Serialize(FArchive& Ar)
 {
     UShapeComponent::Serialize(Ar);
-    Ar << "SphereRadius" << SphereRadius;
 }
 
 void USphereComponent::UpdateWorldAABB() const

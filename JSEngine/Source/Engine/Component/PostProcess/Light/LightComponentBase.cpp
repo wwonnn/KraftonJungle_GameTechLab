@@ -15,7 +15,4 @@ void ULightComponentBase::PostDuplicate(UObject* Original)
 void ULightComponentBase::Serialize(FArchive& Ar)
 {
 	USceneComponent::Serialize(Ar);
-	Ar << "Color" << LightColor;
-	Ar << "Intensity" << Intensity;
-	Ar << "CastShadows" << bCastShadows;
 }

@@ -107,6 +107,7 @@ public:
 	virtual void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) {}
 	void AppendReflectedProperties(TArray<FPropertyDescriptor>& OutProps);
 	void GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps);
+	void SerializeReflectedProperties(FArchive& Ar);
 	virtual void PostEditChangeProperty(const FPropertyChangedEvent& Event) { PostEditProperty(Event.PropertyName); }
 	virtual void PostEditProperty(const char* PropertyName) {}
 	void CopyPropertiesFrom(UObject* Src);
