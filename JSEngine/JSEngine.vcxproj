@@ -871,6 +871,13 @@
     <ClInclude Include="Source\Editor\UI\EditorViewerWindowWidget.h" />
     <ClInclude Include="Source\Editor\Viewer\EditorViewer.h" />
     <ClInclude Include="Source\Editor\Viewport\SkeletalMeshViewportClient.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimationAsset.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequence.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequenceBase.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimTypes.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\IAnimationDataModel.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
     <ClInclude Include="Source\Engine\Asset\SkeletalMesh.h" />
     <ClInclude Include="Source\Engine\Asset\SkeletalMeshTypes.h" />
     <ClInclude Include="Source\Engine\Camera\ShakePattern\SequenceCameraShakePattern.h" />

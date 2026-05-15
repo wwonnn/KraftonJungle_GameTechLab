@@ -1995,6 +1995,8 @@
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Editor\Viewer\EditorViewer.h" />
     <ClInclude Include="Source\Editor\Viewport\SkeletalMeshViewportClient.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\IAnimationDataModel.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\Engine\Runtime\AppIcon.rc" />
