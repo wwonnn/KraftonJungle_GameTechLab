@@ -18,6 +18,8 @@ protected:
 		const TArray<FBoundingBox>* VisibleObjectsBounds) const override;
 
 public:
+    UPROPERTY(EditAnywhere, DisplayName="Inner Cone Angle", Speed=0.1, Animatable)
     float InnerConeAngle = 10.f;
+    UPROPERTY(EditAnywhere, DisplayName="Outer Cone Angle", Speed=0.1, Animatable)
     float OuterConeAngle = 15.f;
 };

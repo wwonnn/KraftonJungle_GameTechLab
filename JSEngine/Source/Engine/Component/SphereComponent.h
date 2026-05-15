@@ -16,6 +16,7 @@ public:
     void Serialize(FArchive& Ar) override;
 
 private:
+    UPROPERTY(EditAnywhere, DisplayName="Sphere Radius")
     float SphereRadius = 0.5f;
 
     // UShapeComponent을(를) 통해 상속됨

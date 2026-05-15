@@ -43,17 +43,6 @@ void USoundComponent::Serialize(FArchive& Ar)
 void USoundComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     USceneComponent::GetEditableProperties(OutProps);
-    OutProps.push_back({ "Sound", EPropertyType::String, &SoundKeyOrPath });
-    OutProps.push_back({ "Play On BeginPlay", EPropertyType::Bool, &bPlayOnBeginPlay });
-    OutProps.push_back({ "Loop", EPropertyType::Bool, &bLoop });
-    OutProps.push_back({ "Spatialized", EPropertyType::Bool, &bSpatialized });
-    OutProps.push_back({ "Volume Scale", EPropertyType::Float, &VolumeScale, 0.0f, 2.0f, 0.01f });
-    OutProps.push_back({ "Fade In", EPropertyType::Float, &FadeInSeconds, 0.0f, 10.0f, 0.01f });
-    OutProps.push_back({ "Fade Out", EPropertyType::Float, &FadeOutSeconds, 0.0f, 10.0f, 0.01f });
-    OutProps.push_back({ "3D Min Distance", EPropertyType::Float, &MinDistance, 0.0f, 100.0f, 0.1f });
-    OutProps.push_back({ "3D Max Distance", EPropertyType::Float, &MaxDistance, 0.1f, 500.0f, 0.1f });
-    OutProps.push_back({ "3D Attenuation Model", EPropertyType::Int, &AttenuationModel, 0.0f, 3.0f, 1.0f });
-    OutProps.push_back({ "3D Rolloff Factor", EPropertyType::Float, &RolloffFactor, 0.0f, 8.0f, 0.1f });
 }
 
 void USoundComponent::Play()

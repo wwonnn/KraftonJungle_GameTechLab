@@ -302,7 +302,7 @@ void FEditorActorSequenceEditModel::CollectAnimatableScalarProperties(
     }
 
     TArray<FPropertyDescriptor> Props;
-    Object->GetEditableProperties(Props);
+    Object->GetAllEditableProperties(Props);
     for (const FPropertyDescriptor& Prop : Props)
     {
         if (IsSequencerScalarProperty(Prop))

@@ -305,8 +305,6 @@ public:
 
     void BeginPlay() override;
     void Serialize(FArchive& Ar) override;
-    void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
-
 protected:
     void TickComponent(float DeltaTime) override;
 
@@ -314,12 +312,19 @@ private:
     float GetRealDeltaTime(float DeltaTime) const;
     bool StartSlice();
 
+    UPROPERTY(EditAnywhere, DisplayName="Auto Start")
     bool bAutoStart = true;
+    UPROPERTY(EditAnywhere, DisplayName="Slice Duration", Min=0.05, Max=10.0, Speed=0.05)
     float SliceDuration = 1.0f;
+    UPROPERTY(EditAnywhere, DisplayName="Slice Speed", Min=0.0, Max=10.0, Speed=0.05)
     float SliceSpeed = 1.2f;
+    UPROPERTY(EditAnywhere, DisplayName="Patrol Amplitude", Min=0.0, Max=10.0, Speed=0.01)
     float PatrolAmplitude = 0.18f;
+    UPROPERTY(EditAnywhere, DisplayName="Patrol Speed", Min=0.0, Max=20.0, Speed=0.05)
     float PatrolSpeed = 1.15f;
+    UPROPERTY(EditAnywhere, DisplayName="Slice Count", Min=1.0, Max=12.0, Speed=1.0)
     int32 SliceCount = 5;
+    UPROPERTY(EditAnywhere, DisplayName="Presentation Trigger", Min=0.0, Max=1.0, Speed=0.01, Animatable)
     float PresentationTrigger = 0.0f;
     bool bPresentationTriggerConsumed = false;
 

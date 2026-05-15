@@ -11,6 +11,7 @@ class UBillboardComponent : public UPrimitiveComponent
 {
 protected:
 	bool bIsBillboard = true;
+	UPROPERTY(EditAnywhere, DisplayName="Inherit Owner Scale")
 	bool bInheritOwnerScale = false;
 	bool TryGetActiveCamera(const FViewportCamera*& OutCamera) const;
 	
@@ -56,16 +57,21 @@ public:
 	///////////////////////////////////////////////////////////
 
 private:
+	UPROPERTY(EditAnywhere, DisplayName="Particle")
 	FName TextureName;
 	UTexture* Texture = nullptr; // ResourceManager 소유, 여기선 참조만
 	FColor Color = FColor::White();
 
 protected:
 	uint32 FrameIndex = 0;
+	UPROPERTY(EditAnywhere, DisplayName="Width", Min=0.1, Max=100.0, Speed=0.1)
 	float  Width = 1.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Height", Min=0.1, Max=100.0, Speed=0.1)
 	float  Height = 1.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Play Rate", Min=1.0, Max=120.0, Speed=1.0)
 	float  PlayRate = 30.0f; // 초당 프레임 수
 	float  TimeAccumulator = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="bLoop")
 	bool   bLoop = true;
 };
 

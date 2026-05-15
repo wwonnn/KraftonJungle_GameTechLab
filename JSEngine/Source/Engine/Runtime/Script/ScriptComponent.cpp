@@ -595,8 +595,6 @@ void UScriptComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutPro
 {
     UActorComponent::GetEditableProperties(OutProps);
 
-    OutProps.push_back({ "ScriptName", EPropertyType::String, &ScriptName });
-
 	// ScriptName이 바뀐 뒤 아직 Property를 안 읽었다면 여기서 갱신
     if (!ScriptName.empty() && !bLuaPropertiesScanned)
     {

@@ -62,6 +62,7 @@ protected:
 	void TickComponent(float DeltaTime) override;
 
 private:
+	UPROPERTY(EditAnywhere, DisplayName="Particle")
 	FName ParticleName;
 	FParticleResource* CachedParticle = nullptr; // ResourceManager 소유, 여기선 참조만
 

@@ -2,6 +2,7 @@
 #include "EngineStatics.h"
 #include "Object/FName.h"
 #include "Object/ObjectFactory.h"
+#include "Object/Reflection.h"
 #include "Math/Vector.h"
 
 #include <cstring>
@@ -31,6 +32,17 @@ UObject::~UObject()
 
 const FTypeInfo UObject::s_TypeInfo = { "UObject", nullptr, sizeof(UObject) };
 
+void UObject::AppendReflectedProperties(TArray<FPropertyDescriptor>& OutProps)
+{
+    FReflectionRegistry::Get().AppendProperties(GetTypeInfo(), this, OutProps);
+}
+
+void UObject::GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps)
+{
+    GetEditableProperties(OutProps);
+    AppendReflectedProperties(OutProps);
+}
+
 // FObjectFactory 로 같은 타입의 인스턴스를 생성한 뒤 프로퍼티 복사 → PostDuplicate 훅을 실행합니다.
 // 팩토리에 등록되지 않은 추상 클래스(PrimitiveComponent 등)는 Create() 가 nullptr 를 반환하므로
 // 그대로 nullptr 를 반환합니다.
@@ -53,10 +65,10 @@ void UObject::CopyPropertiesFrom(UObject* Src)
     if (!Src) return;
 
     TArray<FPropertyDescriptor> SrcProps;
-    Src->GetEditableProperties(SrcProps);
+    Src->GetAllEditableProperties(SrcProps);
 
     TArray<FPropertyDescriptor> DstProps;
-    this->GetEditableProperties(DstProps);
+    this->GetAllEditableProperties(DstProps);
 
     for (const FPropertyDescriptor& SrcProp : SrcProps)
     {
@@ -80,6 +92,7 @@ void UObject::CopyPropertiesFrom(UObject* Src)
         case EPropertyType::Vec4:
 		case EPropertyType::Color:
 		case EPropertyType::Enum:
+        case EPropertyType::ObjectRef:
         {
             const size_t Size = GetPropertySize(SrcProp.Type);
             if (Size > 0)

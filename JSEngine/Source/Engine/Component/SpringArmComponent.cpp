@@ -25,10 +25,6 @@ void USpringArmComponent::Serialize(FArchive& Ar)
 void USpringArmComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
 	USceneComponent::GetEditableProperties(OutProps);
-	OutProps.push_back({ "Target Arm Length", EPropertyType::Float, &TargetArmLength, 0.0f, 100.0f, 0.1f });
-	OutProps.push_back({ "Socket Offset", EPropertyType::Vec3, &SocketOffset, 0.0f, 0.0f, 0.1f });
-	OutProps.push_back({ "Enable Camera Lag", EPropertyType::Bool, &bEnableCameraLag });
-	OutProps.push_back({ "Camera Lag Speed", EPropertyType::Float, &CameraLagSpeed, 0.01f, 100.0f, 0.1f });
 }
 
 void USpringArmComponent::PostEditProperty(const char* PropertyName)

@@ -149,6 +149,7 @@ private:
     void ClearLoadedState();
     bool ApplyLuaPropertyToInstance(const char* PropertyName);
     void DestroyCreatedCameraShakePatterns();
+    UPROPERTY(EditAnywhere, DisplayName="ScriptName")
     FString ScriptName;
     FString RegisteredScriptName;
 

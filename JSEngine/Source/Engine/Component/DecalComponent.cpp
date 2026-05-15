@@ -94,13 +94,6 @@ void UDecalComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProp
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
 	OutProps.push_back({ "Materials", EPropertyType::Material, &Materials });
-	OutProps.push_back({ "Size", EPropertyType::Vec3, &DecalSize });
-	OutProps.push_back({ "Color", EPropertyType::Vec4, &DecalColor });
-	OutProps.push_back({ "Fade Start Delay", EPropertyType::Float, &FadeStartDelay });
-	OutProps.push_back({ "Fade Duration", EPropertyType::Float, &FadeDuration });
-	OutProps.push_back({ "Fade In Start Delay", EPropertyType::Float, &FadeInStartDelay });
-	OutProps.push_back({ "Fade In Duration", EPropertyType::Float, &FadeInDuration });
-	OutProps.push_back({ "Destroy Owner After Fade", EPropertyType::Bool, &bDestroyOwnerAfterFade });
 }
 
 void UDecalComponent::PostEditProperty(const char* PropertyName)

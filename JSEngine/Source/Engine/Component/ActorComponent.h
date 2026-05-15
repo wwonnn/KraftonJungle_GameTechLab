@@ -68,14 +68,18 @@ protected:
 protected:
 	AActor* Owner = nullptr;
 	TArray<FString> Tags;
+	UPROPERTY(EditAnywhere, DisplayName="Tags")
 	FString TagsText;
 	FGuid PersistentGuid;
 
 private:
 	bool bIsActive = true;
 	bool bAutoActivate = true;
+	UPROPERTY(EditAnywhere, DisplayName="Enable Tick")
 	bool bCanEverTick = true;
+	UPROPERTY(EditAnywhere, DisplayName="Be Serialized")
 	bool bTransient = false; // 런타임에만 존재해야 하며, 저장되어서는 안 되는 객체에 붙입니다. (UUID 컴포넌트)
+	UPROPERTY(EditAnywhere, DisplayName="Editor Only")
 	bool bIsEditorOnly = false;
 };
 

@@ -47,14 +47,21 @@ private:
 
 private:
 	TArray<UMaterialInterface*> Materials;
+	UPROPERTY(EditAnywhere, DisplayName="Size")
 	FVector DecalSize = FVector(5.0f, 5.0f, 5.0f);
+	UPROPERTY(EditAnywhere, DisplayName="Color")
 	FColor DecalColor = FColor::White();
 	bool bDebugLine = true;
 
+	UPROPERTY(EditAnywhere, DisplayName="Fade Start Delay")
 	float FadeStartDelay = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Fade Duration")
 	float FadeDuration = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Fade In Duration")
 	float FadeInDuration = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Fade In Start Delay")
 	float FadeInStartDelay = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Destroy Owner After Fade")
 	bool bDestroyOwnerAfterFade = false;
 
 	float LifeTime = 0.0f;

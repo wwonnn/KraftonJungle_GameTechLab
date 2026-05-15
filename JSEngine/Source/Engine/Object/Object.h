@@ -4,11 +4,13 @@
 #include "Object/FName.h"
 #include "Core/Singleton.h"
 #include "Core/PropertyTypes.h"
+#include "Object/Reflection.h"
 #include "Serialization/Archive.h"
 #include "Object/Object.h"
 
 #define DECLARE_CLASS(ClassName, ParentClass)                          \
 	using ThisClass = ClassName;									   \
+    friend void RegisterGeneratedReflection_##ClassName();             \
     static const FTypeInfo s_TypeInfo;                                 \
     const FTypeInfo* GetTypeInfo() const override {                    \
         return &s_TypeInfo;                                            \
@@ -103,6 +105,8 @@ public:
 	//                         이름 기반으로 매칭하여 Src → this 방향으로 복사.
 	// -----------------------------------------------------------------------
 	virtual void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) {}
+	void AppendReflectedProperties(TArray<FPropertyDescriptor>& OutProps);
+	void GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps);
 	virtual void PostEditChangeProperty(const FPropertyChangedEvent& Event) { PostEditProperty(Event.PropertyName); }
 	virtual void PostEditProperty(const char* PropertyName) {}
 	void CopyPropertiesFrom(UObject* Src);

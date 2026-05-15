@@ -25,9 +25,12 @@ public:
 
 private:
 	// X=X축(Roll), Y=Y축(Pitch), Z=Z축(Yaw) 각속도 (deg/s)
+	UPROPERTY(EditAnywhere, DisplayName="Rotation Rate", Min=-360.0, Max=360.0, Speed=1.0)
 	FVector RotationRate = FVector(90.0f, 0.f, 0.f);
 	// 오브젝트 로컬 공간 기준 피벗 오프셋 (오브젝트 → 피벗 방향)
+	UPROPERTY(EditAnywhere, DisplayName="Pivot Translation", Speed=0.1)
 	FVector PivotTranslation = FVector::ZeroVector;
 	
+	UPROPERTY(EditAnywhere, DisplayName="Local Space Rotation")
 	bool bRotationInLocalSpace = true;
 };

@@ -39,12 +39,19 @@ public:
     void PostEditProperty(const char* PropertyName) override;
 
 private:
+    UPROPERTY(EditAnywhere, DisplayName="FogInscatteringColor")
     FColor FogInscatteringColor;
+    UPROPERTY(EditAnywhere, DisplayName="FogDensity", Min=0.0, Max=1.0, Speed=0.01)
     float FogDensity = 0;
+    UPROPERTY(EditAnywhere, DisplayName="HeightFalloff", Min=0.0, Max=10.0, Speed=0.01)
     float HeightFalloff = 0;
+    UPROPERTY(EditAnywhere, DisplayName="FogHeight")
     float FogHeight = 0;
+    UPROPERTY(EditAnywhere, DisplayName="FogStartDistance", Min=0.0)
     float FogStartDistance = 0;
+    UPROPERTY(EditAnywhere, DisplayName="FogCutoffDistance")
     float FogCutoffDistance = 1000;
+    UPROPERTY(EditAnywhere, DisplayName="FogMaxOpacity", Min=0.0, Max=1.0, Speed=0.01)
     float FogMaxOpacity = 1.f;
 
     // UPrimitiveComponent을(를) 통해 상속됨

@@ -125,7 +125,7 @@ bool UActorSequenceComponent::AddFloatTrack(const FActorSequenceFloatTrackDesc& 
     }
 
     TArray<FPropertyDescriptor> Properties;
-    TargetComponent->GetEditableProperties(Properties);
+    TargetComponent->GetAllEditableProperties(Properties);
 
     FPropertyDescriptor* TargetProperty = nullptr;
     for (FPropertyDescriptor& Property : Properties)

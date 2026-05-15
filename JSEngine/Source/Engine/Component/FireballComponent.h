@@ -38,8 +38,12 @@ public:
 	void SetRadiusFallOff(float InFallOff) { if (InFallOff) RadiusFallOff = InFallOff; }
 
 private:
+	UPROPERTY(EditAnywhere, DisplayName="Intensity")
 	float  Intensity		= 1.f;
+	UPROPERTY(EditAnywhere, DisplayName="Radius")
 	float  Radius			= 15.f;
+	UPROPERTY(EditAnywhere, DisplayName="Radius Falloff")
 	float  RadiusFallOff	= 1.f;
+	UPROPERTY(EditAnywhere, DisplayName="Color")
 	FColor Color			= FColor(1.0f, 0.8f, 0.04f, 1.f);
 };

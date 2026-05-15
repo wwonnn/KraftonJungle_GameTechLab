@@ -6,8 +6,6 @@ class UPointLightComponent : public ULightComponent
 public:
     DECLARE_CLASS(UPointLightComponent, ULightComponent)
     virtual void PostDuplicate(UObject* Original) override;
-    virtual void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
-
 	virtual void Serialize(FArchive& Ar) override;
 
 protected:
@@ -17,6 +15,8 @@ protected:
 	//virtual void PrintShadowMapDebugInfo(TArray<FPropertyDescriptor>& OutProps) const override;
 
 public:
+    UPROPERTY(EditAnywhere, DisplayName="Attenuation Radius", Speed=0.1, Animatable)
     float AttenuationRadius		= 10.f;
+    UPROPERTY(EditAnywhere, DisplayName="Light Falloff", Speed=0.1, Animatable)
     float LightFalloffExponent	= 1.f;
 };

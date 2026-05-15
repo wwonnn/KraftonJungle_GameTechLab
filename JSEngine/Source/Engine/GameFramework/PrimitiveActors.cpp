@@ -1054,29 +1054,6 @@ void UMainSceneDestructibleComponent::Serialize(FArchive& Ar)
     }
 }
 
-void UMainSceneDestructibleComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
-{
-    UActorComponent::GetEditableProperties(OutProps);
-
-    OutProps.push_back({ "Auto Start", EPropertyType::Bool, &bAutoStart });
-    OutProps.push_back({ "Slice Duration", EPropertyType::Float, &SliceDuration, 0.05f, 10.0f, 0.05f });
-    OutProps.push_back({ "Slice Speed", EPropertyType::Float, &SliceSpeed, 0.0f, 10.0f, 0.05f });
-    OutProps.push_back({ "Patrol Amplitude", EPropertyType::Float, &PatrolAmplitude, 0.0f, 10.0f, 0.01f });
-    OutProps.push_back({ "Patrol Speed", EPropertyType::Float, &PatrolSpeed, 0.0f, 20.0f, 0.05f });
-    OutProps.push_back({ "Slice Count", EPropertyType::Int, &SliceCount, 1.0f, 12.0f, 1.0f });
-    OutProps.push_back({
-        "Presentation Trigger",
-        EPropertyType::Float,
-        &PresentationTrigger,
-        0.0f,
-        1.0f,
-        0.01f,
-        nullptr,
-        0,
-        nullptr,
-        EPropertyUsageFlags::Editable | EPropertyUsageFlags::Animatable });
-}
-
 float UMainSceneDestructibleComponent::GetRealDeltaTime(float DeltaTime) const
 {
     return DeltaTime;

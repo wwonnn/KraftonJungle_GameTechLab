@@ -18,19 +18,6 @@ void UMovementComponent::SetUpdatedComponent(USceneComponent* InComponent)
     UpdatedComponent = InComponent;
 }
 
-void UMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
-{
-    UActorComponent::GetEditableProperties(OutProps);
-
-    // UpdatedComponent 는 SceneComponentRef 타입으로 노출됩니다.
-    // CopyPropertiesFrom 은 포인터 복원을 건너뛰며, Actor::Duplicate() 에서 재매핑합니다.
-    OutProps.push_back({ "Updated Component",        EPropertyType::SceneComponentRef, &UpdatedComponent });
-    OutProps.push_back({ "Velocity",                 EPropertyType::Vec3, &Velocity });
-    OutProps.push_back({ "Plane Constraint Normal",  EPropertyType::Vec3, &PlaneConstraintNormal });
-    OutProps.push_back({ "Update Only If Rendered",  EPropertyType::Bool, &bUpdateOnlyIfRendered });
-    OutProps.push_back({ "Constrain To Plane",       EPropertyType::Bool, &bConstrainToPlane });
-}
-
 // UpdatedComponent를 Delta만큼 이동시킵니다.
 void UMovementComponent::MoveUpdatedComponent(const FVector& Delta)
 {

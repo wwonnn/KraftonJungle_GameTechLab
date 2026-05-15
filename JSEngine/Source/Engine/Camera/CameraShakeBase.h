@@ -80,8 +80,6 @@ public:
 
     virtual void GetCameraShakeInfo(FCameraShakeInfo& OutCameraInfo) const;
 	
-    void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
-
     /** Gets the shake pattern's parent shake */
     template <typename InstanceType>
     InstanceType* GetShakeInstance() const { return Cast<InstanceType>(GetShakeInstance()); }
@@ -95,8 +93,11 @@ private:
         FCameraShakeUpdateResult& OutResult) {}
 
 public:
+    UPROPERTY(EditAnywhere, DisplayName="Duration")
     float Duration = 1.0f;
+    UPROPERTY(EditAnywhere, DisplayName="BlendInTime")
     float BlendInTime = 0.2f;
+    UPROPERTY(EditAnywhere, DisplayName="BlendOutTime")
     float BlendOutTime = 0.2f;
 
 protected:
