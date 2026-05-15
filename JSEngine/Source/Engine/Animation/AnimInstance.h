@@ -19,10 +19,11 @@ public:
 	DECLARE_CLASS(UAnimInstance, UObject)
 
 public:
+    void SetSequence(UAnimSequence* InSequence);
+    void SetNextSequence(UAnimSequence* InNext, float InBlendSpeed);
+
     virtual void UpdateAnimation(float DeltaTime);		// 재생 시간 관리
     virtual void EvaluatePose(FSkeletonPose& OutPose);	// 시간 t에서 Bone의 Pose 계산
-
-	void SetNextSequence(UAnimSequence* InNext, float InBlendSpeed);
 
 protected:
     void InitializeReferencePose(FSkeletonPose& OutPose);
@@ -34,24 +35,28 @@ protected:
     void BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose);
 
 	// TODO
-	// 1. 재생 시간 관리
-	// 2. Evaluate Pose (t에서 각 Bone의 Transform 계산)
-	// 3. Animation Blend
-	// 4. Animation Notify
-	// 5. Animation State Machine
+	// Animation Notify
+	// Animation State Machine
 
-private:
+protected:
     USkinnedMeshComponent* Owner = nullptr;
 
     UAnimSequence* CurrentSequence = nullptr;
     UAnimSequence* NextSequence = nullptr;
 
+	UPROPERTY(VisibleAnywhere, Transient)
 	float CurrentTime = 0.0f;
+    UPROPERTY(VisibleAnywhere, Transient)
     float NextTime = 0.0f;
 
+    UPROPERTY(EditAnywhere, Min = 0.0, Max = 1.0, Speed = 0.01)
     float PlayRate = 1.0f;
+    UPROPERTY(EditAnywhere)
     bool bLoop = true;
     bool bPlaying = true;
+
+	UPROPERTY(VisibleAnywhere, Transient)
     float BlendFactor = 0.0f; // 0.0f: CurrSequence, 1.0f: NextSequence
-    float BlendSpeed = 1.0f;
+    UPROPERTY(EditAnywhere, Min = 0.0, Max = 1.0, Speed = 0.01)
+	float BlendSpeed = 1.0f;
 };

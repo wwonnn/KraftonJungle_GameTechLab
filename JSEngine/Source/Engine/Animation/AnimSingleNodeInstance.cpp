@@ -2,8 +2,39 @@
 
 void UAnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
 {
+    if (!bPlaying || CurrentSequence == nullptr || !CurrentSequence->DataModel)
+    {
+        return;
+    }
+
+    const float Length = CurrentSequence->DataModel->SequenceLength;
+
+    CurrentTime += DeltaTime * PlayRate;
+
+    if (bLoop && Length > 0.0f)
+    {
+        CurrentTime = std::fmod(CurrentTime, Length);
+
+        // PlayRate < 0
+        if (CurrentTime < 0.0f)
+            CurrentTime += Length;
+    }
+    else
+    {
+        CurrentTime = std::clamp(CurrentTime, 0.0f, Length);
+
+        if (CurrentTime >= Length)
+            bPlaying = false;
+    }
 }
 
 void UAnimSingleNodeInstance::EvaluatePose(FSkeletonPose& OutPose)
 {
+    if (!CurrentSequence)
+    {
+        InitializeReferencePose(OutPose);
+        return;
+    }
+
+    EvaluatePoseAtTime(CurrentSequence, CurrentTime, OutPose.LocalTransforms);
 }

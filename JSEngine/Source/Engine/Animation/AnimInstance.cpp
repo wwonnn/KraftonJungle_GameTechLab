@@ -1,5 +1,24 @@
 ﻿#include "AnimInstance.h"
 
+void UAnimInstance::SetSequence(UAnimSequence* InSequence)
+{
+	CurrentSequence = InSequence;
+	CurrentTime = 0.0f;
+	bPlaying = true;
+
+	// Next Sequence 초기화
+	NextSequence = nullptr;
+	NextTime = 0.0f;
+	BlendFactor = 0.0f;
+}
+void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
+{
+    NextSequence = InNext;
+    NextTime = 0.0f;
+    BlendFactor = 0.0f;
+    BlendSpeed = InBlendSpeed;
+}
+
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
     if (!bPlaying || CurrentSequence == nullptr || !CurrentSequence->DataModel)
@@ -47,6 +66,7 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
         BlendFactor += DeltaTime * BlendSpeed;
         BlendFactor = std::clamp(BlendFactor, 0.0f, 1.0f);
 
+		// Blend 완료 
         if (BlendFactor >= 1.0f)
         {
             CurrentSequence = NextSequence;
@@ -80,14 +100,6 @@ void UAnimInstance::EvaluatePose(FSkeletonPose& OutPose)
     {
         EvaluatePoseAtTime(CurrentSequence, CurrentTime, OutPose.LocalTransforms);
     }
-}
-
-void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
-{
-    NextSequence = InNext;
-    NextTime = 0.0f;
-    BlendFactor = 0.0f;
-    BlendSpeed = InBlendSpeed;
 }
 
 void UAnimInstance::InitializeReferencePose(FSkeletonPose& OutPose)
