@@ -101,6 +101,11 @@ public:
             RootComponent->SetRelativeRotationQuat(Q);
 	}
 
+	FQuat GetActorRotationQuat() const
+    {
+        return FQuat::MakeFromEuler(GetRootComponent()->GetRelativeRotation());
+    }
+
 	// Transform — Scale
 	FVector GetActorScale() const
 	{

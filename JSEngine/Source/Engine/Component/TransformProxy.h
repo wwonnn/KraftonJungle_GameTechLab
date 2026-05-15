@@ -27,25 +27,58 @@ public:
     }
     virtual void SetTransform(const FMatrix& M) override
     {
-        if (Actors.empty())
+        if (Actors.empty() || !Actors[0])
             return;
 
-        // 기준 (첫 Actor)
         FMatrix OldM = GetTransform();
 
         FVector OldT, NewT, OldS, NewS;
         FMatrix OldR, NewR;
-
         OldM.Decompose(OldT, OldR, OldS);
         M.Decompose(NewT, NewR, NewS);
 
-        FVector Delta = NewT - OldT;
+        FQuat OldQuat = FQuat(OldR);
+        FQuat NewQuat = FQuat(NewR);
+        FQuat DeltaQuat = NewQuat * OldQuat.Inverse();
+        DeltaQuat.Normalize();
 
-        for (AActor* Actor : Actors)
+        FVector DeltaT = NewT - OldT;
+        FVector DeltaS = NewS - OldS;
+
+        // Primary
+        Actors[0]->SetActorLocation(NewT);
+        Actors[0]->SetActorRotationQuat(NewQuat);
+        Actors[0]->SetActorScale(NewS);
+
+        // 나머지
+        for (int32 i = 1; i < (int32)Actors.size(); ++i)
         {
+            AActor* Actor = Actors[i];
             if (!Actor)
                 continue;
-            Actor->AddActorWorldOffset(Delta);
+
+            // 위치: 피벗 기준 Delta 회전 + Delta 이동 분리
+            FVector Offset = Actor->GetActorLocation() - OldT;
+            Actor->SetActorLocation(NewT + DeltaQuat.RotateVector(Offset));
+
+            // 회전: DeltaQuat가 Identity에 가까우면 적용 안 함 (오차 방지)
+            if (!DeltaQuat.IsIdentity(1e-6f))
+            {
+                FQuat ActorNewQuat = DeltaQuat * Actor->GetActorRotationQuat();
+                ActorNewQuat.Normalize();
+                Actor->SetActorRotationQuat(ActorNewQuat);
+            }
+
+            // 스케일
+            if (!DeltaS.IsNearlyZero())
+            {
+                FVector ActorScale = Actor->GetActorScale();
+                ActorScale += DeltaS;
+                ActorScale.X = std::max(0.001f, ActorScale.X);
+                ActorScale.Y = std::max(0.001f, ActorScale.Y);
+                ActorScale.Z = std::max(0.001f, ActorScale.Z);
+                Actor->SetActorScale(ActorScale);
+            }
         }
     }
 
@@ -70,18 +103,34 @@ public:
     }
     virtual void SetTransform(const FMatrix& M) override
     {
-        if (!Component) return;
+        if (!Component)
+            return;
         FVector Translation, Scale;
         FMatrix Rotation;
-        if (M.Decompose(Translation, Rotation, Scale))
+        if (!M.Decompose(Translation, Rotation, Scale))
+            return;
+
+        USceneComponent* Parent = Component->GetParent();
+        if (!Parent)
         {
+            // 루트 컴포넌트면 World = Relative
             Component->SetWorldLocation(Translation);
-            // Assuming SetRelativeRotation and SetRelativeScale are appropriate here, 
-            // but for WorldMatrix we might need SetWorldRotation/Scale if they exist.
-            // SceneComponent usually has SetWorldLocation but might not have SetWorldRotation for all.
-            // Let's use Relative for now or check SceneComponent.h
             Component->SetRelativeRotationQuat(FQuat(Rotation));
             Component->SetRelativeScale(Scale);
+        }
+        else
+        {
+            // 부모의 World 역행렬로 Relative 변환
+            FMatrix ParentWorld = Parent->GetWorldMatrix();
+            FMatrix RelativeM = M * ParentWorld.GetInverse();
+
+            FVector RelT, RelS;
+            FMatrix RelR;
+            RelativeM.Decompose(RelT, RelR, RelS);
+
+            Component->SetRelativeLocation(RelT);
+            Component->SetRelativeRotationQuat(FQuat(RelR));
+            Component->SetRelativeScale(RelS);
         }
     }
 };
