@@ -1,4 +1,4 @@
-#include "SelectionMaskRenderPass.h"
+﻿#include "SelectionMaskRenderPass.h"
 #include "Core/ResourceManager.h"
 #include "Component/PrimitiveComponent.h"
 #include "Render/Scene/RenderBus.h"
@@ -215,7 +215,7 @@ bool FSelectionMaskRenderPass::DrawCommand(const FRenderPassContext* Context)
         }
 
         Program->Bind(Context->DeviceContext);
-        BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+        BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
 
         Context->RenderResources->PerObjectConstantBuffer.Update(Context->DeviceContext, &Cmd.PerObjectConstants, sizeof(FPerObjectConstants));
         ID3D11Buffer* cb1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();

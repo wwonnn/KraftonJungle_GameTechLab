@@ -1,4 +1,4 @@
-#include "ShadowPass.h"
+﻿#include "ShadowPass.h"
 
 #include "Core/ResourceManager.h"
 #include "Render/Resource/ShaderHelper.h"
@@ -119,7 +119,7 @@ void FShadowPass::RenderShadowDepth(
 		}
 
 		Program->Bind(DeviceContext);
-		BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd);
+		BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
 		CheckOverrideViewMode(Context);
 
 		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();

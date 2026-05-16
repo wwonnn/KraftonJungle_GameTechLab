@@ -1,4 +1,4 @@
-#include "TranslucentRenderPass.h"
+﻿#include "TranslucentRenderPass.h"
 #include "Render/Scene/RenderBus.h"
 #include "Render/Resource/RenderResources.h"
 #include "Render/Resource/Material.h"
@@ -118,7 +118,7 @@ namespace
                 Program->Bind(Context->DeviceContext);
                 Cmd.Material->BindRenderStates(Context->DeviceContext);
                 Cmd.Material->BindParameters(Context->DeviceContext, Program->PS);
-                BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+                BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
             }
 
             Context->DeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);

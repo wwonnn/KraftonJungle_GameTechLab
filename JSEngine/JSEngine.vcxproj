@@ -349,6 +349,7 @@
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
     <ClCompile Include="Source\Engine\Render\Renderer\RenderFlow\PostProcessRenderPass.cpp" />
     <ClCompile Include="Source\Engine\Render\Renderer\RenderFlow\SandervistanRenderPass.cpp" />
+    <ClCompile Include="Source\Engine\Render\Resource\VertexFactoryTypes.cpp" />
     <ClCompile Include="Source\Engine\Runtime\Script\CoroutineScheduler.cpp" />
     <ClCompile Include="Source\Engine\Runtime\Script\API\LuaApplicationAPI.cpp" />
     <ClCompile Include="Source\Engine\Runtime\Script\API\LuaAudioAPI.cpp" />

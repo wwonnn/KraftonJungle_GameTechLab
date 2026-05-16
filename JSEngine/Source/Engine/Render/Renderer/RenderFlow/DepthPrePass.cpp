@@ -1,4 +1,4 @@
-#include "DepthPrePass.h"
+﻿#include "DepthPrePass.h"
 #include "Render/Scene/RenderBus.h"
 #include "Render/Resource/RenderResources.h"
 #include "Render/Resource/Material.h"
@@ -94,7 +94,7 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		}
 
 		Program->Bind(Context->DeviceContext);
-		BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+		BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
         CheckOverrideViewMode(Context);  
 
 		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();

@@ -1327,26 +1327,6 @@ void FRenderer::FlushLineBatcher(FLineBatcher& Batcher, ERenderPass Pass, const 
 	Batcher.Flush(Context);
 }
 
-// ============================================================
-// 기본 패스 실행기
-// ============================================================
-void FRenderer::ExecuteDefaultPass(ERenderPass Pass, const TArray<FRenderCommand>& Commands, const FRenderBus& Bus, ID3D11DeviceContext* Context)
-{
-	//ApplyPassRenderState(Pass, Context, Bus.GetViewMode());
-
-	//ERenderCommandType LastCommandType = static_cast<ERenderCommandType>(-1);
-	//for (const auto& Cmd : Commands)
-	//{
-	//	BindShaderByType(Cmd, Context, LastCommandType);
-	//	if (Cmd.Type == ERenderCommandType::PostProcessOutline)
-	//	{
-	//		DrawPostProcessOutline(Context);
-	//		continue;
-	//	}
-	//	DrawCommand(Context, Cmd);
-	//}
-}
-
 void FRenderer::ApplyPassRenderState(ERenderPass Pass, ID3D11DeviceContext* Context, EViewMode CurViewMode)
 {
     ID3D11RenderTargetView* RTVs[MaxRTVCount] = {nullptr, nullptr};
@@ -1460,55 +1440,6 @@ void FRenderer::BindShaderByType(const FRenderCommand& InCmd, ID3D11DeviceContex
 	}
 
     LastCommandType = InCmd.Type;
-}
-
-void FRenderer::DrawCommand(ID3D11DeviceContext* InDeviceContext, const FRenderCommand& InCommand)
-{
-	if (InCommand.MeshBuffer == nullptr || !InCommand.MeshBuffer->IsValid())
-	{
-		return;
-	}
-
-	uint32 offset = 0;
-	ID3D11Buffer* vertexBuffer = InCommand.MeshBuffer->GetVertexBuffer().GetBuffer();
-	if (vertexBuffer == nullptr)
-	{
-		return;
-	}
-
-	uint32 vertexCount = InCommand.MeshBuffer->GetVertexBuffer().GetVertexCount();
-	uint32 stride = InCommand.MeshBuffer->GetVertexBuffer().GetStride();
-	if (vertexCount == 0 || stride == 0)
-	{
-		return;
-	}
-
-	if (InCommand.Material)
-	{
-		FShaderProgram* Program = GetProgramForMaterialCommand(InCommand);
-		if (Program)
-		{
-			Program->Bind(InDeviceContext);
-			InCommand.Material->BindRenderStates(InDeviceContext);
-			InCommand.Material->BindParameters(InDeviceContext, Program->PS);
-			BindVertexFactoryResources(InDeviceContext, InCommand.VertexFactoryType, InCommand);
-		}
-	}
-
-	InDeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-
-	ID3D11Buffer* indexBuffer = InCommand.MeshBuffer->GetIndexBuffer().GetBuffer();
-	if (indexBuffer != nullptr)
-	{
-		uint32 indexStart = InCommand.SectionIndexStart;
-		uint32 indexCount = InCommand.SectionIndexCount;
-		InDeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-		InDeviceContext->DrawIndexed(indexCount, indexStart, 0);
-	}
-	else
-	{
-		InDeviceContext->Draw(vertexCount, 0);
-	}
 }
 
 void FRenderer::DrawPostProcessOutline(ID3D11DeviceContext* InDeviceContext)

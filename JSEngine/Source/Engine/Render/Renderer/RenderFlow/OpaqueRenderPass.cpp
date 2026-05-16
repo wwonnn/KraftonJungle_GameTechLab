@@ -126,15 +126,9 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            PermutationKey |= (uint32)EShaderFeature::TileCull;
        bool bShadowApplied = false; // 추가
 
-	   if (Cmd.SkinningMatrices)
+       if (!Cmd.SkinningMatrices)
        {
-		   // GPU 에 SkinningMatrices 를 넘기겠다 = GPU Skinning 쓰겠다.
-           Context->RenderResources->SkinningBuffer.Update(Context->DeviceContext, Cmd.SkinningMatrices->data(), Cmd.SkinningMatrices->size());
-           ID3D11ShaderResourceView* SkinningSRV = Context->RenderResources->SkinningBuffer.GetSRV();
-           Context->DeviceContext->VSSetShaderResources(16, 1, &SkinningSRV);
-       }
-	   else
-	   {
+           // GPU 에 넘길 SkinningMatrices 가 없다 = CPU Skinning 쓰겠다
            PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
 	   }
 
@@ -219,7 +213,7 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            Cmd.Material->BindParameters(Context->DeviceContext, Program->PS);
 
            // 현재는 CPU Skinning이라 추가 바인딩이 없지만, GPU Skinning에서는 여기서 Bone Buffer가 붙습니다.
-           BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+           BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
        }
 
        auto DSState = FResourceManager::Get().GetOrCreateDepthStencilState(EDepthStencilType::Default);
