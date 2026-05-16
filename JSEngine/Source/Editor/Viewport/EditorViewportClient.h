@@ -110,6 +110,7 @@ public:
 	ETransformMode GetTransformMode() const { return TransformMode; }
 	void SetSceneEditingShortcutsEnabled(bool bEnabled) { bSceneEditingShortcutsEnabled = bEnabled; }
 	bool AreSceneEditingShortcutsEnabled() const { return bSceneEditingShortcutsEnabled; }
+	void ReleaseTransientEditorState();
 
 	// Camera lifecycle
 	void CreateCamera();

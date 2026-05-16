@@ -6,6 +6,11 @@
 DEFINE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 REGISTER_FACTORY(USkeletalMeshComponent)
 
+USkeletalMeshComponent::~USkeletalMeshComponent()
+{
+    ReleaseSingleNodeAnimation();
+}
+
 void USkeletalMeshComponent::BeginPlay()
 {
     USkinnedMeshComponent::BeginPlay();
@@ -32,7 +37,7 @@ void USkeletalMeshComponent::SetPreviewSequence(UAnimSequence* InSequence)
 {
     if (!InSequence)
     {
-        SingleNodeInstance = nullptr;
+        ReleaseSingleNodeAnimation();
         ResetToBindPose();
         return;
     }
@@ -199,18 +204,31 @@ void USkeletalMeshComponent::EnsureSingleNodeAnimation()
     SingleNodeInstance->SetOwningComponent(this);
 }
 
+void USkeletalMeshComponent::ReleaseSingleNodeAnimation()
+{
+    if (!SingleNodeInstance)
+    {
+        return;
+    }
+
+    SingleNodeInstance->SetOwningComponent(nullptr);
+    SingleNodeInstance->SetSequence(nullptr);
+    UObjectManager::Get().DestroyObject(SingleNodeInstance);
+    SingleNodeInstance = nullptr;
+}
+
 void USkeletalMeshComponent::InitializeSingleNodeAnimation()
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
     {
-        SingleNodeInstance = nullptr;
+        ReleaseSingleNodeAnimation();
         return;
     }
 
     const TArray<UAnimSequence*>& AnimationSequences = SkeletalMesh->GetAnimationSequences();
     if (AnimationSequences.empty() || AnimationSequences[0] == nullptr)
     {
-        SingleNodeInstance = nullptr;
+        ReleaseSingleNodeAnimation();
         return;
     }
 

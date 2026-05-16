@@ -469,6 +469,11 @@ void FResourceManager::ReleaseGPUResources()
 
 	for (auto& [Path, Sequence] : AnimSequenceMap)
 	{
+		if (Sequence && Sequence->DataModel)
+		{
+			UObjectManager::Get().DestroyObject(Sequence->DataModel);
+			Sequence->DataModel = nullptr;
+		}
 		UObjectManager::Get().DestroyObject(Sequence);
 	}
 	AnimSequenceMap.clear();
@@ -926,6 +931,12 @@ bool FResourceManager::UnloadAnimSequence(const FString& Path)
 	if (It == AnimSequenceMap.end())
 	{
 		return false;
+	}
+
+	if (It->second && It->second->DataModel)
+	{
+		UObjectManager::Get().DestroyObject(It->second->DataModel);
+		It->second->DataModel = nullptr;
 	}
 
 	UObjectManager::Get().DestroyObject(It->second);

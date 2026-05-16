@@ -15,7 +15,7 @@ public:
     DECLARE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 
     USkeletalMeshComponent() = default;
-    ~USkeletalMeshComponent() override = default;
+    ~USkeletalMeshComponent() override;
 
     void BeginPlay() override;
     void TickComponent(float DeltaTime) override;
@@ -40,6 +40,7 @@ public:
     void SetBoneGlobalTransform(int32 BoneIndex, const FMatrix& NewGlobalTransform);
 
 private:
+    void ReleaseSingleNodeAnimation();
     void EnsureSingleNodeAnimation();
     void InitializeSingleNodeAnimation();
     void ApplyAnimationPose(float DeltaTime);

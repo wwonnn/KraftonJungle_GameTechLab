@@ -137,13 +137,16 @@ void FAnimationSequencePreviewController::Shutdown()
     PreviewMeshPath.clear();
 
     PreviewViewport.SetRenderTargetSet(nullptr);
+    PreviewViewport.SetEditorIdPickActors({});
     PreviewViewport.SetClient(nullptr);
+    PreviewViewportClient.SetBonePickHandler(nullptr);
     PreviewViewportClient.DestroyCamera();
     PreviewViewportClient.SetGizmo(nullptr);
     PreviewViewportClient.SetSelectionManager(nullptr);
     PreviewViewportClient.SetViewport(nullptr);
     PreviewViewportClient.SetState(nullptr);
     PreviewViewportClient.SetWorld(nullptr);
+    PreviewViewportClient.ReleaseTransientEditorState();
 
     if (EditorEngine)
     {
