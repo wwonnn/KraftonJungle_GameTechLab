@@ -566,13 +566,6 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
             continue;
         }
 
-		UE_LOG("[FbxImporter] Animation stack info | Path=%s | Stack=%s | Duration=%.3f sec | Frames=%d | FPS=%.3f",
-               Path.c_str(),
-               CurAnimStack->GetName(),
-               DurationSeconds,
-               FrameCount,
-               FPS);
-
         UAnimSequence* AnimSequence = new UAnimSequence();
         UAnimDataModel* AnimDataModel = new UAnimDataModel();
         AnimSequence->DataModel = AnimDataModel;
@@ -586,64 +579,39 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
         AnimDataModel->NumberOfFrames = FrameCount;
         AnimDataModel->NumberOfKeys = FrameCount;
 
-        for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(IndexToBoneNode.size()); ++BoneIndex)
-        {
-            FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
-            if (!BoneNode)
+		for (const auto& Pair : BoneNodeToIndex)
+		{
+            FbxNode* BoneNode = Pair.first;
+            const int32 BoneIndex = Pair.second;
+
+			if (!BoneNode)
             {
                 continue;
             }
 
-            FBoneAnimationTrack Track;
+			FBoneAnimationTrack Track;
             Track.BoneTreeIndex = BoneIndex;
             Track.Name = FName(BoneNode->GetName());
 
-            Track.InternalTrackData.PosKeys.reserve(FrameCount);
+			Track.InternalTrackData.PosKeys.reserve(FrameCount);
             Track.InternalTrackData.RotKeys.reserve(FrameCount);
             Track.InternalTrackData.ScaleKeys.reserve(FrameCount);
 
-            for (int32 Frame = 0; Frame < FrameCount; ++Frame)
-            {
+			for (int32 Frame = 0; Frame < FrameCount; ++Frame)
+			{
                 FbxTime Time;
                 Time.SetSecondDouble(StartSeconds + static_cast<double>(Frame) / FPS);
 
-                const FMatrix Global = ToFMatrix(BoneNode->EvaluateGlobalTransform(Time));
-
-                FMatrix Local = Global;
-                const int32 ParentIndex = SkeletalMesh->Bones[BoneIndex].ParentIndex;
-                if (ParentIndex >= 0 && ParentIndex < static_cast<int32>(IndexToBoneNode.size()))
-                {
-                    if (FbxNode* ParentNode = IndexToBoneNode[ParentIndex])
-                    {
-                        const FMatrix ParentGlobal = ToFMatrix(ParentNode->EvaluateGlobalTransform(Time));
-                        Local = Global * ParentGlobal.GetInverse();
-                    }
-                }
-
+				const FMatrix Local = ToFMatrix(BoneNode->EvaluateLocalTransform(Time));
                 const FTransform LocalTransform(Local);
 
-                Track.InternalTrackData.PosKeys.push_back(LocalTransform.GetTranslation());
+				Track.InternalTrackData.PosKeys.push_back(LocalTransform.GetTranslation());
                 Track.InternalTrackData.RotKeys.push_back(LocalTransform.GetRotation().GetNormalized());
                 Track.InternalTrackData.ScaleKeys.push_back(LocalTransform.GetScale3D());
-                UE_LOG("[FbxImporter] Anim Key | Stack=%s | Bone=%s | Frame=%d | Time=%.3f sec | Pos=(%.3f, %.3f, %.3f) | Rot=(%.3f, %.3f, %.3f, %.3f) | Scale=(%.3f, %.3f, %.3f)",
-					   StackName.c_str(),
-					   BoneNode->GetName(),
-					   Frame,
-					   Time.GetSecondDouble(),
-					   LocalTransform.GetTranslation().X,
-					   LocalTransform.GetTranslation().Y,
-					   LocalTransform.GetTranslation().Z,
-					   LocalTransform.GetRotation().X,
-					   LocalTransform.GetRotation().Y,
-					   LocalTransform.GetRotation().Z,
-					   LocalTransform.GetRotation().W,
-					   LocalTransform.GetScale3D().X,
-					   LocalTransform.GetScale3D().Y,
-                       LocalTransform.GetScale3D().Z);
-            }
+			}
 
-            AnimDataModel->BoneAnimationTracks.push_back(Track);
-        }
+			AnimDataModel->BoneAnimationTracks.push_back(Track);
+		}
 
         if (AnimDataModel->BoneAnimationTracks.empty())
         {
