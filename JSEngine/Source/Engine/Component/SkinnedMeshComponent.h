@@ -44,6 +44,8 @@ public:
     bool       HasSocket(const FName& SocketName) const override;
     FTransform GetSocketTransform(const FName& SocketName) const override;
 
+	bool IsGPUSkinningEnabled() const { return !bEnableCPUSkinning; }
+
 protected:
     void InitializePoseFromBindPose();
     void UpdateCurrentGlobalPose();
@@ -69,6 +71,7 @@ protected:
 
     TArray<FSkeletalMeshVertex> SkinnedVertices;
 
+    UPROPERTY(EditAnywhere, DisplayName = "Enable CPU Skinning")
     bool bEnableCPUSkinning = true;
     bool bSkinningDirty = true;
 
