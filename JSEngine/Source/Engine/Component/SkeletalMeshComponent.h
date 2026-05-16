@@ -1,8 +1,7 @@
 ﻿#pragma once
 
+#include "Animation/AnimSingleNodeInstance.h"
 #include "Component/SkinnedMeshComponent.h"
-
-class UAnimSingleNodeInstance;
 
 /**
  * @brief Unreal Engine 스타일에서는 skinned mesh가 skeleton을 이용하는 mesh를 표현하고,
@@ -36,5 +35,6 @@ private:
     void ApplyAnimationPose(float DeltaTime);
 
 private:
+    UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")
     UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
 };

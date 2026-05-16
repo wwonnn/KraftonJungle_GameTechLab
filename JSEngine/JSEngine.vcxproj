@@ -299,6 +299,9 @@
       <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\RmlUi\Lib\$(Platform)\$(ThirdPartyBinaryConfiguration);$(ProjectDir)ThirdParty\SoLoud\Lib\$(Platform)\$(ThirdPartyBinaryConfiguration);$(ProjectDir)ThirdParty\FBX\lib\$(FbxSdkConfiguration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>RmlUiCore.lib;SoLoud.lib;libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>cd /d "$(SolutionDir)" &amp;&amp; Scripts\python\python.exe Scripts\GenerateReflection.py</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /Y "$(ProjectDir)ThirdParty\FBX\lib\$(FbxSdkConfiguration)\libfbxsdk.dll" "$(OutDir)"</Command>
     </PostBuildEvent>

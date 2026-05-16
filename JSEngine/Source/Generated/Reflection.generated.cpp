@@ -3,6 +3,7 @@
 #include <cstddef>
 #include "Object/Reflection.h"
 
+#include "Engine/Animation/AnimInstance.h"
 #include "Engine/Camera/CameraShakeBase.h"
 #include "Engine/Camera/ShakePattern/SequenceCameraShakePattern.h"
 #include "Engine/Camera/ShakePattern/SinusoidalCameraShakePattern.h"
@@ -24,6 +25,7 @@
 #include "Engine/Component/PostProcess/Light/SpotlightComponent.h"
 #include "Engine/Component/PrimitiveComponent.h"
 #include "Engine/Component/SceneComponent.h"
+#include "Engine/Component/SkeletalMeshComponent.h"
 #include "Engine/Component/SkinnedMeshComponent.h"
 #include "Engine/Component/SoundComponent.h"
 #include "Engine/Component/SphereComponent.h"
@@ -34,6 +36,7 @@
 #include "Engine/GameFramework/PrimitiveActors.h"
 #include "Engine/Runtime/Script/ScriptComponent.h"
 
+void RegisterGeneratedReflection_UAnimInstance();
 void RegisterGeneratedReflection_UCameraShakePattern();
 void RegisterGeneratedReflection_USequenceCameraShakePattern();
 void RegisterGeneratedReflection_USinusoidalCameraShakePattern();
@@ -55,6 +58,7 @@ void RegisterGeneratedReflection_UPointLightComponent();
 void RegisterGeneratedReflection_USpotlightComponent();
 void RegisterGeneratedReflection_UPrimitiveComponent();
 void RegisterGeneratedReflection_USceneComponent();
+void RegisterGeneratedReflection_USkeletalMeshComponent();
 void RegisterGeneratedReflection_USkinnedMeshComponent();
 void RegisterGeneratedReflection_USoundComponent();
 void RegisterGeneratedReflection_USphereComponent();
@@ -67,6 +71,16 @@ void RegisterGeneratedReflection_UScriptComponent();
 
 namespace
 {
+    struct FAutoRegister_UAnimInstance
+    {
+        FAutoRegister_UAnimInstance()
+        {
+            RegisterGeneratedReflection_UAnimInstance();
+        }
+    };
+
+    FAutoRegister_UAnimInstance GAutoRegister_UAnimInstance;
+
     struct FAutoRegister_UCameraShakePattern
     {
         FAutoRegister_UCameraShakePattern()
@@ -277,6 +291,16 @@ namespace
 
     FAutoRegister_USceneComponent GAutoRegister_USceneComponent;
 
+    struct FAutoRegister_USkeletalMeshComponent
+    {
+        FAutoRegister_USkeletalMeshComponent()
+        {
+            RegisterGeneratedReflection_USkeletalMeshComponent();
+        }
+    };
+
+    FAutoRegister_USkeletalMeshComponent GAutoRegister_USkeletalMeshComponent;
+
     struct FAutoRegister_USkinnedMeshComponent
     {
         FAutoRegister_USkinnedMeshComponent()
@@ -367,6 +391,21 @@ namespace
 
     FAutoRegister_UScriptComponent GAutoRegister_UScriptComponent;
 
+}
+
+void RegisterGeneratedReflection_UAnimInstance()
+{
+    static const FPropertyMeta Properties[] =
+    {
+        { "CurrentTime", nullptr, nullptr, EPropertyType::Float, offsetof(UAnimInstance, CurrentTime), EPropertyAccess::VisibleAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized },
+        { "NextTime", nullptr, nullptr, EPropertyType::Float, offsetof(UAnimInstance, NextTime), EPropertyAccess::VisibleAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized },
+        { "PlayRate", nullptr, nullptr, EPropertyType::Float, offsetof(UAnimInstance, PlayRate), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
+        { "bLoop", nullptr, nullptr, EPropertyType::Bool, offsetof(UAnimInstance, bLoop), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "BlendFactor", nullptr, nullptr, EPropertyType::Float, offsetof(UAnimInstance, BlendFactor), EPropertyAccess::VisibleAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized },
+        { "BlendSpeed", nullptr, nullptr, EPropertyType::Float, offsetof(UAnimInstance, BlendSpeed), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None },
+    };
+
+    FReflectionRegistry::Get().RegisterProperties(&UAnimInstance::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
 }
 
 void RegisterGeneratedReflection_UCameraShakePattern()
@@ -646,6 +685,16 @@ void RegisterGeneratedReflection_USceneComponent()
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USceneComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+}
+
+void RegisterGeneratedReflection_USkeletalMeshComponent()
+{
+    static const FPropertyMeta Properties[] =
+    {
+        { "SingleNodeInstance", "AnimInstance", nullptr, EPropertyType::ObjectRef, offsetof(USkeletalMeshComponent, SingleNodeInstance), EPropertyAccess::EditAnywhere, &UAnimSingleNodeInstance::s_TypeInfo, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+    };
+
+    FReflectionRegistry::Get().RegisterProperties(&USkeletalMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
 }
 
 void RegisterGeneratedReflection_USkinnedMeshComponent()
