@@ -169,6 +169,7 @@ void FEditorRenderPipeline::Execute(float DeltaTime, FRenderer& Renderer)
         }
 
 		RenderViewerViewport(Renderer);
+        RenderActiveDocumentViewport(Renderer, DeltaTime);
         ViewportsEnd = std::chrono::steady_clock::now();
 
         BackBufferStart = std::chrono::steady_clock::now();
@@ -560,6 +561,88 @@ void FEditorRenderPipeline::RenderViewerViewport(FRenderer& Renderer)
         }
 #endif
 	}
+}
+
+void FEditorRenderPipeline::RenderActiveDocumentViewport(FRenderer& Renderer, float DeltaTime)
+{
+    FEditorDocument* ActiveDocument = Editor ? Editor->GetMainPanel().GetActiveEditorDocument() : nullptr;
+    if (!ActiveDocument)
+    {
+        return;
+    }
+
+    FSceneViewport* SceneViewport = ActiveDocument->GetSceneViewport();
+    if (!SceneViewport)
+    {
+        return;
+    }
+
+    ActiveDocument->Tick(DeltaTime);
+
+    FEditorViewportClient* VC = SceneViewport->GetClient();
+    if (!VC)
+    {
+        return;
+    }
+
+    FSceneView SceneView;
+    VC->BuildSceneView(SceneView);
+
+    const FViewportRect& Rect = SceneViewport->GetRect();
+    if (Rect.Width <= 0 || Rect.Height <= 0)
+    {
+        return;
+    }
+
+    Renderer.BeginViewportFrame(SceneViewport->GetViewportRenderTargets());
+
+    Bus.Clear();
+
+    UWorld* World = VC->GetFocusedWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    FShowFlags ShowFlags = {};
+    ShowFlags.bPrimitives = true;
+    ShowFlags.bSkeletalMesh = true;
+    ShowFlags.bGrid = false;
+    ShowFlags.bAxis = false;
+    ShowFlags.bGizmo = false;
+    ShowFlags.bBillboardText = false;
+    ShowFlags.bBoundingVolume = false;
+    ShowFlags.bBVHBoundingVolume = false;
+    ShowFlags.bEnableLOD = false;
+    ShowFlags.bDecals = false;
+    ShowFlags.bFog = false;
+    ShowFlags.bShadow = false;
+    ShowFlags.bGammaCorrection = false;
+
+    const FViewportCamera* Camera = VC->GetRenderCamera();
+    if (!Camera)
+    {
+        return;
+    }
+
+    Bus.SetViewProjection(
+        SceneView.ViewMatrix,
+        SceneView.ProjectionMatrix,
+        Camera->GetNearPlane(),
+        Camera->GetFarPlane());
+    Bus.SetRenderSettings(EViewMode::Lit_BlinnPhong, ShowFlags);
+    Bus.SetLightCullMode(ELightCullMode::None);
+    Bus.SetShadowFilterMode(Editor->GetSettings().ShadowFilterMode);
+    Bus.SetViewportSize(FVector2(static_cast<float>(Rect.Width), static_cast<float>(Rect.Height)));
+    Bus.SetViewportOrigin(FVector2(0.0f, 0.0f));
+    Bus.SetFXAAEnabled(Editor->GetSettings().bEnableFXAA && !SceneView.bOrthographic);
+    Bus.SetCascadeVis(false);
+
+    const FFrustum& ViewFrustum = SceneView.CameraFrustum;
+    Collector.CollectWorld(World, ShowFlags, EViewMode::Lit_BlinnPhong, Bus, &ViewFrustum, false);
+
+    Renderer.PrepareBatchers(Bus);
+    Renderer.Render(Bus);
 }
 
 const FRenderCollector::FCullingStats& FEditorRenderPipeline::GetViewportCullingStats(int32 ViewportIndex) const

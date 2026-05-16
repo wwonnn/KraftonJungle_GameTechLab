@@ -23,6 +23,15 @@ public:
     EPrimitiveType GetPrimitiveType() const override { return EPrimitiveType::EPT_SkeletalMesh; }
 
     void ResetToBindPose();
+    void SetPreviewSequence(UAnimSequence* InSequence);
+    void SetPreviewLooping(bool bInLooping);
+    void SetPreviewPlaying(bool bInPlaying);
+    void SetPreviewPlayRate(float InPlayRate);
+    void SetPreviewTime(float InTime);
+    float GetPreviewTime() const;
+    float GetPreviewLength() const;
+    UAnimSingleNodeInstance* GetPreviewAnimInstance() const { return SingleNodeInstance; }
+    void TickPreviewAnimation(float DeltaTime);
 
     void SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform);
     const FMatrix& GetBoneLocalTransform(int32 BoneIndex) const;
@@ -31,8 +40,11 @@ public:
     void SetBoneGlobalTransform(int32 BoneIndex, const FMatrix& NewGlobalTransform);
 
 private:
+    void EnsureSingleNodeAnimation();
     void InitializeSingleNodeAnimation();
     void ApplyAnimationPose(float DeltaTime);
+    void ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime);
+    void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:
     UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")

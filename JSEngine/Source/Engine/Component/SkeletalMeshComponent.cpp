@@ -28,6 +28,90 @@ void USkeletalMeshComponent::ResetToBindPose()
     MarkSkinningDirty();
 }
 
+void USkeletalMeshComponent::SetPreviewSequence(UAnimSequence* InSequence)
+{
+    if (!InSequence)
+    {
+        SingleNodeInstance = nullptr;
+        ResetToBindPose();
+        return;
+    }
+
+    EnsureSingleNodeAnimation();
+    if (!SingleNodeInstance)
+    {
+        return;
+    }
+
+    SingleNodeInstance->SetSequence(InSequence);
+    ApplyAnimationPoseFromInstance(0.0f, false);
+}
+
+void USkeletalMeshComponent::SetPreviewLooping(bool bInLooping)
+{
+    EnsureSingleNodeAnimation();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetLooping(bInLooping);
+    }
+}
+
+void USkeletalMeshComponent::SetPreviewPlaying(bool bInPlaying)
+{
+    EnsureSingleNodeAnimation();
+    if (!SingleNodeInstance)
+    {
+        return;
+    }
+
+    if (bInPlaying)
+    {
+        SingleNodeInstance->Play();
+    }
+    else
+    {
+        SingleNodeInstance->Pause();
+    }
+}
+
+void USkeletalMeshComponent::SetPreviewPlayRate(float InPlayRate)
+{
+    EnsureSingleNodeAnimation();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetPlayRate(InPlayRate);
+    }
+}
+
+void USkeletalMeshComponent::SetPreviewTime(float InTime)
+{
+    EnsureSingleNodeAnimation();
+    if (!SingleNodeInstance)
+    {
+        return;
+    }
+
+    SingleNodeInstance->SetCurrentTime(InTime);
+    ApplyAnimationPoseFromInstance(0.0f, false);
+    EnsureSkinningUpdated();
+}
+
+float USkeletalMeshComponent::GetPreviewTime() const
+{
+    return SingleNodeInstance ? SingleNodeInstance->GetCurrentTime() : 0.0f;
+}
+
+float USkeletalMeshComponent::GetPreviewLength() const
+{
+    return SingleNodeInstance ? SingleNodeInstance->GetSequenceLength() : 0.0f;
+}
+
+void USkeletalMeshComponent::TickPreviewAnimation(float DeltaTime)
+{
+    ApplyAnimationPoseFromInstance(DeltaTime, true);
+    EnsureSkinningUpdated();
+}
+
 void USkeletalMeshComponent::SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform)
 {
     if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(CurrentLocalPose.size()))
@@ -98,6 +182,23 @@ void USkeletalMeshComponent::SetBoneGlobalTransform(int32 BoneIndex, const FMatr
     SetBoneLocalTransform(BoneIndex, NewLocalTransform);
 }
 
+void USkeletalMeshComponent::EnsureSingleNodeAnimation()
+{
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetOwningComponent(this);
+        return;
+    }
+
+    SingleNodeInstance = UObjectManager::Get().CreateObject<UAnimSingleNodeInstance>();
+    if (!SingleNodeInstance)
+    {
+        return;
+    }
+
+    SingleNodeInstance->SetOwningComponent(this);
+}
+
 void USkeletalMeshComponent::InitializeSingleNodeAnimation()
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
@@ -113,28 +214,34 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
         return;
     }
 
-    SingleNodeInstance = UObjectManager::Get().CreateObject<UAnimSingleNodeInstance>();
-    if (!SingleNodeInstance)
-    {
-        return;
-    }
-
-    SingleNodeInstance->SetOwningComponent(this);
-    SingleNodeInstance->SetSequence(AnimationSequences[0]);
-    SingleNodeInstance->SetLooping(true);
+    SetPreviewSequence(AnimationSequences[0]);
+    SetPreviewLooping(true);
 }
 
 void USkeletalMeshComponent::ApplyAnimationPose(float DeltaTime)
+{
+    ApplyAnimationPoseFromInstance(DeltaTime, true);
+}
+
+void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime)
 {
     if (!SingleNodeInstance)
     {
         return;
     }
 
-    SingleNodeInstance->UpdateAnimation(DeltaTime);
+    if (bAdvanceTime)
+    {
+        SingleNodeInstance->UpdateAnimation(DeltaTime);
+    }
 
     FSkeletonPose Pose;
     SingleNodeInstance->EvaluatePose(Pose);
+    ApplyEvaluatedPose(Pose);
+}
+
+void USkeletalMeshComponent::ApplyEvaluatedPose(const FSkeletonPose& Pose)
+{
     if (Pose.LocalTransforms.empty())
     {
         return;

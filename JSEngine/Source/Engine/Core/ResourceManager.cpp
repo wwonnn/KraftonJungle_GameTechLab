@@ -467,6 +467,12 @@ void FResourceManager::ReleaseGPUResources()
 
 	RenderStateCache.Release();
 
+	for (auto& [Path, Sequence] : AnimSequenceMap)
+	{
+		UObjectManager::Get().DestroyObject(Sequence);
+	}
+	AnimSequenceMap.clear();
+
 	for (auto& [Path, Mesh] : SkeletalMeshMap)
 	{
 		UObjectManager::Get().DestroyObject(Mesh);
@@ -913,6 +919,20 @@ UAnimSequence* FResourceManager::FindAnimSequence(const FString& Path) const
 	return It != AnimSequenceMap.end() ? It->second : nullptr;
 }
 
+bool FResourceManager::UnloadAnimSequence(const FString& Path)
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	auto It = AnimSequenceMap.find(NormalizedPath);
+	if (It == AnimSequenceMap.end())
+	{
+		return false;
+	}
+
+	UObjectManager::Get().DestroyObject(It->second);
+	AnimSequenceMap.erase(It);
+	return true;
+}
+
 bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence)
 {
 	const FString NormalizedPath = FPaths::Normalize(Path);
@@ -922,7 +942,6 @@ bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence
 		return false;
 	}
 
-	AnimSequenceMap[NormalizedPath] = const_cast<UAnimSequence*>(Sequence);
 	if (std::find(AnimSequenceFilePaths.begin(), AnimSequenceFilePaths.end(), NormalizedPath) == AnimSequenceFilePaths.end())
 	{
 		AnimSequenceFilePaths.push_back(NormalizedPath);

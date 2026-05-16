@@ -1,5 +1,6 @@
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 
+#include "Core/ResourceManager.h"
 #include "Core/Paths.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -7,7 +8,18 @@
 
 #include "ImGui/imgui.h"
 
-FAnimationSequenceEditorDocument::~FAnimationSequenceEditorDocument() = default;
+FAnimationSequenceEditorDocument::~FAnimationSequenceEditorDocument()
+{
+    Widget.reset();
+    PreviewController.reset();
+
+    if (!SequencePath.empty())
+    {
+        FResourceManager::Get().UnloadAnimSequence(SequencePath);
+    }
+
+    Sequence = nullptr;
+}
 
 bool FAnimationSequenceEditorDocument::Initialize(UEditorEngine* InEditorEngine, const FString& InSequencePath, UAnimSequence* InSequence)
 {
@@ -23,12 +35,20 @@ bool FAnimationSequenceEditorDocument::Initialize(UEditorEngine* InEditorEngine,
     TabLabel = MakeAnimationSequenceTabLabel(SequencePath);
 
     PreviewController = std::make_unique<FAnimationSequencePreviewController>();
-    PreviewController->SetSequence(SequencePath, Sequence);
+    PreviewController->Initialize(InEditorEngine, SequencePath, Sequence);
 
     Widget = std::make_unique<FAnimationSequenceEditorWidget>();
     Widget->Initialize(InEditorEngine);
     Widget->BindDocumentContext(SequencePath, Sequence, PreviewController.get());
     return true;
+}
+
+void FAnimationSequenceEditorDocument::Tick(float DeltaTime)
+{
+    if (PreviewController)
+    {
+        PreviewController->Tick(DeltaTime);
+    }
 }
 
 void FAnimationSequenceEditorDocument::RenderEmbedded(float DeltaTime)
@@ -53,4 +73,14 @@ void FAnimationSequenceEditorDocument::RenderToolbar()
 void FAnimationSequenceEditorDocument::BuildCommandList(FEditorCommandList& OutCommands)
 {
     (void)OutCommands;
+}
+
+FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport()
+{
+    return PreviewController ? PreviewController->GetSceneViewport() : nullptr;
+}
+
+const FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport() const
+{
+    return PreviewController ? PreviewController->GetSceneViewport() : nullptr;
 }

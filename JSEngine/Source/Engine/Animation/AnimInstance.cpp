@@ -29,6 +29,44 @@ void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
     BlendSpeed = InBlendSpeed;
 }
 
+void UAnimInstance::SetCurrentTime(float InCurrentTime)
+{
+    CurrentTime = NormalizeTimeForSequence(CurrentSequence, InCurrentTime);
+    NextTime = NormalizeTimeForSequence(NextSequence, InCurrentTime);
+}
+
+void UAnimInstance::Play()
+{
+    if (HasValidSequence())
+    {
+        bPlaying = true;
+    }
+}
+
+void UAnimInstance::Pause()
+{
+    bPlaying = false;
+}
+
+void UAnimInstance::Stop()
+{
+    CurrentTime = 0.0f;
+    NextTime = 0.0f;
+    NextSequence = nullptr;
+    BlendFactor = 0.0f;
+    bPlaying = false;
+}
+
+float UAnimInstance::GetSequenceLength() const
+{
+    return GetSequenceLength(CurrentSequence);
+}
+
+bool UAnimInstance::HasValidSequence() const
+{
+    return CurrentSequence != nullptr && CurrentSequence->DataModel != nullptr;
+}
+
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
     if (!bPlaying || CurrentSequence == nullptr || !CurrentSequence->DataModel)
@@ -37,8 +75,7 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     }
 
 	// Current Sequence Time
-    const UAnimDataModel* Model = CurrentSequence->DataModel;
-    const float Length = (float)(Model->NumberOfKeys - 1) / Model->FrameRate.AsDecimal();
+    const float Length = GetSequenceLength(CurrentSequence);
 
 	CurrentTime += DeltaTime * PlayRate;
 
@@ -54,15 +91,14 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     {
         CurrentTime = std::clamp(CurrentTime, 0.0f, Length);
 
-		if (CurrentTime >= Length)
+		if ((PlayRate >= 0.0f && CurrentTime >= Length) || (PlayRate < 0.0f && CurrentTime <= 0.0f))
             bPlaying = false;
     }
 
 	// Next Sequence Time (Blending)
     if (NextSequence && NextSequence->DataModel)
     {
-        const UAnimDataModel* Model = NextSequence->DataModel;
-        const float NextLength = (float)(Model->NumberOfKeys - 1) / Model->FrameRate.AsDecimal();
+        const float NextLength = GetSequenceLength(NextSequence);
 
         NextTime += DeltaTime * PlayRate;
 
@@ -244,4 +280,43 @@ void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& 
         BlendedRot.Normalize();
         OutPose.LocalTransforms[i] = FTransform(BlendedRot, BlendedPos, BlendedScale);
     }
+}
+
+float UAnimInstance::GetSequenceLength(const UAnimSequence* Sequence) const
+{
+    if (!Sequence || !Sequence->DataModel)
+    {
+        return 0.0f;
+    }
+
+    const UAnimDataModel* Model = Sequence->DataModel;
+    const float FrameRate = Model->FrameRate.AsDecimal();
+    if (FrameRate <= 0.0f || Model->NumberOfKeys <= 1)
+    {
+        return 0.0f;
+    }
+
+    return static_cast<float>(Model->NumberOfKeys - 1) / FrameRate;
+}
+
+float UAnimInstance::NormalizeTimeForSequence(const UAnimSequence* Sequence, float InTime) const
+{
+    const float Length = GetSequenceLength(Sequence);
+    if (Length <= 0.0f)
+    {
+        return 0.0f;
+    }
+
+    if (bLoop)
+    {
+        float WrappedTime = std::fmod(InTime, Length);
+        if (WrappedTime < 0.0f)
+        {
+            WrappedTime += Length;
+        }
+
+        return WrappedTime;
+    }
+
+    return std::clamp(InTime, 0.0f, Length);
 }

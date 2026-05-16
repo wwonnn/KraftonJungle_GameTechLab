@@ -20,9 +20,12 @@ public:
     const FEditorTabId& GetTabId() const override { return TabId; }
     const FString& GetTabLabel() const override { return TabLabel; }
 
+    void Tick(float DeltaTime) override;
     void RenderEmbedded(float DeltaTime) override;
     void RenderToolbar() override;
     void BuildCommandList(FEditorCommandList& OutCommands) override;
+    FSceneViewport* GetSceneViewport() override;
+    const FSceneViewport* GetSceneViewport() const override;
 
     bool CanSave() const override { return false; }
     bool Save() override { return false; }

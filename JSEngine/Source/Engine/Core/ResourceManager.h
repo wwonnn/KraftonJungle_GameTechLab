@@ -129,6 +129,7 @@ public:
 
 	UAnimSequence* LoadAnimSequence(const FString& Path);
 	UAnimSequence* FindAnimSequence(const FString& Path) const;
+	bool UnloadAnimSequence(const FString& Path);
 	bool SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence);
 	TArray<FString> GetAnimSequencePaths() const;
 

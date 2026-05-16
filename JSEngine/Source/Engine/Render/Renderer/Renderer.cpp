@@ -910,6 +910,11 @@ FViewportRenderResource& FRenderer::AcquireViewerViewportResource(uint32 Index, 
         ViewerViewportResources.push_back(std::make_unique<FViewportRenderResource>());
     }
 
+    if (!ViewerViewportResources[Index])
+    {
+        ViewerViewportResources[Index] = std::make_unique<FViewportRenderResource>();
+    }
+
     FViewportRenderResource& Resource = *ViewerViewportResources[Index];
 
     if (Device.GetDevice() == nullptr || W == 0 || H == 0)
@@ -931,6 +936,23 @@ FViewportRenderResource& FRenderer::AcquireViewerViewportResource(uint32 Index, 
     InitializeRenderResource(Resource, W, H);
     InitializeEditorIdPickResource(Resource, W, H);
     return Resource;
+}
+
+void FRenderer::ReleaseViewerViewportResource(uint32 Index)
+{
+    if (Index >= static_cast<uint32>(ViewerViewportResources.size()))
+    {
+        return;
+    }
+
+    std::unique_ptr<FViewportRenderResource>& Resource = ViewerViewportResources[Index];
+    if (!Resource)
+    {
+        return;
+    }
+
+    ReleaseRenderResource(*Resource);
+    Resource.reset();
 }
 
 void FRenderer::InitializeViewportResource(uint32 Width, uint32 Height, int32 Index)

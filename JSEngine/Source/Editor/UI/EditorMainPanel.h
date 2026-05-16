@@ -76,6 +76,8 @@ public:
 	void RestoreLastSceneFromProjectSettings();
 	bool IsLevelEditorViewportVisible() const;
 	bool IsViewerViewportVisible(FEditorViewer* Viewer) const;
+	FEditorDocument* GetActiveEditorDocument();
+	const FEditorDocument* GetActiveEditorDocument() const;
 
 	// Viewport input routing rule:
 	// 1. Level viewport input is owned only by the active Level tab.
@@ -108,8 +110,6 @@ private:
 	void RenderEditorPanelWindows(float DeltaTime, bool bDrawEditorPanels);
 	float ResolveEffectiveDeltaTime(float DeltaTime) const;
 	bool IsLevelEditorTabActive() const;
-	FEditorDocument* GetActiveEditorDocument();
-	const FEditorDocument* GetActiveEditorDocument() const;
 	FEditorDocument* FindDocumentByTabId(const FEditorTabId& TabId);
 	const FEditorDocument* FindDocumentByTabId(const FEditorTabId& TabId) const;
 	FEditorViewerWindowWidget* FindViewerWidgetForTab(const FEditorTabId& TabId) const;
