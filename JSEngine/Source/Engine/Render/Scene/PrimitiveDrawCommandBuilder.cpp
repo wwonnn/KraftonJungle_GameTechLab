@@ -166,7 +166,9 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
             Cmd.SectionIndexCount = MeshBuffer->GetIndexBuffer().GetIndexCount();
             Cmd.Material = SkeletalMeshComp->GetMaterial(0);
             Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
-            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+
+			if (SkeletalMeshComp->IsGPUSkinningEnabled())
+	            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
 
             RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
             return true;
@@ -194,7 +196,9 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
             Cmd.Material = Material;
 
             Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
-            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+
+            if (SkeletalMeshComp->IsGPUSkinningEnabled())
+	            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
 
             RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
         }

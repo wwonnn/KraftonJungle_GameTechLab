@@ -14,7 +14,8 @@ enum class EShaderFeature : uint32
 	HasSpecularMap	= 1 << 2,
 	HasEmissiveMap	= 1 << 3,
 	HasAlphaMask	= 1 << 4,
-    CascadeVis		= 1 << 5,
+    CascadeVis      = 1 << 5,
+    UseCPUSkinning  = 1 << 6,
 
 	ClusterCull		= 1 << 11,
 	TileCull		= 1 << 12,
@@ -23,6 +24,7 @@ enum class EShaderFeature : uint32
 	ShadowPSM		= 1 << 14,
 	ShadowPCF		= 1 << 15,
 	ShadowVSM		= 1 << 16,
+
 
 };
 

@@ -79,11 +79,6 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
        ID3D11ShaderResourceView* PointShadowCubeSRV = FShadowAtlasManager::Get().GetCubeSRV();
        Context->DeviceContext->PSSetShaderResources(12, 1, &PointShadowCubeSRV);
 
-	   if (Cmd.SkinningMatrices)
-		   Context->RenderResources->SkinningBuffer.Update(Context->DeviceContext, Cmd.SkinningMatrices->data(), Cmd.SkinningMatrices->size());
-       ID3D11ShaderResourceView* SkinningSRV = Context->RenderResources->SkinningBuffer.GetSRV();
-       Context->DeviceContext->VSSetShaderResources(16, 1, &SkinningSRV);
-
        if (Cmd.Type == ERenderCommandType::PostProcessOutline)  
        {  
            continue;  
@@ -130,6 +125,18 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
        else if (RenderBus->GetLightCullMode() == ELightCullMode::Tiled)
            PermutationKey |= (uint32)EShaderFeature::TileCull;
        bool bShadowApplied = false; // 추가
+
+	   if (Cmd.SkinningMatrices)
+       {
+		   // GPU 에 SkinningMatrices 를 넘기겠다 = GPU Skinning 쓰겠다.
+           Context->RenderResources->SkinningBuffer.Update(Context->DeviceContext, Cmd.SkinningMatrices->data(), Cmd.SkinningMatrices->size());
+           ID3D11ShaderResourceView* SkinningSRV = Context->RenderResources->SkinningBuffer.GetSRV();
+           Context->DeviceContext->VSSetShaderResources(16, 1, &SkinningSRV);
+       }
+	   else
+	   {
+           PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+	   }
 
 	   // ShadowMap Permutation Key 조합
        for (const FShadowLightRequest& Request : RenderBus->ShadowLightRequests)
