@@ -299,6 +299,9 @@
       <AdditionalLibraryDirectories>$(ProjectDir)ThirdParty\RmlUi\Lib\$(Platform)\$(ThirdPartyBinaryConfiguration);$(ProjectDir)ThirdParty\SoLoud\Lib\$(Platform)\$(ThirdPartyBinaryConfiguration);$(ProjectDir)ThirdParty\FBX\lib\$(FbxSdkConfiguration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>RmlUiCore.lib;SoLoud.lib;libfbxsdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>cd /d "$(SolutionDir)" &amp;&amp; Scripts\python\python.exe Scripts\GenerateReflection.py</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
       <Command>xcopy /Y "$(ProjectDir)ThirdParty\FBX\lib\$(FbxSdkConfiguration)\libfbxsdk.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
@@ -316,6 +319,7 @@
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\BuildTools\Scripts\BuildSoLoudLib.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -Configuration &quot;$(ThirdPartyBinaryConfiguration)&quot; -Platform &quot;$(Platform)&quot;" />
   </Target>
   <ItemGroup>
+    <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Editor\UI\EditorViewerWindowWidget.cpp">
@@ -872,6 +876,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Editor\UI\EditorViewerWindowWidget.h" />
