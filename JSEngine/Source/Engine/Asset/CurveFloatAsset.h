@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
@@ -33,6 +33,7 @@ struct FCurveKey
 class FFloatCurve
 {
 public:
+    FName CurveName;
     TArray<FCurveKey> Keys;
 
     float Evaluate(float Time) const;

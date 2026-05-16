@@ -110,6 +110,24 @@ function Get-UniqueFiles {
     return $Result
 }
 
+function Get-FileSha256Hash {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $Stream = [System.IO.File]::OpenRead($Path)
+    $Hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $HashBytes = $Hasher.ComputeHash($Stream)
+        return -join ($HashBytes | ForEach-Object { $_.ToString("x2") })
+    }
+    finally {
+        $Stream.Dispose()
+        $Hasher.Dispose()
+    }
+}
+
 function New-InputManifest {
     param(
         [Parameter(Mandatory = $true)]
@@ -125,7 +143,7 @@ function New-InputManifest {
 
     foreach ($File in ($Files | Sort-Object FullName)) {
         $RelativePath = Get-RelativePath -BasePath $ProjectRoot -Path $File.FullName
-        $Hash = (Get-FileHash -Path $File.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        $Hash = Get-FileSha256Hash -Path $File.FullName
         $Lines += "Input=$RelativePath|$($File.Length)|$Hash"
     }
 
