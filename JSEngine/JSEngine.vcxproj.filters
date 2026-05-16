@@ -1044,6 +1044,8 @@
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Editor\Viewer\EditorViewer.cpp" />
     <ClCompile Include="Source\Editor\Viewport\SkeletalMeshViewportClient.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -2009,6 +2011,8 @@
     <ClInclude Include="Source\Editor\Viewport\SkeletalMeshViewportClient.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\IAnimationDataModel.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\Engine\Runtime\AppIcon.rc" />
