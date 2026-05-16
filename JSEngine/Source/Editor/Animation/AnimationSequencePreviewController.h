@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Animation/AnimData/FrameRate.h"
 #include "Core/CoreMinimal.h"
 #include "Editor/Viewport/FSceneViewport.h"
 #include "Editor/Viewport/SkeletalMeshViewportClient.h"
@@ -25,10 +26,17 @@ public:
     void SetCurrentTime(float InTime);
     float GetCurrentTime() const { return CurrentTime; }
     float GetLength() const;
+    FFrameRate GetFrameRate() const;
+    int32 GetFrameCount() const;
+    int32 GetCurrentFrameIndex() const;
 
     void Play();
     void Pause();
     void Stop();
+    void StepToNextFrame();
+    void StepToPreviousFrame();
+    void JumpToStart();
+    void JumpToEnd();
 
     void SetLooping(bool bInLooping);
     bool IsLooping() const { return bLooping; }

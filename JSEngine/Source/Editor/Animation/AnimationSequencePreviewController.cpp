@@ -56,6 +56,33 @@ namespace
 
         return static_cast<float>(DataModel->NumberOfKeys - 1) / FrameRate;
     }
+
+    FFrameRate GetSequenceFrameRate(const UAnimSequence* Sequence)
+    {
+        return Sequence && Sequence->DataModel ? Sequence->DataModel->FrameRate : FFrameRate();
+    }
+
+    int32 GetSequenceFrameCount(const UAnimSequence* Sequence)
+    {
+        if (!Sequence || !Sequence->DataModel)
+        {
+            return 0;
+        }
+
+        return std::max(Sequence->DataModel->NumberOfFrames, Sequence->DataModel->NumberOfKeys);
+    }
+
+    float FrameIndexToTime(int32 FrameIndex, const FFrameRate& FrameRate)
+    {
+        const int32 SafeFrameIndex = std::max(FrameIndex, 0);
+        const double FPS = FrameRate.AsDecimal();
+        if (FPS <= 0.0)
+        {
+            return static_cast<float>(SafeFrameIndex);
+        }
+
+        return static_cast<float>(static_cast<double>(SafeFrameIndex) / FPS);
+    }
 }
 
 FAnimationSequencePreviewController::~FAnimationSequencePreviewController()
@@ -121,7 +148,7 @@ bool FAnimationSequencePreviewController::Initialize(
 
     bInitialized = true;
     PreviewStatusText = "Preview mesh: " + PreviewMeshPath;
-    TimelineStatusText = "Use the slider below to scrub the current pose or play the clip in place.";
+    TimelineStatusText = "Use the timeline below to scrub the current pose or play the clip in place.";
     return true;
 }
 
@@ -187,14 +214,14 @@ void FAnimationSequencePreviewController::Tick(float DeltaTime)
 
 void FAnimationSequencePreviewController::SetCurrentTime(float InTime)
 {
-    CurrentTime = InTime;
+    CurrentTime = std::clamp(InTime, 0.0f, GetLength());
     if (!PreviewComponent)
     {
         bPoseDirty = true;
         return;
     }
 
-    PreviewComponent->SetPreviewTime(InTime);
+    PreviewComponent->SetPreviewTime(CurrentTime);
     CurrentTime = PreviewComponent->GetPreviewTime();
     if (PreviewWorld)
     {
@@ -211,6 +238,34 @@ float FAnimationSequencePreviewController::GetLength() const
     }
 
     return GetSequenceLengthSeconds(Sequence);
+}
+
+FFrameRate FAnimationSequencePreviewController::GetFrameRate() const
+{
+    return GetSequenceFrameRate(Sequence);
+}
+
+int32 FAnimationSequencePreviewController::GetFrameCount() const
+{
+    return GetSequenceFrameCount(Sequence);
+}
+
+int32 FAnimationSequencePreviewController::GetCurrentFrameIndex() const
+{
+    const int32 FrameCount = GetFrameCount();
+    if (FrameCount <= 0)
+    {
+        return 0;
+    }
+
+    const double FrameRate = GetFrameRate().AsDecimal();
+    if (FrameRate <= 0.0)
+    {
+        return std::clamp(static_cast<int32>(std::lround(CurrentTime)), 0, std::max(0, FrameCount - 1));
+    }
+
+    const int32 FrameIndex = static_cast<int32>(std::lround(static_cast<double>(CurrentTime) * FrameRate));
+    return std::clamp(FrameIndex, 0, std::max(0, FrameCount - 1));
 }
 
 void FAnimationSequencePreviewController::Play()
@@ -234,7 +289,51 @@ void FAnimationSequencePreviewController::Pause()
 void FAnimationSequencePreviewController::Stop()
 {
     Pause();
+    JumpToStart();
+}
+
+void FAnimationSequencePreviewController::StepToNextFrame()
+{
+    const int32 FrameCount = GetFrameCount();
+    if (FrameCount <= 0)
+    {
+        return;
+    }
+
+    Pause();
+    SetCurrentTime(FrameIndexToTime(std::min(GetCurrentFrameIndex() + 1, FrameCount - 1), GetFrameRate()));
+}
+
+void FAnimationSequencePreviewController::StepToPreviousFrame()
+{
+    const int32 FrameCount = GetFrameCount();
+    if (FrameCount <= 0)
+    {
+        return;
+    }
+
+    Pause();
+    SetCurrentTime(FrameIndexToTime(std::max(GetCurrentFrameIndex() - 1, 0), GetFrameRate()));
+}
+
+void FAnimationSequencePreviewController::JumpToStart()
+{
+    Pause();
     SetCurrentTime(0.0f);
+}
+
+void FAnimationSequencePreviewController::JumpToEnd()
+{
+    const int32 FrameCount = GetFrameCount();
+    if (FrameCount > 1)
+    {
+        Pause();
+        SetCurrentTime(FrameIndexToTime(FrameCount - 1, GetFrameRate()));
+        return;
+    }
+
+    Pause();
+    SetCurrentTime(GetLength());
 }
 
 void FAnimationSequencePreviewController::SetLooping(bool bInLooping)

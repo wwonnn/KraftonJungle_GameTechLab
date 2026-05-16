@@ -36,10 +36,16 @@ bool FAnimationSequenceEditorDocument::Initialize(UEditorEngine* InEditorEngine,
 
     PreviewController = std::make_unique<FAnimationSequencePreviewController>();
     PreviewController->Initialize(InEditorEngine, SequencePath, Sequence);
+    EditorState.InitializeFromSequence(
+        Sequence,
+        PreviewController->GetLength(),
+        PreviewController->IsLooping(),
+        PreviewController->GetPlayRate());
+    SyncEditorState();
 
     Widget = std::make_unique<FAnimationSequenceEditorWidget>();
     Widget->Initialize(InEditorEngine);
-    Widget->BindDocumentContext(SequencePath, Sequence, PreviewController.get());
+    Widget->BindDocumentContext(SequencePath, Sequence, PreviewController.get(), &EditorState);
     return true;
 }
 
@@ -49,10 +55,14 @@ void FAnimationSequenceEditorDocument::Tick(float DeltaTime)
     {
         PreviewController->Tick(DeltaTime);
     }
+
+    SyncEditorState();
 }
 
 void FAnimationSequenceEditorDocument::RenderEmbedded(float DeltaTime)
 {
+    SyncEditorState();
+
     if (Widget)
     {
         Widget->Render(DeltaTime);
@@ -83,4 +93,20 @@ FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport()
 const FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport() const
 {
     return PreviewController ? PreviewController->GetSceneViewport() : nullptr;
+}
+
+void FAnimationSequenceEditorDocument::SyncEditorState()
+{
+    if (!PreviewController)
+    {
+        return;
+    }
+
+    EditorState.SequenceLength = PreviewController->GetLength();
+    EditorState.DisplayFrameRate = PreviewController->GetFrameRate();
+    EditorState.TotalFrames = PreviewController->GetFrameCount();
+    EditorState.bLoop = PreviewController->IsLooping();
+    EditorState.PlayRate = PreviewController->GetPlayRate();
+    EditorState.SetCurrentTime(PreviewController->GetCurrentTime(), false);
+    EditorState.SetVisibleRange(EditorState.VisibleTimeStart, EditorState.VisibleTimeEnd);
 }

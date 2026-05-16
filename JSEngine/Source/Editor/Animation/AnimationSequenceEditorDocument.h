@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Document/EditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -36,11 +37,15 @@ public:
     UAnimSequence* GetSequence() const { return Sequence; }
 
 private:
+    void SyncEditorState();
+
+private:
     UEditorEngine* EditorEngine = nullptr;
     FString SequencePath;
     UAnimSequence* Sequence = nullptr;
     FEditorTabId TabId;
     FString TabLabel;
+    FAnimationSequenceEditorState EditorState;
     std::unique_ptr<FAnimationSequenceEditorWidget> Widget;
     std::unique_ptr<FAnimationSequencePreviewController> PreviewController;
 };

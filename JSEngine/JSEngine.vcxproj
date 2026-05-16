@@ -391,7 +391,19 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequencePreviewController.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceTimelineWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -945,7 +957,10 @@
     <ClInclude Include="Source\Editor\EditorUtils.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorDocument.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewController.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceTimelineWidget.h" />
     <ClInclude Include="Source\Editor\Document\AssetEditorRegistry.h" />
     <ClInclude Include="Source\Editor\Document\EditorDocument.h" />
     <ClInclude Include="Source\Editor\PIE\PIESession.h" />

@@ -12,6 +12,7 @@
 #include "GameFramework/PrimitiveActors.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/World.h"
+#include "Editor/Document/EditorDocument.h"
 #include "Editor/EditorRenderPipeline.h"
 #include "Core/Logging/Log.h"
 #include "Core/Logging/Stats.h"
@@ -273,6 +274,26 @@ void UEditorEngine::Tick(float DeltaTime)
                      RoutedInputContext.bCaptured ||
                      RoutedInputContext.bRelativeMouseMode ||
                      RoutedInputContext.bFocused);
+            }
+        }
+    }
+
+    if (FEditorDocument* ActiveDocument = MainPanel.GetActiveEditorDocument())
+    {
+        if (FSceneViewport* DocumentViewport = ActiveDocument->GetSceneViewport())
+        {
+            if (FEditorViewportClient* DocumentClient = static_cast<FEditorViewportClient*>(DocumentViewport->GetClient()))
+            {
+                if (FEditorViewportState* State = DocumentClient->GetViewportState())
+                {
+                    const bool bRoutedToDocument = RoutedInputContext.TargetClient == DocumentClient;
+                    State->bHovered =
+                        bRoutedToDocument &&
+                        (RoutedInputContext.bHovered ||
+                            RoutedInputContext.bCaptured ||
+                            RoutedInputContext.bRelativeMouseMode ||
+                            RoutedInputContext.bFocused);
+                }
             }
         }
     }
@@ -561,6 +582,63 @@ void UEditorEngine::RegisterViewportInputTargets()
 
                     FEditorViewer* ViewerRawPtr = Viewers[Index].get();
                     return MainPanel.GetViewerViewportZOrder(ViewerRawPtr);
+                });
+        }
+    }
+
+    if (FEditorDocument* ActiveDocument = MainPanel.GetActiveEditorDocument())
+    {
+        FSceneViewport* DocumentViewport = ActiveDocument->GetSceneViewport();
+        FEditorViewportClient* DocumentClient =
+            DocumentViewport ? static_cast<FEditorViewportClient*>(DocumentViewport->GetClient()) : nullptr;
+        if (DocumentViewport && DocumentClient)
+        {
+            EditorInputRouter.RegisterTarget(
+                DocumentViewport,
+                DocumentClient,
+                EInteractionDomain::Editor,
+                [DocumentViewport](FRect& OutRect)
+                {
+                    const FViewportRect& ViewportRect = DocumentViewport->GetRect();
+                    if (ViewportRect.Width <= 0 || ViewportRect.Height <= 0)
+                    {
+                        return false;
+                    }
+
+                    OutRect = FRect(
+                        static_cast<float>(ViewportRect.X),
+                        static_cast<float>(ViewportRect.Y),
+                        static_cast<float>(ViewportRect.Width),
+                        static_cast<float>(ViewportRect.Height));
+                    return true;
+                },
+                [DocumentClient]() -> UWorld*
+                {
+                    return DocumentClient->GetFocusedWorld();
+                },
+                []() -> int32
+                {
+                    ImGuiWindow* Win = ImGui::FindWindowByName("Viewport");
+                    if (!Win)
+                    {
+                        return 0;
+                    }
+
+                    ImGuiContext* Ctx = ImGui::GetCurrentContext();
+                    if (!Ctx)
+                    {
+                        return 0;
+                    }
+
+                    for (int32 i = 0; i < Ctx->Windows.Size; ++i)
+                    {
+                        if (Ctx->Windows[i] == Win)
+                        {
+                            return i;
+                        }
+                    }
+
+                    return 0;
                 });
         }
     }
