@@ -1,6 +1,7 @@
-﻿#include "AnimInstance.h"
+#include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
+#include "Animation/AnimationStateMachine.h"
 #include "Object/ObjectFactory.h"
 
 namespace
@@ -25,6 +26,18 @@ namespace
 DEFINE_CLASS(UAnimInstance, UObject)
 REGISTER_FACTORY(UAnimInstance)
 
+void UAnimInstance::Intialize()
+{
+	NativeInitializeAnimation();
+
+    if (StateMachine && StateMachine->GetCurrentSequence() && !CurrentSequence)
+    {
+        SetSequence(StateMachine->GetCurrentSequence());
+        SetLooping(StateMachine->GetCurrentStateLooping());
+        PlayRate = StateMachine->GetCurrentStatePlayRate();
+    }
+}
+
 void UAnimInstance::SetOwningComponent(USkinnedMeshComponent* InOwner)
 {
     Owner = InOwner;
@@ -43,6 +56,11 @@ void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 }
 void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 {
+    if (!InNext || InNext == CurrentSequence)
+    {
+        return;
+    }
+
     NextSequence = InNext;
     NextTime = 0.0f;
     BlendFactor = 0.0f;
@@ -87,9 +105,50 @@ bool UAnimInstance::HasValidSequence() const
     return GetValidAnimDataModel(CurrentSequence) != nullptr;
 }
 
+void UAnimInstance::SetStateMachine(UAnimationStateMachine* InStateMachine)
+{
+    StateMachine = InStateMachine;
+    if (StateMachine)
+    {
+        StateMachine->SetOwningAnimInstance(this);
+    }
+}
+
+UAnimationStateMachine* UAnimInstance::CreateStateMachine()
+{
+    UAnimationStateMachine* NewStateMachine = UObjectManager::Get().CreateObject<UAnimationStateMachine>();
+    SetStateMachine(NewStateMachine);
+    return NewStateMachine;
+}
+
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
     if (!bPlaying || !HasValidSequence())
+	// 서브 클래스에서 변수 업데이트
+	NativeUpdateAnimation(DeltaTime);
+
+    if (StateMachine)
+    {
+        StateMachine->Tick(DeltaTime);
+
+        FAnimStateTransitionResult TransitionResult;
+        if (StateMachine->ConsumeTransition(TransitionResult))
+        {
+            SetLooping(TransitionResult.bLoop);
+            PlayRate = TransitionResult.PlayRate;
+
+            if (!CurrentSequence || !bPlaying)
+            {
+                SetSequence(TransitionResult.TargetSequence);
+            }
+            else
+            {
+                SetNextSequence(TransitionResult.TargetSequence, TransitionResult.BlendSpeed);
+            }
+        }
+    }
+
+    if (!bPlaying || CurrentSequence == nullptr || !CurrentSequence->DataModel)
     {
         return;
     }

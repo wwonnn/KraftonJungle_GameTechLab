@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 
 #include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/LuaAnimInstance.h"
 #include "Component/SkinnedMeshComponent.h"
 
 /**
@@ -49,10 +50,15 @@ public:
 protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
 
+    void SetAnimInstance(UAnimInstance* InAnimInstance);
+    UAnimInstance* GetAnimInstance() const { return AnimInstance; }
+    void SetLuaAnimScriptName(const FString& InScriptName);
+
 private:
     void ReleaseSingleNodeAnimation();
     void EnsureSingleNodeAnimation();
     void InitializeSingleNodeAnimation();
+    void InitializeAnimation();
     void ApplyAnimationPose(float DeltaTime);
     void ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime);
     void ApplyEvaluatedPose(const FSkeletonPose& Pose);
@@ -65,4 +71,8 @@ private:
     UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
 
     bool bDeferAnimationInitialization = false;
+
+    UAnimInstance* AnimInstance = nullptr;
+    UPROPERTY(EditAnywhere, DisplayName = "Lua Anim Script")
+    FString LuaAnimScriptName;
 };

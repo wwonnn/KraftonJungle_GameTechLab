@@ -3,6 +3,7 @@
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Asset/Skeleton.h"
 #include "Core/ResourceManager.h"
+#include "Animation/LuaAnimInstance.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/SkeletalMeshRenderProxy.h"
 #include "Core/Paths.h"
@@ -110,7 +111,7 @@ void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
 void USkeletalMeshComponent::BeginPlay()
 {
     USkinnedMeshComponent::BeginPlay();
-    InitializeSingleNodeAnimation();
+    InitializeAnimation();
 }
 
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
@@ -314,10 +315,29 @@ void USkeletalMeshComponent::SetAnimSequencePath(const FString& InAnimSequencePa
 }
 
 void USkeletalMeshComponent::EnsureSingleNodeAnimation()
+void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
 {
     if (IsLiveSingleNodeInstance(SingleNodeInstance))
+    AnimInstance = InAnimInstance;
+    if (AnimInstance)
+    {
+        AnimInstance->SetOwningComponent(this);
+        AnimInstance->Intialize();
+    }
+}
+
+void USkeletalMeshComponent::SetLuaAnimScriptName(const FString& InScriptName)
+{
+    LuaAnimScriptName = InScriptName;
+}
+
+void USkeletalMeshComponent::InitializeAnimation()
+{
+    if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
     {
         SingleNodeInstance->SetOwningComponent(this);
+        SingleNodeInstance = nullptr;
+        AnimInstance = nullptr;
         return;
     }
 
@@ -325,7 +345,14 @@ void USkeletalMeshComponent::EnsureSingleNodeAnimation()
 
     SingleNodeInstance = UObjectManager::Get().CreateObject<UAnimSingleNodeInstance>();
     if (!SingleNodeInstance)
+    if (!LuaAnimScriptName.empty())
     {
+        ULuaAnimInstance* LuaAnimInstance = UObjectManager::Get().CreateObject<ULuaAnimInstance>();
+        if (LuaAnimInstance)
+        {
+            LuaAnimInstance->SetScriptName(LuaAnimScriptName);
+            SetAnimInstance(LuaAnimInstance);
+        }
         return;
     }
 
@@ -338,6 +365,16 @@ void USkeletalMeshComponent::ReleaseSingleNodeAnimation()
     SingleNodeInstance = nullptr;
 
     if (!IsLiveSingleNodeInstance(Instance))
+    const TArray<UAnimSequence*>& AnimationSequences = SkeletalMesh->GetAnimationSequences();
+    if (AnimationSequences.empty() || AnimationSequences[0] == nullptr)
+    {
+        SingleNodeInstance = nullptr;
+        AnimInstance = nullptr;
+        return;
+    }
+
+    USkeleton* MeshSkeleton = SkeletalMesh->GetSkeleton();
+    if (!MeshSkeleton || !MeshSkeleton->HasValidSkeletonData())
     {
         return;
     }
@@ -375,6 +412,8 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
     SingleNodeInstance->SetSequence(AnimSequence);
     SingleNodeInstance->SetLooping(true);
     ApplyAnimationPoseFromInstance(0.0f, false);
+    SingleNodeInstance->Intialize();
+    AnimInstance = SingleNodeInstance;
 }
 
 void USkeletalMeshComponent::ApplyAnimationPose(float DeltaTime)
@@ -385,6 +424,7 @@ void USkeletalMeshComponent::ApplyAnimationPose(float DeltaTime)
 void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime)
 {
     if (!IsLiveSingleNodeInstance(SingleNodeInstance))
+    if (!AnimInstance)
     {
         return;
     }
@@ -393,6 +433,7 @@ void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(float DeltaTime, boo
     {
         SingleNodeInstance->UpdateAnimation(DeltaTime);
     }
+    AnimInstance->UpdateAnimation(DeltaTime);
 
     FSkeletonPose Pose;
     SingleNodeInstance->EvaluatePose(Pose);
@@ -401,6 +442,7 @@ void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(float DeltaTime, boo
 
 void USkeletalMeshComponent::ApplyEvaluatedPose(const FSkeletonPose& Pose)
 {
+    AnimInstance->EvaluatePose(Pose);
     if (Pose.LocalTransforms.empty())
     {
         return;

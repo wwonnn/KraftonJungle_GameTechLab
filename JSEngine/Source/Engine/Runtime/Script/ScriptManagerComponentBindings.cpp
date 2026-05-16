@@ -29,6 +29,8 @@
 #include "Component/PrimitiveComponent.h"
 #include "Component/ShapeComponent.h"
 #include "Component/SceneComponent.h"
+#include "Component/SkeletalMeshComponent.h"
+#include "Component/SkinnedMeshComponent.h"
 #include "Component/SoundComponent.h"
 #include "Component/SphereComponent.h"
 #include "Component/StaticMeshComponent.h"
@@ -405,6 +407,18 @@ void FScriptManager::BindStaticMeshTypes()
     LUA_METHOD(GetStaticMesh, GetStaticMesh);
     LUA_METHOD(SetStaticMesh, SetStaticMesh);
     LUA_METHOD(HasValidMesh, HasValidMesh);
+    LUA_METHOD(GetPrimitiveType, GetPrimitiveType);
+    LUA_END_TYPE();
+
+    LUA_BEGIN_TYPE_NO_CTOR_BASE(GLuaState, USkinnedMeshComponent, "SkinnedMeshComponent", UMeshComponent, UPrimitiveComponent, USceneComponent, UActorComponent, UObject)
+    LUA_METHOD(GetSkeletalMesh, GetSkeletalMesh);
+    LUA_METHOD(SetSkeletalMesh, SetSkeletalMesh);
+    LUA_METHOD(HasValidMesh, HasValidMesh);
+    LUA_END_TYPE();
+
+    LUA_BEGIN_TYPE_NO_CTOR_BASE(GLuaState, USkeletalMeshComponent, "SkeletalMeshComponent", USkinnedMeshComponent, UMeshComponent, UPrimitiveComponent, USceneComponent, UActorComponent, UObject)
+    LUA_METHOD(GetAnimInstance, GetAnimInstance);
+    LUA_METHOD(SetLuaAnimScriptName, SetLuaAnimScriptName);
     LUA_METHOD(GetPrimitiveType, GetPrimitiveType);
     LUA_END_TYPE();
 }

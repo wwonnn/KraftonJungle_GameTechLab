@@ -693,6 +693,7 @@ void RegisterGeneratedReflection_USkeletalMeshComponent()
     {
         { "AnimSequencePath", "AnimSequence", "AnimSequenceAsset", EPropertyType::String, offsetof(USkeletalMeshComponent, AnimSequencePath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
         { "SingleNodeInstance", "AnimInstance", nullptr, EPropertyType::ObjectRef, offsetof(USkeletalMeshComponent, SingleNodeInstance), EPropertyAccess::EditAnywhere, &UAnimSingleNodeInstance::s_TypeInfo, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "LuaAnimScriptName", "Lua Anim Script", nullptr, EPropertyType::String, offsetof(USkeletalMeshComponent, LuaAnimScriptName), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USkeletalMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));

@@ -323,6 +323,8 @@
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
+    <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
     <ClCompile Include="Source\Editor\UI\EditorViewerWindowWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
@@ -951,6 +953,8 @@
     <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
+    <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />
     <ClInclude Include="Source\Editor\UI\EditorViewerWindowWidget.h" />
     <ClInclude Include="Source\Editor\Viewer\EditorViewer.h" />
     <ClInclude Include="Source\Editor\Viewport\SkeletalMeshViewportClient.h" />
