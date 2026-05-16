@@ -48,6 +48,22 @@ struct FVertexFactoryDesc
 class FVertexFactoryRegistry
 {
 public:
+    // Provide a skeletal-specific position-only layout that contains blend
+    // indices/weights so GPU skinning variants of position-only shaders can
+    // consume the necessary vertex attributes without needing the full
+    // skeletal vertex layout.
+    static const FVertexLayoutDesc& GetSkeletalPositionOnlyLayout()
+    {
+        static const FVertexLayoutDesc SkeletalPositionOnlyLayout = {
+            {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, static_cast<uint32>(offsetof(FSkeletalMeshVertex, Position)) },
+                { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, static_cast<uint32>(offsetof(FSkeletalMeshVertex, BoneIndices)) },
+                { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, static_cast<uint32>(offsetof(FSkeletalMeshVertex, BoneWeights)) },
+            },
+            sizeof(FSkeletalMeshVertex)
+        };
+        return SkeletalPositionOnlyLayout;
+    }
     // 초기 단계에서는 과한 상속 구조 대신 Enum -> Desc 매핑으로 관리합니다.
     // GPU Skinning처럼 리소스 바인딩 규칙이 복잡해지면 객체 모델로 확장하면 됩니다.
     static const FVertexFactoryDesc& Get(EVertexFactoryType Type)
@@ -101,6 +117,19 @@ public:
                 { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0 },
             },
             0
+        };
+
+        // For skeletal depth/shadow passes we still want to use a "position-only"
+        // input layout but additionally provide blend indices/weights so the
+        // depth/shadow vertex shaders can perform GPU skinning without reading
+        // the full vertex layout.
+        static const FVertexLayoutDesc SkeletalPositionOnlyLayout = {
+            {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, static_cast<uint32>(offsetof(FSkeletalMeshVertex, Position)) },
+                { "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, static_cast<uint32>(offsetof(FSkeletalMeshVertex, BoneIndices)) },
+                { "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, static_cast<uint32>(offsetof(FSkeletalMeshVertex, BoneWeights)) },
+            },
+            sizeof(FSkeletalMeshVertex)
         };
 
         static const FVertexFactoryDesc StaticMeshDesc = {
