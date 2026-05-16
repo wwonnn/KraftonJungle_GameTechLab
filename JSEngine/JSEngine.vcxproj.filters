@@ -1046,6 +1046,7 @@
     <ClCompile Include="Source\Editor\Viewport\SkeletalMeshViewportClient.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
+    <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -2013,6 +2014,7 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
+    <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\Engine\Runtime\AppIcon.rc" />

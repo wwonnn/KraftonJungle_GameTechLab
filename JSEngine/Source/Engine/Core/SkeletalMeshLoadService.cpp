@@ -1,5 +1,6 @@
 #include "Core/SkeletalMeshLoadService.h"
 
+#include "Animation/AnimData/AnimSequence.h"
 #include "Core/AssetPathPolicy.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
@@ -7,6 +8,46 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
+
+namespace
+{
+	FString SanitizeAssetFileName(const FString& Name)
+	{
+		FString Result = Name.empty() ? FString("AnimSequence") : Name;
+		for (char& Ch : Result)
+		{
+			const bool bInvalid =
+				Ch == '<' || Ch == '>' || Ch == ':' || Ch == '"' ||
+				Ch == '/' || Ch == '\\' || Ch == '|' || Ch == '?' || Ch == '*';
+			if (bInvalid || static_cast<unsigned char>(Ch) < 32)
+			{
+				Ch = '_';
+			}
+		}
+		return Result;
+	}
+
+	FString MakeSequenceAssetPath(const FString& SourcePath, const UAnimSequence* Sequence, int32 SequenceIndex)
+	{
+		const std::filesystem::path SourceFsPath(FPaths::ToWide(FPaths::Normalize(SourcePath)));
+		const FString MeshName = SanitizeAssetFileName(FPaths::ToUtf8(SourceFsPath.stem().wstring()));
+		FString SequenceName = Sequence ? FString(Sequence->GetName()) : FString();
+		if (SequenceName.empty())
+		{
+			SequenceName = "Sequence_" + std::to_string(SequenceIndex);
+		}
+		SequenceName = SanitizeAssetFileName(SequenceName);
+
+		const std::filesystem::path AssetPath =
+			std::filesystem::path(L"Asset") /
+			L"Animation" /
+			FPaths::ToWide(MeshName) /
+			(FPaths::ToWide(SequenceName) + L".sequence");
+
+		return FPaths::Normalize(FPaths::ToUtf8(AssetPath.generic_wstring()));
+	}
+}
 
 FSkeletalMeshLoadService::FSkeletalMeshLoadService(FResourceManager& InResourceManager)
 	: ResourceManager(InResourceManager)
@@ -101,6 +142,32 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshD
 		== ResourceManager.SkeletalMeshFilePaths.end())
 	{
 		ResourceManager.SkeletalMeshFilePaths.push_back(CacheKey);
+	}
+
+	const TArray<UAnimSequence*>& AnimationSequences = LoadedMesh->GetAnimationSequences();
+	for (int32 SequenceIndex = 0; SequenceIndex < static_cast<int32>(AnimationSequences.size()); ++SequenceIndex)
+	{
+		UAnimSequence* Sequence = AnimationSequences[SequenceIndex];
+		if (!Sequence)
+		{
+			continue;
+		}
+
+		const FString SequenceAssetPath = MakeSequenceAssetPath(ResolvePath, Sequence, SequenceIndex);
+		if (ResourceManager.SaveAnimSequence(SequenceAssetPath, Sequence))
+		{
+			UE_LOG("[SkeletalMeshLoad] Animation sequence asset saved | Mesh=%s | Sequence=%s | Path=%s",
+			       CacheKey.c_str(),
+			       Sequence->GetName().c_str(),
+			       SequenceAssetPath.c_str());
+		}
+		else
+		{
+			UE_LOG_WARNING("[SkeletalMeshLoad] Failed to save animation sequence asset | Mesh=%s | Sequence=%s | Path=%s",
+			               CacheKey.c_str(),
+			               Sequence->GetName().c_str(),
+			               SequenceAssetPath.c_str());
+		}
 	}
 
 	UE_LOG("[SkeletalMeshLoad] Loaded | Path=%s | Vertices=%zu | Indices=%zu | Bones=%zu | Sections=%zu",

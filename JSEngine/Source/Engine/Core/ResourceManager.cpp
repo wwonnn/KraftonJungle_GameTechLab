@@ -1,5 +1,6 @@
 ﻿#include "Core/ResourceManager.h"
 
+#include "Asset/AnimSequenceAssetLoader.h"
 #include "Core/Paths.h"
 #include "Core/AssetPathPolicy.h"
 #include "Core/ImportedMaterialPolicy.h"
@@ -152,6 +153,7 @@ void FResourceManager::ClearDiscoveredResourceLists(bool bClearAtlasCache)
 	MaterialFilePaths.clear();
 	ParticleFilePaths.clear();
 	CurveFilePaths.clear();
+	AnimSequenceFilePaths.clear();
 	SkeletalMeshFilePaths.clear();
 	StaticMeshCache.ClearRegistry();
 
@@ -176,6 +178,10 @@ void FResourceManager::RegisterDiscoveredAssetFile(const std::filesystem::path& 
 	if (FAssetPathPolicy::IsCurveAssetPath(FPaths::ToUtf8(FilePath.generic_wstring())))
 	{
 		CurveFilePaths.push_back(RelativePath);
+	}
+	else if (FAssetPathPolicy::IsSequenceAssetPath(FPaths::ToUtf8(FilePath.generic_wstring())))
+	{
+		AnimSequenceFilePaths.push_back(RelativePath);
 	}
 	else if (Extension == L".obj" || Extension == L".fbx")
 	{
@@ -873,6 +879,61 @@ bool FResourceManager::SaveCurve(const FString& Path, const UCurveFloatAsset* Cu
 TArray<FString> FResourceManager::GetCurvePaths() const
 {
 	return CurveFilePaths;
+}
+
+UAnimSequence* FResourceManager::LoadAnimSequence(const FString& Path)
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	auto It = AnimSequenceMap.find(NormalizedPath);
+	if (It != AnimSequenceMap.end())
+	{
+		return It->second;
+	}
+
+	FAnimSequenceAssetLoader Loader;
+	UAnimSequence* Sequence = Loader.Load(NormalizedPath);
+	if (!Sequence)
+	{
+		return nullptr;
+	}
+
+	AnimSequenceMap[NormalizedPath] = Sequence;
+	if (std::find(AnimSequenceFilePaths.begin(), AnimSequenceFilePaths.end(), NormalizedPath) == AnimSequenceFilePaths.end())
+	{
+		AnimSequenceFilePaths.push_back(NormalizedPath);
+	}
+
+	return Sequence;
+}
+
+UAnimSequence* FResourceManager::FindAnimSequence(const FString& Path) const
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	auto It = AnimSequenceMap.find(NormalizedPath);
+	return It != AnimSequenceMap.end() ? It->second : nullptr;
+}
+
+bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence)
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	FAnimSequenceAssetLoader Loader;
+	if (!Loader.Save(NormalizedPath, Sequence))
+	{
+		return false;
+	}
+
+	AnimSequenceMap[NormalizedPath] = const_cast<UAnimSequence*>(Sequence);
+	if (std::find(AnimSequenceFilePaths.begin(), AnimSequenceFilePaths.end(), NormalizedPath) == AnimSequenceFilePaths.end())
+	{
+		AnimSequenceFilePaths.push_back(NormalizedPath);
+	}
+
+	return true;
+}
+
+TArray<FString> FResourceManager::GetAnimSequencePaths() const
+{
+	return AnimSequenceFilePaths;
 }
 
 const TArray<FString>& FResourceManager::GetTextureFilePath() const

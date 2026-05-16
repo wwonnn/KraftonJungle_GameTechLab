@@ -3,6 +3,7 @@
 #include "Asset/BinarySerializer.h"
 #include "Asset/CurveFloatAsset.h"
 #include "Asset/FbxImporter.h"
+#include "Animation/AnimData/AnimSequence.h"
 #include "Asset/ObjLoader.h"
 #include "Asset/SkeletalMesh.h"
 #include "Asset/StaticMesh.h"
@@ -126,6 +127,11 @@ public:
 	bool SaveCurve(const FString& Path, const UCurveFloatAsset* Curve);
 	TArray<FString> GetCurvePaths() const;
 
+	UAnimSequence* LoadAnimSequence(const FString& Path);
+	UAnimSequence* FindAnimSequence(const FString& Path) const;
+	bool SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence);
+	TArray<FString> GetAnimSequencePaths() const;
+
 	ID3D11SamplerState* GetOrCreateSamplerState(ESamplerType Type, ID3D11Device* Device = nullptr);
 	ID3D11DepthStencilState* GetOrCreateDepthStencilState(EDepthStencilType Type, ID3D11Device* Device = nullptr);
 	ID3D11BlendState* GetOrCreateBlendState(EBlendType Type, ID3D11Device* Device = nullptr);
@@ -175,6 +181,7 @@ private:
 	FAtlasResourceCache AtlasCache;
 
 	TMap<FString, USkeletalMesh*> SkeletalMeshMap;
+	TMap<FString, UAnimSequence*> AnimSequenceMap;
 
 	/* Paths */
 	TArray<FString> ObjFilePaths;
@@ -184,4 +191,5 @@ private:
 	TArray<FString> TextureFilePaths;
 	TArray<FString> SkeletalMeshFilePaths;
 	TArray<FString> CurveFilePaths;
+	TArray<FString> AnimSequenceFilePaths;
 };
