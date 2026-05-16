@@ -509,6 +509,19 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
         }
     }
 
+	TArray<FbxNode*> IndexToBoneNode;
+    IndexToBoneNode.resize(SkeletalMesh->Bones.size());
+	for (const auto& Pair : BoneNodeToIndex)
+	{
+		const int32 BoneIndex = Pair.second;
+		if (BoneIndex >= 0 && BoneIndex < static_cast<int32>(IndexToBoneNode.size()))
+		{
+            IndexToBoneNode[BoneIndex] = Pair.first;
+		}
+	}
+
+	const int32 NumBones = static_cast<int32>(IndexToBoneNode.size());
+
     const int32 AnimStackCount = Scene->GetSrcObjectCount<FbxAnimStack>();
     for (int32 AnimStackIndex = 0; AnimStackIndex < AnimStackCount; AnimStackIndex++)
     {
@@ -568,38 +581,74 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
         AnimDataModel->NumberOfFrames = FrameCount;
         AnimDataModel->NumberOfKeys = FrameCount;
 
-		for (const auto& Pair : BoneNodeToIndex)
+		TArray<TArray<FMatrix>> GlobalTransformCache;
+        GlobalTransformCache.resize(FrameCount);
+		for (int32 Frame = 0; Frame < FrameCount; ++Frame)
 		{
-            FbxNode* BoneNode = Pair.first;
-            const int32 BoneIndex = Pair.second;
+            GlobalTransformCache[Frame].resize(NumBones);
 
+			FbxTime Time;
+            Time.SetSecondDouble(StartSeconds + static_cast<double>(Frame) / FPS);
+
+			for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+			{
+                FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
+				if (BoneNode)
+				{
+                    GlobalTransformCache[Frame][BoneIndex] = ToFMatrix(BoneNode->EvaluateGlobalTransform(Time));
+				}
+				else
+				{
+                    GlobalTransformCache[Frame][BoneIndex] = FMatrix(
+						1.0f, 0.0f, 0.0f, 0.0f,
+						0.0f, 1.0f, 0.0f, 0.0f,
+						0.0f, 0.0f, 1.0f, 0.0f,
+						0.0f, 0.0f, 0.0f, 1.0f
+					);
+				}
+			}
+		}
+
+		for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+		{
+			FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
 			if (!BoneNode)
-            {
-                continue;
-            }
+			{
+				continue;
+			}
 
 			FBoneAnimationTrack Track;
-            Track.BoneTreeIndex = BoneIndex;
-            Track.Name = FName(BoneNode->GetName());
+			Track.BoneTreeIndex = BoneIndex;
+			Track.Name = FName(BoneNode->GetName());
 
 			Track.InternalTrackData.PosKeys.reserve(FrameCount);
             Track.InternalTrackData.RotKeys.reserve(FrameCount);
             Track.InternalTrackData.ScaleKeys.reserve(FrameCount);
 
+			const int32 ParentIndex = SkeletalMesh->Bones[BoneIndex].ParentIndex;
+
 			for (int32 Frame = 0; Frame < FrameCount; ++Frame)
 			{
-                FbxTime Time;
-                Time.SetSecondDouble(StartSeconds + static_cast<double>(Frame) / FPS);
+				const FMatrix& Global = GlobalTransformCache[Frame][BoneIndex];
 
-				const FMatrix Local = ToFMatrix(BoneNode->EvaluateLocalTransform(Time));
-                const FTransform LocalTransform(Local);
+				FMatrix Local = Global;
+				if (ParentIndex >= 0 && ParentIndex < NumBones)
+				{
+					if (IndexToBoneNode[ParentIndex])
+					{
+                        const FMatrix ParentGlobal = GlobalTransformCache[Frame][ParentIndex];
+                        Local = Global * ParentGlobal.GetInverse();
+					}
+				}
+
+				const FTransform LocalTransform(Local);
 
 				Track.InternalTrackData.PosKeys.push_back(LocalTransform.GetTranslation());
-                Track.InternalTrackData.RotKeys.push_back(LocalTransform.GetRotation().GetNormalized());
-                Track.InternalTrackData.ScaleKeys.push_back(LocalTransform.GetScale3D());
+				Track.InternalTrackData.RotKeys.push_back(LocalTransform.GetRotation());
+				Track.InternalTrackData.ScaleKeys.push_back(LocalTransform.GetScale3D());
 			}
 
-			AnimDataModel->BoneAnimationTracks.push_back(Track);
+            AnimDataModel->BoneAnimationTracks.push_back(Track);
 		}
 
         if (AnimDataModel->BoneAnimationTracks.empty())
