@@ -1,5 +1,6 @@
 #include "Editor/UI/EditorMainPanel.h"
 
+#include "Editor/Document/EditorDocument.h"
 #include "Editor/Viewer/EditorViewer.h"
 
 #include "ImGui/imgui.h"
@@ -135,6 +136,43 @@ void FEditorMainPanel::RenderActiveViewerDocument(float DeltaTime)
 	else
 	{
 		ImGui::TextDisabled("Viewer tab target is no longer available.");
+	}
+
+	ImGui::End();
+}
+
+void FEditorMainPanel::RenderActiveEditorDocument(float DeltaTime)
+{
+	const FEditorTabEntry* ActiveTab = EditorTabs.GetActiveTab();
+	if (!ActiveTab)
+	{
+		return;
+	}
+
+	FEditorDocument* Document = FindDocumentByTabId(ActiveTab->Id);
+	if (!Document)
+	{
+		return;
+	}
+
+	constexpr ImGuiWindowFlags WindowFlags = 0;
+	if (!ImGui::Begin("Viewport", nullptr, WindowFlags))
+	{
+		ImGui::End();
+		return;
+	}
+
+	if (ActiveTab->bDetached && !Document->IsDetachedSupported())
+	{
+		ImGui::TextDisabled("This document does not support detached tabs.");
+		if (ImGui::Button("Dock Back"))
+		{
+			RequestDetachEditorTab(ActiveTab->Id, false);
+		}
+	}
+	else
+	{
+		Document->RenderEmbedded(DeltaTime);
 	}
 
 	ImGui::End();

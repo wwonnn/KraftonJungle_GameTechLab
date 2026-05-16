@@ -71,10 +71,16 @@ void FEditorMainPanel::RenderMainViewport(float DeltaTime)
 {
 	FlushOpenViewerWidgets();
 
-    if (IsLevelEditorTabActive())
+	if (IsLevelEditorTabActive())
     {
         RenderViewportHostWindow();
         Widgets.ViewportOverlayWidget.RenderViewportFrameOverlays(DeltaTime);
+        return;
+    }
+
+    if (GetActiveEditorDocument())
+    {
+        RenderActiveEditorDocument(DeltaTime);
         return;
     }
 

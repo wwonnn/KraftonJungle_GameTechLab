@@ -1,5 +1,6 @@
-#include "Editor/UI/EditorMainPanel.h"
+﻿#include "Editor/UI/EditorMainPanel.h"
 
+#include "Editor/Document/EditorDocument.h"
 #include "Editor/UI/EditorChromeConstants.h"
 #include "Editor/UI/EditorMainPanelViewportToolbarHelpers.h"
 #include "Editor/Viewer/EditorViewer.h"
@@ -42,12 +43,17 @@ void FEditorMainPanel::RenderActiveDocumentToolbar()
 	if (ImGui::Begin("##EditorDocumentToolbar", nullptr, Flags))
 	{
 		const FEditorTabEntry* ActiveTab = EditorTabs.GetActiveTab();
+		FEditorDocument* Document = GetActiveEditorDocument();
 		FEditorViewerWindowWidget* ViewerWidget = ActiveTab ? FindViewerWidgetForTab(ActiveTab->Id) : nullptr;
 		FEditorViewer* Viewer = ViewerWidget ? ViewerWidget->GetViewer() : nullptr;
 
 		if (Viewer)
 		{
 			RenderViewerToolbarControls(Viewer);
+		}
+		else if (Document)
+		{
+			Document->RenderToolbar();
 		}
 		else if (ActiveTab && ActiveTab->Id.Kind == EEditorTabKind::RuntimeUIPreview)
 		{
@@ -128,7 +134,7 @@ void FEditorMainPanel::RenderViewerToolbarControls(FEditorViewer* Viewer)
 	snprintf(
 		TypeButtonLabel,
 		sizeof(TypeButtonLabel),
-		"%s ▼",
+		"%s v",
 		FEditorMainPanelViewportToolbarHelpers::GetViewportTypeName(Client->GetViewportType()));
 	if (DrawViewportTextButton("##ViewerViewportTypeShared", TypeButtonLabel))
 	{
@@ -164,7 +170,7 @@ void FEditorMainPanel::RenderViewerToolbarControls(FEditorViewer* Viewer)
 	snprintf(
 		CameraButtonLabel,
 		sizeof(CameraButtonLabel),
-		"Cam %.1fx ▼",
+		"Cam %.1fx v",
 		FEditorMainPanelViewportToolbarHelpers::GetCameraSpeedMultiplier(Client));
 	if (DrawViewportTextButton("##ViewerCameraSpeedShared", CameraButtonLabel))
 	{
@@ -185,7 +191,7 @@ void FEditorMainPanel::RenderViewerToolbarControls(FEditorViewer* Viewer)
 		? FEditorMainPanelViewportToolbarHelpers::GetViewModeName(ViewportState->ViewMode)
 		: "View";
 	char ViewButtonLabel[80];
-	snprintf(ViewButtonLabel, sizeof(ViewButtonLabel), "%s ▼", ViewModeName);
+	snprintf(ViewButtonLabel, sizeof(ViewButtonLabel), "%s v", ViewModeName);
 	if (DrawViewportTextButton("##ViewerViewModeShared", ViewButtonLabel))
 	{
 		ImGui::OpenPopup("##ViewerViewModePopupShared");
@@ -237,7 +243,7 @@ void FEditorMainPanel::RenderViewerToolbarControls(FEditorViewer* Viewer)
 	}
 
 	ImGui::SameLine(0.0f, 10.0f);
-	if (DrawViewportTextButton("##ViewerShowFlagsShared", "Show ▼"))
+	if (DrawViewportTextButton("##ViewerShowFlagsShared", "Show v"))
 	{
 		ImGui::OpenPopup("##ViewerShowFlagsPopupShared");
 	}
@@ -264,6 +270,8 @@ bool FEditorMainPanel::RenderActiveDocumentMainMenu()
 		return false;
 	}
 
+	FEditorDocument* Document = GetActiveEditorDocument();
+
 	auto RenderCommonDocumentWindowMenu = [this, ActiveTab]()
 	{
 		if (!ImGui::BeginMenu("Window"))
@@ -271,7 +279,11 @@ bool FEditorMainPanel::RenderActiveDocumentMainMenu()
 			return;
 		}
 
-		if (ActiveTab->bCanClose && ImGui::MenuItem("Detach Tab"))
+		const FEditorDocument* ActiveDocument = FindDocumentByTabId(ActiveTab->Id);
+		const bool bCanDetach =
+			FindViewerWidgetForTab(ActiveTab->Id) != nullptr ||
+			(ActiveDocument && ActiveDocument->IsDetachedSupported());
+		if (ActiveTab->bCanClose && bCanDetach && ImGui::MenuItem("Detach Tab"))
 		{
 			RequestDetachEditorTab(ActiveTab->Id, true);
 		}
@@ -379,6 +391,41 @@ bool FEditorMainPanel::RenderActiveDocumentMainMenu()
 			ImGui::EndMenu();
 		}
 
+		RenderDocumentHelpMenu();
+		return true;
+	}
+
+	if (Document)
+	{
+		const bool bCanSave = Document->CanSave();
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Save Asset", "Ctrl+S", false, bCanSave))
+			{
+				Document->Save();
+			}
+			ImGui::Separator();
+			if (ActiveTab->bCanClose && ImGui::MenuItem("Close Tab"))
+			{
+				RequestCloseEditorTab(ActiveTab->Id);
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Edit"))
+		{
+			ImGui::MenuItem("Undo", "Ctrl+Z", false, false);
+			ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, false);
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Asset"))
+		{
+			ImGui::TextDisabled("Animation Sequence Editor");
+			ImGui::EndMenu();
+		}
+
+		RenderCommonDocumentWindowMenu();
 		RenderDocumentHelpMenu();
 		return true;
 	}

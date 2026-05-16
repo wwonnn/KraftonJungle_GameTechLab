@@ -1,5 +1,6 @@
 ﻿#include "Editor/UI/EditorMainPanel.h"
 
+#include "Editor/Document/EditorDocument.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/UI/EditorViewerWindowWidget.h"
 #include "Editor/Viewer/EditorViewer.h"
@@ -55,6 +56,12 @@ void FEditorMainPanel::BuildActiveEditorCommandList(FEditorCommandList& OutComma
 	OutCommands.Clear();
 
 	const FEditorTabId RoutingTabId = GetInputRoutingTabId();
+	if (FEditorDocument* Document = FindDocumentByTabId(RoutingTabId))
+	{
+		Document->BuildCommandList(OutCommands);
+		return;
+	}
+
 	if (RoutingTabId.Kind == EEditorTabKind::SkeletalMeshViewer ||
 		RoutingTabId.Kind == EEditorTabKind::StaticMeshViewer)
 	{

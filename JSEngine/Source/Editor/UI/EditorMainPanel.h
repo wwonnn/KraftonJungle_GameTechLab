@@ -1,12 +1,15 @@
 ﻿#pragma once
 
 #include "ImGui/imgui.h"
+#include "Editor/Document/EditorDocument.h"
 #include "Editor/UI/EditorCommandContext.h"
 #include "Editor/UI/EditorFooterLogSystem.h"
 #include "Editor/UI/EditorMainPanelState.h"
 #include "Editor/UI/EditorMainPanelWidgetSet.h"
 #include "Editor/UI/EditorTabManager.h"
 #include "Editor/Viewport/ViewportLayout.h"
+
+#include <memory>
 
 class FRenderer;
 class UEditorEngine;
@@ -50,6 +53,7 @@ public:
 	void OpenMaterialAsset(UMaterialInterface* Material);
 	void OpenMaterialSlot(UPrimitiveComponent* PrimitiveComp, int32 SlotIndex);
 	void OpenCurveAsset(const FString& CurvePath);
+	void OpenAnimationSequenceAsset(const FString& SequencePath);
 	void OpenRuntimeUIPreviewAsset(const FString& RmlPath = "");
 	void OpenViewer(FEditorViewer* Viewer);
 	void RequestDockViewer(FEditorViewer* Viewer);
@@ -104,7 +108,12 @@ private:
 	void RenderEditorPanelWindows(float DeltaTime, bool bDrawEditorPanels);
 	float ResolveEffectiveDeltaTime(float DeltaTime) const;
 	bool IsLevelEditorTabActive() const;
+	FEditorDocument* GetActiveEditorDocument();
+	const FEditorDocument* GetActiveEditorDocument() const;
+	FEditorDocument* FindDocumentByTabId(const FEditorTabId& TabId);
+	const FEditorDocument* FindDocumentByTabId(const FEditorTabId& TabId) const;
 	FEditorViewerWindowWidget* FindViewerWidgetForTab(const FEditorTabId& TabId) const;
+	void RenderActiveEditorDocument(float DeltaTime);
 	void RenderActiveViewerDocument(float DeltaTime);
 	void RenderRuntimeUIPreviewDocument(float DeltaTime);
 	void UpdateConsoleDrawerAnimation(float EffectiveDeltaTime);
@@ -161,6 +170,8 @@ private:
 	void OpenContentBrowser();
 	void CloseContentBrowser();
 	void ToggleContentBrowser();
+	void OpenDocument(std::unique_ptr<FEditorDocument> Document);
+	bool CloseDocument(const FEditorTabId& TabId);
 
 	void ApplyPIEViewportFullscreen();
 	void RestorePIEViewportLayout();
@@ -171,6 +182,7 @@ private:
 	ImVector<ImWchar> FontGlyphRanges; // Keep alive until the font atlas is built.
 	FEditorMainPanelWidgetSet Widgets;
 	FEditorTabManager EditorTabs;
+	TArray<std::unique_ptr<FEditorDocument>> OpenDocuments;
     TArray<FEditorViewer*> PendingOpenViewers;
 
 	FEditorMainPanelVisibilityState PanelVisibility;
