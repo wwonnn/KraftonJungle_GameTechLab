@@ -1,4 +1,4 @@
-#include "OpaqueRenderPass.h"
+﻿#include "OpaqueRenderPass.h"
 #include "Render/Device/D3DDevice.h"
 #include "Render/Scene/RenderBus.h"
 #include "Render/Resource/RenderResources.h"
@@ -78,6 +78,11 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
 	   Context->DeviceContext->PSSetShaderResources(10, 1, &ShadowSRV);
        ID3D11ShaderResourceView* PointShadowCubeSRV = FShadowAtlasManager::Get().GetCubeSRV();
        Context->DeviceContext->PSSetShaderResources(12, 1, &PointShadowCubeSRV);
+
+	   if (Cmd.SkinningMatrices)
+		   Context->RenderResources->SkinningBuffer.Update(Context->DeviceContext, Cmd.SkinningMatrices->data(), Cmd.SkinningMatrices->size());
+       ID3D11ShaderResourceView* SkinningSRV = Context->RenderResources->SkinningBuffer.GetSRV();
+       Context->DeviceContext->VSSetShaderResources(16, 1, &SkinningSRV);
 
        if (Cmd.Type == ERenderCommandType::PostProcessOutline)  
        {  

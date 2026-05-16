@@ -302,11 +302,6 @@ bool USkinnedMeshComponent::ConsumeRenderStateDirty()
 
 void USkinnedMeshComponent::EnsureSkinningUpdated()
 {
-    if (!bEnableCPUSkinning)
-    {
-        return;
-    }
-
     if (!bSkinningDirty)
     {
         return;

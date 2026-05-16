@@ -72,7 +72,7 @@ protected:
     TArray<FSkeletalMeshVertex> SkinnedVertices;
 
     UPROPERTY(EditAnywhere, DisplayName = "Enable CPU Skinning")
-    bool bEnableCPUSkinning = true;
+    bool bEnableCPUSkinning = false;
     bool bSkinningDirty = true;
 
     mutable bool bBoundsDirty = true;

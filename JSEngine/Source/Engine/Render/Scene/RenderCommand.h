@@ -202,6 +202,11 @@ struct FDecalInfo
     float Padding[3];
 };
 
+struct FSkinningInfo
+{
+    FMatrix SkinningMatrix;
+};
+
 struct FGizmoConstants
 {
 	FVector4 ColorTint;
@@ -432,6 +437,8 @@ struct FRenderCommand
 	uint32 SectionIndexCount = 0;
 
 	FBoundingBox WorldAABB;
+
+	const TArray<FMatrix>* SkinningMatrices = nullptr;
 
 	union
 	{

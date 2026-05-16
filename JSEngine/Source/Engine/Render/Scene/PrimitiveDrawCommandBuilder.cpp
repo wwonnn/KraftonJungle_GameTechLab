@@ -132,13 +132,23 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
         SkeletalMeshComp->EnsureSkinningUpdated();
         const bool bNeedsUpload = SkeletalMeshComp->ConsumeRenderStateDirty();
 
-        const TArray<FSkeletalMeshVertex>& SkinnedVertices = SkeletalMeshComp->GetSkinnedVertices();
+		const TArray<FSkeletalMeshVertex>* SkeletalVertices;
+
+		if (SkeletalMeshComp->IsGPUSkinningEnabled())
+		{
+            SkeletalVertices = &SkeletalMesh->GetVertices();
+		}
+		else
+		{
+            SkeletalVertices = &SkeletalMeshComp->GetSkinnedVertices();
+		}
+
         const TArray<uint32>& Indices = SkeletalMesh->GetIndices(); // 이건 immutable이라 걍 asset에서 들고와도 댐
 
         FMeshBuffer* MeshBuffer = MeshBufferManager.GetSkeletalMeshBuffer(
             SkeletalMeshComp->GetUUID(),
             SkeletalMesh,
-            SkinnedVertices,
+            *SkeletalVertices,
             Indices,
             bNeedsUpload);
         if (!MeshBuffer) return true;
@@ -156,6 +166,7 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
             Cmd.SectionIndexCount = MeshBuffer->GetIndexBuffer().GetIndexCount();
             Cmd.Material = SkeletalMeshComp->GetMaterial(0);
             Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
+            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
 
             RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
             return true;
@@ -183,6 +194,7 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
             Cmd.Material = Material;
 
             Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
+            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
 
             RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
         }

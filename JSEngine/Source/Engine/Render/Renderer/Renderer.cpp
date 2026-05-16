@@ -296,6 +296,7 @@ void FRenderer::CreateResources()
 	Resources.LightPassConstantBuffer.Create(Device.GetDevice(), sizeof(FLightPassConstants));
 	Resources.MPLightStructuredBuffer.Create(Device.GetDevice(), sizeof(FLightData), 256);
 	Resources.DecalStructuredBuffer.Create(Device.GetDevice(), sizeof(FDecalInfo), 256);
+    Resources.SkinningBuffer.Create(Device.GetDevice(), sizeof(FSkinningInfo), 256);
 
 	// VSM 전용 ComputeShader Constantbuffer
     Resources.VSMConstantBuffer.Create(Device.GetDevice(), sizeof(FVSMBlurConstants));
