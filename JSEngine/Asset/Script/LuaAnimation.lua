@@ -12,7 +12,9 @@ local Direction = {
 function LuaAnimation.new(animInstance)
     local self = setmetatable({}, LuaAnimation)
     self.AnimInstance = animInstance
-    self.StateMachine = animInstance:CreateStateMachine()
+    if animInstance ~= nil and animInstance.CreateStateMachine ~= nil then
+        self.StateMachine = animInstance:CreateStateMachine()
+    end
     return self
 end
 
@@ -25,6 +27,10 @@ local function addState(sm, name, path, fallbackIndex)
 end
 
 function LuaAnimation:NativeInitializeAnimation()
+    if self.StateMachine == nil then
+        return
+    end
+
     local sm = self.StateMachine
 
     sm:RegisterParameterInt("Direction", Direction.Idle)
@@ -45,6 +51,10 @@ function LuaAnimation:NativeInitializeAnimation()
 end
 
 function LuaAnimation:NativeUpdateAnimation(deltaTime)
+    if self.StateMachine == nil then
+        return
+    end
+
     local input = Engine.API.Input
     local direction = Direction.Idle
 

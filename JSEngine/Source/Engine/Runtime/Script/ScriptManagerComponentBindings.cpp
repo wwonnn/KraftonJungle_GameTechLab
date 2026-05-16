@@ -418,7 +418,7 @@ void FScriptManager::BindStaticMeshTypes()
 
     LUA_BEGIN_TYPE_NO_CTOR_BASE(GLuaState, USkeletalMeshComponent, "SkeletalMeshComponent", USkinnedMeshComponent, UMeshComponent, UPrimitiveComponent, USceneComponent, UActorComponent, UObject)
     LUA_METHOD(GetAnimInstance, GetAnimInstance);
-    LUA_METHOD(SetLuaAnimScriptName, SetLuaAnimScriptName);
+    LUA_METHOD(BindLuaAnimInstance, BindLuaAnimInstance);
     LUA_METHOD(GetPrimitiveType, GetPrimitiveType);
     LUA_END_TYPE();
 }

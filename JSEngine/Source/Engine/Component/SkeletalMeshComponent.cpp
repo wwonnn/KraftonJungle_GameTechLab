@@ -326,9 +326,22 @@ void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
     }
 }
 
-void USkeletalMeshComponent::SetLuaAnimScriptName(const FString& InScriptName)
+ULuaAnimInstance* USkeletalMeshComponent::BindLuaAnimInstance(const FString& ScriptName)
 {
-    LuaAnimScriptName = InScriptName;
+    if (ScriptName.empty())
+    {
+        return nullptr;
+    }
+
+    ULuaAnimInstance* LuaAnimInstance = UObjectManager::Get().CreateObject<ULuaAnimInstance>();
+    if (!LuaAnimInstance)
+    {
+        return nullptr;
+    }
+
+    LuaAnimInstance->SetScriptName(ScriptName);
+    SetAnimInstance(LuaAnimInstance);
+    return LuaAnimInstance;
 }
 
 void USkeletalMeshComponent::InitializeAnimation()

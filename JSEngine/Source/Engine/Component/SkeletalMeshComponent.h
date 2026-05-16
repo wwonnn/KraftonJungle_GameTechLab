@@ -52,7 +52,7 @@ protected:
 
     void SetAnimInstance(UAnimInstance* InAnimInstance);
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
-    void SetLuaAnimScriptName(const FString& InScriptName);
+    ULuaAnimInstance* BindLuaAnimInstance(const FString& ScriptName);
 
 private:
     void ReleaseSingleNodeAnimation();
@@ -73,6 +73,4 @@ private:
     bool bDeferAnimationInitialization = false;
 
     UAnimInstance* AnimInstance = nullptr;
-    UPROPERTY(EditAnywhere, DisplayName = "Lua Anim Script")
-    FString LuaAnimScriptName;
 };
