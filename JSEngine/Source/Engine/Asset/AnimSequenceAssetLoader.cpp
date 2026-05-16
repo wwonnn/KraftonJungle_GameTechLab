@@ -89,6 +89,24 @@ namespace
         }
     }
 
+    void WriteFloatArray(json::JSON& OutArray, const TArray<float>& Values)
+    {
+        OutArray = json::Array();
+        for (float Value : Values)
+        {
+            OutArray.append(Value);
+        }
+    }
+
+    void WriteIntArray(json::JSON& OutArray, const TArray<int32>& Values)
+    {
+        OutArray = json::Array();
+        for (int32 Value : Values)
+        {
+            OutArray.append(Value);
+        }
+    }
+
     void ReadVectorKeys(const json::JSON& SourceArray, TArray<FVector>& OutKeys)
     {
         OutKeys.clear();
@@ -117,6 +135,145 @@ namespace
         {
             OutKeys.push_back(ReadQuatKey(SourceArray.at(static_cast<unsigned>(Index))));
         }
+    }
+
+    void ReadFloatArray(const json::JSON& SourceArray, TArray<float>& OutValues)
+    {
+        OutValues.clear();
+        if (SourceArray.JSONType() != json::JSON::Class::Array)
+        {
+            return;
+        }
+
+        OutValues.reserve(SourceArray.length());
+        for (int32 Index = 0; Index < SourceArray.length(); ++Index)
+        {
+            OutValues.push_back(static_cast<float>(SourceArray.at(static_cast<unsigned>(Index)).ToFloat()));
+        }
+    }
+
+    void ReadIntArray(const json::JSON& SourceArray, TArray<int32>& OutValues)
+    {
+        OutValues.clear();
+        if (SourceArray.JSONType() != json::JSON::Class::Array)
+        {
+            return;
+        }
+
+        OutValues.reserve(SourceArray.length());
+        for (int32 Index = 0; Index < SourceArray.length(); ++Index)
+        {
+            OutValues.push_back(static_cast<int32>(SourceArray.at(static_cast<unsigned>(Index)).ToInt()));
+        }
+    }
+
+    void WriteFloatCurve(json::JSON& OutObject, const FFloatCurve& Curve)
+    {
+        OutObject = json::JSON::Make(json::JSON::Class::Object);
+        OutObject["CurveName"] = Curve.CurveName.ToString();
+
+        TArray<float> Times;
+        TArray<float> Values;
+        TArray<int32> InterpModes;
+        TArray<int32> TangentModes;
+        TArray<float> ArriveTangents;
+        TArray<float> LeaveTangents;
+
+        Times.reserve(Curve.Keys.size());
+        Values.reserve(Curve.Keys.size());
+        InterpModes.reserve(Curve.Keys.size());
+        TangentModes.reserve(Curve.Keys.size());
+        ArriveTangents.reserve(Curve.Keys.size());
+        LeaveTangents.reserve(Curve.Keys.size());
+
+        for (const FCurveKey& Key : Curve.Keys)
+        {
+            Times.push_back(Key.Time);
+            Values.push_back(Key.Value);
+            InterpModes.push_back(static_cast<int32>(Key.InterpMode));
+            TangentModes.push_back(static_cast<int32>(Key.TangentMode));
+            ArriveTangents.push_back(Key.ArriveTangent);
+            LeaveTangents.push_back(Key.LeaveTangent);
+        }
+
+        WriteFloatArray(OutObject["Times"], Times);
+        WriteFloatArray(OutObject["Values"], Values);
+        WriteIntArray(OutObject["InterpModes"], InterpModes);
+        WriteIntArray(OutObject["TangentModes"], TangentModes);
+        WriteFloatArray(OutObject["ArriveTangents"], ArriveTangents);
+        WriteFloatArray(OutObject["LeaveTangents"], LeaveTangents);
+    }
+
+    FFloatCurve ReadFloatCurve(const json::JSON& SourceObject)
+    {
+        FFloatCurve Curve;
+        if (SourceObject.JSONType() != json::JSON::Class::Object)
+        {
+            return Curve;
+        }
+
+        FString CurveName;
+        if (SourceObject.hasKey("CurveName"))
+        {
+            CurveName = SourceObject.at("CurveName").ToString();
+        }
+        else if (SourceObject.hasKey("Name"))
+        {
+            CurveName = SourceObject.at("Name").ToString();
+        }
+        Curve.CurveName = FName(CurveName);
+
+        TArray<float> Times;
+        TArray<float> Values;
+        TArray<int32> InterpModes;
+        TArray<int32> TangentModes;
+        TArray<float> ArriveTangents;
+        TArray<float> LeaveTangents;
+
+        if (SourceObject.hasKey("Times"))
+        {
+            ReadFloatArray(SourceObject.at("Times"), Times);
+        }
+        if (SourceObject.hasKey("Values"))
+        {
+            ReadFloatArray(SourceObject.at("Values"), Values);
+        }
+        if (SourceObject.hasKey("InterpModes"))
+        {
+            ReadIntArray(SourceObject.at("InterpModes"), InterpModes);
+        }
+        if (SourceObject.hasKey("TangentModes"))
+        {
+            ReadIntArray(SourceObject.at("TangentModes"), TangentModes);
+        }
+        if (SourceObject.hasKey("ArriveTangents"))
+        {
+            ReadFloatArray(SourceObject.at("ArriveTangents"), ArriveTangents);
+        }
+        if (SourceObject.hasKey("LeaveTangents"))
+        {
+            ReadFloatArray(SourceObject.at("LeaveTangents"), LeaveTangents);
+        }
+
+        Curve.Keys.reserve(Times.size());
+        for (size_t Index = 0; Index < Times.size(); ++Index)
+        {
+            FCurveKey Key;
+            Key.Time = Times[Index];
+            Key.Value = Index < Values.size() ? Values[Index] : 0.0f;
+            Key.InterpMode = Index < InterpModes.size()
+                ? static_cast<ECurveInterpMode>(InterpModes[Index])
+                : ECurveInterpMode::Cubic;
+            Key.TangentMode = Index < TangentModes.size()
+                ? static_cast<ECurveTangentMode>(TangentModes[Index])
+                : ECurveTangentMode::Auto;
+            Key.ArriveTangent = Index < ArriveTangents.size() ? ArriveTangents[Index] : 0.0f;
+            Key.LeaveTangent = Index < LeaveTangents.size() ? LeaveTangents[Index] : 0.0f;
+            Curve.Keys.push_back(Key);
+        }
+        Curve.SortKeys();
+
+        return Curve;
     }
 }
 
@@ -190,6 +347,20 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
         }
     }
 
+    if (Root.hasKey("FloatCurves") && Root["FloatCurves"].JSONType() == json::JSON::Class::Array)
+    {
+        json::JSON& FloatCurves = Root["FloatCurves"];
+        DataModel->CurveData.FloatCurves.reserve(FloatCurves.length());
+        for (int32 CurveIndex = 0; CurveIndex < FloatCurves.length(); ++CurveIndex)
+        {
+            json::JSON& CurveObject = FloatCurves.at(static_cast<unsigned>(CurveIndex));
+            if (CurveObject.JSONType() == json::JSON::Class::Object)
+            {
+                DataModel->CurveData.FloatCurves.push_back(ReadFloatCurve(CurveObject));
+            }
+        }
+    }
+
     Sequence->DataModel = DataModel;
     return Sequence;
 }
@@ -226,6 +397,14 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
         WriteQuatKeys(TrackObject["RotKeys"], Track.InternalTrackData.RotKeys);
         WriteVectorKeys(TrackObject["ScaleKeys"], Track.InternalTrackData.ScaleKeys);
         Root["Tracks"].append(TrackObject);
+    }
+
+    Root["FloatCurves"] = json::Array();
+    for (const FFloatCurve& Curve : DataModel->CurveData.FloatCurves)
+    {
+        json::JSON CurveObject = json::JSON::Make(json::JSON::Class::Object);
+        WriteFloatCurve(CurveObject, Curve);
+        Root["FloatCurves"].append(CurveObject);
     }
 
     std::error_code ErrorCode;
