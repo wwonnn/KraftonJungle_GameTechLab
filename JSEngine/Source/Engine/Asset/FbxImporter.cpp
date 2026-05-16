@@ -509,17 +509,6 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
         }
     }
 
-    TArray<FbxNode*> IndexToBoneNode;
-    IndexToBoneNode.resize(SkeletalMesh->Bones.size());
-    for (const auto& Pair : BoneNodeToIndex)
-    {
-        const int32 BoneIndex = Pair.second;
-        if (BoneIndex >= 0 && BoneIndex < static_cast<int32>(IndexToBoneNode.size()))
-        {
-            IndexToBoneNode[BoneIndex] = Pair.first;
-        }
-    }
-
     const int32 AnimStackCount = Scene->GetSrcObjectCount<FbxAnimStack>();
     for (int32 AnimStackIndex = 0; AnimStackIndex < AnimStackCount; AnimStackIndex++)
     {
