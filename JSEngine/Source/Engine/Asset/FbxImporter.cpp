@@ -236,6 +236,335 @@ static bool ShouldSkipRigidMeshByName(FbxNode* OwnerNode)
                                     "dummy" });
 }
 
+static FbxProperty FindCurveNodeTargetProperty(
+    FbxAnimCurveNode* CurveNode,
+    const FbxAnimLayer* AnimLayer,
+    const FbxProperty& FallbackProperty)
+{
+    FbxProperty FirstValidProperty;
+
+    if (!CurveNode)
+    {
+        return FallbackProperty;
+    }
+
+    const int32 DstPropertyCount = CurveNode->GetDstPropertyCount();
+    for (int32 PropertyIndex = 0; PropertyIndex < DstPropertyCount; ++PropertyIndex)
+    {
+        FbxProperty Candidate = CurveNode->GetDstProperty(PropertyIndex);
+        if (!Candidate.IsValid())
+        {
+            continue;
+        }
+
+        if (!FirstValidProperty.IsValid())
+        {
+            FirstValidProperty = Candidate;
+        }
+
+        FbxObject* OwnerObject = Candidate.GetFbxObject();
+        if (!OwnerObject || OwnerObject == AnimLayer || FbxCast<FbxAnimCurveNode>(OwnerObject))
+        {
+            continue;
+        }
+
+        return Candidate;
+    }
+
+    if (FallbackProperty.IsValid())
+    {
+        return FallbackProperty;
+    }
+
+    return FirstValidProperty;
+}
+
+static FString GetFbxObjectName(FbxObject* Object, const FString& FallbackName)
+{
+    if (!Object)
+    {
+        return FallbackName;
+    }
+
+    if (Object->GetName() && Object->GetName()[0] != '\0')
+    {
+        return Object->GetName();
+    }
+
+    FbxString NameOnly = Object->GetNameOnly();
+    if (NameOnly.GetLen() > 0)
+    {
+        return NameOnly.Buffer();
+    }
+
+    return FallbackName;
+}
+
+static FString BuildFbxNodePath(FbxNode* Node)
+{
+    if (!Node)
+    {
+        return "Node";
+    }
+
+    TArray<FString> PathSegments;
+    for (FbxNode* Current = Node; Current; Current = Current->GetParent())
+    {
+        const FString Segment = Current->GetName() && Current->GetName()[0] != '\0'
+            ? FString(Current->GetName())
+            : FString("Node");
+        PathSegments.push_back(Segment);
+    }
+
+    FString Result;
+    for (auto It = PathSegments.rbegin(); It != PathSegments.rend(); ++It)
+    {
+        if (!Result.empty())
+        {
+            Result += "/";
+        }
+        Result += *It;
+    }
+
+    return Result.empty() ? FString("Node") : Result;
+}
+
+static FString BuildFbxOwnerPath(FbxObject* OwnerObject, const FString& FallbackName)
+{
+    if (FbxNode* OwnerNode = FbxCast<FbxNode>(OwnerObject))
+    {
+        return BuildFbxNodePath(OwnerNode);
+    }
+
+    if (FbxNodeAttribute* NodeAttribute = FbxCast<FbxNodeAttribute>(OwnerObject))
+    {
+        if (FbxNode* AttributeOwnerNode = NodeAttribute->GetNode())
+        {
+            return BuildFbxNodePath(AttributeOwnerNode) + "/" + GetFbxObjectName(OwnerObject, FallbackName);
+        }
+    }
+
+    return GetFbxObjectName(OwnerObject, FallbackName);
+}
+
+static FString BuildAnimCurveName(
+    FbxAnimCurveNode* CurveNode,
+    const FbxProperty& TargetProperty,
+    FbxAnimLayer* AnimLayer,
+    int32 LayerCount,
+    int32 ChannelCount,
+    int32 ChannelIndex,
+    int32 CurveCount,
+    int32 CurveIndex)
+{
+    FString OwnerName = CurveNode && CurveNode->GetName() ? FString(CurveNode->GetName()) : FString("CurveNode");
+    FString PropertyName = OwnerName;
+
+    if (TargetProperty.IsValid())
+    {
+        if (FbxObject* OwnerObject = TargetProperty.GetFbxObject())
+        {
+            OwnerName = BuildFbxOwnerPath(OwnerObject, OwnerName);
+        }
+
+        FbxString HierarchicalName = TargetProperty.GetHierarchicalName();
+        if (HierarchicalName.GetLen() > 0)
+        {
+            PropertyName = HierarchicalName.Buffer();
+        }
+        else
+        {
+            FbxString Name = TargetProperty.GetName();
+            if (Name.GetLen() > 0)
+            {
+                PropertyName = Name.Buffer();
+            }
+        }
+    }
+
+    FString Result = OwnerName + "_" + PropertyName;
+
+    if (CurveNode && ChannelCount > 1)
+    {
+        FbxString ChannelName = CurveNode->GetChannelName(ChannelIndex);
+        if (ChannelName.GetLen() > 0)
+        {
+            Result += "_" + FString(ChannelName.Buffer());
+        }
+    }
+
+    if (CurveCount > 1)
+    {
+        Result += "_Curve" + std::to_string(CurveIndex);
+    }
+
+    if (LayerCount > 1 && AnimLayer && AnimLayer->GetName() && AnimLayer->GetName()[0] != '\0')
+    {
+        Result += "_" + FString(AnimLayer->GetName());
+    }
+
+    return Result;
+}
+
+static bool ConvertFbxAnimCurveToFloatCurve(
+    FbxAnimCurve* FbxCurve,
+    const FString& CurveName,
+    double StartSeconds,
+    double EndSeconds,
+    FFloatCurve& OutCurve)
+{
+    if (!FbxCurve)
+    {
+        return false;
+    }
+
+    const int32 KeyCount = FbxCurve->KeyGetCount();
+    if (KeyCount <= 0)
+    {
+        return false;
+    }
+
+    OutCurve.CurveName = FName(CurveName);
+    OutCurve.Keys.clear();
+    OutCurve.Keys.reserve(KeyCount);
+
+    for (int32 KeyIndex = 0; KeyIndex < KeyCount; ++KeyIndex)
+    {
+        const double AbsoluteTime = FbxCurve->KeyGetTime(KeyIndex).GetSecondDouble();
+        if (!std::isfinite(AbsoluteTime) || AbsoluteTime < StartSeconds || AbsoluteTime > EndSeconds)
+        {
+            continue;
+        }
+
+        FCurveKey EngineKey;
+        EngineKey.Time = static_cast<float>(AbsoluteTime - StartSeconds);
+
+        EngineKey.Value = static_cast<float>(FbxCurve->KeyGetValue(KeyIndex));
+
+        const FbxAnimCurveDef::EInterpolationType InterpType = FbxCurve->KeyGetInterpolation(KeyIndex);
+        if (InterpType == FbxAnimCurveDef::eInterpolationConstant)
+        {
+            EngineKey.InterpMode = ECurveInterpMode::Constant;
+        }
+        else if (InterpType == FbxAnimCurveDef::eInterpolationLinear)
+        {
+            EngineKey.InterpMode = ECurveInterpMode::Linear;
+        }
+        else
+        {
+            EngineKey.InterpMode = ECurveInterpMode::Cubic;
+            EngineKey.TangentMode = ECurveTangentMode::User;
+            EngineKey.ArriveTangent = static_cast<float>(FbxCurve->KeyGetLeftDerivative(KeyIndex));
+            EngineKey.LeaveTangent = static_cast<float>(FbxCurve->KeyGetRightDerivative(KeyIndex));
+        }
+
+        OutCurve.Keys.push_back(EngineKey);
+    }
+
+    if (OutCurve.Keys.empty())
+    {
+        return false;
+    }
+
+    OutCurve.SortKeys();
+    return true;
+}
+
+static int32 ReadCurveNodeRecursive(
+    FbxAnimCurveNode* CurveNode,
+    FbxAnimLayer* AnimLayer,
+    int32 LayerCount,
+    double StartSeconds,
+    double EndSeconds,
+    UAnimDataModel* AnimDataModel,
+    const FbxProperty& InheritedTargetProperty,
+    TMap<FbxAnimCurveNode*, bool>& VisitedCurveNodes)
+{
+    if (!CurveNode || !AnimDataModel)
+    {
+        return 0;
+    }
+
+    if (VisitedCurveNodes.find(CurveNode) != VisitedCurveNodes.end())
+    {
+        return 0;
+    }
+    VisitedCurveNodes[CurveNode] = true;
+
+    int32 ImportedCurveCount = 0;
+    const FbxProperty TargetProperty = FindCurveNodeTargetProperty(CurveNode, AnimLayer, InheritedTargetProperty);
+
+    if (CurveNode->IsComposite())
+    {
+        const int32 ChildCount = CurveNode->GetSrcObjectCount<FbxAnimCurveNode>();
+        for (int32 ChildIndex = 0; ChildIndex < ChildCount; ++ChildIndex)
+        {
+            ImportedCurveCount += ReadCurveNodeRecursive(
+                CurveNode->GetSrcObject<FbxAnimCurveNode>(ChildIndex),
+                AnimLayer,
+                LayerCount,
+                StartSeconds,
+                EndSeconds,
+                AnimDataModel,
+                TargetProperty,
+                VisitedCurveNodes);
+        }
+
+        return ImportedCurveCount;
+    }
+
+    const int32 ChannelCount = static_cast<int32>(CurveNode->GetChannelsCount());
+    for (int32 ChannelIndex = 0; ChannelIndex < ChannelCount; ++ChannelIndex)
+    {
+        const int32 CurveCount = CurveNode->GetCurveCount(static_cast<unsigned int>(ChannelIndex));
+        for (int32 CurveIndex = 0; CurveIndex < CurveCount; ++CurveIndex)
+        {
+            FbxAnimCurve* FbxCurve = CurveNode->GetCurve(
+                static_cast<unsigned int>(ChannelIndex),
+                static_cast<unsigned int>(CurveIndex));
+
+            const FString CurveName = BuildAnimCurveName(
+                CurveNode,
+                TargetProperty,
+                AnimLayer,
+                LayerCount,
+                ChannelCount,
+                ChannelIndex,
+                CurveCount,
+                CurveIndex);
+
+            FFloatCurve EngineCurve;
+            if (!ConvertFbxAnimCurveToFloatCurve(FbxCurve, CurveName, StartSeconds, EndSeconds, EngineCurve))
+            {
+                continue;
+            }
+
+            AnimDataModel->CurveData.FloatCurves.push_back(EngineCurve);
+            ++ImportedCurveCount;
+
+            UE_LOG("[FbxImporter] Read Anim Curve: %s (Keys: %zu)",
+                   CurveName.c_str(),
+                   EngineCurve.Keys.size());
+        }
+    }
+
+    const int32 ChildCount = CurveNode->GetSrcObjectCount<FbxAnimCurveNode>();
+    for (int32 ChildIndex = 0; ChildIndex < ChildCount; ++ChildIndex)
+    {
+        ImportedCurveCount += ReadCurveNodeRecursive(
+            CurveNode->GetSrcObject<FbxAnimCurveNode>(ChildIndex),
+            AnimLayer,
+            LayerCount,
+            StartSeconds,
+            EndSeconds,
+            AnimDataModel,
+            TargetProperty,
+            VisitedCurveNodes);
+    }
+
+    return ImportedCurveCount;
+}
+
 static bool HasValidSkinInfluence(FbxMesh* Mesh)
 {
     if (!Mesh)
@@ -609,6 +938,7 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
 			}
 		}
 
+		// 트랙 1: Baking
 		for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
 		{
 			FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
@@ -650,6 +980,32 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
 
             AnimDataModel->BoneAnimationTracks.push_back(Track);
 		}
+
+		// 트랙 2: Curve Reading
+        const int32 LayerCount = CurAnimStack->GetMemberCount<FbxAnimLayer>();
+        for (int32 LayerIdx = 0; LayerIdx < LayerCount; ++LayerIdx)
+        {
+            FbxAnimLayer* AnimLayer = CurAnimStack->GetMember<FbxAnimLayer>(LayerIdx);
+            if (!AnimLayer)
+            {
+                continue;
+            }
+
+            TMap<FbxAnimCurveNode*, bool> VisitedCurveNodes;
+            const int32 CurveNodeCount = AnimLayer->GetSrcObjectCount<FbxAnimCurveNode>();
+            for (int32 CurveNodeIndex = 0; CurveNodeIndex < CurveNodeCount; ++CurveNodeIndex)
+            {
+                ReadCurveNodeRecursive(
+                    AnimLayer->GetSrcObject<FbxAnimCurveNode>(CurveNodeIndex),
+                    AnimLayer,
+                    LayerCount,
+                    StartSeconds,
+                    EndSeconds,
+                    AnimDataModel,
+                    FbxProperty(),
+                    VisitedCurveNodes);
+            }
+        }
 
         if (AnimDataModel->BoneAnimationTracks.empty())
         {

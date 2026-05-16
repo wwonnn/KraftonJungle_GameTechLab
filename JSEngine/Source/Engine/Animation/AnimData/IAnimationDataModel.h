@@ -2,6 +2,7 @@
 
 #include "Object/FName.h"
 #include "Animation/AnimData/AnimTypes.h"
+#include "Asset/CurveFloatAsset.h"
 
 struct FBoneAnimationTrack
 {
@@ -13,6 +14,5 @@ struct FBoneAnimationTrack
 
 struct FAnimationCurveData
 {
-    //TArray<FFloatCurve> FloatCurves;
-    //TArray<FTransformCurve> TransformCurves;
+    TArray<FFloatCurve> FloatCurves;
 };
