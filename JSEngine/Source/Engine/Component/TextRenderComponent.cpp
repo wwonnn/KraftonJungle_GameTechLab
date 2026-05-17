@@ -6,6 +6,7 @@
 #include "GameFramework/AActor.h"
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
+#include "Render/Proxy/TextRenderProxy.h"
 
 DEFINE_CLASS(UTextRenderComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UTextRenderComponent)
@@ -178,4 +179,11 @@ int32 UTextRenderComponent::GetUTF8Length(const FString& str) const{
 		if ((str[i] & 0xC0) != 0x80) count++;
 	}
 	return count;
+}
+
+FPrimitiveRenderProxy* UTextRenderComponent::CreateRenderProxy()
+{
+    FTextRenderProxy* Proxy = new FTextRenderProxy;
+	Proxy->TextComp = this;
+    return Proxy;
 }

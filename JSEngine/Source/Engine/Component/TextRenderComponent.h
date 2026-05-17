@@ -96,6 +96,9 @@ public:
 	FMatrix GetTextMatrix() const;
 	int32 GetUTF8Length(const FString& str) const;
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
 	UPROPERTY(EditAnywhere, DisplayName="Text")
 	FString Text;
