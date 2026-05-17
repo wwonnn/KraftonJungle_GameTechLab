@@ -1,6 +1,7 @@
 ﻿#include "SkeletalMeshComponent.h"
 
 #include "Animation/AnimSingleNodeInstance.h"
+#include "Asset/Skeleton.h"
 #include "Object/ObjectFactory.h"
 
 DEFINE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
@@ -75,7 +76,13 @@ void USkeletalMeshComponent::SetBoneGlobalTransform(int32 BoneIndex, const FMatr
         return;
     }
 
-    const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton || !Skeleton->HasValidSkeletonData())
+    {
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     if (BoneIndex >= static_cast<int32>(Bones.size()))
     {
         return;
