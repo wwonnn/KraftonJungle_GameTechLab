@@ -264,12 +264,6 @@ void FRenderCollector::CollectFromActor(AActor* Actor, const FShowFlags& ShowFla
 	{
 		CollectFromComponent(Primitive, ShowFlags, ViewMode, RenderBus, WorldType, bIncludeEditorOnlyPrimitives);
 	}
-
-	if (Actor->IsA<ADecalSpotLightActor>())
-	{
-		ADecalSpotLightActor* SpotlightActor = Cast<ADecalSpotLightActor>(Actor);
-
-	}
 }
 
 void FRenderCollector::CollectFromComponent(UPrimitiveComponent* Primitive, const FShowFlags& ShowFlags, EViewMode ViewMode,
@@ -280,22 +274,15 @@ void FRenderCollector::CollectFromComponent(UPrimitiveComponent* Primitive, cons
 
 	EPrimitiveType PrimType = Primitive->GetPrimitiveType();
 
-	if (PrimType != EPrimitiveType::EPT_Decal)
+	// Decal 은 내부적으로 OBB Query 를 통해 적용될 Primitive 를 탐색해야하므로
+	// 다른 Primitive 와 별개의 Collection 과정을 거침
+	if (PrimType == EPrimitiveType::EPT_Decal)
 	{
-		PrimitiveDrawCommandBuilder.CollectPrimitive(Primitive, ShowFlags, ViewMode, RenderBus, MeshBufferManager);
+        DecalCommandBuilder.CollectDecal(Primitive, ShowFlags, RenderBus, MeshBufferManager, OBBQueryScratch);
 		return;
 	}
 
-	switch (PrimType)
-	{
-	case EPrimitiveType::EPT_Decal:
-	{
-		DecalCommandBuilder.CollectDecal(Primitive, ShowFlags, RenderBus, MeshBufferManager, OBBQueryScratch);
-		break;
-	}
-	default:
-		return;
-	}
+	PrimitiveDrawCommandBuilder.CollectPrimitive(Primitive, ShowFlags, ViewMode, RenderBus, MeshBufferManager);
 }
 
 void FRenderCollector::CollectLight(const ULightComponentBase* Light, FRenderBus& RenderBus)
