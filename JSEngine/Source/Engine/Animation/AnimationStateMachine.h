@@ -25,6 +25,7 @@ enum class EAnimTransitionConditionType : uint8
     FloatLessEqual,
     IntEquals,
     Trigger,
+    StateFinished,
 };
 
 struct FAnimStateMachineParameter
@@ -145,6 +146,12 @@ public:
         const FName& FromState,
         const FName& ToState,
         const FName& ParameterName,
+        float BlendSpeed,
+        int32 Priority = 0);
+
+    bool AddStateFinishedTransition(
+        const FName& FromState,
+        const FName& ToState,
         float BlendSpeed,
         int32 Priority = 0);
 

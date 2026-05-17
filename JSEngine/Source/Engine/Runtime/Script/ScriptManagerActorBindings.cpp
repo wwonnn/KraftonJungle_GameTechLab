@@ -354,6 +354,10 @@ void FScriptManager::BindActorTypes()
     LUA_SET(GetTags, &ActorTagsToLuaTable);
     LUA_SET(Get_Static_Mesh_Component, [](AActor& Actor)
             { return Cast<UStaticMeshComponent>(GetComponentByType(Actor, "StaticMeshComponent")); });
+    LUA_SET(GetSkeletalMeshComponent, [](AActor& Actor)
+            { return Cast<USkeletalMeshComponent>(GetComponentByType(Actor, "SkeletalMeshComponent")); });
+    LUA_SET(Get_Skeletal_Mesh_Component, [](AActor& Actor)
+            { return Cast<USkeletalMeshComponent>(GetComponentByType(Actor, "SkeletalMeshComponent")); });
     LUA_SET(GetActorSequenceComponent, [](AActor& Actor)
             { return Cast<UActorSequenceComponent>(GetComponentByType(Actor, "ActorSequenceComponent")); });
     LUA_END_TYPE();

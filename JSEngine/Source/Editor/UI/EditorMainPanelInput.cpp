@@ -230,6 +230,7 @@ void FEditorMainPanel::Update()
     // name-based hover checks are only a hint.
     if (bMouseOverViewportRect
         && !bMouseOverContentBrowser
+        && (!bAnyWindowHovered || bHoveredViewportContentWindow)
         && !bAnyUIItemActive
         && !bAnyPopupOpen
         && !bAnyDragDropActive)

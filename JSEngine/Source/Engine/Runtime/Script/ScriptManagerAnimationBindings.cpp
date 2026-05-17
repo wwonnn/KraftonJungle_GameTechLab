@@ -88,6 +88,8 @@ void FScriptManager::BindAnimationTypes()
             { return Self.AddIntEqualsTransition(LuaName(From), LuaName(To), LuaName(Parameter), Expected, BlendSpeed, Priority); });
     LUA_SET(AddTriggerTransition, [](UAnimationStateMachine& Self, const FString& From, const FString& To, const FString& Parameter, float BlendSpeed, int32 Priority)
             { return Self.AddTriggerTransition(LuaName(From), LuaName(To), LuaName(Parameter), BlendSpeed, Priority); });
+    LUA_SET(AddStateFinishedTransition, [](UAnimationStateMachine& Self, const FString& From, const FString& To, float BlendSpeed, int32 Priority)
+            { return Self.AddStateFinishedTransition(LuaName(From), LuaName(To), BlendSpeed, Priority); });
     LUA_SET(GetCurrentStateName, [](UAnimationStateMachine& Self)
             { return Self.GetCurrentStateName().ToString(); });
     LUA_END_TYPE();

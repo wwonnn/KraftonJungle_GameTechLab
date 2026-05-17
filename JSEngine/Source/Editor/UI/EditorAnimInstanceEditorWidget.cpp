@@ -6,6 +6,7 @@
 #include "ImGui/imgui.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -45,6 +46,8 @@ namespace
             return "Int Equals";
         case EAnimTransitionConditionType::Trigger:
             return "Trigger";
+        case EAnimTransitionConditionType::StateFinished:
+            return "State Finished";
         case EAnimTransitionConditionType::Native:
         default:
             return "Native";
@@ -70,6 +73,67 @@ namespace
         {
             Value = FName(Text);
         }
+    }
+
+    void DrawSectionHeader(const char* Label)
+    {
+        const ImVec2 Min = ImGui::GetCursorScreenPos();
+        const float Height = ImGui::GetFrameHeight();
+        const ImVec2 Max(Min.x + ImGui::GetContentRegionAvail().x, Min.y + Height);
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+        DrawList->AddRectFilled(Min, Max, ImGui::GetColorU32(ImVec4(0.20f, 0.24f, 0.29f, 1.0f)), 4.0f);
+        DrawList->AddRect(Min, Max, ImGui::GetColorU32(ImVec4(0.34f, 0.39f, 0.46f, 1.0f)), 4.0f);
+        ImGui::SetCursorScreenPos(ImVec2(Min.x + 8.0f, Min.y + 3.0f));
+        ImGui::TextUnformatted(Label);
+        ImGui::SetCursorScreenPos(ImVec2(Min.x, Max.y + 4.0f));
+    }
+
+    ImVec2 CubicBezierPoint(const ImVec2& P0, const ImVec2& P1, const ImVec2& P2, const ImVec2& P3, float T)
+    {
+        const float U = 1.0f - T;
+        const float TT = T * T;
+        const float UU = U * U;
+        const float UUU = UU * U;
+        const float TTT = TT * T;
+        return ImVec2(
+            UUU * P0.x + 3.0f * UU * T * P1.x + 3.0f * U * TT * P2.x + TTT * P3.x,
+            UUU * P0.y + 3.0f * UU * T * P1.y + 3.0f * U * TT * P2.y + TTT * P3.y);
+    }
+
+    float DistancePointToSegment(const ImVec2& P, const ImVec2& A, const ImVec2& B)
+    {
+        const float ABX = B.x - A.x;
+        const float ABY = B.y - A.y;
+        const float APX = P.x - A.x;
+        const float APY = P.y - A.y;
+        const float LengthSq = ABX * ABX + ABY * ABY;
+        if (LengthSq <= 0.0001f)
+        {
+            const float DX = P.x - A.x;
+            const float DY = P.y - A.y;
+            return std::sqrt(DX * DX + DY * DY);
+        }
+
+        const float T = std::clamp((APX * ABX + APY * ABY) / LengthSq, 0.0f, 1.0f);
+        const float ClosestX = A.x + ABX * T;
+        const float ClosestY = A.y + ABY * T;
+        const float DX = P.x - ClosestX;
+        const float DY = P.y - ClosestY;
+        return std::sqrt(DX * DX + DY * DY);
+    }
+
+    float DistancePointToBezier(const ImVec2& P, const ImVec2& P0, const ImVec2& P1, const ImVec2& P2, const ImVec2& P3)
+    {
+        float Best = FLT_MAX;
+        ImVec2 Prev = P0;
+        for (int32 Step = 1; Step <= 24; ++Step)
+        {
+            const float T = static_cast<float>(Step) / 24.0f;
+            const ImVec2 Next = CubicBezierPoint(P0, P1, P2, P3, T);
+            Best = std::min(Best, DistancePointToSegment(P, Prev, Next));
+            Prev = Next;
+        }
+        return Best;
     }
 }
 
@@ -171,10 +235,20 @@ void FEditorAnimInstanceEditorWidget::DrawToolbar()
 
 void FEditorAnimInstanceEditorWidget::DrawGraph()
 {
-    const ImVec2 CanvasSize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
-    ImGui::InvisibleButton("##AnimInstanceGraphCanvas", CanvasSize, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-    const ImVec2 CanvasMin = ImGui::GetItemRectMin();
-    const ImVec2 CanvasMax = ImGui::GetItemRectMax();
+    if (!ImGui::BeginChild("##AnimInstanceGraphChild", ImVec2(0.0f, 0.0f), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+    {
+        ImGui::EndChild();
+        return;
+    }
+
+    const ImVec2 CanvasSize(
+        std::max(1.0f, ImGui::GetContentRegionAvail().x),
+        std::max(1.0f, ImGui::GetContentRegionAvail().y));
+    const ImVec2 CanvasMin = ImGui::GetCursorScreenPos();
+    const ImVec2 CanvasMax(CanvasMin.x + CanvasSize.x, CanvasMin.y + CanvasSize.y);
+    const bool bCanvasHovered =
+        ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
+        ImGui::IsMouseHoveringRect(CanvasMin, CanvasMax, true);
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
     DrawList->AddRectFilled(CanvasMin, CanvasMax, ImGui::GetColorU32(ImVec4(0.12f, 0.13f, 0.15f, 1.0f)));
@@ -192,8 +266,9 @@ void FEditorAnimInstanceEditorWidget::DrawGraph()
     }
 
     const ImVec2 NodeSize(150.0f, 62.0f);
-    for (const FAnimInstanceTransitionAssetData& Transition : CurrentAsset->Transitions)
+    for (int32 TransitionIndex = 0; TransitionIndex < static_cast<int32>(CurrentAsset->Transitions.size()); ++TransitionIndex)
     {
+        const FAnimInstanceTransitionAssetData& Transition = CurrentAsset->Transitions[TransitionIndex];
         const int32 FromIndex = FindStateIndex(CurrentAsset, Transition.FromState);
         const int32 ToIndex = FindStateIndex(CurrentAsset, Transition.ToState);
         if (FromIndex < 0 || ToIndex < 0)
@@ -206,13 +281,26 @@ void FEditorAnimInstanceEditorWidget::DrawGraph()
         ImVec2 Start(CanvasMin.x + FromPos.X + NodeSize.x, CanvasMin.y + FromPos.Y + NodeSize.y * 0.5f);
         ImVec2 End(CanvasMin.x + ToPos.X, CanvasMin.y + ToPos.Y + NodeSize.y * 0.5f);
         const ImVec2 ControlOffset(std::max(40.0f, std::abs(End.x - Start.x) * 0.45f), 0.0f);
+        const ImVec2 ControlA(Start.x + ControlOffset.x, Start.y);
+        const ImVec2 ControlB(End.x - ControlOffset.x, End.y);
+        const bool bSelected = SelectedTransitionIndex == TransitionIndex;
         DrawList->AddBezierCubic(
             Start,
-            ImVec2(Start.x + ControlOffset.x, Start.y),
-            ImVec2(End.x - ControlOffset.x, End.y),
+            ControlA,
+            ControlB,
             End,
-            ImGui::GetColorU32(ImVec4(0.83f, 0.72f, 0.45f, 1.0f)),
-            2.0f);
+            ImGui::GetColorU32(bSelected ? ImVec4(1.0f, 0.86f, 0.42f, 1.0f) : ImVec4(0.83f, 0.72f, 0.45f, 1.0f)),
+            bSelected ? 4.0f : 2.0f);
+
+        if (bCanvasHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            const float Distance = DistancePointToBezier(ImGui::GetIO().MousePos, Start, ControlA, ControlB, End);
+            if (Distance <= 8.0f)
+            {
+                SelectedTransitionIndex = TransitionIndex;
+                SelectedStateIndex = -1;
+            }
+        }
     }
 
     for (int32 Index = 0; Index < static_cast<int32>(CurrentAsset->States.size()); ++Index)
@@ -249,11 +337,12 @@ void FEditorAnimInstanceEditorWidget::DrawGraph()
     }
 
     DrawList->PopClipRect();
+    ImGui::EndChild();
 }
 
 void FEditorAnimInstanceEditorWidget::DrawDetails()
 {
-    ImGui::TextUnformatted("States");
+    DrawSectionHeader("States");
     for (int32 Index = 0; Index < static_cast<int32>(CurrentAsset->States.size()); ++Index)
     {
         const FString Label = CurrentAsset->States[Index].Name.ToString();
@@ -265,7 +354,7 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
     }
 
     ImGui::Spacing();
-    ImGui::TextUnformatted("Transitions");
+    DrawSectionHeader("Transitions");
     for (int32 Index = 0; Index < static_cast<int32>(CurrentAsset->Transitions.size()); ++Index)
     {
         const FAnimInstanceTransitionAssetData& Transition = CurrentAsset->Transitions[Index];
@@ -315,6 +404,7 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
             EAnimTransitionConditionType::FloatLessEqual,
             EAnimTransitionConditionType::IntEquals,
             EAnimTransitionConditionType::Trigger,
+            EAnimTransitionConditionType::StateFinished,
         };
         if (ImGui::BeginCombo("Condition", ToConditionLabel(Transition.ConditionType)))
         {
@@ -346,6 +436,10 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
         else if (Transition.ConditionType == EAnimTransitionConditionType::IntEquals)
         {
             bChanged |= ImGui::DragInt("Expected Int", &Transition.ExpectedInt, 1);
+        }
+        else if (Transition.ConditionType == EAnimTransitionConditionType::StateFinished)
+        {
+            ImGui::TextDisabled("Fires when the source state's non-looping animation finishes.");
         }
 
         bChanged |= ImGui::DragFloat("Blend Speed", &Transition.BlendSpeed, 0.01f, 0.0f, 100.0f);

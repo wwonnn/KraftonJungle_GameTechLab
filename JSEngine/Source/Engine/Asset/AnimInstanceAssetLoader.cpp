@@ -34,6 +34,7 @@ namespace
         case EAnimTransitionConditionType::FloatLessEqual: return "FloatLessEqual";
         case EAnimTransitionConditionType::IntEquals: return "IntEquals";
         case EAnimTransitionConditionType::Trigger: return "Trigger";
+        case EAnimTransitionConditionType::StateFinished: return "StateFinished";
         default: return "BoolEquals";
         }
     }
@@ -44,6 +45,7 @@ namespace
         if (Text == "FloatLessEqual") return EAnimTransitionConditionType::FloatLessEqual;
         if (Text == "IntEquals") return EAnimTransitionConditionType::IntEquals;
         if (Text == "Trigger") return EAnimTransitionConditionType::Trigger;
+        if (Text == "StateFinished") return EAnimTransitionConditionType::StateFinished;
         return EAnimTransitionConditionType::BoolEquals;
     }
 

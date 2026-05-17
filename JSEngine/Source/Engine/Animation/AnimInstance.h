@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Object/Object.h"
@@ -33,6 +33,7 @@ public:
     bool BuildStateMachineFromAsset(UAnimInstanceAsset* Asset);
     void SetLooping(bool bInLoop) { bLoop = bInLoop; }
     bool IsLooping() const { return bLoop; }
+    bool IsCurrentAnimationFinished() const { return CurrentSequence && !NextSequence && !bLoop && !bPlaying; }
     float GetCurrentTime() const { return CurrentTime; }
     void SetCurrentTime(float InCurrentTime);
     float GetPlayRate() const { return PlayRate; }

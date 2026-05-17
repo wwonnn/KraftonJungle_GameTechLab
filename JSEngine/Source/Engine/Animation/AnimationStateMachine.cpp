@@ -1,4 +1,4 @@
-#include "AnimationStateMachine.h"
+﻿#include "AnimationStateMachine.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimData/AnimSequence.h"
@@ -337,6 +337,27 @@ bool UAnimationStateMachine::AddTriggerTransition(
     return true;
 }
 
+bool UAnimationStateMachine::AddStateFinishedTransition(
+    const FName& FromState,
+    const FName& ToState,
+    float InBlendSpeed,
+    int32 InPriority)
+{
+    if (!FindState(ToState) || !FindState(FromState))
+    {
+        return false;
+    }
+
+    FAnimStateMachineTransition Transition;
+    Transition.FromState = FromState;
+    Transition.ToState = ToState;
+    Transition.ConditionType = EAnimTransitionConditionType::StateFinished;
+    Transition.BlendSpeed = InBlendSpeed;
+    Transition.Priority = InPriority;
+    Transitions.push_back(Transition);
+    return true;
+}
+
 void UAnimationStateMachine::Tick(float DeltaTime)
 {
     if (!CurrentStateName.IsValid() || bHasPendingTransition)
@@ -455,6 +476,8 @@ bool UAnimationStateMachine::EvaluateTransition(FAnimStateMachineTransition& Tra
         return GetParameterInt(Transition.ParameterName) == Transition.ExpectedInt;
     case EAnimTransitionConditionType::Trigger:
         return ConsumeParameterTrigger(Transition.ParameterName);
+    case EAnimTransitionConditionType::StateFinished:
+        return AnimInstance && AnimInstance->IsCurrentAnimationFinished();
     default:
         return false;
     }

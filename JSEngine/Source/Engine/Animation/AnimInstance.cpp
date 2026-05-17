@@ -225,6 +225,13 @@ bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
                 Transition.BlendSpeed,
                 Transition.Priority);
             break;
+        case EAnimTransitionConditionType::StateFinished:
+            NewStateMachine->AddStateFinishedTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
         case EAnimTransitionConditionType::Native:
         default:
             break;
