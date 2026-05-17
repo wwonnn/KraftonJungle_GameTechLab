@@ -52,10 +52,13 @@ protected:
 
     void SetAnimInstance(UAnimInstance* InAnimInstance);
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
+    void SetAnimInstanceAssetPath(const FString& InPath);
+    const FString& GetAnimInstanceAssetPath() const { return AnimInstanceAssetPath; }
     ULuaAnimInstance* BindLuaAnimInstance(const FString& ScriptName);
 
 protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
+    void PostEditProperty(const char* PropertyName) override;
 
 private:
     void ReleaseSingleNodeAnimation();
@@ -67,11 +70,10 @@ private:
     void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:
-    UPROPERTY(EditAnywhere, DisplayName = "AnimSequence", SerializeName = "AnimSequenceAsset")
-    FString AnimSequencePath;
+    UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
 
     UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")
-    UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
+    FString AnimInstanceAssetPath;
 
     bool bDeferAnimationInitialization = false;
 

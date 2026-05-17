@@ -7,6 +7,7 @@
 #include "Component/SkinnedMeshComponent.h"
 
 class UAnimationStateMachine;
+class UAnimInstanceAsset;
 
 // 시간 t에서의 Skeleton Pose (매 프레임 계산)
 struct FSkeletonPose
@@ -29,6 +30,7 @@ public:
     void SetStateMachine(UAnimationStateMachine* InStateMachine);
     UAnimationStateMachine* GetStateMachine() const { return StateMachine; }
     UAnimationStateMachine* CreateStateMachine();
+    bool BuildStateMachineFromAsset(UAnimInstanceAsset* Asset);
     void SetLooping(bool bInLoop) { bLoop = bInLoop; }
     bool IsLooping() const { return bLoop; }
     float GetCurrentTime() const { return CurrentTime; }

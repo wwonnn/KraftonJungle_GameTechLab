@@ -1,4 +1,4 @@
-﻿#include "Editor/UI/EditorPropertyWidget.h"
+#include "Editor/UI/EditorPropertyWidget.h"
 
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorRenderPipeline.h"
@@ -1825,6 +1825,35 @@ void FEditorPropertyWidget::RenderPropertyWidget(FPropertyDescriptor& Prop)
 					*Val = Buf;
 					bChanged = true;
 				}
+			}
+		}
+		else if (strcmp(Prop.Name, "AnimInstanceAssetPath") == 0)
+		{
+			const TArray<FString>& AnimInstancePaths = EditorEngine
+				? EditorEngine->GetAssetService().GetAnimInstanceAssetPaths()
+				: EmptyAssetNames();
+			const FString Current = *Val;
+			if (ImGui::BeginCombo(Label.c_str(), Current.empty() ? "<None>" : Current.c_str()))
+			{
+				if (ImGui::Selectable("<None>", Current.empty()))
+				{
+					Val->clear();
+					bChanged = true;
+				}
+				for (const FString& Path : AnimInstancePaths)
+				{
+					const bool bSelected = (Current == Path);
+					if (ImGui::Selectable(Path.c_str(), bSelected))
+					{
+						*Val = Path;
+						bChanged = true;
+					}
+					if (bSelected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
 			}
 		}
         else if (strcmp(Prop.Name, "ScriptName") == 0)

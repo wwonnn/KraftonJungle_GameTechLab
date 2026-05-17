@@ -1,4 +1,4 @@
-﻿#include "Editor/UI/EditorMainPanel.h"
+#include "Editor/UI/EditorMainPanel.h"
 
 #include "Editor/Viewer/EditorViewer.h"
 
@@ -146,6 +146,58 @@ void FEditorMainPanel::RenderEditorPanelWindows(float DeltaTime, bool bDrawEdito
 	{
 		Widgets.ConsoleWidget.Render(DeltaTime);
 	}
+    if (bDrawEditorPanels && bLevelEditorTabActive && PanelVisibility.bShowControl)
+    {
+        Widgets.ControlWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && PanelVisibility.bShowMaterialEditor)
+    {
+        Widgets.MaterialWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && PanelVisibility.bShowProperty)
+    {
+        Widgets.PropertyWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && PanelVisibility.bShowSceneManager)
+    {
+        Widgets.SceneWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && PanelVisibility.bShowStatProfiler)
+    {
+        Widgets.StatWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive)
+    {
+        RenderEditorDebugPanel(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive)
+    {
+        RenderUndoHistoryPanel(DeltaTime);
+    }
+    if (bDrawEditorPanels && PanelVisibility.bShowProjectSettings)
+    {
+        RenderProjectSettingsPanel();
+    }
+    if (bDrawEditorPanels && PanelVisibility.bShowWorldSettings)
+    {
+        RenderWorldSettingsPanel();
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && Widgets.CurveEditorWidget.IsVisible())
+    {
+        Widgets.CurveEditorWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && Widgets.AnimInstanceEditorWidget.IsVisible())
+    {
+        Widgets.AnimInstanceEditorWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && bLevelEditorTabActive && Widgets.ActorSequencerWidget.IsVisible())
+    {
+        Widgets.ActorSequencerWidget.Render(DeltaTime);
+    }
+    if (bDrawEditorPanels && PanelVisibility.bShowConsole && Widgets.ConsoleWidget.IsFloatingWindowMode())
+    {
+        Widgets.ConsoleWidget.Render(DeltaTime);
+    }
 
 	for (auto& Widget : Widgets.ViewerWindowWidgets)
 	{

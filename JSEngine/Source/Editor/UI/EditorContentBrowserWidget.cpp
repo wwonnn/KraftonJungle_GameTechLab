@@ -1,4 +1,4 @@
-﻿#include "Editor/UI/EditorContentBrowserWidget.h"
+#include "Editor/UI/EditorContentBrowserWidget.h"
 
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorRenderPipeline.h"
@@ -9,6 +9,7 @@
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/AnimSequenceAssetLoader.h"
+#include "Animation/AnimInstanceAsset.h"
 #include "Asset/CurveFloatAsset.h"
 #include "Asset/StaticMesh.h"
 #include "Core/ResourceManager.h"
@@ -1096,6 +1097,19 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 			DrawList->AddText(ImVec2((IconMin.x + IconMax.x - TextSize.x) * 0.5f, IconMax.y - 22.0f),
 				ImGui::GetColorU32(ImVec4(0.96f, 0.97f, 0.99f, 1.0f)), Kind);
 		}
+		else if (IsAnimInstanceAsset(Item.Extension))
+		{
+			const ImVec2 Center((IconMin.x + IconMax.x) * 0.5f, (IconMin.y + IconMax.y) * 0.5f - 4.0f);
+			const ImU32 NodeColor = ImGui::GetColorU32(ImVec4(0.18f, 0.23f, 0.30f, 1.0f));
+			const ImU32 LineColor = ImGui::GetColorU32(ImVec4(0.84f, 0.72f, 0.42f, 1.0f));
+			DrawList->AddLine(ImVec2(Center.x - 18.0f, Center.y), ImVec2(Center.x + 18.0f, Center.y), LineColor, 2.0f);
+			DrawList->AddRectFilled(ImVec2(Center.x - 32.0f, Center.y - 12.0f), ImVec2(Center.x - 8.0f, Center.y + 12.0f), NodeColor, 4.0f);
+			DrawList->AddRectFilled(ImVec2(Center.x + 8.0f, Center.y - 12.0f), ImVec2(Center.x + 32.0f, Center.y + 12.0f), NodeColor, 4.0f);
+			const char* Kind = "ANIM";
+			const ImVec2 TextSize = ImGui::CalcTextSize(Kind);
+			DrawList->AddText(ImVec2((IconMin.x + IconMax.x - TextSize.x) * 0.5f, IconMax.y - 22.0f),
+				ImGui::GetColorU32(ImVec4(0.96f, 0.97f, 0.99f, 1.0f)), Kind);
+		}
 	}
 
 	FString Label = Item.Name;
@@ -1127,6 +1141,10 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 	{
 		ExtLine = ".curve";
 	}
+	else if (IsAnimInstanceAsset(Item.Extension))
+	{
+		ExtLine = ".AnimInstance";
+	}
 	DrawList->AddText(ImVec2(Min.x + 6.0f, Max.y - 35.0f), ImGui::GetColorU32(ImGuiCol_Text), Label.c_str());
 	DrawList->AddText(ImVec2(Min.x + 6.0f, Max.y - 18.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), ExtLine.c_str());
 
@@ -1146,6 +1164,10 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 		else if (IsCurveAsset(Item.Path))
 		{
 			EditorEngine->GetMainPanel().OpenCurveAsset(MakeRelativeProjectPath(Item.Path));
+		}
+		else if (IsAnimInstanceAsset(Item.Extension))
+		{
+			EditorEngine->GetMainPanel().OpenAnimInstanceAsset(MakeRelativeProjectPath(Item.Path));
 		}
 		else if (Item.Extension == ".scene")
 		{
@@ -1219,6 +1241,11 @@ void FEditorContentBrowserWidget::DrawContentContextMenu(bool bHasSelectedItem)
 		if (ImGui::MenuItem("Curve"))
 		{
 			CreateCurveAsset();
+			ImGui::CloseCurrentPopup();
+		}
+		if (ImGui::MenuItem("Anim Instance"))
+		{
+			CreateAnimInstanceAsset();
 			ImGui::CloseCurrentPopup();
 		}
 		if (ImGui::MenuItem("Scene"))
@@ -1392,6 +1419,45 @@ bool FEditorContentBrowserWidget::CreateCurveAsset()
 
 	SelectedPath = NewPath;
 	RefreshContent();
+	return true;
+}
+
+bool FEditorContentBrowserWidget::CreateAnimInstanceAsset()
+{
+	const std::filesystem::path NewPath = MakeUniquePath(CurrentPath / L"New AnimInstance.AnimInstance");
+	const FString RelativePath = MakeRelativeProjectPath(NewPath);
+
+	UAnimInstanceAsset* Asset = UObjectManager::Get().CreateObject<UAnimInstanceAsset>();
+	if (!Asset)
+	{
+		return false;
+	}
+
+	Asset->SetAssetPath(RelativePath);
+	Asset->EntryState = FName("Idle");
+
+	FAnimInstanceParameterAssetData DirectionParam;
+	DirectionParam.Name = FName("Direction");
+	DirectionParam.Type = EAnimStateParameterType::Int;
+	DirectionParam.IntDefault = 0;
+	Asset->Parameters.push_back(DirectionParam);
+
+	FAnimInstanceStateAssetData IdleState;
+	IdleState.Name = FName("Idle");
+	IdleState.EditorNodePosition = FVector2(80.0f, 120.0f);
+	Asset->States.push_back(IdleState);
+
+	if (!FResourceManager::Get().SaveAnimInstanceAsset(RelativePath, Asset))
+	{
+		return false;
+	}
+
+	SelectedPath = NewPath;
+	RefreshContent();
+	if (EditorEngine)
+	{
+		EditorEngine->GetAssetService().RefreshAssetDatabase();
+	}
 	return true;
 }
 
@@ -1726,6 +1792,23 @@ void FEditorContentBrowserWidget::DrawAssetPreview()
 		return;
 	}
 
+	if (IsAnimInstanceAsset(Extension))
+	{
+		UAnimInstanceAsset* Asset = FResourceManager::Get().LoadAnimInstanceAsset(RelativePath);
+		ImGui::Spacing();
+		ImGui::TextDisabled("Anim Instance");
+		if (!Asset)
+		{
+			ImGui::TextWrapped("Not loaded in ResourceManager.");
+			return;
+		}
+
+		ImGui::Text("States: %d", static_cast<int32>(Asset->States.size()));
+		ImGui::Text("Transitions: %d", static_cast<int32>(Asset->Transitions.size()));
+		ImGui::Text("Parameters: %d", static_cast<int32>(Asset->Parameters.size()));
+		return;
+	}
+
 	if (IsSequenceAsset(Extension))
 	{
 		ImGui::Spacing();
@@ -2022,6 +2105,10 @@ FString FEditorContentBrowserWidget::GetPayloadType(const FContentItem& Item) co
 	{
 		return "CurveContentItem";
 	}
+	if (IsAnimInstanceAsset(Item.Extension))
+	{
+		return "AnimInstanceContentItem";
+	}
 	if (Item.Extension == ".prefab")
 	{
 		return "PrefabContentItem";
@@ -2066,6 +2153,10 @@ ImU32 FEditorContentBrowserWidget::GetItemColor(const FContentItem& Item) const
 	if (IsCurveAsset(Item.Path))
 	{
 		return ImGui::GetColorU32(ImVec4(0.42f, 0.50f, 0.78f, 1.0f));
+	}
+	if (IsAnimInstanceAsset(Item.Extension))
+	{
+		return ImGui::GetColorU32(ImVec4(0.50f, 0.58f, 0.42f, 1.0f));
 	}
 	if (IsSequenceAsset(Item.Extension))
 	{
@@ -2127,6 +2218,11 @@ bool FEditorContentBrowserWidget::IsCurveAsset(const std::filesystem::path& Path
 {
 	const FString Extension = ToLower(FPaths::ToUtf8(Path.extension().wstring()));
 	return Extension == ".curve";
+}
+
+bool FEditorContentBrowserWidget::IsAnimInstanceAsset(const FString& Extension) const
+{
+	return Extension == ".animinstance";
 }
 
 bool FEditorContentBrowserWidget::IsSequenceAsset(const FString& Extension) const

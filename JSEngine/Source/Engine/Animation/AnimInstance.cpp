@@ -1,7 +1,9 @@
 #include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
+#include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimationStateMachine.h"
+#include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 
 namespace
@@ -119,6 +121,124 @@ UAnimationStateMachine* UAnimInstance::CreateStateMachine()
     UAnimationStateMachine* NewStateMachine = UObjectManager::Get().CreateObject<UAnimationStateMachine>();
     SetStateMachine(NewStateMachine);
     return NewStateMachine;
+}
+
+bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
+{
+    if (!Asset)
+    {
+        return false;
+    }
+
+    UAnimationStateMachine* NewStateMachine = CreateStateMachine();
+    if (!NewStateMachine)
+    {
+        return false;
+    }
+
+    for (const FAnimInstanceParameterAssetData& Param : Asset->Parameters)
+    {
+        switch (Param.Type)
+        {
+        case EAnimStateParameterType::Bool:
+            NewStateMachine->RegisterParameterBool(Param.Name, Param.BoolDefault);
+            break;
+        case EAnimStateParameterType::Float:
+            NewStateMachine->RegisterParameterFloat(Param.Name, Param.FloatDefault);
+            break;
+        case EAnimStateParameterType::Int:
+            NewStateMachine->RegisterParameterInt(Param.Name, Param.IntDefault);
+            break;
+        case EAnimStateParameterType::Trigger:
+            NewStateMachine->RegisterParameterTrigger(Param.Name);
+            break;
+        default:
+            break;
+        }
+    }
+
+    bool bAddedAnyState = false;
+    for (const FAnimInstanceStateAssetData& State : Asset->States)
+    {
+        UAnimSequence* Sequence = FResourceManager::Get().LoadAnimSequence(State.AnimSequencePath);
+        if (NewStateMachine->AddState(State.Name, Sequence, State.bLoop, State.PlayRate))
+        {
+            bAddedAnyState = true;
+        }
+    }
+
+    if (!bAddedAnyState)
+    {
+        return false;
+    }
+
+    if (!NewStateMachine->SetEntryState(Asset->EntryState) && !Asset->States.empty())
+    {
+        NewStateMachine->SetEntryState(Asset->States[0].Name);
+    }
+
+    for (const FAnimInstanceTransitionAssetData& Transition : Asset->Transitions)
+    {
+        switch (Transition.ConditionType)
+        {
+        case EAnimTransitionConditionType::BoolEquals:
+            NewStateMachine->AddBoolEqualsTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.ExpectedBool,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::FloatGreater:
+            NewStateMachine->AddFloatGreaterTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.CompareFloat,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::FloatLessEqual:
+            NewStateMachine->AddFloatLessEqualTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.CompareFloat,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::IntEquals:
+            NewStateMachine->AddIntEqualsTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.ExpectedInt,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::Trigger:
+            NewStateMachine->AddTriggerTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::Native:
+        default:
+            break;
+        }
+    }
+
+    if (UAnimSequence* EntrySequence = NewStateMachine->GetCurrentSequence())
+    {
+        SetSequence(EntrySequence);
+        SetLooping(NewStateMachine->GetCurrentStateLooping());
+        PlayRate = NewStateMachine->GetCurrentStatePlayRate();
+    }
+
+    return true;
 }
 
 void UAnimInstance::UpdateAnimation(float DeltaTime)

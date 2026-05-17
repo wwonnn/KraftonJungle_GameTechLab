@@ -1,9 +1,11 @@
 #include "SkeletalMeshComponent.h"
 
+#include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Asset/Skeleton.h"
 #include "Core/ResourceManager.h"
 #include "Animation/LuaAnimInstance.h"
+#include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/SkeletalMeshRenderProxy.h"
 #include "Core/Paths.h"
@@ -326,6 +328,12 @@ void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
     }
 }
 
+void USkeletalMeshComponent::SetAnimInstanceAssetPath(const FString& InPath)
+{
+    AnimInstanceAssetPath = InPath;
+    InitializeAnimation();
+}
+
 ULuaAnimInstance* USkeletalMeshComponent::BindLuaAnimInstance(const FString& ScriptName)
 {
     if (ScriptName.empty())
@@ -345,6 +353,16 @@ ULuaAnimInstance* USkeletalMeshComponent::BindLuaAnimInstance(const FString& Scr
     return LuaAnimInstance;
 }
 
+void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
+{
+    USkinnedMeshComponent::PostEditProperty(PropertyName);
+
+    if (PropertyName && strcmp(PropertyName, "AnimInstanceAssetPath") == 0)
+    {
+        InitializeAnimation();
+    }
+}
+
 void USkeletalMeshComponent::InitializeAnimation()
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
@@ -353,6 +371,25 @@ void USkeletalMeshComponent::InitializeAnimation()
         SingleNodeInstance = nullptr;
         AnimInstance = nullptr;
         return;
+    }
+
+    if (Cast<ULuaAnimInstance>(AnimInstance))
+    {
+        return;
+    }
+
+    if (!AnimInstanceAssetPath.empty())
+    {
+        if (UAnimInstanceAsset* AnimAsset = FResourceManager::Get().LoadAnimInstanceAsset(AnimInstanceAssetPath))
+        {
+            UAnimInstance* AssetAnimInstance = UObjectManager::Get().CreateObject<UAnimInstance>();
+            if (AssetAnimInstance && AssetAnimInstance->BuildStateMachineFromAsset(AnimAsset))
+            {
+                SingleNodeInstance = nullptr;
+                SetAnimInstance(AssetAnimInstance);
+                return;
+            }
+        }
     }
 
     SingleNodeInstance = nullptr;

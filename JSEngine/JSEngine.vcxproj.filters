@@ -1102,6 +1102,8 @@
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimInstanceAsset.cpp" />
+    <ClCompile Include="Source\Engine\Asset\AnimInstanceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Render\Resource\VertexFactoryTypes.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\BillboardRenderProxy.cpp" />
@@ -1113,6 +1115,7 @@
     <ClCompile Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\SubUVRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\TextRenderProxy.cpp" />
+    <ClCompile Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -1212,6 +1215,9 @@
       <Filter>Source\Editor\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\UI\EditorContentBrowserWidget.h">
+      <Filter>Source\Editor\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.h">
       <Filter>Source\Editor\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\UI\EditorControlWidget.h">
@@ -2130,6 +2136,8 @@
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimInstanceAsset.h" />
+    <ClInclude Include="Source\Engine\Asset\AnimInstanceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimationAsset.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequence.h" />

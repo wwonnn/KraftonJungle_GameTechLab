@@ -1,5 +1,6 @@
-﻿#include "Core/ResourceManager.h"
+#include "Core/ResourceManager.h"
 
+#include "Asset/AnimInstanceAssetLoader.h"
 #include "Asset/AnimSequenceAssetLoader.h"
 #include "Core/Paths.h"
 #include "Core/AssetPathPolicy.h"
@@ -162,6 +163,7 @@ void FResourceManager::ClearDiscoveredResourceLists(bool bClearAtlasCache)
 	ParticleFilePaths.clear();
 	CurveFilePaths.clear();
 	AnimSequenceFilePaths.clear();
+	AnimInstanceAssetFilePaths.clear();
 	SkeletalMeshFilePaths.clear();
 	StaticMeshCache.ClearRegistry();
 
@@ -198,6 +200,10 @@ void FResourceManager::RegisterDiscoveredAssetFile(const std::filesystem::path& 
 	else if (Extension == L".skmesh")
 	{
 		SkeletalMeshFilePaths.push_back(RelativePath);
+	}
+	else if (FAssetPathPolicy::IsAnimInstanceAssetPath(FPaths::ToUtf8(FilePath.generic_wstring())))
+	{
+		AnimInstanceAssetFilePaths.push_back(RelativePath);
 	}
 	else if (Extension == L".obj" || Extension == L".fbx")
 	{
@@ -1006,6 +1012,61 @@ bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence
 TArray<FString> FResourceManager::GetAnimSequencePaths() const
 {
 	return AnimSequenceFilePaths;
+}
+
+UAnimInstanceAsset* FResourceManager::LoadAnimInstanceAsset(const FString& Path)
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	auto It = AnimInstanceAssetMap.find(NormalizedPath);
+	if (It != AnimInstanceAssetMap.end())
+	{
+		return It->second;
+	}
+
+	FAnimInstanceAssetLoader Loader;
+	UAnimInstanceAsset* Asset = Loader.Load(NormalizedPath);
+	if (!Asset)
+	{
+		return nullptr;
+	}
+
+	AnimInstanceAssetMap[NormalizedPath] = Asset;
+	if (std::find(AnimInstanceAssetFilePaths.begin(), AnimInstanceAssetFilePaths.end(), NormalizedPath) == AnimInstanceAssetFilePaths.end())
+	{
+		AnimInstanceAssetFilePaths.push_back(NormalizedPath);
+	}
+
+	return Asset;
+}
+
+UAnimInstanceAsset* FResourceManager::FindAnimInstanceAsset(const FString& Path) const
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	auto It = AnimInstanceAssetMap.find(NormalizedPath);
+	return It != AnimInstanceAssetMap.end() ? It->second : nullptr;
+}
+
+bool FResourceManager::SaveAnimInstanceAsset(const FString& Path, const UAnimInstanceAsset* Asset)
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	FAnimInstanceAssetLoader Loader;
+	if (!Loader.Save(NormalizedPath, Asset))
+	{
+		return false;
+	}
+
+	AnimInstanceAssetMap[NormalizedPath] = const_cast<UAnimInstanceAsset*>(Asset);
+	if (std::find(AnimInstanceAssetFilePaths.begin(), AnimInstanceAssetFilePaths.end(), NormalizedPath) == AnimInstanceAssetFilePaths.end())
+	{
+		AnimInstanceAssetFilePaths.push_back(NormalizedPath);
+	}
+
+	return true;
+}
+
+TArray<FString> FResourceManager::GetAnimInstanceAssetPaths() const
+{
+	return AnimInstanceAssetFilePaths;
 }
 
 const TArray<FString>& FResourceManager::GetTextureFilePath() const

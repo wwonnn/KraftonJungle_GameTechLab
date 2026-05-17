@@ -58,6 +58,14 @@ bool FAssetPathPolicy::IsSequenceAssetPath(const FString& Path)
 	return Extension == L".sequence";
 }
 
+bool FAssetPathPolicy::IsAnimInstanceAssetPath(const FString& Path)
+{
+	std::filesystem::path FsPath(FPaths::ToWide(FPaths::Normalize(Path)));
+	std::wstring Extension = FsPath.extension().wstring();
+	std::transform(Extension.begin(), Extension.end(), Extension.begin(), ::towlower);
+	return Extension == L".animinstance";
+}
+
 bool FAssetPathPolicy::IsSerializedMaterialAssetPath(const FString& Path)
 {
 	std::filesystem::path FsPath(FPaths::ToWide(FPaths::Normalize(Path)));
