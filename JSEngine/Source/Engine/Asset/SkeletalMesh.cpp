@@ -1,24 +1,31 @@
 ﻿#include "SkeletalMesh.h"
 
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/Skeleton.h"
 #include "Core/Logging/Log.h"
 #include "Engine/Geometry/Transform.h"
 
 DEFINE_CLASS(USkeletalMesh, UObject)
 
-FSkeletalMesh::~FSkeletalMesh()
+const TArray<FBoneInfo>& FSkeletalMesh::GetBones() const
 {
-    ClearAnimationSequences();
+    static const TArray<FBoneInfo> Empty = {};
+    return Skeleton ? Skeleton->GetBones() : Empty;
 }
 
-void FSkeletalMesh::ClearAnimationSequences()
+TArray<FBoneInfo>* FSkeletalMesh::GetMutableBones()
 {
-    for (UAnimSequence* Sequence : AnimationSequences)
+    if (!Skeleton || !Skeleton->GetSkeletonData())
     {
-        delete Sequence;
+        return nullptr;
     }
 
-    AnimationSequences.clear();
+    return &Skeleton->GetSkeletonData()->Bones;
+}
+
+bool FSkeletalMesh::HasValidSkeletonData() const
+{
+    return Skeleton != nullptr && Skeleton->HasValidSkeletonData();
 }
 
 FMatrix FSkeletalMeshSocket::GetRelativeTransform() const
@@ -80,13 +87,34 @@ const TArray<uint32>& USkeletalMesh::GetIndices() const
 const TArray<FBoneInfo>& USkeletalMesh::GetBones() const
 {
     static const TArray<FBoneInfo> Empty = {};
-    return MeshData ? MeshData->Bones : Empty;
+    return MeshData ? MeshData->GetBones() : Empty;
 }
 
 const TArray<UAnimSequence*>& USkeletalMesh::GetAnimationSequences() const
 {
     static const TArray<UAnimSequence*> Empty = {};
-    return MeshData ? MeshData->AnimationSequences : Empty;
+    return Empty;
+}
+
+void USkeletalMesh::SetSkeleton(USkeleton* InSkeleton)
+{
+    if (!MeshData)
+    {
+        return;
+    }
+
+    MeshData->Skeleton = InSkeleton;
+}
+
+USkeleton* USkeletalMesh::GetSkeleton() const
+{
+    return MeshData ? MeshData->Skeleton : nullptr;
+}
+
+const FString& USkeletalMesh::GetSkeletonAssetPath() const
+{
+    static const FString Empty = {};
+    return MeshData ? MeshData->SkeletonAssetPath : Empty;
 }
 
 const FBoneInfo* USkeletalMesh::GetBoneInfo(int32 BoneIndex) const
@@ -96,12 +124,13 @@ const FBoneInfo* USkeletalMesh::GetBoneInfo(int32 BoneIndex) const
         return nullptr;
     }
 
-    if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(MeshData->Bones.size()))
+    const TArray<FBoneInfo>& Bones = MeshData->GetBones();
+    if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(Bones.size()))
     {
         return nullptr;
     }
 
-    return &MeshData->Bones[BoneIndex];
+    return &Bones[BoneIndex];
 }
 
 const FMatrix& USkeletalMesh::GetLocalBindTransform(int32 BoneIndex) const
@@ -177,7 +206,10 @@ const FAABB& USkeletalMesh::GetLocalBounds() const
 
 bool USkeletalMesh::HasValidMeshData() const
 {
-    return MeshData != nullptr && !MeshData->Vertices.empty() && !MeshData->Indices.empty() && !MeshData->Bones.empty();
+    return MeshData != nullptr
+        && !MeshData->Vertices.empty()
+        && !MeshData->Indices.empty()
+        && MeshData->HasValidSkeletonData();
 }
 
 void USkeletalMesh::RebuildLocalBoundsFromMeshData()

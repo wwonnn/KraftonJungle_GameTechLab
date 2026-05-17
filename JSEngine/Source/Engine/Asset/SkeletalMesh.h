@@ -2,6 +2,9 @@
 #include "Object/Object.h"
 #include "SkeletalMeshTypes.h"
 
+class UAnimSequence;
+class USkeleton;
+
 class USkeletalMesh : public UObject
 {
 public:
@@ -22,6 +25,9 @@ public:
 
     const TArray<FBoneInfo>& GetBones() const;
     const TArray<UAnimSequence*>& GetAnimationSequences() const;
+    void SetSkeleton(USkeleton* InSkeleton);
+    USkeleton* GetSkeleton() const;
+    const FString& GetSkeletonAssetPath() const;
 
 	const FBoneInfo* GetBoneInfo(int32 BoneIndex) const;
 

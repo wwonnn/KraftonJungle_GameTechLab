@@ -2,21 +2,12 @@
 #include "Core/CoreMinimal.h"
 #include "Math/Rotator.h"
 #include "Object/FName.h"
+#include "SkeletonTypes.h"
 #include "StaticMeshTypes.h"
 
-class UAnimSequence;
+class USkeleton;
 
-struct FBoneInfo
-{
-    FString Name;
-
-    int32 ParentIndex = -1;
-
-    FMatrix LocalBindTransform;
-    FMatrix GlobalBindTransform;
-
-    FMatrix InverseBindPose;
-};
+using FBoneInfo = FSkeletonBone;
 
 // 본에 묶인 명명된 attach point. T/R/S는 본 local 기준.
 struct FSkeletalMeshSocket
@@ -33,16 +24,16 @@ struct FSkeletalMeshSocket
 
 struct FSkeletalMesh
 {
-    ~FSkeletalMesh();
-
-    void ClearAnimationSequences();
-
     FString PathFileName;
+    FString SkeletonAssetPath;
+    USkeleton* Skeleton = nullptr;
+
     TArray<FSkeletalMeshVertex> Vertices;
     TArray<uint32> Indices;
 
-    TArray<FBoneInfo> Bones;
-    TArray<UAnimSequence*> AnimationSequences;
+    const TArray<FBoneInfo>& GetBones() const;
+    TArray<FBoneInfo>* GetMutableBones();
+    bool HasValidSkeletonData() const;
 
     // 변환 행렬의 경우 FBoneInfo에만 두도록 처리
 

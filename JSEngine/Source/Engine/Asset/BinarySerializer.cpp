@@ -2,10 +2,13 @@
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/PhysicsAsset.h"
+#include "Asset/Skeleton.h"
 #include "Asset/StaticMeshTypes.h"
 #include "Asset/SkeletalMeshTypes.h"
 #include "Core/Paths.h"
 #include "Math/Matrix.h"
+#include "Object/ObjectFactory.h"
 
 #include <filesystem>
 #include <chrono>
@@ -40,7 +43,13 @@ constexpr uint32 STATIC_MESH_BINARY_MAGIC = 0x4853454D; // 'MESH'
 constexpr uint32 STATIC_MESH_BINARY_VERSION = 1;
 
 constexpr uint32 SKELETAL_MESH_BINARY_MAGIC   = 0x534D4B53; // 'SKMS'
-constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 3;          // v3: AnimationSequences 블록 추가
+constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 4;          // v4: Skeleton/Animation/PhysicsAsset 분리
+
+constexpr uint32 SKELETON_BINARY_MAGIC = 0x4C454B53;        // 'SKEL'
+constexpr uint32 SKELETON_BINARY_VERSION = 1;
+
+constexpr uint32 PHYSICS_ASSET_BINARY_MAGIC = 0x53594850;   // 'PHYS'
+constexpr uint32 PHYSICS_ASSET_BINARY_VERSION = 1;
 
 //	Vailidation Checkers
 constexpr uint32 MAX_STATIC_MESH_VERTEX_COUNT   = 10'000'000;
@@ -58,6 +67,13 @@ constexpr uint32 MAX_SKELETAL_MESH_SOCKET_COUNT   = 1024;
 constexpr uint32 MAX_SKELETAL_MESH_ANIMATION_COUNT = 1024;
 constexpr uint32 MAX_ANIMATION_TRACK_COUNT         = 65'536;
 constexpr uint32 MAX_ANIMATION_KEY_COUNT           = 1'000'000;
+
+constexpr uint32 MAX_SKELETON_BONE_COUNT           = 65'536;
+constexpr uint32 MAX_SKELETON_SOCKET_COUNT         = 1024;
+constexpr uint32 MAX_SKELETON_CURVE_METADATA_COUNT = 4096;
+
+constexpr uint32 MAX_PHYSICS_BODY_COUNT            = 65'536;
+constexpr uint32 MAX_PHYSICS_CONSTRAINT_COUNT      = 65'536;
 
 static bool IsValidStaticMeshHeader(const FStaticMeshBinaryHeader& Header)
 {
@@ -101,8 +117,7 @@ static bool IsValidSkeletalMeshHeader(const FSkeletalMeshBinaryHeader& Header)
 		return false;
 	}
 
-	// 포맷 변경 시 캐시를 재생성하기 위해 현재 버전만 유효한 캐시로 수용.
-	if (Header.Version != SKELETAL_MESH_BINARY_VERSION)
+	if (Header.Version == 0 || Header.Version > SKELETAL_MESH_BINARY_VERSION)
 	{
 		return false;
 	}
@@ -138,6 +153,61 @@ static bool IsValidSkeletalMeshHeader(const FSkeletalMeshBinaryHeader& Header)
 	}
 
 	if (Header.AnimationCount > MAX_SKELETAL_MESH_ANIMATION_COUNT)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+static bool IsValidSkeletonHeader(const FSkeletonBinaryHeader& Header)
+{
+	if (Header.MagicNumber != SKELETON_BINARY_MAGIC)
+	{
+		return false;
+	}
+
+	if (Header.Version != SKELETON_BINARY_VERSION)
+	{
+		return false;
+	}
+
+	if (Header.BoneCount > MAX_SKELETON_BONE_COUNT)
+	{
+		return false;
+	}
+
+	if (Header.SocketCount > MAX_SKELETON_SOCKET_COUNT)
+	{
+		return false;
+	}
+
+	if (Header.CurveMetaDataCount > MAX_SKELETON_CURVE_METADATA_COUNT)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+static bool IsValidPhysicsAssetHeader(const FPhysicsAssetBinaryHeader& Header)
+{
+	if (Header.MagicNumber != PHYSICS_ASSET_BINARY_MAGIC)
+	{
+		return false;
+	}
+
+	if (Header.Version != PHYSICS_ASSET_BINARY_VERSION)
+	{
+		return false;
+	}
+
+	if (Header.BodyCount > MAX_PHYSICS_BODY_COUNT)
+	{
+		return false;
+	}
+
+	if (Header.ConstraintCount > MAX_PHYSICS_CONSTRAINT_COUNT)
 	{
 		return false;
 	}
@@ -755,6 +825,44 @@ bool FBinarySerializer::ReadSkeletalHeader(std::ifstream& In, FSkeletalMeshBinar
 	return true;
 }
 
+void FBinarySerializer::WriteSkeletonHeader(std::ofstream& Out, const FSkeletonBinaryHeader& Header)
+{
+	WriteUInt32LE(Out, Header.MagicNumber);
+	WriteUInt32LE(Out, Header.Version);
+	WriteUInt32LE(Out, Header.BoneCount);
+	WriteUInt32LE(Out, Header.SocketCount);
+	WriteUInt32LE(Out, Header.CurveMetaDataCount);
+	WriteUInt64LE(Out, Header.SourceFileWriteTime);
+}
+
+bool FBinarySerializer::ReadSkeletonHeader(std::ifstream& In, FSkeletonBinaryHeader& OutHeader) const
+{
+	return ReadUInt32LE(In, OutHeader.MagicNumber)
+		&& ReadUInt32LE(In, OutHeader.Version)
+		&& ReadUInt32LE(In, OutHeader.BoneCount)
+		&& ReadUInt32LE(In, OutHeader.SocketCount)
+		&& ReadUInt32LE(In, OutHeader.CurveMetaDataCount)
+		&& ReadUInt64LE(In, OutHeader.SourceFileWriteTime);
+}
+
+void FBinarySerializer::WritePhysicsAssetHeader(std::ofstream& Out, const FPhysicsAssetBinaryHeader& Header)
+{
+	WriteUInt32LE(Out, Header.MagicNumber);
+	WriteUInt32LE(Out, Header.Version);
+	WriteUInt32LE(Out, Header.BodyCount);
+	WriteUInt32LE(Out, Header.ConstraintCount);
+	WriteUInt64LE(Out, Header.SourceFileWriteTime);
+}
+
+bool FBinarySerializer::ReadPhysicsAssetHeader(std::ifstream& In, FPhysicsAssetBinaryHeader& OutHeader) const
+{
+	return ReadUInt32LE(In, OutHeader.MagicNumber)
+		&& ReadUInt32LE(In, OutHeader.Version)
+		&& ReadUInt32LE(In, OutHeader.BodyCount)
+		&& ReadUInt32LE(In, OutHeader.ConstraintCount)
+		&& ReadUInt64LE(In, OutHeader.SourceFileWriteTime);
+}
+
 void FBinarySerializer::WriteMatrix4x4(std::ofstream& Out, const FMatrix& M)
 {
 	// row-major 16 float
@@ -780,6 +888,252 @@ bool FBinarySerializer::ReadMatrix4x4(std::ifstream& In, FMatrix& OutM) const
 		}
 	}
 
+	return true;
+}
+
+void FBinarySerializer::WriteTransform(std::ofstream& Out, const FTransform& Transform)
+{
+	const FQuat& Rotation = Transform.GetRotation();
+	const FVector& Translation = Transform.GetTranslation();
+	const FVector& Scale3D = Transform.GetScale3D();
+
+	WriteFloatLE(Out, Rotation.X);
+	WriteFloatLE(Out, Rotation.Y);
+	WriteFloatLE(Out, Rotation.Z);
+	WriteFloatLE(Out, Rotation.W);
+
+	WriteFloatLE(Out, Translation.X);
+	WriteFloatLE(Out, Translation.Y);
+	WriteFloatLE(Out, Translation.Z);
+
+	WriteFloatLE(Out, Scale3D.X);
+	WriteFloatLE(Out, Scale3D.Y);
+	WriteFloatLE(Out, Scale3D.Z);
+}
+
+bool FBinarySerializer::ReadTransform(std::ifstream& In, FTransform& OutTransform) const
+{
+	FQuat Rotation;
+	FVector Translation;
+	FVector Scale3D;
+
+	if (!ReadFloatLE(In, Rotation.X) ||
+		!ReadFloatLE(In, Rotation.Y) ||
+		!ReadFloatLE(In, Rotation.Z) ||
+		!ReadFloatLE(In, Rotation.W))
+	{
+		return false;
+	}
+
+	if (!ReadFloatLE(In, Translation.X) ||
+		!ReadFloatLE(In, Translation.Y) ||
+		!ReadFloatLE(In, Translation.Z))
+	{
+		return false;
+	}
+
+	if (!ReadFloatLE(In, Scale3D.X) ||
+		!ReadFloatLE(In, Scale3D.Y) ||
+		!ReadFloatLE(In, Scale3D.Z))
+	{
+		return false;
+	}
+
+	OutTransform = FTransform(Rotation, Translation, Scale3D);
+	return true;
+}
+
+void FBinarySerializer::WriteSkeletonData(std::ofstream& Out, const FSkeletonData& Data)
+{
+	WriteString(Out, Data.PathFileName);
+
+	WriteUInt32LE(Out, static_cast<uint32>(Data.Bones.size()));
+	for (const FSkeletonBone& Bone : Data.Bones)
+	{
+		WriteString(Out, Bone.Name);
+		WriteInt32LE(Out, Bone.ParentIndex);
+		WriteMatrix4x4(Out, Bone.LocalBindTransform);
+		WriteMatrix4x4(Out, Bone.GlobalBindTransform);
+		WriteMatrix4x4(Out, Bone.InverseBindPose);
+	}
+
+	WriteUInt32LE(Out, static_cast<uint32>(Data.Sockets.size()));
+	for (const FSkeletonSocket& Socket : Data.Sockets)
+	{
+		WriteString(Out, Socket.Name.ToString());
+		WriteInt32LE(Out, Socket.BoneIndex);
+
+		WriteFloatLE(Out, Socket.RelativeLocation.X);
+		WriteFloatLE(Out, Socket.RelativeLocation.Y);
+		WriteFloatLE(Out, Socket.RelativeLocation.Z);
+
+		WriteFloatLE(Out, Socket.RelativeRotation.Pitch);
+		WriteFloatLE(Out, Socket.RelativeRotation.Yaw);
+		WriteFloatLE(Out, Socket.RelativeRotation.Roll);
+
+		WriteFloatLE(Out, Socket.RelativeScale.X);
+		WriteFloatLE(Out, Socket.RelativeScale.Y);
+		WriteFloatLE(Out, Socket.RelativeScale.Z);
+	}
+
+	WriteUInt32LE(Out, static_cast<uint32>(Data.CurveMetaData.size()));
+	for (const FSkeletonCurveMetaData& CurveMetaData : Data.CurveMetaData)
+	{
+		WriteString(Out, CurveMetaData.Name.ToString());
+		WriteUInt32LE(Out, CurveMetaData.bMorphTarget ? 1u : 0u);
+		WriteUInt32LE(Out, CurveMetaData.bMaterial ? 1u : 0u);
+	}
+}
+
+bool FBinarySerializer::ReadSkeletonData(std::ifstream& In, FSkeletonData& OutData, const FSkeletonBinaryHeader& Header) const
+{
+	if (!ReadString(In, OutData.PathFileName))
+	{
+		return false;
+	}
+
+	uint32 BoneCount = 0;
+	if (!ReadUInt32LE(In, BoneCount) || BoneCount != Header.BoneCount || BoneCount > MAX_SKELETON_BONE_COUNT)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	OutData.Bones.resize(BoneCount);
+	for (FSkeletonBone& Bone : OutData.Bones)
+	{
+		if (!ReadString(In, Bone.Name) ||
+			!ReadInt32LE(In, Bone.ParentIndex) ||
+			!ReadMatrix4x4(In, Bone.LocalBindTransform) ||
+			!ReadMatrix4x4(In, Bone.GlobalBindTransform) ||
+			!ReadMatrix4x4(In, Bone.InverseBindPose))
+		{
+			return false;
+		}
+	}
+
+	uint32 SocketCount = 0;
+	if (!ReadUInt32LE(In, SocketCount) || SocketCount != Header.SocketCount || SocketCount > MAX_SKELETON_SOCKET_COUNT)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	OutData.Sockets.resize(SocketCount);
+	for (FSkeletonSocket& Socket : OutData.Sockets)
+	{
+		FString SocketName;
+		if (!ReadString(In, SocketName) ||
+			!ReadInt32LE(In, Socket.BoneIndex) ||
+			!ReadFloatLE(In, Socket.RelativeLocation.X) ||
+			!ReadFloatLE(In, Socket.RelativeLocation.Y) ||
+			!ReadFloatLE(In, Socket.RelativeLocation.Z) ||
+			!ReadFloatLE(In, Socket.RelativeRotation.Pitch) ||
+			!ReadFloatLE(In, Socket.RelativeRotation.Yaw) ||
+			!ReadFloatLE(In, Socket.RelativeRotation.Roll) ||
+			!ReadFloatLE(In, Socket.RelativeScale.X) ||
+			!ReadFloatLE(In, Socket.RelativeScale.Y) ||
+			!ReadFloatLE(In, Socket.RelativeScale.Z))
+		{
+			return false;
+		}
+
+		Socket.Name = FName(SocketName);
+	}
+
+	uint32 CurveMetaDataCount = 0;
+	if (!ReadUInt32LE(In, CurveMetaDataCount) ||
+		CurveMetaDataCount != Header.CurveMetaDataCount ||
+		CurveMetaDataCount > MAX_SKELETON_CURVE_METADATA_COUNT)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	OutData.CurveMetaData.resize(CurveMetaDataCount);
+	for (FSkeletonCurveMetaData& CurveMetaData : OutData.CurveMetaData)
+	{
+		FString CurveName;
+		uint32 bMorphTarget = 0;
+		uint32 bMaterial = 0;
+		if (!ReadString(In, CurveName) ||
+			!ReadUInt32LE(In, bMorphTarget) ||
+			!ReadUInt32LE(In, bMaterial))
+		{
+			return false;
+		}
+
+		CurveMetaData.Name = FName(CurveName);
+		CurveMetaData.bMorphTarget = bMorphTarget != 0;
+		CurveMetaData.bMaterial = bMaterial != 0;
+	}
+
+	return In.good();
+}
+
+bool FBinarySerializer::SaveSkeleton(const FString& BinaryPath, const FString& SourcePath, const USkeleton& Data)
+{
+	const FSkeletonData* SkeletonData = Data.GetSkeletonData();
+	if (!SkeletonData)
+	{
+		return false;
+	}
+
+	std::ofstream Out(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
+	if (!Out.is_open())
+	{
+		return false;
+	}
+
+	FSkeletonBinaryHeader Header;
+	Header.MagicNumber = SKELETON_BINARY_MAGIC;
+	Header.Version = SKELETON_BINARY_VERSION;
+	Header.BoneCount = static_cast<uint32>(SkeletonData->Bones.size());
+	Header.SocketCount = static_cast<uint32>(SkeletonData->Sockets.size());
+	Header.CurveMetaDataCount = static_cast<uint32>(SkeletonData->CurveMetaData.size());
+	Header.SourceFileWriteTime = GetFileWriteTimeTicks(SourcePath);
+
+	if (!IsValidSkeletonHeader(Header))
+	{
+		return false;
+	}
+
+	WriteSkeletonHeader(Out, Header);
+	WriteSkeletonData(Out, *SkeletonData);
+	return Out.good();
+}
+
+bool FBinarySerializer::LoadSkeleton(const FString& BinaryPath, USkeleton& OutData)
+{
+	std::ifstream In(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
+	if (!In.is_open())
+	{
+		return false;
+	}
+
+	FSkeletonBinaryHeader Header;
+	if (!ReadSkeletonHeader(In, Header) || !IsValidSkeletonHeader(Header))
+	{
+		return false;
+	}
+
+	FSkeletonData* SkeletonData = new FSkeletonData();
+	if (!ReadSkeletonData(In, *SkeletonData, Header))
+	{
+		delete SkeletonData;
+		return false;
+	}
+
+	if (!In.good() ||
+		SkeletonData->Bones.size() != Header.BoneCount ||
+		SkeletonData->Sockets.size() != Header.SocketCount ||
+		SkeletonData->CurveMetaData.size() != Header.CurveMetaDataCount)
+	{
+		delete SkeletonData;
+		return false;
+	}
+
+	OutData.SetSkeletonData(SkeletonData);
 	return true;
 }
 
@@ -949,10 +1303,11 @@ bool FBinarySerializer::ReadSkeletalSections(std::ifstream& In, FSkeletalMesh& O
 
 void FBinarySerializer::WriteBones(std::ofstream& Out, const FSkeletalMesh& Data)
 {
-	uint32 Count = static_cast<uint32>(Data.Bones.size());
+	const TArray<FBoneInfo>& Bones = Data.GetBones();
+	uint32 Count = static_cast<uint32>(Bones.size());
 	WriteUInt32LE(Out, Count);
 
-	for (const FBoneInfo& Bone : Data.Bones)
+	for (const FBoneInfo& Bone : Bones)
 	{
 		WriteString(Out, Bone.Name);
 		WriteInt32LE(Out, Bone.ParentIndex);
@@ -976,9 +1331,25 @@ bool FBinarySerializer::ReadBones(std::ifstream& In, FSkeletalMesh& OutData, uin
 		return false;
 	}
 
-	OutData.Bones.resize(Count);
+	if (!OutData.Skeleton)
+	{
+		USkeleton* Skeleton = UObjectManager::Get().CreateObject<USkeleton>();
+		FSkeletonData* SkeletonData = new FSkeletonData();
+		SkeletonData->PathFileName = OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath;
+		Skeleton->SetSkeletonData(SkeletonData);
+		OutData.Skeleton = Skeleton;
+	}
 
-	for (FBoneInfo& Bone : OutData.Bones)
+	TArray<FBoneInfo>* Bones = OutData.GetMutableBones();
+	if (!Bones)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	Bones->resize(Count);
+
+	for (FBoneInfo& Bone : *Bones)
 	{
 		if (!ReadString(In, Bone.Name))
 		{
@@ -1085,63 +1456,16 @@ bool FBinarySerializer::ReadSockets(std::ifstream& In, FSkeletalMesh& OutData, u
 
 void FBinarySerializer::WriteAnimationSequences(std::ofstream& Out, const FSkeletalMesh& Data)
 {
-	const uint32 SequenceCount = static_cast<uint32>(Data.AnimationSequences.size());
+	(void)Data;
+	const uint32 SequenceCount = 0;
 	WriteUInt32LE(Out, SequenceCount);
-
-	for (const UAnimSequence* Sequence : Data.AnimationSequences)
-	{
-		const UAnimDataModel* DataModel = Sequence ? Sequence->DataModel : nullptr;
-		const FString SequenceName = Sequence ? FString(Sequence->GetName()) : FString();
-
-		WriteString(Out, SequenceName);
-		WriteInt32LE(Out, DataModel ? DataModel->FrameRate.Numerator : 30);
-		WriteInt32LE(Out, DataModel ? DataModel->FrameRate.Denominator : 1);
-		WriteInt32LE(Out, DataModel ? DataModel->NumberOfFrames : 0);
-		WriteInt32LE(Out, DataModel ? DataModel->NumberOfKeys : 0);
-
-		const uint32 TrackCount = DataModel ? static_cast<uint32>(DataModel->BoneAnimationTracks.size()) : 0;
-		WriteUInt32LE(Out, TrackCount);
-
-		if (!DataModel)
-		{
-			continue;
-		}
-
-		for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
-		{
-			const FString TrackName = Track.Name.ToString();
-			WriteString(Out, TrackName);
-			WriteInt32LE(Out, Track.BoneTreeIndex);
-
-			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.PosKeys.size()));
-			for (const FVector& Key : Track.InternalTrackData.PosKeys)
-			{
-				WriteFloatLE(Out, Key.X);
-				WriteFloatLE(Out, Key.Y);
-				WriteFloatLE(Out, Key.Z);
-			}
-
-			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.RotKeys.size()));
-			for (const FQuat& Key : Track.InternalTrackData.RotKeys)
-			{
-				WriteFloatLE(Out, Key.X);
-				WriteFloatLE(Out, Key.Y);
-				WriteFloatLE(Out, Key.Z);
-				WriteFloatLE(Out, Key.W);
-			}
-
-			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.ScaleKeys.size()));
-			for (const FVector& Key : Track.InternalTrackData.ScaleKeys)
-			{
-				WriteFloatLE(Out, Key.X);
-				WriteFloatLE(Out, Key.Y);
-				WriteFloatLE(Out, Key.Z);
-			}
-		}
-	}
 }
 
-bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh& OutData, uint32 AnimationCount) const
+bool FBinarySerializer::ReadAnimationSequences(
+	std::ifstream& In,
+	FSkeletalMesh& OutData,
+	uint32 AnimationCount,
+	TArray<UAnimSequence*>* OutAnimationSequences) const
 {
 	uint32 SequenceCount = 0;
 	if (!ReadUInt32LE(In, SequenceCount))
@@ -1154,9 +1478,6 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 		In.setstate(std::ios::failbit);
 		return false;
 	}
-
-	OutData.ClearAnimationSequences();
-	OutData.AnimationSequences.reserve(SequenceCount);
 
 	for (uint32 SequenceIndex = 0; SequenceIndex < SequenceCount; ++SequenceIndex)
 	{
@@ -1192,6 +1513,8 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 
 		UAnimSequence* Sequence = new UAnimSequence();
 		Sequence->SetFName(FName(SequenceName));
+		Sequence->SetSkeleton(OutData.Skeleton);
+		Sequence->SetSkeletonAssetPath(OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath);
 
 		UAnimDataModel* DataModel = new UAnimDataModel();
 		DataModel->SetFName(FName(SequenceName + "_Data"));
@@ -1281,7 +1604,14 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 			DataModel->BoneAnimationTracks.push_back(Track);
 		}
 
-		OutData.AnimationSequences.push_back(Sequence);
+		if (OutAnimationSequences)
+		{
+			OutAnimationSequences->push_back(Sequence);
+		}
+		else
+		{
+			delete Sequence;
+		}
 	}
 
 	return In.good();
@@ -1323,9 +1653,9 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 	Header.IndexCount   = static_cast<uint32>(Data.Indices.size());
 	Header.SectionCount = static_cast<uint32>(Data.Sections.size());
 	Header.SlotCount    = static_cast<uint32>(Data.MaterialSlots.size());
-	Header.BoneCount    = static_cast<uint32>(Data.Bones.size());
+	Header.BoneCount    = 0;
 	Header.SocketCount  = static_cast<uint32>(Data.Sockets.size());
-	Header.AnimationCount = static_cast<uint32>(Data.AnimationSequences.size());
+	Header.AnimationCount = 0;
 	Header.SourceFileWriteTime = GetFileWriteTimeTicks(SourcePath);
 
 	if (!IsValidSkeletalMeshHeader(Header))
@@ -1336,6 +1666,7 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 	WriteSkeletalHeader(Out, Header);
 
 	WriteString(Out, Data.PathFileName);
+	WriteString(Out, Data.SkeletonAssetPath);
 	WriteSkeletalVertices(Out, Data);
 	WriteIndexArray(Out, Data.Indices);
 	WriteSkeletalSections(Out, Data);
@@ -1348,15 +1679,21 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 		WriteString(Out, Slot.SlotName);
 	}
 
-	WriteBones(Out, Data);
 	WriteSockets(Out, Data);
-	WriteAnimationSequences(Out, Data);
 	WriteSkeletalBounds(Out, Data);
 
 	return Out.good();
 }
 
 bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMesh& OutData)
+{
+	return LoadSkeletalMesh(BinaryPath, OutData, nullptr);
+}
+
+bool FBinarySerializer::LoadSkeletalMesh(
+	const FString& BinaryPath,
+	FSkeletalMesh& OutData,
+	TArray<UAnimSequence*>* OutLegacyAnimationSequences)
 {
 	std::ifstream In(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
 	if (!In.is_open())
@@ -1378,6 +1715,18 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 	if (!ReadString(In, OutData.PathFileName))
 	{
 		return false;
+	}
+
+	if (Header.Version >= 4)
+	{
+		if (!ReadString(In, OutData.SkeletonAssetPath))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		OutData.SkeletonAssetPath = OutData.PathFileName;
 	}
 
 	if (!ReadSkeletalVertices(In, OutData, Header.VertexCount))
@@ -1417,9 +1766,16 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 		OutData.MaterialSlots[i].Material = nullptr; // load 후 resolve
 	}
 
-	if (!ReadBones(In, OutData, Header.BoneCount))
+	if (Header.Version < 4)
 	{
-		return false;
+		if (!ReadBones(In, OutData, Header.BoneCount))
+		{
+			return false;
+		}
+	}
+	else
+	{
+		OutData.Skeleton = nullptr;
 	}
 
 	// v2부터 Sockets 블록. v1 .bin은 Header.SocketCount==0으로 들어와서 자연스럽게 skip.
@@ -1435,19 +1791,249 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 		OutData.Sockets.clear();
 	}
 
-	if (Header.Version >= 3)
+	TArray<UAnimSequence*> LegacyAnimationSequences;
+	auto DeleteLegacyAnimationSequences = [&LegacyAnimationSequences]()
 	{
-		if (!ReadAnimationSequences(In, OutData, Header.AnimationCount))
+		for (UAnimSequence* Sequence : LegacyAnimationSequences)
 		{
+			delete Sequence;
+		}
+		LegacyAnimationSequences.clear();
+	};
+
+	if (Header.Version >= 3 && Header.Version < 4)
+	{
+		if (!ReadAnimationSequences(In, OutData, Header.AnimationCount, &LegacyAnimationSequences))
+		{
+			DeleteLegacyAnimationSequences();
 			return false;
 		}
 	}
 	else
 	{
-		OutData.ClearAnimationSequences();
 	}
 
 	if (!ReadSkeletalBounds(In, OutData))
+	{
+		DeleteLegacyAnimationSequences();
+		return false;
+	}
+
+	if (!In.good())
+	{
+		DeleteLegacyAnimationSequences();
+		return false;
+	}
+
+	//	Header ↔ Body 카운트 cross-check
+	if (!(OutData.Vertices.size()      == Header.VertexCount  &&
+	      OutData.Indices.size()       == Header.IndexCount   &&
+	      OutData.Sections.size()      == Header.SectionCount &&
+	      OutData.MaterialSlots.size() == Header.SlotCount    &&
+	      OutData.Sockets.size()       == Header.SocketCount))
+	{
+		DeleteLegacyAnimationSequences();
+		return false;
+	}
+
+	if (Header.Version < 4 && OutData.GetBones().size() != Header.BoneCount)
+	{
+		DeleteLegacyAnimationSequences();
+		return false;
+	}
+
+	if (OutLegacyAnimationSequences)
+	{
+		OutLegacyAnimationSequences->insert(
+			OutLegacyAnimationSequences->end(),
+			LegacyAnimationSequences.begin(),
+			LegacyAnimationSequences.end());
+	}
+	else
+	{
+		DeleteLegacyAnimationSequences();
+	}
+
+	return true;
+}
+
+void FBinarySerializer::WritePhysicsAssetData(std::ofstream& Out, const FPhysicsAssetData& Data)
+{
+	WriteString(Out, Data.PathFileName);
+	WriteString(Out, Data.SkeletonAssetPath);
+
+	WriteUInt32LE(Out, static_cast<uint32>(Data.Bodies.size()));
+	for (const FPhysicsBody& Body : Data.Bodies)
+	{
+		WriteString(Out, Body.Name.ToString());
+		WriteInt32LE(Out, Body.BoneIndex);
+		WriteUInt32LE(Out, static_cast<uint32>(Body.Shape));
+		WriteTransform(Out, Body.LocalTransform);
+
+		WriteFloatLE(Out, Body.BoxExtent.X);
+		WriteFloatLE(Out, Body.BoxExtent.Y);
+		WriteFloatLE(Out, Body.BoxExtent.Z);
+		WriteFloatLE(Out, Body.SphereRadius);
+		WriteFloatLE(Out, Body.CapsuleRadius);
+		WriteFloatLE(Out, Body.CapsuleHalfHeight);
+	}
+
+	WriteUInt32LE(Out, static_cast<uint32>(Data.Constraints.size()));
+	for (const FPhysicsConstraint& Constraint : Data.Constraints)
+	{
+		WriteString(Out, Constraint.Name.ToString());
+		WriteInt32LE(Out, Constraint.ParentBodyIndex);
+		WriteInt32LE(Out, Constraint.ChildBodyIndex);
+		WriteTransform(Out, Constraint.ParentLocalFrame);
+		WriteTransform(Out, Constraint.ChildLocalFrame);
+	}
+}
+
+bool FBinarySerializer::ReadPhysicsAssetData(std::ifstream& In, FPhysicsAssetData& OutData, const FPhysicsAssetBinaryHeader& Header) const
+{
+	if (!ReadString(In, OutData.PathFileName) ||
+		!ReadString(In, OutData.SkeletonAssetPath))
+	{
+		return false;
+	}
+
+	uint32 BodyCount = 0;
+	if (!ReadUInt32LE(In, BodyCount) || BodyCount != Header.BodyCount || BodyCount > MAX_PHYSICS_BODY_COUNT)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	OutData.Bodies.resize(BodyCount);
+	for (FPhysicsBody& Body : OutData.Bodies)
+	{
+		FString BodyName;
+		uint32 ShapeValue = 0;
+		if (!ReadString(In, BodyName) ||
+			!ReadInt32LE(In, Body.BoneIndex) ||
+			!ReadUInt32LE(In, ShapeValue) ||
+			!ReadTransform(In, Body.LocalTransform) ||
+			!ReadFloatLE(In, Body.BoxExtent.X) ||
+			!ReadFloatLE(In, Body.BoxExtent.Y) ||
+			!ReadFloatLE(In, Body.BoxExtent.Z) ||
+			!ReadFloatLE(In, Body.SphereRadius) ||
+			!ReadFloatLE(In, Body.CapsuleRadius) ||
+			!ReadFloatLE(In, Body.CapsuleHalfHeight))
+		{
+			return false;
+		}
+
+		if (ShapeValue > static_cast<uint32>(EPhysicsBodyShape::Capsule))
+		{
+			In.setstate(std::ios::failbit);
+			return false;
+		}
+
+		Body.Name = FName(BodyName);
+		Body.Shape = static_cast<EPhysicsBodyShape>(ShapeValue);
+	}
+
+	uint32 ConstraintCount = 0;
+	if (!ReadUInt32LE(In, ConstraintCount) ||
+		ConstraintCount != Header.ConstraintCount ||
+		ConstraintCount > MAX_PHYSICS_CONSTRAINT_COUNT)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	OutData.Constraints.resize(ConstraintCount);
+	for (FPhysicsConstraint& Constraint : OutData.Constraints)
+	{
+		FString ConstraintName;
+		if (!ReadString(In, ConstraintName) ||
+			!ReadInt32LE(In, Constraint.ParentBodyIndex) ||
+			!ReadInt32LE(In, Constraint.ChildBodyIndex) ||
+			!ReadTransform(In, Constraint.ParentLocalFrame) ||
+			!ReadTransform(In, Constraint.ChildLocalFrame))
+		{
+			return false;
+		}
+
+		Constraint.Name = FName(ConstraintName);
+	}
+
+	return In.good();
+}
+
+bool FBinarySerializer::SavePhysicsAsset(const FString& BinaryPath, const FString& SourcePath, const UPhysicsAsset& Data)
+{
+	const FPhysicsAssetData* PhysicsAssetData = Data.GetPhysicsAssetData();
+	if (!PhysicsAssetData)
+	{
+		return false;
+	}
+
+	std::ofstream Out(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
+	if (!Out.is_open())
+	{
+		return false;
+	}
+
+	FPhysicsAssetBinaryHeader Header;
+	Header.MagicNumber = PHYSICS_ASSET_BINARY_MAGIC;
+	Header.Version = PHYSICS_ASSET_BINARY_VERSION;
+	Header.BodyCount = static_cast<uint32>(PhysicsAssetData->Bodies.size());
+	Header.ConstraintCount = static_cast<uint32>(PhysicsAssetData->Constraints.size());
+	Header.SourceFileWriteTime = GetFileWriteTimeTicks(SourcePath);
+
+	if (!IsValidPhysicsAssetHeader(Header))
+	{
+		return false;
+	}
+
+	WritePhysicsAssetHeader(Out, Header);
+	WritePhysicsAssetData(Out, *PhysicsAssetData);
+	return Out.good();
+}
+
+bool FBinarySerializer::LoadPhysicsAsset(const FString& BinaryPath, UPhysicsAsset& OutData)
+{
+	std::ifstream In(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
+	if (!In.is_open())
+	{
+		return false;
+	}
+
+	FPhysicsAssetBinaryHeader Header;
+	if (!ReadPhysicsAssetHeader(In, Header) || !IsValidPhysicsAssetHeader(Header))
+	{
+		return false;
+	}
+
+	FPhysicsAssetData* PhysicsAssetData = new FPhysicsAssetData();
+	if (!ReadPhysicsAssetData(In, *PhysicsAssetData, Header))
+	{
+		delete PhysicsAssetData;
+		return false;
+	}
+
+	if (!In.good() ||
+		PhysicsAssetData->Bodies.size() != Header.BodyCount ||
+		PhysicsAssetData->Constraints.size() != Header.ConstraintCount)
+	{
+		delete PhysicsAssetData;
+		return false;
+	}
+
+	OutData.SetPhysicsAssetData(PhysicsAssetData);
+	return true;
+}
+
+bool FBinarySerializer::ReadSkeletonHeader(const FString& BinaryPath, FSkeletonBinaryHeader& OutHeader) const
+{
+	std::ifstream In(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
+	if (!In.is_open())
+	{
+		return false;
+	}
+
+	if (!ReadSkeletonHeader(In, OutHeader))
 	{
 		return false;
 	}
@@ -1457,14 +2043,7 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 		return false;
 	}
 
-	//	Header ↔ Body 카운트 cross-check
-	if (!(OutData.Vertices.size()      == Header.VertexCount  &&
-	      OutData.Indices.size()       == Header.IndexCount   &&
-	      OutData.Sections.size()      == Header.SectionCount &&
-	      OutData.MaterialSlots.size() == Header.SlotCount    &&
-	      OutData.Bones.size()         == Header.BoneCount    &&
-	      OutData.Sockets.size()       == Header.SocketCount  &&
-	      OutData.AnimationSequences.size() == Header.AnimationCount))
+	if (!IsValidSkeletonHeader(OutHeader))
 	{
 		return false;
 	}
@@ -1491,6 +2070,32 @@ bool FBinarySerializer::ReadSkeletalMeshHeader(const FString& BinaryPath, FSkele
 	}
 
 	if (!IsValidSkeletalMeshHeader(OutHeader))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool FBinarySerializer::ReadPhysicsAssetHeader(const FString& BinaryPath, FPhysicsAssetBinaryHeader& OutHeader) const
+{
+	std::ifstream In(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
+	if (!In.is_open())
+	{
+		return false;
+	}
+
+	if (!ReadPhysicsAssetHeader(In, OutHeader))
+	{
+		return false;
+	}
+
+	if (!In.good())
+	{
+		return false;
+	}
+
+	if (!IsValidPhysicsAssetHeader(OutHeader))
 	{
 		return false;
 	}

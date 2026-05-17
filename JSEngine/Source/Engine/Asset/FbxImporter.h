@@ -26,6 +26,18 @@ struct FFbxMeshContentInfo
     bool bHasSkeletalMesh = false;
 };
 
+class UAnimSequence;
+class UPhysicsAsset;
+class USkeleton;
+
+struct FImportedSkeletalAsset
+{
+    USkeleton* Skeleton = nullptr;
+    FSkeletalMesh* SkeletalMesh = nullptr;
+    TArray<UAnimSequence*> AnimationSequences;
+    UPhysicsAsset* PhysicsAsset = nullptr;
+};
+
 class FFbxImporter : public IAssetLoader
 {
 public:
@@ -37,6 +49,7 @@ public:
 	bool SupportsExtension(const FString& Extension) const override;
 	FString GetLoaderName() const override;
 
+    FImportedSkeletalAsset ImportSkeletalAsset(const FString& Path, const FStaticMeshLoadOptions& LoadOptions);
 	FSkeletalMesh* LoadSkeletalMesh(const FString& Path, const FStaticMeshLoadOptions& LoadOptions);
 
 	FFbxMeshContentInfo InspectMeshContent(const FString& Path);
