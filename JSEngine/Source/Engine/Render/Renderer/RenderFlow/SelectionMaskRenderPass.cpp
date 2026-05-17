@@ -1,4 +1,4 @@
-#include "SelectionMaskRenderPass.h"
+﻿#include "SelectionMaskRenderPass.h"
 #include "Core/ResourceManager.h"
 #include "Component/PrimitiveComponent.h"
 #include "Render/Scene/RenderBus.h"
@@ -96,6 +96,18 @@ static FShaderProgram* GetSelectionMaskProgram(const FRenderCommand& Cmd)
     PSKey.FilePath = FShaderPaths::EditorSelectionMask;
     PSKey.EntryPoint = PSEntry;
     PSKey.PermutationKey = ShaderKey;
+
+    // If drawing skeletal mesh, compile with SKELETAL_MESH macro so GPU skinning path is available
+    if (ShaderKey == 3 && Cmd.SkinningMatrices)
+    {
+        static D3D_SHADER_MACRO Macros[] = { { "SKELETAL_MESH", "1" }, { nullptr, nullptr } };
+        return FResourceManager::Get().GetOrCreateShaderProgram(
+            VSKey,
+            PSKey,
+            Macros,
+            Macros,
+            VertexLayout);
+    }
 
     return FResourceManager::Get().GetOrCreateShaderProgram(
         VSKey,
@@ -215,7 +227,7 @@ bool FSelectionMaskRenderPass::DrawCommand(const FRenderPassContext* Context)
         }
 
         Program->Bind(Context->DeviceContext);
-        BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+        BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
 
         Context->RenderResources->PerObjectConstantBuffer.Update(Context->DeviceContext, &Cmd.PerObjectConstants, sizeof(FPerObjectConstants));
         ID3D11Buffer* cb1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();

@@ -30,6 +30,8 @@ TArray<D3D_SHADER_MACRO> FShaderHelper::BuildUberLitMacros(uint32 PermutationKey
 	if (!!(Features & EShaderFeature::ShadowPSM))      AddMacro("SHADOW_MAP_PSM", "1");
 	if (!!(Features & EShaderFeature::CascadeVis))     AddMacro("CASCADE_VIS", "1");
     if (!!(Features & EShaderFeature::ShadowVSM))      AddMacro("SHADOW_MAP_VSM", "1");
+    if (!!(Features & EShaderFeature::UseCPUSkinning)) 
+		AddMacro("USE_CPU_SKINNING", "1");
 
 	switch (LightingModel)
 	{

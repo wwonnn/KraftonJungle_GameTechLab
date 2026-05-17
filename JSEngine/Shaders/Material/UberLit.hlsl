@@ -51,6 +51,8 @@ SamplerComparisonState ShadowSampler : register(s1);
 
 Texture2D VSMMap : register(t11); // ?곷떒 ?좎뼵遺??異붽?
 
+StructuredBuffer<float4x4> SkinningMatrices : register(t16);
+
 struct VSInput
 {
     float3 Position : POSITION;
@@ -132,11 +134,41 @@ PSInput mainVS(VSInput input)
 PSInput SkeletalMeshVS(SkeletalVSInput input)
 {
     VSInput passThrough;
-    passThrough.Position = input.Position;
+
+    float4 Pos = float4(input.Position, 1);
+
+    float4 weights = input.BoneWeights / dot(input.BoneWeights, 1.0f);
+
+    float4 SkinnedPos =
+        mul(SkinningMatrices[input.BoneIndices.x], Pos) * weights.x +
+        mul(SkinningMatrices[input.BoneIndices.y], Pos) * weights.y +
+        mul(SkinningMatrices[input.BoneIndices.z], Pos) * weights.z +
+        mul(SkinningMatrices[input.BoneIndices.w], Pos) * weights.w;
+
+    float3 SkinnedNormal =
+        mul((float3x3) SkinningMatrices[input.BoneIndices.x], input.Normal) * weights.x +
+        mul((float3x3) SkinningMatrices[input.BoneIndices.y], input.Normal) * weights.y +
+        mul((float3x3) SkinningMatrices[input.BoneIndices.z], input.Normal) * weights.z +
+        mul((float3x3) SkinningMatrices[input.BoneIndices.w], input.Normal) * weights.w;
+
+    float3 SkinnedTangent =
+        mul((float3x3) SkinningMatrices[input.BoneIndices.x], input.Tangent.xyz) * weights.x +
+        mul((float3x3) SkinningMatrices[input.BoneIndices.y], input.Tangent.xyz) * weights.y +
+        mul((float3x3) SkinningMatrices[input.BoneIndices.z], input.Tangent.xyz) * weights.z +
+        mul((float3x3) SkinningMatrices[input.BoneIndices.w], input.Tangent.xyz) * weights.w;
+
+    #if USE_CPU_SKINNING
+        passThrough.Position = input.Position;
+        passThrough.Normal = input.Normal;
+        passThrough.Tangent = input.Tangent;
+    #else
+        passThrough.Position = SkinnedPos.xyz;
+        passThrough.Normal = normalize(SkinnedNormal);
+        passThrough.Tangent = float4(normalize(SkinnedTangent), input.Tangent.w);
+    #endif
     passThrough.Color = input.Color;
-    passThrough.Normal = input.Normal;
     passThrough.UV = input.UV;
-    passThrough.Tangent = input.Tangent;
+
     return mainVS(passThrough);
 }
 

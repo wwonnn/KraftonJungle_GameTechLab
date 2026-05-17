@@ -1,4 +1,4 @@
-#include "EditorOverlayCollector.h"
+﻿#include "EditorOverlayCollector.h"
 
 #include "Component/BillboardComponent.h"
 #include "Component/DecalComponent.h"
@@ -455,6 +455,10 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                     MaskCmd.SectionIndexStart = Section.StartIndex;
                     MaskCmd.SectionIndexCount = Section.IndexCount;
                     MaskCmd.Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(SectionIdx));
+                    if (SkeletalMeshComp->IsGPUSkinningEnabled())
+                    {
+                        MaskCmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+                    }
                     RenderBus.AddCommand(ERenderPass::SelectionMask, MaskCmd);
                 }
             }
@@ -463,6 +467,10 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                 FRenderCommand MaskCmd = BaseCmd;
                 MaskCmd.Type = ERenderCommandType::SelectionMask;
                 MaskCmd.Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(0));
+            if (SkeletalMeshComp->IsGPUSkinningEnabled())
+            {
+                MaskCmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+            }
                 RenderBus.AddCommand(ERenderPass::SelectionMask, MaskCmd);
             }
         }

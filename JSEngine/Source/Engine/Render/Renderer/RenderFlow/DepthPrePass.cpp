@@ -1,14 +1,15 @@
-#include "DepthPrePass.h"
+﻿#include "DepthPrePass.h"
 #include "Render/Scene/RenderBus.h"
 #include "Render/Resource/RenderResources.h"
 #include "Render/Resource/Material.h"
 #include "Render/Resource/ShaderPaths.h"
 #include "Render/Resource/VertexFactoryTypes.h"
+#include "Render/Resource/ShaderHelper.h"
 #include "Core/ResourceManager.h"
 
 namespace
 {
-	FShaderProgram* GetDepthPrepassProgram(EVertexFactoryType VertexFactoryType)
+	FShaderProgram* GetDepthPrepassProgram(EVertexFactoryType VertexFactoryType, bool bUseGPUSkinning, const FVertexLayoutDesc* PositionLayout)
 	{
 		const FVertexFactoryDesc& VertexFactory = FVertexFactoryRegistry::Get(VertexFactoryType);
 
@@ -20,12 +21,24 @@ namespace
 		PSKey.FilePath = FShaderPaths::DepthPrepass;
 		PSKey.EntryPoint = "DepthPrepassPS";
 
+		// Build macros so we can compile a skeletal variant of the depth VS that
+		// performs GPU skinning when needed. Only enable SKELETAL_MESH when the
+		// draw command intends to use GPU skinning.
+		TArray<D3D_SHADER_MACRO> Macros;
+		if (VertexFactoryType == EVertexFactoryType::SkeletalMesh && bUseGPUSkinning)
+		{
+			Macros.push_back({ "SKELETAL_MESH", "1" });
+		}
+		Macros.push_back({ nullptr, nullptr });
+
+		const FVertexLayoutDesc* LayoutToUse = PositionLayout ? PositionLayout : &VertexFactory.PositionOnlyLayout;
+
 		return FResourceManager::Get().GetOrCreateShaderProgram(
 			VSKey,
 			PSKey,
-			nullptr,
-			nullptr,
-			&VertexFactory.PositionOnlyLayout);
+			Macros.data(),
+			Macros.data(),
+			LayoutToUse);
 	}
 }
 
@@ -87,14 +100,34 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		uint32 Offset = 0;
 		Context->DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
 
-		FShaderProgram* Program = GetDepthPrepassProgram(Cmd.VertexFactoryType);
+	// Select input layout & whether to compile GPU-skinning variant per-command.
+	const FVertexFactoryDesc& VFDesc = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+	const FVertexLayoutDesc* PositionLayout = nullptr;
+	bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
+	if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
+	{
+		if (bUseGPUSkinning)
+		{
+			PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
+		}
+		else
+		{
+			// For CPU skinning, ensure depth prepass reads the same full skeletal
+			// vertex layout that the mesh buffer provides so POSITION is sourced
+			// correctly from the dynamic skeletal vertex buffer.
+			const FVertexFactoryDesc& VF = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+			PositionLayout = &VF.VertexLayout;
+		}
+	}
+
+	FShaderProgram* Program = GetDepthPrepassProgram(Cmd.VertexFactoryType, bUseGPUSkinning, PositionLayout);
 		if (!Program)
 		{
 			continue;
 		}
 
 		Program->Bind(Context->DeviceContext);
-		BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+		BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
         CheckOverrideViewMode(Context);  
 
 		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();

@@ -1,4 +1,4 @@
-#include "SkinnedMeshComponent.h"
+﻿#include "SkinnedMeshComponent.h"
 
 #include "Core/ResourceManager.h"
 #include "Render/Resource/Material.h"
@@ -92,6 +92,10 @@ void USkinnedMeshComponent::PostEditProperty(const char* PropertyName)
 
         MarkRenderStateDirty();
     }
+	else if (std::strcmp(PropertyName, "bEnableCPUSkinning") == 0)
+	{
+        MarkSkinningDirty();
+	}
 }
 
 void USkinnedMeshComponent::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
@@ -298,11 +302,6 @@ bool USkinnedMeshComponent::ConsumeRenderStateDirty()
 
 void USkinnedMeshComponent::EnsureSkinningUpdated()
 {
-    if (!bEnableCPUSkinning)
-    {
-        return;
-    }
-
     if (!bSkinningDirty)
     {
         return;
@@ -313,9 +312,12 @@ void USkinnedMeshComponent::EnsureSkinningUpdated()
         return;
     }
 
+	// Matrix Update 는 CPU/GPU Skinning 공통
     UpdateCurrentGlobalPose();
     UpdateSkinningMatrices();
-    SkinVerticesCPU();
+
+	if (bEnableCPUSkinning)
+	    SkinVerticesCPU();
 
     bSkinningDirty = false;
     MarkBoundsDirty();

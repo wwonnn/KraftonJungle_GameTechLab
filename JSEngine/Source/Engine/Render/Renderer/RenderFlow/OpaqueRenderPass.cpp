@@ -1,4 +1,4 @@
-#include "OpaqueRenderPass.h"
+﻿#include "OpaqueRenderPass.h"
 #include "Render/Device/D3DDevice.h"
 #include "Render/Scene/RenderBus.h"
 #include "Render/Resource/RenderResources.h"
@@ -126,6 +126,12 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            PermutationKey |= (uint32)EShaderFeature::TileCull;
        bool bShadowApplied = false; // 추가
 
+       if (!Cmd.SkinningMatrices)
+       {
+           // GPU 에 넘길 SkinningMatrices 가 없다 = CPU Skinning 쓰겠다
+           PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+	   }
+
 	   // ShadowMap Permutation Key 조합
        for (const FShadowLightRequest& Request : RenderBus->ShadowLightRequests)
        {
@@ -207,7 +213,7 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            Cmd.Material->BindParameters(Context->DeviceContext, Program->PS);
 
            // 현재는 CPU Skinning이라 추가 바인딩이 없지만, GPU Skinning에서는 여기서 Bone Buffer가 붙습니다.
-           BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd);
+           BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
        }
 
        auto DSState = FResourceManager::Get().GetOrCreateDepthStencilState(EDepthStencilType::Default);

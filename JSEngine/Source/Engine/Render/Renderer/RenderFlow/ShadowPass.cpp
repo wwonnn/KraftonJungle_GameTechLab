@@ -1,4 +1,4 @@
-#include "ShadowPass.h"
+﻿#include "ShadowPass.h"
 
 #include "Core/ResourceManager.h"
 #include "Render/Resource/ShaderHelper.h"
@@ -38,10 +38,16 @@ namespace
 		return Cast<ULightComponent>(Request.LightComponent);
 	}
 
-	FShaderProgram* GetShadowProgram(EVertexFactoryType VertexFactoryType, uint32 ShadowKey)
+    FShaderProgram* GetShadowProgram(EVertexFactoryType VertexFactoryType, uint32 ShadowKey, bool bUseGPUSkinning, const FVertexLayoutDesc* PositionLayout)
 	{
 		const FVertexFactoryDesc& VertexFactory = FVertexFactoryRegistry::Get(VertexFactoryType);
-		auto Macros = FShaderHelper::BuildShadowMapMacros(static_cast<EShadowMap>(ShadowKey));
+        auto Macros = FShaderHelper::BuildShadowMapMacros(static_cast<EShadowMap>(ShadowKey));
+
+        // Only enable skeletal skinning macro if this draw will use GPU skinning.
+        if (VertexFactoryType == EVertexFactoryType::SkeletalMesh && bUseGPUSkinning)
+        {
+            Macros.insert(Macros.end() - 1, D3D_SHADER_MACRO{ "SKELETAL_MESH", "1" });
+        }
 
 		FShaderStageKey VSKey;
 		VSKey.FilePath = VertexFactory.ShadowPassVSPath.empty() ? FShaderPaths::Shadow : VertexFactory.ShadowPassVSPath;
@@ -53,12 +59,13 @@ namespace
 		PSKey.EntryPoint = "ShadowPS";
 		PSKey.PermutationKey = ShadowKey;
 
-		return FResourceManager::Get().GetOrCreateShaderProgram(
-			VSKey,
-			PSKey,
-			Macros.data(),
-			Macros.data(),
-			&VertexFactory.PositionOnlyLayout);
+        const FVertexLayoutDesc* LayoutToUse = PositionLayout ? PositionLayout : &VertexFactory.PositionOnlyLayout;
+        return FResourceManager::Get().GetOrCreateShaderProgram(
+            VSKey,
+            PSKey,
+            Macros.data(),
+            Macros.data(),
+            LayoutToUse);
 	}
 }
 
@@ -112,14 +119,32 @@ void FShadowPass::RenderShadowDepth(
 		uint32 Offset = 0;
 		DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
 
-		FShaderProgram* Program = GetShadowProgram(Cmd.VertexFactoryType, ShadowKey);
+	// Per-command choose whether GPU skinning will be used and select input layout
+	bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
+	const FVertexLayoutDesc* PositionLayout = nullptr;
+	if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
+	{
+		if (bUseGPUSkinning)
+		{
+			PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
+		}
+		else
+		{
+			// For CPU skinning, use the full skeletal vertex layout so the shadow
+			// pass reads POSITION from the dynamic skinned vertex buffer.
+			const FVertexFactoryDesc& VF = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+			PositionLayout = &VF.VertexLayout;
+		}
+	}
+
+	FShaderProgram* Program = GetShadowProgram(Cmd.VertexFactoryType, ShadowKey, bUseGPUSkinning, PositionLayout);
 		if (!Program)
 		{
 			continue;
 		}
 
 		Program->Bind(DeviceContext);
-		BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd);
+		BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
 		CheckOverrideViewMode(Context);
 
 		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
