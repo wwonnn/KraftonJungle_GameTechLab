@@ -1,10 +1,12 @@
 #include "Core/SkeletalMeshLoadService.h"
 
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/Skeleton.h"
 #include "Core/AssetPathPolicy.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
+#include "Object/ObjectFactory.h"
 
 #include <algorithm>
 #include <chrono>
@@ -72,8 +74,10 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 {
 	FStaticMeshLoadOptions LoadOptions;
 	const FString BinaryPath = FAssetPathPolicy::MakeWritableSkeletalMeshCacheBinaryPath(NormalizedPath);
+	const FString SkeletonBinaryPath = FAssetPathPolicy::MakeWritableSkeletonCacheBinaryPath(NormalizedPath);
 
 	FSkeletalMesh* LoadedMeshData = nullptr;
+	TArray<UAnimSequence*> ImportedAnimationSequences;
 	double BinaryLoadSec = 0.0;
 	double SourceLoadSec = 0.0;
 
@@ -88,6 +92,23 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 			delete LoadedMeshData;
 			LoadedMeshData = nullptr;
 		}
+		else if (!LoadedMeshData->HasValidSkeletonData())
+		{
+			USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
+			if (LoadedSkeleton && ResourceManager.BinarySerializer.LoadSkeleton(SkeletonBinaryPath, *LoadedSkeleton))
+			{
+				LoadedMeshData->Skeleton = LoadedSkeleton;
+				if (LoadedMeshData->SkeletonAssetPath.empty())
+				{
+					LoadedMeshData->SkeletonAssetPath = LoadedSkeleton->GetAssetPathFileName();
+				}
+			}
+			else
+			{
+				delete LoadedMeshData;
+				LoadedMeshData = nullptr;
+			}
+		}
 
 		const auto BinaryEnd = std::chrono::steady_clock::now();
 		BinaryLoadSec = std::chrono::duration<double>(BinaryEnd - BinaryStart).count();
@@ -97,15 +118,39 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 	if (LoadedMeshData == nullptr)
 	{
 		const auto SourceStart = std::chrono::steady_clock::now();
-		LoadedMeshData = ResourceManager.FbxImporter.LoadSkeletalMesh(NormalizedPath, LoadOptions);
+		FImportedSkeletalAsset ImportedAsset = ResourceManager.FbxImporter.ImportSkeletalAsset(NormalizedPath, LoadOptions);
+		LoadedMeshData = ImportedAsset.SkeletalMesh;
+		ImportedAnimationSequences = ImportedAsset.AnimationSequences;
 		const auto SourceEnd = std::chrono::steady_clock::now();
 		SourceLoadSec = std::chrono::duration<double>(SourceEnd - SourceStart).count();
 
 		if (!LoadedMeshData)
 		{
+			for (UAnimSequence* Sequence : ImportedAnimationSequences)
+			{
+				delete Sequence;
+			}
 			UE_LOG_ERROR("[SkeletalMeshLoad] Failed | Path=%s | BinarySec=%.6f | FbxSec=%.6f",
 				NormalizedPath.c_str(), BinaryLoadSec, SourceLoadSec);
 			return nullptr;
+		}
+
+		if (LoadedMeshData->Skeleton)
+		{
+			const bool bSaveSkeletonOk = ResourceManager.BinarySerializer.SaveSkeleton(
+				SkeletonBinaryPath,
+				NormalizedPath,
+				*LoadedMeshData->Skeleton);
+			if (bSaveSkeletonOk)
+			{
+				UE_LOG("[SkeletalMeshLoad] Skeleton cache saved | Path=%s | BinaryPath=%s",
+				       NormalizedPath.c_str(), SkeletonBinaryPath.c_str());
+			}
+			else
+			{
+				UE_LOG_WARNING("[SkeletalMeshLoad] Skeleton cache save failed | Path=%s | BinaryPath=%s",
+				               NormalizedPath.c_str(), SkeletonBinaryPath.c_str());
+			}
 		}
 
 		// Material 포인터는 직렬화 대상이 아니므로 이 시점에 그대로 굽고, resolve는 Finalize에서 한 번만.
@@ -127,10 +172,14 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		       NormalizedPath.c_str(), BinaryLoadSec, BinaryPath.c_str());
 	}
 
-	return FinalizeLoadedMesh(LoadedMeshData, NormalizedPath, NormalizedPath);
+	return FinalizeLoadedMesh(LoadedMeshData, NormalizedPath, NormalizedPath, ImportedAnimationSequences);
 }
 
-USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshData, const FString& ResolvePath, const FString& CacheKey)
+USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
+	FSkeletalMesh* MeshData,
+	const FString& ResolvePath,
+	const FString& CacheKey,
+	const TArray<UAnimSequence*>& ImportedAnimationSequences)
 {
 	ResourceManager.ResolveSkeletalMeshMaterialSlots(ResolvePath, MeshData);
 
@@ -144,13 +193,21 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshD
 		ResourceManager.SkeletalMeshFilePaths.push_back(CacheKey);
 	}
 
-	const TArray<UAnimSequence*>& AnimationSequences = LoadedMesh->GetAnimationSequences();
-	for (int32 SequenceIndex = 0; SequenceIndex < static_cast<int32>(AnimationSequences.size()); ++SequenceIndex)
+	for (int32 SequenceIndex = 0; SequenceIndex < static_cast<int32>(ImportedAnimationSequences.size()); ++SequenceIndex)
 	{
-		UAnimSequence* Sequence = AnimationSequences[SequenceIndex];
+		UAnimSequence* Sequence = ImportedAnimationSequences[SequenceIndex];
 		if (!Sequence)
 		{
 			continue;
+		}
+
+		if (!Sequence->GetSkeleton())
+		{
+			Sequence->SetSkeleton(LoadedMesh->GetSkeleton());
+		}
+		if (Sequence->GetSkeletonAssetPath().empty())
+		{
+			Sequence->SetSkeletonAssetPath(LoadedMesh->GetSkeletonAssetPath());
 		}
 
 		const FString SequenceAssetPath = MakeSequenceAssetPath(ResolvePath, Sequence, SequenceIndex);
@@ -167,6 +224,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshD
 			               CacheKey.c_str(),
 			               Sequence->GetName().c_str(),
 			               SequenceAssetPath.c_str());
+			delete Sequence;
 		}
 	}
 

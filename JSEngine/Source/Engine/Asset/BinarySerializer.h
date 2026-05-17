@@ -6,7 +6,12 @@
 
 struct FStaticMesh;
 struct FSkeletalMesh;
+struct FPhysicsAssetData;
+struct FSkeletonData;
 struct FMatrix;
+struct FTransform;
+class UPhysicsAsset;
+class USkeleton;
 
 /*
  *	[주의사항]
@@ -27,14 +32,35 @@ struct FStaticMeshBinaryHeader
 struct FSkeletalMeshBinaryHeader
 {
 	uint32 MagicNumber = 0x534D4B53;	// 'SKMS' (Skeletal MeSh)
-	uint32 Version = 3;					// v3: AnimationSequences 블록 추가
+	uint32 Version = 4;					// v4: Skeleton/Animation/PhysicsAsset 분리
 	uint32 VertexCount = 0;
 	uint32 IndexCount = 0;
 	uint32 SectionCount = 0;
 	uint32 SlotCount = 0;
+	uint32 BoneCount = 0;				// legacy v1~v3 embedded skeleton
+	uint32 SocketCount = 0;				// mesh socket transitional data
+	uint32 AnimationCount = 0;			// legacy v3 embedded animation
+
+	uint64 SourceFileWriteTime = 0;
+};
+
+struct FSkeletonBinaryHeader
+{
+	uint32 MagicNumber = 0x4C454B53;		// 'SKEL'
+	uint32 Version = 1;
 	uint32 BoneCount = 0;
-	uint32 SocketCount = 0;				// v2 신규
-	uint32 AnimationCount = 0;			// v3 신규
+	uint32 SocketCount = 0;
+	uint32 CurveMetaDataCount = 0;
+
+	uint64 SourceFileWriteTime = 0;
+};
+
+struct FPhysicsAssetBinaryHeader
+{
+	uint32 MagicNumber = 0x53594850;		// 'PHYS'
+	uint32 Version = 1;
+	uint32 BodyCount = 0;
+	uint32 ConstraintCount = 0;
 
 	uint64 SourceFileWriteTime = 0;
 };
@@ -45,12 +71,20 @@ public:
 	bool SaveStaticMesh(const FString& BinaryPath, const FString& SourcePath, const FStaticMesh& Data);
 	bool LoadStaticMesh(const FString& BinaryPath, FStaticMesh& OutData);
 
+	bool SaveSkeleton(const FString& BinaryPath, const FString& SourcePath, const USkeleton& Data);
+	bool LoadSkeleton(const FString& BinaryPath, USkeleton& OutData);
+
 	bool SaveSkeletalMesh(const FString& BinaryPath, const FString& SourcePath, const FSkeletalMesh& Data);
 	bool LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMesh& OutData);
 
+	bool SavePhysicsAsset(const FString& BinaryPath, const FString& SourcePath, const UPhysicsAsset& Data);
+	bool LoadPhysicsAsset(const FString& BinaryPath, UPhysicsAsset& OutData);
+
 	//	Header Read + 검사 장치
 	bool ReadStaticMeshHeader(const FString& BinaryPath, FStaticMeshBinaryHeader& OutHeader) const;
+	bool ReadSkeletonHeader(const FString& BinaryPath, FSkeletonBinaryHeader& OutHeader) const;
 	bool ReadSkeletalMeshHeader(const FString& BinaryPath, FSkeletalMeshBinaryHeader& OutHeader) const;
+	bool ReadPhysicsAssetHeader(const FString& BinaryPath, FPhysicsAssetBinaryHeader& OutHeader) const;
 
 private:
 	
@@ -86,8 +120,20 @@ private:
 	void WriteSkeletalHeader(std::ofstream& Out, const FSkeletalMeshBinaryHeader& Header);
 	bool ReadSkeletalHeader(std::ifstream& In, FSkeletalMeshBinaryHeader& OutHeader) const;
 
+	void WriteSkeletonHeader(std::ofstream& Out, const FSkeletonBinaryHeader& Header);
+	bool ReadSkeletonHeader(std::ifstream& In, FSkeletonBinaryHeader& OutHeader) const;
+
+	void WritePhysicsAssetHeader(std::ofstream& Out, const FPhysicsAssetBinaryHeader& Header);
+	bool ReadPhysicsAssetHeader(std::ifstream& In, FPhysicsAssetBinaryHeader& OutHeader) const;
+
 	void WriteMatrix4x4(std::ofstream& Out, const FMatrix& M);
 	bool ReadMatrix4x4(std::ifstream& In, FMatrix& OutM) const;
+
+	void WriteTransform(std::ofstream& Out, const FTransform& Transform);
+	bool ReadTransform(std::ifstream& In, FTransform& OutTransform) const;
+
+	void WriteSkeletonData(std::ofstream& Out, const FSkeletonData& Data);
+	bool ReadSkeletonData(std::ifstream& In, FSkeletonData& OutData, const FSkeletonBinaryHeader& Header) const;
 
 	void WriteSkeletalVertices(std::ofstream& Out, const FSkeletalMesh& Data);
 	bool ReadSkeletalVertices(std::ifstream& In, FSkeletalMesh& OutData, uint32 VertexCount) const;
@@ -106,4 +152,7 @@ private:
 
 	void WriteSkeletalBounds(std::ofstream& Out, const FSkeletalMesh& Data);
 	bool ReadSkeletalBounds(std::ifstream& In, FSkeletalMesh& OutData) const;
+
+	void WritePhysicsAssetData(std::ofstream& Out, const FPhysicsAssetData& Data);
+	bool ReadPhysicsAssetData(std::ifstream& In, FPhysicsAssetData& OutData, const FPhysicsAssetBinaryHeader& Header) const;
 };
