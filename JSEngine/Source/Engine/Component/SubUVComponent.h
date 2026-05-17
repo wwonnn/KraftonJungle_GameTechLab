@@ -61,6 +61,8 @@ public:
 protected:
 	void TickComponent(float DeltaTime) override;
 
+	FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
 	UPROPERTY(EditAnywhere, DisplayName="Particle")
 	FName ParticleName;

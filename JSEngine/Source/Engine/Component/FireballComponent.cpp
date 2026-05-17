@@ -1,4 +1,6 @@
 ﻿#include "FireballComponent.h"
+#include "Render/Proxy/FireballRenderProxy.h"
+
 DEFINE_CLASS(UFireballComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UFireballComponent)
 
@@ -60,4 +62,11 @@ bool UFireballComponent::RaycastMesh(const FRay& Ray, FHitResult& OutHitResult)
 {
     // Fireball does not have a mesh by itself.
     return false;
+}
+
+FPrimitiveRenderProxy* UFireballComponent::CreateRenderProxy()
+{
+    FFireballRenderProxy* Proxy = new FFireballRenderProxy;
+    Proxy->FireballComp = this;
+    return Proxy;
 }

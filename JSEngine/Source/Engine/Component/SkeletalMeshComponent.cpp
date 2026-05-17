@@ -4,6 +4,7 @@
 #include "Asset/Skeleton.h"
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
+#include "Render/Proxy/SkeletalMeshRenderProxy.h"
 
 #include <cstring>
 
@@ -127,6 +128,13 @@ void USkeletalMeshComponent::SetBoneGlobalTransform(int32 BoneIndex, const FMatr
     // Local = Global * ParentGlobal.Inverse
     FMatrix NewLocalTransform = NewGlobalTransform * ParentGlobalTransform.GetInverse();
     SetBoneLocalTransform(BoneIndex, NewLocalTransform);
+}
+
+FPrimitiveRenderProxy* USkeletalMeshComponent::CreateRenderProxy()
+{
+    FSkeletalMeshRenderProxy* Proxy = new FSkeletalMeshRenderProxy;
+	Proxy->SkeletalMeshComp = this;
+    return Proxy;
 }
 
 void USkeletalMeshComponent::SetAnimSequencePath(const FString& InAnimSequencePath)

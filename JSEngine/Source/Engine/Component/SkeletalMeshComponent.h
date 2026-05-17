@@ -35,6 +35,8 @@ public:
 
     void SetAnimSequencePath(const FString& InAnimSequencePath);
     const FString& GetAnimSequencePath() const { return AnimSequencePath; }
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
 
 private:
     void InitializeSingleNodeAnimation();

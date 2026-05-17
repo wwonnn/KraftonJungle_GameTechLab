@@ -8,6 +8,7 @@
 #include "GameFramework/World.h"
 #include "Component/CameraComponent.h"
 #include "Math/Utils.h"
+#include "Render/Proxy/SubUVRenderProxy.h"
 
 DEFINE_CLASS(USubUVComponent, UBillboardComponent)
 REGISTER_FACTORY(USubUVComponent)
@@ -198,5 +199,12 @@ void USubUVComponent::TickComponent(float DeltaTime)
 			}
 		}
 	}
+}
+
+FPrimitiveRenderProxy* USubUVComponent::CreateRenderProxy()
+{
+    FSubUVRenderProxy* Proxy = new FSubUVRenderProxy;
+	Proxy->SubUVComp = this;
+    return Proxy;
 }
 
