@@ -2,10 +2,34 @@
 
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Asset/Skeleton.h"
+#include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
+
+#include <cstring>
 
 DEFINE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 REGISTER_FACTORY(USkeletalMeshComponent)
+
+void USkeletalMeshComponent::Serialize(FArchive& Ar)
+{
+    USkinnedMeshComponent::Serialize(Ar);
+
+    if (Ar.IsLoading())
+    {
+        InitializeSingleNodeAnimation();
+    }
+}
+
+void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
+{
+    USkinnedMeshComponent::PostEditProperty(PropertyName);
+
+    if (std::strcmp(PropertyName, "AnimSequencePath") == 0 ||
+        std::strcmp(PropertyName, "SkeletalMeshPath") == 0)
+    {
+        InitializeSingleNodeAnimation();
+    }
+}
 
 void USkeletalMeshComponent::BeginPlay()
 {
@@ -105,19 +129,51 @@ void USkeletalMeshComponent::SetBoneGlobalTransform(int32 BoneIndex, const FMatr
     SetBoneLocalTransform(BoneIndex, NewLocalTransform);
 }
 
-void USkeletalMeshComponent::InitializeSingleNodeAnimation()
+void USkeletalMeshComponent::SetAnimSequencePath(const FString& InAnimSequencePath)
 {
-    if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
+    if (AnimSequencePath == InAnimSequencePath)
     {
-        SingleNodeInstance = nullptr;
         return;
     }
 
-    const TArray<UAnimSequence*>& AnimationSequences = SkeletalMesh->GetAnimationSequences();
-    if (AnimationSequences.empty() || AnimationSequences[0] == nullptr)
+    AnimSequencePath = InAnimSequencePath;
+    InitializeSingleNodeAnimation();
+}
+
+void USkeletalMeshComponent::InitializeSingleNodeAnimation()
+{
+    SingleNodeInstance = nullptr;
+
+    if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData() || AnimSequencePath.empty())
     {
-        SingleNodeInstance = nullptr;
         return;
+    }
+
+    UAnimSequence* AnimSequence = FResourceManager::Get().LoadAnimSequence(AnimSequencePath);
+    if (!AnimSequence)
+    {
+        return;
+    }
+
+    USkeleton* MeshSkeleton = SkeletalMesh->GetSkeleton();
+    if (!MeshSkeleton || !MeshSkeleton->HasValidSkeletonData())
+    {
+        return;
+    }
+
+    const FString& MeshSkeletonPath = SkeletalMesh->GetSkeletonAssetPath();
+    const FString& SequenceSkeletonPath = AnimSequence->GetSkeletonAssetPath();
+    if (!MeshSkeletonPath.empty() &&
+        !SequenceSkeletonPath.empty() &&
+        MeshSkeletonPath != SequenceSkeletonPath)
+    {
+        return;
+    }
+
+    AnimSequence->SetSkeleton(MeshSkeleton);
+    if (AnimSequence->GetSkeletonAssetPath().empty())
+    {
+        AnimSequence->SetSkeletonAssetPath(MeshSkeletonPath);
     }
 
     SingleNodeInstance = UObjectManager::Get().CreateObject<UAnimSingleNodeInstance>();
@@ -127,7 +183,7 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
     }
 
     SingleNodeInstance->SetOwningComponent(this);
-    SingleNodeInstance->SetSequence(AnimationSequences[0]);
+    SingleNodeInstance->SetSequence(AnimSequence);
     SingleNodeInstance->SetLooping(true);
 }
 

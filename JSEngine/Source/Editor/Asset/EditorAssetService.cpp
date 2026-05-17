@@ -104,6 +104,7 @@ void FEditorAssetService::RefreshAssetDatabase()
 {
 	StaticMeshPaths.clear();
 	SkeletalMeshPaths.clear();
+	AnimSequencePaths.clear();
 	TexturePaths.clear();
 	MaterialInterfaceNames.clear();
 	FontNames.clear();
@@ -124,6 +125,12 @@ void FEditorAssetService::RefreshAssetDatabase()
 	for (const FString& Path : FResourceManager::Get().GetSkeletalMeshPaths())
 	{
 		FEditorAssetService::AddUniquePath(SkeletalMeshPaths, Path);
+	}
+
+	ListAssetFiles(L"Animation", { ".sequence" }, AnimSequencePaths);
+	for (const FString& Path : FResourceManager::Get().GetAnimSequencePaths())
+	{
+		FEditorAssetService::AddUniquePath(AnimSequencePaths, Path);
 	}
 
 	for (const FString& Path : FAssetQueryService::GetTexturePaths())
