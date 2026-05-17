@@ -97,23 +97,20 @@ static FShaderProgram* GetSelectionMaskProgram(const FRenderCommand& Cmd)
     PSKey.EntryPoint = PSEntry;
     PSKey.PermutationKey = ShaderKey;
 
-    // If drawing skeletal mesh, compile with SKELETAL_MESH macro so GPU skinning path is available
-    if (ShaderKey == 3 && Cmd.SkinningMatrices)
+	uint32 PermutationKey = 0;
+    TArray<D3D_SHADER_MACRO> Macros;
+    if (ShaderKey == 3 && !Cmd.SkinningMatrices)
     {
-        static D3D_SHADER_MACRO Macros[] = { { "SKELETAL_MESH", "1" }, { nullptr, nullptr } };
-        return FResourceManager::Get().GetOrCreateShaderProgram(
-            VSKey,
-            PSKey,
-            Macros,
-            Macros,
-            VertexLayout);
+        PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
     }
+
+    Macros = FShaderHelper::BuildUberLitMacros(PermutationKey);
 
     return FResourceManager::Get().GetOrCreateShaderProgram(
         VSKey,
         PSKey,
-        nullptr,
-        nullptr,
+        Macros.data(),
+        Macros.data(),
         VertexLayout);
 }
 

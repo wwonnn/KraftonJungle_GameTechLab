@@ -337,6 +337,9 @@
     <ClCompile Include="Source\Engine\Asset\SkeletalMesh.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SequenceCameraShakePattern.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SinusoidalCameraShakePattern.cpp" />
+    <None Include="Shaders\Common\Skinning.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="Shaders\PostProcess\PostProcess.hlsl" />
     <None Include="Shaders\UI\ScreenOverlay.hlsl" />
     <ClCompile Include="Source\Engine\Camera\CameraShakeBase.cpp" />

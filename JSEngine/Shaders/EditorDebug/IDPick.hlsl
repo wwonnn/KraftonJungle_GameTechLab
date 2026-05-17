@@ -1,4 +1,5 @@
 #include "../Common/Common.hlsli"
+#include "../Common/Skinning.hlsli"
 
 cbuffer EditorPickingBuffer : register(b12)
 {
@@ -12,9 +13,6 @@ cbuffer EditorPickingBuffer : register(b12)
 
 Texture2D PickTexture : register(t0);
 SamplerState PickSampler : register(s0);
-
-// GPU skinning matrices bound at t16 when available
-StructuredBuffer<float4x4> SkinningMatrices : register(t16);
 
 struct VSInputPrimitive
 {
@@ -80,20 +78,15 @@ VSOutputTextured VSStaticMesh(VSInputStaticMesh Input)
 VSOutputTextured VSSkeletalMesh(VSInputSkeletalMesh Input)
 {
     VSOutputTextured Output;
-#ifdef SKELETAL_MESH
-    float4 Pos = float4(Input.Position, 1.0f);
-    float weightSum = Input.BoneWeights.x + Input.BoneWeights.y + Input.BoneWeights.z + Input.BoneWeights.w;
-    float4 weights = weightSum > 0.0f ? Input.BoneWeights / weightSum : float4(1, 0, 0, 0);
+    SkinnedVertex v = ApplySkinning(
+        Input.Position,
+        float3(0, 0, 1), // dummy
+        float3(1, 0, 0), // dummy
+        Input.BoneIndices,
+        Input.BoneWeights
+    );
 
-    float4 skinnedPos = mul(SkinningMatrices[Input.BoneIndices.x], Pos) * weights.x;
-    skinnedPos += mul(SkinningMatrices[Input.BoneIndices.y], Pos) * weights.y;
-    skinnedPos += mul(SkinningMatrices[Input.BoneIndices.z], Pos) * weights.z;
-    skinnedPos += mul(SkinningMatrices[Input.BoneIndices.w], Pos) * weights.w;
-
-    Output.Position = ApplyMVP(skinnedPos.xyz);
-#else
-    Output.Position = ApplyMVP(Input.Position);
-#endif
+    Output.Position = ApplyMVP(v.Position);
     Output.UV = UVOffset + Input.UV * UVScale;
     return Output;
 }

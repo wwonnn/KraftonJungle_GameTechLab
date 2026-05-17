@@ -125,25 +125,21 @@ namespace
 		PSKey.EntryPoint = PSEntryPoint;
 		PSKey.Target = "ps_5_0";
 
-    // Provide shader macro for GPU skinning when using skeletal vertex factory
-    if (ShaderKey == 3 && Cmd.SkinningMatrices)
-    {
-        static D3D_SHADER_MACRO Macros[] = { { "SKELETAL_MESH", "1" }, { nullptr, nullptr } };
+		uint32 PermutationKey = 0;
+        TArray<D3D_SHADER_MACRO> Macros;
+		if (ShaderKey == 3 && !Cmd.SkinningMatrices)
+		{
+            PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		}
 
-        return FResourceManager::Get().GetOrCreateShaderProgram(
-            VSKey,
-            PSKey,
-            Macros,
-            Macros,
-            VertexLayout);
-    }
+        Macros = FShaderHelper::BuildUberLitMacros(PermutationKey);
 
-    return FResourceManager::Get().GetOrCreateShaderProgram(
-        VSKey,
-        PSKey,
-        nullptr,
-        nullptr,
-        VertexLayout);
+		return FResourceManager::Get().GetOrCreateShaderProgram(
+			VSKey,
+			PSKey,
+            Macros.data(),
+			Macros.data(),
+			VertexLayout);
 	}
 }
 
