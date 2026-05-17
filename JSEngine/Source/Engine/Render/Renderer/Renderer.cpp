@@ -89,7 +89,7 @@ namespace
 		return FResourceManager::Get().GetOrCreateShaderProgram(VSKey, PSKey);
 	}
 
-	FShaderProgram* GetEditorIdPickProgram(uint32 ShaderKey)
+	FShaderProgram* GetEditorIdPickProgram(uint32 ShaderKey, const FRenderCommand& Cmd)
 	{
 		const char* VSEntryPoint = "VSPrimitive";
 		const char* PSEntryPoint = "PSOpaque";
@@ -125,12 +125,25 @@ namespace
 		PSKey.EntryPoint = PSEntryPoint;
 		PSKey.Target = "ps_5_0";
 
-		return FResourceManager::Get().GetOrCreateShaderProgram(
-			VSKey,
-			PSKey,
-			nullptr,
-			nullptr,
-			VertexLayout);
+    // Provide shader macro for GPU skinning when using skeletal vertex factory
+    if (ShaderKey == 3 && Cmd.SkinningMatrices)
+    {
+        static D3D_SHADER_MACRO Macros[] = { { "SKELETAL_MESH", "1" }, { nullptr, nullptr } };
+
+        return FResourceManager::Get().GetOrCreateShaderProgram(
+            VSKey,
+            PSKey,
+            Macros,
+            Macros,
+            VertexLayout);
+    }
+
+    return FResourceManager::Get().GetOrCreateShaderProgram(
+        VSKey,
+        PSKey,
+        nullptr,
+        nullptr,
+        VertexLayout);
 	}
 }
 
@@ -686,7 +699,7 @@ void FRenderer::RenderEditorIdPickBuffer(const FRenderBus& InRenderBus, FViewpor
             Context->PSSetConstantBuffers(12, 1, &PickingBuffer);
 
             Context->PSSetShaderResources(0, 1, &TextureSRV);
-            FShaderProgram* PickProgram = GetEditorIdPickProgram(ShaderKey);
+            FShaderProgram* PickProgram = GetEditorIdPickProgram(ShaderKey, Command);
             if (!PickProgram)
             {
                 continue;

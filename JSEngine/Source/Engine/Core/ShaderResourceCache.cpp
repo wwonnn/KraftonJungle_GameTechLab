@@ -1,10 +1,30 @@
-#include "Core/ShaderResourceCache.h"
+﻿#include "Core/ShaderResourceCache.h"
 
 #include "Core/Paths.h"
 #include "Core/Logging/Log.h"
 #include "Render/Resource/ShaderCompiler.h"
 
 #include <cstring>
+#include <string>
+
+static uint64_t GetDefinesHash(const D3D_SHADER_MACRO* Defines)
+{
+    if (!Defines || !Defines->Name)
+    {
+        return 0;
+    }
+
+    std::string Fingerprint;
+    for (const D3D_SHADER_MACRO* D = Defines; D && D->Name; ++D)
+    {
+        Fingerprint += D->Name;
+        Fingerprint += "=";
+        Fingerprint += D->Definition ? D->Definition : "";
+        Fingerprint += ";";
+    }
+
+    return std::hash<std::string>{}(Fingerprint);
+}
 
 namespace
 {
@@ -262,19 +282,20 @@ namespace
 }
 
 FVertexShader* FShaderResourceCache::GetOrCreateVertexShader(
-	const FShaderStageKey& Key,
-	const D3D_SHADER_MACRO* Defines,
-	ID3D11Device* Device,
-	const FVertexLayoutDesc* VertexLayout)
+    const FShaderStageKey& Key,
+    const D3D_SHADER_MACRO* Defines,
+    ID3D11Device* Device,
+    const FVertexLayoutDesc* VertexLayout)
 {
 	if (!Device)
 	{
 		return nullptr;
 	}
 
-	// 같은 StageKey는 한 번만 컴파일하고 이후에는 캐시된 Stage를 재사용합니다.
-	const FShaderStageKey NormalizedKey = NormalizeVertexStageKey(Key, VertexLayout);
-	auto It = VertexShaders.find(NormalizedKey);
+    // 같은 StageKey는 한 번만 컴파일하고 이후에는 캐시된 Stage를 재사용합니다.
+    FShaderStageKey NormalizedKey = NormalizeVertexStageKey(Key, VertexLayout);
+    NormalizedKey.DefineHash = GetDefinesHash(Defines);
+    auto It = VertexShaders.find(NormalizedKey);
 	if (It != VertexShaders.end())
 	{
 		return It->second;
@@ -337,13 +358,14 @@ FPixelShader* FShaderResourceCache::GetOrCreatePixelShader(const FShaderStageKey
 		return nullptr;
 	}
 
-	// PS Reflection은 Material Parameter / Texture Slot 바인딩에 사용됩니다.
-	const FShaderStageKey NormalizedKey = NormalizeStageKey(Key);
-	auto It = PixelShaders.find(NormalizedKey);
-	if (It != PixelShaders.end())
-	{
-		return It->second;
-	}
+    // PS Reflection은 Material Parameter / Texture Slot 바인딩에 사용됩니다.
+    FShaderStageKey NormalizedKey = NormalizeStageKey(Key);
+    NormalizedKey.DefineHash = GetDefinesHash(Defines);
+    auto It = PixelShaders.find(NormalizedKey);
+    if (It != PixelShaders.end())
+    {
+        return It->second;
+    }
 
 	FShaderCompileResult CompileResult = FShaderCompiler::CompileFromFile(
 		NormalizedKey.FilePath,
@@ -392,8 +414,13 @@ FShaderProgram* FShaderResourceCache::GetOrCreateProgram(
 {
 	// Program은 VS/PS를 소유하지 않습니다.
 	// Stage Cache에 있는 포인터를 조합해서 바인딩 단위만 만들어 둡니다.
-	FShaderProgramKey ProgramKey = { NormalizeVertexStageKey(VSKey, VertexLayout), NormalizeStageKey(PSKey) };
-	auto It = ShaderPrograms.find(ProgramKey);
+    FShaderStageKey NormVS = NormalizeVertexStageKey(VSKey, VertexLayout);
+    NormVS.DefineHash = GetDefinesHash(VSDefines);
+    FShaderStageKey NormPS = NormalizeStageKey(PSKey);
+    NormPS.DefineHash = GetDefinesHash(PSDefines);
+
+    FShaderProgramKey ProgramKey = { NormVS, NormPS };
+    auto It = ShaderPrograms.find(ProgramKey);
 	if (It != ShaderPrograms.end())
 	{
 		return It->second;

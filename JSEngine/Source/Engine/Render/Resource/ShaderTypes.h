@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreTypes.h"
 #include "Core/Containers/Array.h"
@@ -17,6 +17,7 @@ struct FShaderStageKey
     FString Target;
     uint32 PermutationKey = 0;
     uint32 InputLayoutHash = 0;
+    uint64 DefineHash = 0;
 
     bool operator==(const FShaderStageKey& Other) const
     {
@@ -24,7 +25,8 @@ struct FShaderStageKey
             && EntryPoint == Other.EntryPoint
             && Target == Other.Target
             && PermutationKey == Other.PermutationKey
-            && InputLayoutHash == Other.InputLayoutHash;
+            && InputLayoutHash == Other.InputLayoutHash
+            && DefineHash == Other.DefineHash;
     }
 };
 
@@ -38,6 +40,7 @@ struct FShaderStageKeyHasher
         Hash ^= std::hash<FString>{}(Key.Target) + 0x9e3779b9 + (Hash << 6) + (Hash >> 2);
         Hash ^= std::hash<uint32>{}(Key.PermutationKey) + 0x9e3779b9 + (Hash << 6) + (Hash >> 2);
         Hash ^= std::hash<uint32>{}(Key.InputLayoutHash) + 0x9e3779b9 + (Hash << 6) + (Hash >> 2);
+        Hash ^= std::hash<uint64>{}(Key.DefineHash) + 0x9e3779b9 + (Hash << 6) + (Hash >> 2);
         return Hash;
     }
 };

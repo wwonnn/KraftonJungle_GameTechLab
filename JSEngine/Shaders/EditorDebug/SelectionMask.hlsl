@@ -63,6 +63,27 @@ VSOutputTextured VSStaticMesh(VSInputStaticMesh Input)
     return Output;
 }
 
+// Support GPU skinning when compiled with SKELETAL_MESH
+#ifdef SKELETAL_MESH
+StructuredBuffer<float4x4> SkinningMatrices : register(t16);
+
+VSOutputTextured VSSkeletalMesh(VSInputSkeletalMesh Input)
+{
+    VSOutputTextured Output;
+    float4 Pos = float4(Input.Position, 1.0f);
+    float4 weights = Input.BoneWeights / dot(Input.BoneWeights, 1.0f);
+
+    float4 SkinnedPos =
+        mul(SkinningMatrices[Input.BoneIndices.x], Pos) * weights.x +
+        mul(SkinningMatrices[Input.BoneIndices.y], Pos) * weights.y +
+        mul(SkinningMatrices[Input.BoneIndices.z], Pos) * weights.z +
+        mul(SkinningMatrices[Input.BoneIndices.w], Pos) * weights.w;
+
+    Output.Position = ApplyMVP(SkinnedPos.xyz);
+    Output.UV = UVOffset + Input.UV * UVScale;
+    return Output;
+}
+#else
 VSOutputTextured VSSkeletalMesh(VSInputSkeletalMesh Input)
 {
     VSOutputTextured Output;
@@ -70,6 +91,7 @@ VSOutputTextured VSSkeletalMesh(VSInputSkeletalMesh Input)
     Output.UV = UVOffset + Input.UV * UVScale;
     return Output;
 }
+#endif
 
 VSOutputTextured VSBillboard(VSInputPrimitive Input)
 {
