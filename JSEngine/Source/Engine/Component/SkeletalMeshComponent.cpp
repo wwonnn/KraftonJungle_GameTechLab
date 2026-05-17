@@ -339,6 +339,7 @@ ULuaAnimInstance* USkeletalMeshComponent::BindLuaAnimInstance(const FString& Scr
         return nullptr;
     }
 
+	// Lua있으면 LuaAnimInstance로 교체
     LuaAnimInstance->SetScriptName(ScriptName);
     SetAnimInstance(LuaAnimInstance);
     return LuaAnimInstance;
@@ -422,6 +423,8 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
         return;
     }
 
+	// Default : SingleNodeInstance, 0번째 애니메이션 재생
+    SingleNodeInstance->SetOwningComponent(this);
     SingleNodeInstance->SetSequence(AnimSequence);
     SingleNodeInstance->SetLooping(true);
     ApplyAnimationPoseFromInstance(0.0f, false);

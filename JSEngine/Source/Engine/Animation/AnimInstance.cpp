@@ -127,6 +127,7 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
 	// 서브 클래스에서 변수 업데이트
 	NativeUpdateAnimation(DeltaTime);
 
+	// State Machine Tick 및 Transition 처리
     if (StateMachine)
     {
         StateMachine->Tick(DeltaTime);

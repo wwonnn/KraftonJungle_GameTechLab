@@ -54,6 +54,9 @@ protected:
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
     ULuaAnimInstance* BindLuaAnimInstance(const FString& ScriptName);
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
     void ReleaseSingleNodeAnimation();
     void EnsureSingleNodeAnimation();
