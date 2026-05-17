@@ -334,7 +334,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Asset\PhysicsAsset.cpp" />
     <ClCompile Include="Source\Engine\Asset\SkeletalMesh.cpp" />
+    <ClCompile Include="Source\Engine\Asset\Skeleton.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SequenceCameraShakePattern.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SinusoidalCameraShakePattern.cpp" />
     <None Include="Shaders\Common\Skinning.hlsli">
@@ -893,8 +895,11 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\IAnimationDataModel.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
+    <ClInclude Include="Source\Engine\Asset\PhysicsAsset.h" />
     <ClInclude Include="Source\Engine\Asset\SkeletalMesh.h" />
     <ClInclude Include="Source\Engine\Asset\SkeletalMeshTypes.h" />
+    <ClInclude Include="Source\Engine\Asset\Skeleton.h" />
+    <ClInclude Include="Source\Engine\Asset\SkeletonTypes.h" />
     <ClInclude Include="Source\Engine\Camera\ShakePattern\SequenceCameraShakePattern.h" />
     <ClInclude Include="Source\Engine\Camera\ShakePattern\SinusoidalCameraShakePattern.h" />
     <ClInclude Include="Source\Engine\Camera\CameraShakeBase.h" />
