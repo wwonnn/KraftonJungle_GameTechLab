@@ -12,6 +12,7 @@ struct FMatrix;
 struct FTransform;
 class UPhysicsAsset;
 class USkeleton;
+class UAnimSequence;
 
 /*
  *	[주의사항]
@@ -76,6 +77,10 @@ public:
 
 	bool SaveSkeletalMesh(const FString& BinaryPath, const FString& SourcePath, const FSkeletalMesh& Data);
 	bool LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMesh& OutData);
+	bool LoadSkeletalMesh(
+		const FString& BinaryPath,
+		FSkeletalMesh& OutData,
+		TArray<UAnimSequence*>* OutLegacyAnimationSequences);
 
 	bool SavePhysicsAsset(const FString& BinaryPath, const FString& SourcePath, const UPhysicsAsset& Data);
 	bool LoadPhysicsAsset(const FString& BinaryPath, UPhysicsAsset& OutData);
@@ -148,7 +153,11 @@ private:
 	bool ReadSockets(std::ifstream& In, FSkeletalMesh& OutData, uint32 SocketCount) const;
 
 	void WriteAnimationSequences(std::ofstream& Out, const FSkeletalMesh& Data);
-	bool ReadAnimationSequences(std::ifstream& In, FSkeletalMesh& OutData, uint32 AnimationCount) const;
+	bool ReadAnimationSequences(
+		std::ifstream& In,
+		FSkeletalMesh& OutData,
+		uint32 AnimationCount,
+		TArray<UAnimSequence*>* OutAnimationSequences = nullptr) const;
 
 	void WriteSkeletalBounds(std::ofstream& Out, const FSkeletalMesh& Data);
 	bool ReadSkeletalBounds(std::ifstream& In, FSkeletalMesh& OutData) const;

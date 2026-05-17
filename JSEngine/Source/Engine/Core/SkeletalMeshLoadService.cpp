@@ -78,6 +78,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 
 	FSkeletalMesh* LoadedMeshData = nullptr;
 	TArray<UAnimSequence*> ImportedAnimationSequences;
+	bool bLoadedLegacyBinary = false;
 	double BinaryLoadSec = 0.0;
 	double SourceLoadSec = 0.0;
 
@@ -86,8 +87,15 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 	{
 		const auto BinaryStart = std::chrono::steady_clock::now();
 
+		FSkeletalMeshBinaryHeader BinaryHeader;
+		const bool bHasBinaryHeader = ResourceManager.BinarySerializer.ReadSkeletalMeshHeader(BinaryPath, BinaryHeader);
+		bLoadedLegacyBinary = bHasBinaryHeader && BinaryHeader.Version < 4;
+
 		LoadedMeshData = new FSkeletalMesh();
-		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(BinaryPath, *LoadedMeshData))
+		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(
+				BinaryPath,
+				*LoadedMeshData,
+				bLoadedLegacyBinary ? &ImportedAnimationSequences : nullptr))
 		{
 			delete LoadedMeshData;
 			LoadedMeshData = nullptr;
@@ -107,6 +115,46 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 			{
 				delete LoadedMeshData;
 				LoadedMeshData = nullptr;
+			}
+		}
+
+		if (LoadedMeshData && bLoadedLegacyBinary)
+		{
+			bool bSaveSkeletonOk = false;
+			if (LoadedMeshData->Skeleton)
+			{
+				bSaveSkeletonOk = ResourceManager.BinarySerializer.SaveSkeleton(
+					SkeletonBinaryPath,
+					NormalizedPath,
+					*LoadedMeshData->Skeleton);
+			}
+
+			if (bSaveSkeletonOk)
+			{
+				const bool bSaveConvertedMeshOk = ResourceManager.BinarySerializer.SaveSkeletalMesh(
+					BinaryPath,
+					NormalizedPath,
+					*LoadedMeshData);
+				if (bSaveConvertedMeshOk)
+				{
+					UE_LOG("[SkeletalMeshLoad] Legacy skeletal cache converted | Path=%s | Skeleton=%s | Mesh=%s | Animations=%zu",
+					       NormalizedPath.c_str(),
+					       SkeletonBinaryPath.c_str(),
+					       BinaryPath.c_str(),
+					       ImportedAnimationSequences.size());
+				}
+				else
+				{
+					UE_LOG_WARNING("[SkeletalMeshLoad] Legacy skeletal mesh cache conversion failed; legacy cache kept | Path=%s | BinaryPath=%s",
+					               NormalizedPath.c_str(),
+					               BinaryPath.c_str());
+				}
+			}
+			else
+			{
+				UE_LOG_WARNING("[SkeletalMeshLoad] Legacy skeleton cache conversion failed; legacy mesh cache kept | Path=%s | SkeletonBinaryPath=%s",
+				               NormalizedPath.c_str(),
+				               SkeletonBinaryPath.c_str());
 			}
 		}
 

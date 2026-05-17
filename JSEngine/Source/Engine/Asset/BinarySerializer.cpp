@@ -1461,7 +1461,11 @@ void FBinarySerializer::WriteAnimationSequences(std::ofstream& Out, const FSkele
 	WriteUInt32LE(Out, SequenceCount);
 }
 
-bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh& OutData, uint32 AnimationCount) const
+bool FBinarySerializer::ReadAnimationSequences(
+	std::ifstream& In,
+	FSkeletalMesh& OutData,
+	uint32 AnimationCount,
+	TArray<UAnimSequence*>* OutAnimationSequences) const
 {
 	uint32 SequenceCount = 0;
 	if (!ReadUInt32LE(In, SequenceCount))
@@ -1600,7 +1604,14 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 			DataModel->BoneAnimationTracks.push_back(Track);
 		}
 
-		delete Sequence;
+		if (OutAnimationSequences)
+		{
+			OutAnimationSequences->push_back(Sequence);
+		}
+		else
+		{
+			delete Sequence;
+		}
 	}
 
 	return In.good();
@@ -1675,6 +1686,14 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 }
 
 bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMesh& OutData)
+{
+	return LoadSkeletalMesh(BinaryPath, OutData, nullptr);
+}
+
+bool FBinarySerializer::LoadSkeletalMesh(
+	const FString& BinaryPath,
+	FSkeletalMesh& OutData,
+	TArray<UAnimSequence*>* OutLegacyAnimationSequences)
 {
 	std::ifstream In(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(BinaryPath))), std::ios::binary);
 	if (!In.is_open())
@@ -1772,10 +1791,21 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 		OutData.Sockets.clear();
 	}
 
+	TArray<UAnimSequence*> LegacyAnimationSequences;
+	auto DeleteLegacyAnimationSequences = [&LegacyAnimationSequences]()
+	{
+		for (UAnimSequence* Sequence : LegacyAnimationSequences)
+		{
+			delete Sequence;
+		}
+		LegacyAnimationSequences.clear();
+	};
+
 	if (Header.Version >= 3 && Header.Version < 4)
 	{
-		if (!ReadAnimationSequences(In, OutData, Header.AnimationCount))
+		if (!ReadAnimationSequences(In, OutData, Header.AnimationCount, &LegacyAnimationSequences))
 		{
+			DeleteLegacyAnimationSequences();
 			return false;
 		}
 	}
@@ -1785,11 +1815,13 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 
 	if (!ReadSkeletalBounds(In, OutData))
 	{
+		DeleteLegacyAnimationSequences();
 		return false;
 	}
 
 	if (!In.good())
 	{
+		DeleteLegacyAnimationSequences();
 		return false;
 	}
 
@@ -1800,12 +1832,26 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 	      OutData.MaterialSlots.size() == Header.SlotCount    &&
 	      OutData.Sockets.size()       == Header.SocketCount))
 	{
+		DeleteLegacyAnimationSequences();
 		return false;
 	}
 
 	if (Header.Version < 4 && OutData.GetBones().size() != Header.BoneCount)
 	{
+		DeleteLegacyAnimationSequences();
 		return false;
+	}
+
+	if (OutLegacyAnimationSequences)
+	{
+		OutLegacyAnimationSequences->insert(
+			OutLegacyAnimationSequences->end(),
+			LegacyAnimationSequences.begin(),
+			LegacyAnimationSequences.end());
+	}
+	else
+	{
+		DeleteLegacyAnimationSequences();
 	}
 
 	return true;
