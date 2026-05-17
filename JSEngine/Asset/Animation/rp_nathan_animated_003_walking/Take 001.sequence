@@ -1,4 +1,5 @@
 {
+        "FloatCurves" : [],
         "FrameRateDenominator" : 1000,
         "FrameRateNumerator" : 30000,
         "NumberOfFrames" : 69,

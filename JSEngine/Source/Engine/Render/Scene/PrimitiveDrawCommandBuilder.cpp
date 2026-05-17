@@ -73,8 +73,6 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
     {
     case EPrimitiveType::EPT_StaticMesh:
     {
-        if (!ShowFlags.bPrimitives) return true;
-
 		FPrimitiveRenderProxy* Proxy = Primitive->GetOrCreateRenderProxy();
         FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
         Proxy->CollectRenderCommands(Context, RenderBus);
@@ -84,88 +82,10 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
 
     case EPrimitiveType::EPT_SkeletalMesh:
     {
-        if (!ShowFlags.bPrimitives || !ShowFlags.bSkeletalMesh) return true;
-
-        USkeletalMeshComponent* SkeletalMeshComp = static_cast<USkeletalMeshComponent*>(Primitive);
-        USkeletalMesh* SkeletalMesh = SkeletalMeshComp->GetSkeletalMesh();
-
-        if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData()) return true;
-
-        SkeletalMeshComp->EnsureSkinningUpdated();
-        const bool bNeedsUpload = SkeletalMeshComp->ConsumeRenderStateDirty();
-
-		const TArray<FSkeletalMeshVertex>* SkeletalVertices;
-
-		if (SkeletalMeshComp->IsGPUSkinningEnabled())
-		{
-            SkeletalVertices = &SkeletalMesh->GetVertices();
-		}
-		else
-		{
-            SkeletalVertices = &SkeletalMeshComp->GetSkinnedVertices();
-		}
-
-        const TArray<uint32>& Indices = SkeletalMesh->GetIndices(); // 이건 immutable이라 걍 asset에서 들고와도 댐
-
-        FMeshBuffer* MeshBuffer = MeshBufferManager.GetSkeletalMeshBuffer(
-            SkeletalMeshComp->GetUUID(),
-            SkeletalMesh,
-            *SkeletalVertices,
-            Indices,
-            bNeedsUpload);
-        if (!MeshBuffer) return true;
-
-        const TArray<FStaticMeshSection>& Sections = SkeletalMesh->GetSections();
-        if (Sections.empty()) // fallback
-        {
-            FRenderCommand Cmd = {};
-            Cmd.PerObjectConstants = FPerObjectConstants{ Primitive->GetWorldMatrix(), FColor::White().ToVector4() };
-            Cmd.SourcePrimitive = Primitive;
-            Cmd.Type = ERenderCommandType::SkeletalMesh;
-            Cmd.VertexFactoryType = EVertexFactoryType::SkeletalMesh;
-            Cmd.MeshBuffer = MeshBuffer;
-            Cmd.SectionIndexStart = 0;
-            Cmd.SectionIndexCount = MeshBuffer->GetIndexBuffer().GetIndexCount();
-            Cmd.Material = SkeletalMeshComp->GetMaterial(0);
-            Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
-
-			if (SkeletalMeshComp->IsGPUSkinningEnabled())
-	            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
-
-            RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
-            return true;
-        }
-
-        for (int32 SectionIdx = 0; SectionIdx < static_cast<int32>(Sections.size()); ++SectionIdx)
-        {
-            const FStaticMeshSection& Section = Sections[SectionIdx];
-            if (Section.IndexCount == 0)
-            {
-                continue;
-            }
-
-            UMaterialInterface* Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(SectionIdx));
-
-            FRenderCommand Cmd = {};
-            Cmd.PerObjectConstants = FPerObjectConstants{ Primitive->GetWorldMatrix(), FColor::White().ToVector4() };
-            Cmd.SourcePrimitive = Primitive;
-            Cmd.Type = ERenderCommandType::SkeletalMesh;
-            Cmd.VertexFactoryType = EVertexFactoryType::SkeletalMesh;
-            Cmd.MeshBuffer = MeshBuffer;
-
-            Cmd.SectionIndexStart = Section.StartIndex;
-            Cmd.SectionIndexCount = Section.IndexCount;
-            Cmd.Material = Material;
-
-            Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
-
-            if (SkeletalMeshComp->IsGPUSkinningEnabled())
-	            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
-
-            RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
-        }
-
-        return true;
+        FPrimitiveRenderProxy* Proxy = Primitive->GetOrCreateRenderProxy();
+        FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
+        Proxy->CollectRenderCommands(Context, RenderBus);
+        return true; 
     }
 
     case EPrimitiveType::EPT_Text:

@@ -30,6 +30,9 @@ public:
     FMatrix GetBoneGlobalTransform(int32 BoneIndex) const;
     void SetBoneGlobalTransform(int32 BoneIndex, const FMatrix& NewGlobalTransform);
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
     void InitializeSingleNodeAnimation();
     void ApplyAnimationPose(float DeltaTime);

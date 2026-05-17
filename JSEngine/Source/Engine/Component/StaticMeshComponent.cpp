@@ -289,9 +289,6 @@ void UStaticMeshComponent::GetMeshData(TArray<FNormalVertex>& OutVertices, TArra
 FPrimitiveRenderProxy* UStaticMeshComponent::CreateRenderProxy()
 {
     FStaticMeshRenderProxy* Proxy = new FStaticMeshRenderProxy;
-    Proxy->ValidLODCount = GetStaticMesh()->GetValidLODCount();
-    Proxy->Bounds = GetWorldAABB();
-    Proxy->StaticMeshAsset = StaticMeshAsset;
     Proxy->StaticMeshComp = this;
 
     return Proxy;

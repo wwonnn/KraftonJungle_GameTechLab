@@ -1,12 +1,12 @@
 ﻿#pragma once
 #include "PrimitiveRenderProxy.h"
 
-class UStaticMeshComponent;
+class USkeletalMeshComponent;
 
-class FStaticMeshRenderProxy : public FPrimitiveRenderProxy
+class FSkeletalMeshRenderProxy : public FPrimitiveRenderProxy
 {
 public:
     void CollectRenderCommands(const FRenderProxyContext& Context, FRenderBus& RenderBus) override;
 
-    UStaticMeshComponent* StaticMeshComp = nullptr;
+	USkeletalMeshComponent* SkeletalMeshComp = nullptr;
 };

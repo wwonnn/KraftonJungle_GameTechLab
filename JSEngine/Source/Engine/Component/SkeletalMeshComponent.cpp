@@ -2,6 +2,7 @@
 
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Object/ObjectFactory.h"
+#include "Render/Proxy/SkeletalMeshRenderProxy.h"
 
 DEFINE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 REGISTER_FACTORY(USkeletalMeshComponent)
@@ -96,6 +97,13 @@ void USkeletalMeshComponent::SetBoneGlobalTransform(int32 BoneIndex, const FMatr
     // Local = Global * ParentGlobal.Inverse
     FMatrix NewLocalTransform = NewGlobalTransform * ParentGlobalTransform.GetInverse();
     SetBoneLocalTransform(BoneIndex, NewLocalTransform);
+}
+
+FPrimitiveRenderProxy* USkeletalMeshComponent::CreateRenderProxy()
+{
+    FSkeletalMeshRenderProxy* Proxy = new FSkeletalMeshRenderProxy;
+	Proxy->SkeletalMeshComp = this;
+    return Proxy;
 }
 
 void USkeletalMeshComponent::InitializeSingleNodeAnimation()

@@ -3,6 +3,7 @@
 #include "Core/CollisionTypes.h"
 #include "GameFramework/World.h"
 #include "Math/Utils.h"
+#include "Render/Proxy/PrimitiveRenderProxy.h"
 
 DEFINE_CLASS(UPrimitiveComponent, USceneComponent)
 

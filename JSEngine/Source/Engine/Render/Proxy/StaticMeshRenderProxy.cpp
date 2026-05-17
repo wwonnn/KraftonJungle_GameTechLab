@@ -41,20 +41,23 @@ namespace
 
 void FStaticMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& Context, FRenderBus& RenderBus)
 {
+    if (!Context.ShowFlags.bPrimitives)
+        return;
+
     FVector CameraPos = RenderBus.GetCameraPosition();
     FMatrix ProjMatrix = RenderBus.GetProj();
 
     int32 SelectedLOD = 0;
     if (Context.ShowFlags.bEnableLOD)
     {
-        SelectedLOD = SelectLODLevel(CameraPos, Bounds, ProjMatrix, ValidLODCount);
+        SelectedLOD = SelectLODLevel(CameraPos, StaticMeshComp->GetWorldAABB(), ProjMatrix, StaticMeshComp->GetStaticMesh()->GetValidLODCount());
     }
 
-    FMeshBuffer* MeshBuffer = Context.MeshBufferManager.GetStaticMeshBuffer(StaticMeshAsset, SelectedLOD);
+    FMeshBuffer* MeshBuffer = Context.MeshBufferManager.GetStaticMeshBuffer(StaticMeshComp->GetStaticMesh(), SelectedLOD);
     if (!MeshBuffer)
         return;
 
-    const FStaticMesh* MeshData = StaticMeshAsset->GetMeshData(SelectedLOD);
+    const FStaticMesh* MeshData = StaticMeshComp->GetStaticMesh()->GetMeshData(SelectedLOD);
     const TArray<FStaticMeshSection>& Sections = MeshData->Sections;
 
     for (int32 SectionIdx = 0; SectionIdx < static_cast<int32>(Sections.size()); ++SectionIdx)

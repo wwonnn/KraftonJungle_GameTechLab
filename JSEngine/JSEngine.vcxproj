@@ -351,6 +351,7 @@
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Renderer\RenderFlow\PostProcessRenderPass.cpp" />
     <ClCompile Include="Source\Engine\Render\Renderer\RenderFlow\SandervistanRenderPass.cpp" />
@@ -907,6 +908,7 @@
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\RenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Renderer\RenderFlow\PostProcessRenderPass.h" />
     <ClInclude Include="Source\Engine\Render\Renderer\RenderFlow\SandervistanRenderPass.h" />

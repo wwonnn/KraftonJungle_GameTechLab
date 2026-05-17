@@ -114,5 +114,7 @@ protected:
     TMap<UPrimitiveComponent*, FCollisionResult> PrevOverlaps;
 
 	FPrimitiveRenderProxy* CachedRenderProxy = nullptr;
+	// 현재는 Proxy 가 Primitive 를 Pointer 로 가져가고 있으므로 Dirty 체크가 의미 없어서 사용은 안하고 있음
+	// 만약 Render Thread 개념이 들어온다면, 값 복사로 전부 바꿔야 하는데 그 때는 Dirty 체크해야함 
     bool bRenderStateDirty = true;
 };
