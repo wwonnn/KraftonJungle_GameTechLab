@@ -24,7 +24,8 @@ private:
 		FSkeletalMesh* MeshData,
 		const FString& ResolvePath,
 		const FString& CacheKey,
-		const TArray<UAnimSequence*>& ImportedAnimationSequences);
+		const TArray<UAnimSequence*>& ImportedAnimationSequences,
+		TArray<FString>* OutSavedAnimationSequencePaths = nullptr);
 
 	FResourceManager& ResourceManager;
 };

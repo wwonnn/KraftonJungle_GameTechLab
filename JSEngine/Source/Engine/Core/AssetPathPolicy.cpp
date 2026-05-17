@@ -170,3 +170,22 @@ FString FAssetPathPolicy::MakeWritablePhysicsAssetCacheBinaryPath(const FString&
 	std::filesystem::path BinaryPath = BinDir / BinaryFileName;
 	return FPaths::ToString(BinaryPath.wstring());
 }
+
+FString FAssetPathPolicy::MakeWritableSkeletalImportManifestPath(const FString& SourcePath)
+{
+	const FString NormalizedSourcePath = FPaths::Normalize(SourcePath);
+	std::filesystem::path SourceFsPath(FPaths::ToWide(NormalizedSourcePath));
+
+	std::filesystem::path ManifestDir = std::filesystem::path(FPaths::RootDir()) / "Asset" / "ImportManifest" / "Skeletal";
+
+	if (!std::filesystem::exists(ManifestDir))
+	{
+		std::filesystem::create_directories(ManifestDir);
+	}
+
+	std::filesystem::path ManifestFileName = SourceFsPath.stem();
+	ManifestFileName += ".manifest";
+
+	std::filesystem::path ManifestPath = ManifestDir / ManifestFileName;
+	return FPaths::ToString(ManifestPath.wstring());
+}
