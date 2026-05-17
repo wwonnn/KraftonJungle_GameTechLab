@@ -30,6 +30,9 @@ public:
 
 	void GetMeshData(TArray<FNormalVertex>& OutVertices, TArray<uint32>& OutIndices) const;
 
+protected:
+    virtual FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
 	void MarkBoundsDirty();
 	void MarkRenderStateDirty();

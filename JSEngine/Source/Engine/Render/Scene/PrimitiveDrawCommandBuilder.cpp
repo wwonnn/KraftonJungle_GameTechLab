@@ -11,6 +11,7 @@
 #include "Engine/Asset/StaticMesh.h"
 #include "Render/Resource/MeshBufferManager.h"
 #include "Render/Scene/RenderBus.h"
+#include "Render/Proxy/PrimitiveRenderProxy.h"
 
 #include <cmath>
 
@@ -74,48 +75,9 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
     {
         if (!ShowFlags.bPrimitives) return true;
 
-        UStaticMeshComponent* StaticMeshComp = static_cast<UStaticMeshComponent*>(Primitive);
-        const UStaticMesh* StaticMesh = StaticMeshComp->GetStaticMesh();
-
-        if (!StaticMesh || !StaticMesh->HasValidMeshData()) return true;
-
-        FVector CameraPos = RenderBus.GetCameraPosition();
-        FMatrix ProjMatrix = RenderBus.GetProj();
-        FAABB Bounds = StaticMeshComp->GetWorldAABB();
-        const int32 ValidLODCount = StaticMesh->GetValidLODCount();
-
-        int32 SelectedLOD = 0;
-        if (ShowFlags.bEnableLOD)
-        {
-            SelectedLOD = SelectLODLevel(CameraPos, Bounds, ProjMatrix, ValidLODCount);
-        }
-
-        FMeshBuffer* MeshBuffer = MeshBufferManager.GetStaticMeshBuffer(StaticMesh, SelectedLOD);
-        if (!MeshBuffer) return true;
-
-        const FStaticMesh* MeshData = StaticMesh->GetMeshData(SelectedLOD);
-        const TArray<FStaticMeshSection>& Sections = MeshData->Sections;
-
-        for (int32 SectionIdx = 0; SectionIdx < static_cast<int32>(Sections.size()); ++SectionIdx)
-        {
-            const FStaticMeshSection& Section = Sections[SectionIdx];
-            UMaterialInterface* Material = Cast<UMaterialInterface>(StaticMeshComp->GetMaterial(SectionIdx));
-
-            FRenderCommand Cmd = {};
-            Cmd.PerObjectConstants = FPerObjectConstants{ Primitive->GetWorldMatrix(), FColor::White().ToVector4() };
-            Cmd.SourcePrimitive = Primitive;
-            Cmd.Type = ERenderCommandType::StaticMesh;
-            Cmd.VertexFactoryType = EVertexFactoryType::StaticMesh;
-            Cmd.MeshBuffer = MeshBuffer;
-
-            Cmd.SectionIndexStart = Section.StartIndex;
-            Cmd.SectionIndexCount = Section.IndexCount;
-            Cmd.Material = Material;
-
-            Cmd.WorldAABB = StaticMeshComp->GetWorldAABB();
-
-            RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
-        }
+		FPrimitiveRenderProxy* Proxy = Primitive->GetOrCreateRenderProxy();
+        FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
+        Proxy->CollectRenderCommands(Context, RenderBus);
 
         return true;
     }

@@ -17,6 +17,12 @@ UPrimitiveComponent::~UPrimitiveComponent()
     }
     CurOverlaps.clear();
     PrevOverlaps.clear();
+	
+	if (CachedRenderProxy)
+    {
+        delete CachedRenderProxy;
+        CachedRenderProxy = nullptr;
+	}
 }
 
 void UPrimitiveComponent::PostDuplicate(UObject* Original)
@@ -177,6 +183,24 @@ void UPrimitiveComponent::ResolveOverlaps()
             OnComponentEndOverlap.Broadcast(this, It.first->GetOwner(), It.first, 0, false, HitResult);
         }
     }
+}
+
+FPrimitiveRenderProxy* UPrimitiveComponent::GetOrCreateRenderProxy()
+{
+	if (!CachedRenderProxy || bRenderStateDirty)
+	{
+		// 새로 생성
+        delete CachedRenderProxy;
+        CachedRenderProxy = CreateRenderProxy();
+        bRenderStateDirty = false;
+	}
+
+    return CachedRenderProxy;
+}
+
+FPrimitiveRenderProxy* UPrimitiveComponent::CreateRenderProxy()
+{
+    return nullptr;
 }
 
 void UPrimitiveComponent::OnTransformDirty()

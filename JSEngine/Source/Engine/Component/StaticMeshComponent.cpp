@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "Core/ResourceManager.h"
+#include "Render/Proxy/StaticMeshRenderProxy.h"
 
 DEFINE_CLASS(UStaticMeshComponent, UMeshComponent)
 REGISTER_FACTORY(UStaticMeshComponent)
@@ -283,6 +284,17 @@ void UStaticMeshComponent::GetMeshData(TArray<FNormalVertex>& OutVertices, TArra
 	{
         OutIndices.push_back(Index);
 	}
+}
+
+FPrimitiveRenderProxy* UStaticMeshComponent::CreateRenderProxy()
+{
+    FStaticMeshRenderProxy* Proxy = new FStaticMeshRenderProxy;
+    Proxy->ValidLODCount = GetStaticMesh()->GetValidLODCount();
+    Proxy->Bounds = GetWorldAABB();
+    Proxy->StaticMeshAsset = StaticMeshAsset;
+    Proxy->StaticMeshComp = this;
+
+    return Proxy;
 }
 
 void UStaticMeshComponent::MarkBoundsDirty()
