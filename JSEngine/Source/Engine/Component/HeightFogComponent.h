@@ -38,6 +38,9 @@ public:
     void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
     void PostEditProperty(const char* PropertyName) override;
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
     UPROPERTY(EditAnywhere, DisplayName="FogInscatteringColor")
     FColor FogInscatteringColor;

@@ -1,5 +1,6 @@
 ﻿#include "HeightFogComponent.h"
 #include "Object/Object.h"
+#include "Render/Proxy/HeightFogRenderProxy.h"
 
 
 DEFINE_CLASS(UHeightFogComponent, UPrimitiveComponent)
@@ -23,6 +24,13 @@ void UHeightFogComponent::PostEditProperty(const char* PropertyName)
 {
     // 지금은 별도 후처리 없이 값만 바꿔도 되지만
     // 나중에 셰이더 업데이트 등 필요하면 여기서 처리
+}
+
+FPrimitiveRenderProxy* UHeightFogComponent::CreateRenderProxy()
+{
+    FHeightFogRenderProxy* Proxy = new FHeightFogRenderProxy;
+    Proxy->HeightFogComp = this;
+    return Proxy;
 }
 
 void UHeightFogComponent::UpdateWorldAABB() const

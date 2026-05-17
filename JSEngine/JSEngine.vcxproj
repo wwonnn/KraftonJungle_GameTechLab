@@ -351,7 +351,10 @@
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\BillboardRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\FireballRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\ProceduralMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\SubUVRenderProxy.cpp" />
@@ -910,7 +913,10 @@
     <ClInclude Include="Source\Engine\Component\SkeletalMeshComponent.h" />
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\FireballRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\ProceduralMeshRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\RenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.h" />
