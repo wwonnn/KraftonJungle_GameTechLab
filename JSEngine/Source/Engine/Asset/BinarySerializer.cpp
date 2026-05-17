@@ -2,10 +2,12 @@
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/Skeleton.h"
 #include "Asset/StaticMeshTypes.h"
 #include "Asset/SkeletalMeshTypes.h"
 #include "Core/Paths.h"
 #include "Math/Matrix.h"
+#include "Object/ObjectFactory.h"
 
 #include <filesystem>
 #include <chrono>
@@ -949,10 +951,11 @@ bool FBinarySerializer::ReadSkeletalSections(std::ifstream& In, FSkeletalMesh& O
 
 void FBinarySerializer::WriteBones(std::ofstream& Out, const FSkeletalMesh& Data)
 {
-	uint32 Count = static_cast<uint32>(Data.Bones.size());
+	const TArray<FBoneInfo>& Bones = Data.GetBones();
+	uint32 Count = static_cast<uint32>(Bones.size());
 	WriteUInt32LE(Out, Count);
 
-	for (const FBoneInfo& Bone : Data.Bones)
+	for (const FBoneInfo& Bone : Bones)
 	{
 		WriteString(Out, Bone.Name);
 		WriteInt32LE(Out, Bone.ParentIndex);
@@ -976,9 +979,25 @@ bool FBinarySerializer::ReadBones(std::ifstream& In, FSkeletalMesh& OutData, uin
 		return false;
 	}
 
-	OutData.Bones.resize(Count);
+	if (!OutData.Skeleton)
+	{
+		USkeleton* Skeleton = UObjectManager::Get().CreateObject<USkeleton>();
+		FSkeletonData* SkeletonData = new FSkeletonData();
+		SkeletonData->PathFileName = OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath;
+		Skeleton->SetSkeletonData(SkeletonData);
+		OutData.Skeleton = Skeleton;
+	}
 
-	for (FBoneInfo& Bone : OutData.Bones)
+	TArray<FBoneInfo>* Bones = OutData.GetMutableBones();
+	if (!Bones)
+	{
+		In.setstate(std::ios::failbit);
+		return false;
+	}
+
+	Bones->resize(Count);
+
+	for (FBoneInfo& Bone : *Bones)
 	{
 		if (!ReadString(In, Bone.Name))
 		{
@@ -1085,60 +1104,9 @@ bool FBinarySerializer::ReadSockets(std::ifstream& In, FSkeletalMesh& OutData, u
 
 void FBinarySerializer::WriteAnimationSequences(std::ofstream& Out, const FSkeletalMesh& Data)
 {
-	const uint32 SequenceCount = static_cast<uint32>(Data.AnimationSequences.size());
+	(void)Data;
+	const uint32 SequenceCount = 0;
 	WriteUInt32LE(Out, SequenceCount);
-
-	for (const UAnimSequence* Sequence : Data.AnimationSequences)
-	{
-		const UAnimDataModel* DataModel = Sequence ? Sequence->DataModel : nullptr;
-		const FString SequenceName = Sequence ? FString(Sequence->GetName()) : FString();
-
-		WriteString(Out, SequenceName);
-		WriteInt32LE(Out, DataModel ? DataModel->FrameRate.Numerator : 30);
-		WriteInt32LE(Out, DataModel ? DataModel->FrameRate.Denominator : 1);
-		WriteInt32LE(Out, DataModel ? DataModel->NumberOfFrames : 0);
-		WriteInt32LE(Out, DataModel ? DataModel->NumberOfKeys : 0);
-
-		const uint32 TrackCount = DataModel ? static_cast<uint32>(DataModel->BoneAnimationTracks.size()) : 0;
-		WriteUInt32LE(Out, TrackCount);
-
-		if (!DataModel)
-		{
-			continue;
-		}
-
-		for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
-		{
-			const FString TrackName = Track.Name.ToString();
-			WriteString(Out, TrackName);
-			WriteInt32LE(Out, Track.BoneTreeIndex);
-
-			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.PosKeys.size()));
-			for (const FVector& Key : Track.InternalTrackData.PosKeys)
-			{
-				WriteFloatLE(Out, Key.X);
-				WriteFloatLE(Out, Key.Y);
-				WriteFloatLE(Out, Key.Z);
-			}
-
-			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.RotKeys.size()));
-			for (const FQuat& Key : Track.InternalTrackData.RotKeys)
-			{
-				WriteFloatLE(Out, Key.X);
-				WriteFloatLE(Out, Key.Y);
-				WriteFloatLE(Out, Key.Z);
-				WriteFloatLE(Out, Key.W);
-			}
-
-			WriteUInt32LE(Out, static_cast<uint32>(Track.InternalTrackData.ScaleKeys.size()));
-			for (const FVector& Key : Track.InternalTrackData.ScaleKeys)
-			{
-				WriteFloatLE(Out, Key.X);
-				WriteFloatLE(Out, Key.Y);
-				WriteFloatLE(Out, Key.Z);
-			}
-		}
-	}
 }
 
 bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh& OutData, uint32 AnimationCount) const
@@ -1154,9 +1122,6 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 		In.setstate(std::ios::failbit);
 		return false;
 	}
-
-	OutData.ClearAnimationSequences();
-	OutData.AnimationSequences.reserve(SequenceCount);
 
 	for (uint32 SequenceIndex = 0; SequenceIndex < SequenceCount; ++SequenceIndex)
 	{
@@ -1192,6 +1157,8 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 
 		UAnimSequence* Sequence = new UAnimSequence();
 		Sequence->SetFName(FName(SequenceName));
+		Sequence->SetSkeleton(OutData.Skeleton);
+		Sequence->SetSkeletonAssetPath(OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath);
 
 		UAnimDataModel* DataModel = new UAnimDataModel();
 		DataModel->SetFName(FName(SequenceName + "_Data"));
@@ -1281,7 +1248,7 @@ bool FBinarySerializer::ReadAnimationSequences(std::ifstream& In, FSkeletalMesh&
 			DataModel->BoneAnimationTracks.push_back(Track);
 		}
 
-		OutData.AnimationSequences.push_back(Sequence);
+		delete Sequence;
 	}
 
 	return In.good();
@@ -1323,9 +1290,9 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 	Header.IndexCount   = static_cast<uint32>(Data.Indices.size());
 	Header.SectionCount = static_cast<uint32>(Data.Sections.size());
 	Header.SlotCount    = static_cast<uint32>(Data.MaterialSlots.size());
-	Header.BoneCount    = static_cast<uint32>(Data.Bones.size());
+	Header.BoneCount    = static_cast<uint32>(Data.GetBones().size());
 	Header.SocketCount  = static_cast<uint32>(Data.Sockets.size());
-	Header.AnimationCount = static_cast<uint32>(Data.AnimationSequences.size());
+	Header.AnimationCount = 0;
 	Header.SourceFileWriteTime = GetFileWriteTimeTicks(SourcePath);
 
 	if (!IsValidSkeletalMeshHeader(Header))
@@ -1444,7 +1411,6 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 	}
 	else
 	{
-		OutData.ClearAnimationSequences();
 	}
 
 	if (!ReadSkeletalBounds(In, OutData))
@@ -1462,9 +1428,8 @@ bool FBinarySerializer::LoadSkeletalMesh(const FString& BinaryPath, FSkeletalMes
 	      OutData.Indices.size()       == Header.IndexCount   &&
 	      OutData.Sections.size()      == Header.SectionCount &&
 	      OutData.MaterialSlots.size() == Header.SlotCount    &&
-	      OutData.Bones.size()         == Header.BoneCount    &&
-	      OutData.Sockets.size()       == Header.SocketCount  &&
-	      OutData.AnimationSequences.size() == Header.AnimationCount))
+	      OutData.GetBones().size()    == Header.BoneCount    &&
+	      OutData.Sockets.size()       == Header.SocketCount))
 	{
 		return false;
 	}
