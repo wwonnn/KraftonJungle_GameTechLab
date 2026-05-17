@@ -106,26 +106,10 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
 
     case EPrimitiveType::EPT_Billboard:
     {
-        UBillboardComponent* BillboardComp = static_cast<UBillboardComponent*>(Primitive);
-        UTexture* Texture = BillboardComp->GetTexture();
-
-        FRenderCommand Cmd = {};
-        Cmd.Type = ERenderCommandType::Billboard;
-        Cmd.VertexFactoryType = EVertexFactoryType::Billboard;
-        Cmd.SourcePrimitive = Primitive;
-        Cmd.MeshBuffer = &MeshBufferManager.GetMeshBuffer(EPrimitiveType::EPT_Billboard);
-        Cmd.SectionIndexStart = 0;
-        Cmd.SectionIndexCount = Cmd.MeshBuffer->GetIndexBuffer().GetIndexCount();
-        Cmd.PerObjectConstants = FPerObjectConstants{
-            MakeViewBillboardMatrix(Primitive, RenderBus),
-            FColor::White().ToVector4() };
-        Cmd.Constants.Billboard.Texture = Texture;
-        Cmd.Constants.Billboard.Width = BillboardComp->GetWidth();
-        Cmd.Constants.Billboard.Height = BillboardComp->GetHeight();
-        Cmd.Constants.Billboard.Color = BillboardComp->GetColor();
-
-        RenderBus.AddCommand(ERenderPass::SubUV, Cmd);
-        return true;
+        FPrimitiveRenderProxy* Proxy = Primitive->GetOrCreateRenderProxy();
+        FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
+        Proxy->CollectRenderCommands(Context, RenderBus);
+        return true; 
     }
 
     case EPrimitiveType::EPT_FOG:

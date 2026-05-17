@@ -350,6 +350,7 @@
     <ClCompile Include="Source\Engine\Component\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\BillboardRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.cpp" />
@@ -908,6 +909,7 @@
     <ClInclude Include="Source\Engine\Camera\PlayerCameraManager.h" />
     <ClInclude Include="Source\Engine\Component\SkeletalMeshComponent.h" />
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\RenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.h" />
