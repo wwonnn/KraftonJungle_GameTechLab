@@ -98,27 +98,10 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
 
     case EPrimitiveType::EPT_SubUV:
     {
-        USubUVComponent* SubUVComp = static_cast<USubUVComponent*>(Primitive);
-        const FParticleResource* Particle = SubUVComp->GetParticle();
-        if (!Particle || !Particle->IsLoaded()) return true;
-
-        FRenderCommand Cmd = {};
-        Cmd.PerObjectConstants = FPerObjectConstants{
-            MakeViewBillboardMatrix(Primitive, RenderBus),
-            FColor::White().ToVector4() };
-        Cmd.SourcePrimitive = Primitive;
-        Cmd.Type = ERenderCommandType::SubUV;
-        Cmd.VertexFactoryType = EVertexFactoryType::SubUV;
-        Cmd.MeshBuffer = &MeshBufferManager.GetMeshBuffer(EPrimitiveType::EPT_SubUV);
-        Cmd.SectionIndexStart = 0;
-        Cmd.SectionIndexCount = Cmd.MeshBuffer->GetIndexBuffer().GetIndexCount();
-        Cmd.Constants.SubUV.Particle = Particle;
-        Cmd.Constants.SubUV.FrameIndex = SubUVComp->GetFrameIndex();
-        Cmd.Constants.SubUV.Width = SubUVComp->GetWidth();
-        Cmd.Constants.SubUV.Height = SubUVComp->GetHeight();
-
-        RenderBus.AddCommand(ERenderPass::SubUV, Cmd);
-        return true;
+        FPrimitiveRenderProxy* Proxy = Primitive->GetOrCreateRenderProxy();
+        FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
+        Proxy->CollectRenderCommands(Context, RenderBus);
+        return true; 
     }
 
     case EPrimitiveType::EPT_Billboard:
