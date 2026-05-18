@@ -377,6 +377,8 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyColor(const FColor& Colo
 
 void FAnimationSequenceEditorDocument::SelectNotify(int32 TrackIndex, int32 EventIndex)
 {
+    EditorState.SelectedCurveIndex = -1;
+    EditorState.HoveredCurveIndex = -1;
     EditorState.SelectedNotifyTrackIndex = TrackIndex;
     EditorState.SelectedNotifyEventIndex = EventIndex;
     EditorState.HoveredNotifyTrackIndex = TrackIndex;
@@ -415,6 +417,18 @@ void FAnimationSequenceEditorDocument::SyncEditorState()
     EditorState.PlayRate = PreviewController->GetPlayRate();
     EditorState.SetCurrentTime(PreviewController->GetCurrentTime(), false);
     EditorState.SetVisibleRange(EditorState.VisibleTimeStart, EditorState.VisibleTimeEnd);
+
+    const UAnimDataModel* DataModel = AnimationSequenceViewer::GetValidAnimDataModel(Sequence);
+    const int32 CurveCount = DataModel ? static_cast<int32>(DataModel->CurveData.FloatCurves.size()) : 0;
+    if (EditorState.SelectedCurveIndex >= CurveCount)
+    {
+        EditorState.SelectedCurveIndex = -1;
+    }
+    if (EditorState.HoveredCurveIndex >= CurveCount)
+    {
+        EditorState.HoveredCurveIndex = -1;
+    }
+
     ValidateNotifySelection();
 }
 

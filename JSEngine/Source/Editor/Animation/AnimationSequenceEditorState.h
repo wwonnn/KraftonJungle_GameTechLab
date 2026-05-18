@@ -47,11 +47,17 @@ public:
     float VisibleTimeStart = 0.0f;
     float VisibleTimeEnd = 1.0f;
     float PreviewPaneHeight = 0.0f;
+    float TrackOutlinerWidth = 0.0f;
+    float SequencerScrollY = 0.0f;
+    bool bNotifiesExpanded = true;
+    bool bCurvesExpanded = true;
     int32 SelectedNotifyTrackIndex = -1;
     int32 SelectedNotifyEventIndex = -1;
     int32 HoveredNotifyTrackIndex = -1;
     int32 HoveredNotifyEventIndex = -1;
     int32 DraggedNotifyTrackIndex = -1;
     int32 DraggedNotifyEventIndex = -1;
+    int32 SelectedCurveIndex = -1;
+    int32 HoveredCurveIndex = -1;
     bool bDraggingNotify = false;
 };

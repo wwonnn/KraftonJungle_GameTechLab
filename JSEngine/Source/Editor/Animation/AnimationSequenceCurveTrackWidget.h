@@ -1,15 +1,15 @@
 #pragma once
 
+class UAnimSequence;
 class FAnimationSequenceEditorState;
-class FAnimationSequenceEditorDocument;
 struct FAnimationSequenceTimelineGeometry;
 
-class FAnimationSequenceNotifyLaneWidget
+class FAnimationSequenceCurveTrackWidget
 {
 public:
     void RenderRows(
+        const UAnimSequence* Sequence,
         FAnimationSequenceEditorState& State,
-        FAnimationSequenceEditorDocument* Document,
         const FAnimationSequenceTimelineGeometry& Geometry,
-        float SectionTop);
+        float SectionTop) const;
 };

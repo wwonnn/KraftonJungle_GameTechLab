@@ -24,6 +24,14 @@ FAnimationSequenceTimelineGeometry FAnimationSequenceTimelineGeometry::BuildTime
     return Geometry;
 }
 
+FAnimationSequenceTimelineGeometry FAnimationSequenceTimelineGeometry::BuildSequencerCanvasGeometry(
+    const ImVec2& InCanvasPos,
+    const ImVec2& InCanvasSize,
+    float RulerHeight)
+{
+    return BuildTimelineGeometry(InCanvasPos, InCanvasSize, RulerHeight);
+}
+
 FAnimationSequenceTimelineGeometry FAnimationSequenceTimelineGeometry::BuildLaneGeometry(
     const ImVec2& InCanvasPos,
     const ImVec2& InCanvasSize)
@@ -56,6 +64,11 @@ float FAnimationSequenceTimelineGeometry::XToTime(const FAnimationSequenceEditor
 float FAnimationSequenceTimelineGeometry::GetClampedPlayheadX(const FAnimationSequenceEditorState& State) const
 {
     return std::clamp(TimeToX(State, State.CurrentTime), TimelineMinX, TimelineMaxX);
+}
+
+float FAnimationSequenceTimelineGeometry::ClampX(float X) const
+{
+    return std::clamp(X, TimelineMinX, TimelineMaxX);
 }
 
 int32 FAnimationSequenceTimelineGeometry::GetStartFrame(const FAnimationSequenceEditorState& State) const

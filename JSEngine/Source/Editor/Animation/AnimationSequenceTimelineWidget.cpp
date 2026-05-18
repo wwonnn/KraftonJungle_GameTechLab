@@ -2,19 +2,17 @@
 
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
+#include "Editor/Animation/AnimationSequenceSequencerLayout.h"
 #include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
 
 #include "ImGui/imgui.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <cmath>
+#include <cstdio>
 
 namespace
 {
-    constexpr float TimelineHeight = 92.0f;
-    constexpr float RulerHeight = 24.0f;
-
     ImU32 WithAlpha(ImU32 Color, float AlphaScale)
     {
         const ImU32 Alpha = static_cast<ImU32>(std::clamp(AlphaScale, 0.0f, 1.0f) * 255.0f);
@@ -22,39 +20,35 @@ namespace
     }
 }
 
-void FAnimationSequenceTimelineWidget::Render(
-    FAnimationSequenceEditorState& State,
-    FAnimationSequencePreviewController* PreviewController)
+float FAnimationSequenceTimelineWidget::GetRulerHeight() const
 {
-    ImGui::BeginChild(
-        "##AnimationSequenceTimeline",
-        ImVec2(0.0f, TimelineHeight),
-        true,
-        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    return FAnimationSequenceSequencerLayout::RulerHeight;
+}
 
-    const ImVec2 CanvasPos = ImGui::GetCursorScreenPos();
-    const ImVec2 CanvasSize = ImGui::GetContentRegionAvail();
-    ImGui::InvisibleButton("##AnimationSequenceTimelineCanvas", CanvasSize);
-    const FAnimationSequenceTimelineGeometry Geometry =
-        FAnimationSequenceTimelineGeometry::BuildTimelineGeometry(CanvasPos, CanvasSize, RulerHeight);
-
+void FAnimationSequenceTimelineWidget::RenderCanvas(
+    FAnimationSequenceEditorState& State,
+    FAnimationSequencePreviewController* PreviewController,
+    const FAnimationSequenceTimelineGeometry& Geometry,
+    bool bCanvasHovered,
+    bool bCanvasActive) const
+{
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
     const ImU32 BorderColor = ImGui::GetColorU32(ImGuiCol_Border);
-    const ImU32 PanelColor = ImGui::GetColorU32(ImGuiCol_ChildBg);
-    const ImU32 RulerColor = ImGui::GetColorU32(ImGuiCol_FrameBg);
-    const ImU32 GridColor = WithAlpha(ImGui::GetColorU32(ImGuiCol_TextDisabled), 0.34f);
-    const ImU32 MinorGridColor = WithAlpha(ImGui::GetColorU32(ImGuiCol_TextDisabled), 0.16f);
+    const ImU32 PanelColor = IM_COL32(24, 26, 31, 255);
+    const ImU32 RulerColor = IM_COL32(31, 35, 41, 255);
+    const ImU32 GridColor = WithAlpha(IM_COL32(153, 160, 171, 255), 0.34f);
+    const ImU32 MinorGridColor = WithAlpha(IM_COL32(153, 160, 171, 255), 0.16f);
     const ImU32 PlayheadColor = IM_COL32(255, 106, 72, 255);
     const ImU32 AccentColor = IM_COL32(255, 170, 72, 255);
 
-    DrawList->AddRectFilled(CanvasPos, Geometry.CanvasEnd, PanelColor);
+    DrawList->AddRectFilled(Geometry.CanvasPos, Geometry.CanvasEnd, PanelColor);
     DrawList->AddRectFilled(
         ImVec2(Geometry.TimelineMinX, Geometry.RulerTop),
-        ImVec2(Geometry.TimelineMaxX, Geometry.CanvasEnd.y - FAnimationSequenceTimelineGeometry::VerticalPadding),
+        ImVec2(Geometry.TimelineMaxX, Geometry.TrackTop),
         RulerColor,
         4.0f);
-    DrawList->AddRect(CanvasPos, Geometry.CanvasEnd, BorderColor);
+    DrawList->AddRect(Geometry.CanvasPos, Geometry.CanvasEnd, BorderColor);
     DrawList->AddLine(
         ImVec2(Geometry.TimelineMinX, Geometry.TrackTop),
         ImVec2(Geometry.TimelineMaxX, Geometry.TrackTop),
@@ -66,7 +60,6 @@ void FAnimationSequenceTimelineWidget::Render(
             ImVec2(Geometry.TimelineMinX, Geometry.TrackTop + 10.0f),
             ImGui::GetColorU32(ImGuiCol_TextDisabled),
             "Timeline data is unavailable.");
-        ImGui::EndChild();
         return;
     }
 
@@ -120,43 +113,44 @@ void FAnimationSequenceTimelineWidget::Render(
 
     DrawList->PopClipRect();
 
-    const bool bHovered = ImGui::IsItemHovered();
-    const bool bActive = ImGui::IsItemActive();
     const ImVec2 MousePos = ImGui::GetIO().MousePos;
+    const bool bMouseInRuler =
+        MousePos.x >= Geometry.TimelineMinX &&
+        MousePos.x <= Geometry.TimelineMaxX &&
+        MousePos.y >= Geometry.RulerTop &&
+        MousePos.y <= Geometry.TrackTop;
 
-    if (bHovered && std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
+    if (bCanvasHovered && std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
     {
         const float AnchorTime = State.ClampTime(
-            Geometry.XToTime(State, std::clamp(MousePos.x, Geometry.TimelineMinX, Geometry.TimelineMaxX)));
+            Geometry.XToTime(State, Geometry.ClampX(MousePos.x)));
         const float ZoomFactor = ImGui::GetIO().MouseWheel > 0.0f ? 0.85f : (1.0f / 0.85f);
         State.ZoomVisibleRange(AnchorTime, ZoomFactor);
     }
 
-    if (bHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
+    if (bCanvasHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
     {
         const float DeltaTime = -(ImGui::GetIO().MouseDelta.x / Geometry.TimelineWidth) * State.GetVisibleRange();
         State.PanVisibleRange(DeltaTime);
     }
 
-    if (PreviewController && bActive && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+    if (PreviewController && bCanvasActive && bMouseInRuler && ImGui::IsMouseDown(ImGuiMouseButton_Left) && !State.bDraggingNotify)
     {
         const float NewTime = State.ClampOrSnapTime(
             Geometry.XToTime(
                 State,
-                std::clamp(MousePos.x, Geometry.TimelineMinX, Geometry.TimelineMaxX)));
+                Geometry.ClampX(MousePos.x)));
         PreviewController->SetCurrentTime(NewTime);
         State.SetCurrentTime(PreviewController->GetCurrentTime(), false);
     }
 
     DrawList->AddText(
-        ImVec2(CanvasPos.x + 8.0f, Geometry.CanvasEnd.y - 20.0f),
+        ImVec2(Geometry.CanvasPos.x + 10.0f, Geometry.CanvasEnd.y - 20.0f),
         ImGui::GetColorU32(ImGuiCol_TextDisabled),
-        bHovered ? "Wheel: Zoom  Middle-drag: Pan  Left-drag: Scrub" : "Timeline");
+        bCanvasHovered ? "Wheel: Zoom  Middle-drag: Pan  Left-drag on ruler: Scrub" : "Timeline Canvas");
 
     DrawList->AddText(
         ImVec2(Geometry.CanvasEnd.x - 118.0f, Geometry.CanvasEnd.y - 20.0f),
         AccentColor,
         State.bSnapToFrames ? "Snap: Frames" : "Snap: Off");
-
-    ImGui::EndChild();
 }

@@ -431,6 +431,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
@@ -1018,10 +1026,13 @@
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePlaybackController.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewController.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewMeshResolver.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewScene.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceSequencerLayout.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceTimelineWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceTimelineGeometry.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceViewerUtils.h" />

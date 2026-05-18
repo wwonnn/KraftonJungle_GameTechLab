@@ -4226,6 +4226,16 @@
           }],
         "FrameRateDenominator" : 1000,
         "FrameRateNumerator" : 30000,
+        "NotifyTracks" : [{
+            "Events" : [{
+                "Color" : [0.949020, 0.619608, 0.239216, 1.000000],
+                "Duration" : 0.742000,
+                "Name" : "Notify",
+                "StableId" : "28821EC3-0479478D-A6F1DE85-E839D37E",
+                "Time" : 0.266667
+              }],
+            "TrackName" : "Track 1"
+          }],
         "NumberOfFrames" : 69,
         "NumberOfKeys" : 69,
         "ObjectName" : "Take 001",

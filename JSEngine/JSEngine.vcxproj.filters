@@ -240,6 +240,12 @@
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
@@ -1145,6 +1151,12 @@
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
@@ -1155,6 +1167,9 @@
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewScene.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceSequencerLayout.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceTimelineGeometry.h">

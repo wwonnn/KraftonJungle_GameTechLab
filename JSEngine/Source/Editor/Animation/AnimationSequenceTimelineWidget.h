@@ -2,9 +2,16 @@
 
 class FAnimationSequenceEditorState;
 class FAnimationSequencePreviewController;
+struct FAnimationSequenceTimelineGeometry;
 
 class FAnimationSequenceTimelineWidget
 {
 public:
-    void Render(FAnimationSequenceEditorState& State, FAnimationSequencePreviewController* PreviewController);
+    float GetRulerHeight() const;
+    void RenderCanvas(
+        FAnimationSequenceEditorState& State,
+        FAnimationSequencePreviewController* PreviewController,
+        const FAnimationSequenceTimelineGeometry& Geometry,
+        bool bCanvasHovered,
+        bool bCanvasActive) const;
 };

@@ -1,6 +1,7 @@
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 
 #include "Animation/AnimData/AnimSequence.h"
+#include "Editor/Animation/AnimationSequenceSequencerLayout.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 
 #include <algorithm>
@@ -19,12 +20,18 @@ void FAnimationSequenceEditorState::Reset()
     VisibleTimeStart = 0.0f;
     VisibleTimeEnd = 1.0f;
     PreviewPaneHeight = 0.0f;
+    TrackOutlinerWidth = FAnimationSequenceSequencerLayout::OutlinerDefaultWidth;
+    SequencerScrollY = 0.0f;
+    bNotifiesExpanded = true;
+    bCurvesExpanded = true;
     SelectedNotifyTrackIndex = -1;
     SelectedNotifyEventIndex = -1;
     HoveredNotifyTrackIndex = -1;
     HoveredNotifyEventIndex = -1;
     DraggedNotifyTrackIndex = -1;
     DraggedNotifyEventIndex = -1;
+    SelectedCurveIndex = -1;
+    HoveredCurveIndex = -1;
     bDraggingNotify = false;
 }
 
