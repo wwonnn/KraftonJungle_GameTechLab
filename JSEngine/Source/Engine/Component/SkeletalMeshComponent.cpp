@@ -1,4 +1,4 @@
-#include "SkeletalMeshComponent.h"
+﻿#include "SkeletalMeshComponent.h"
 
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -13,7 +13,10 @@
 DEFINE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 REGISTER_FACTORY(USkeletalMeshComponent)
 
-USkeletalMeshComponent::~USkeletalMeshComponent() = default;
+USkeletalMeshComponent::~USkeletalMeshComponent()
+{
+    ReleaseAnimInstance();
+}
 
 UObject* USkeletalMeshComponent::Duplicate()
 {
@@ -261,6 +264,13 @@ FPrimitiveRenderProxy* USkeletalMeshComponent::CreateRenderProxy()
 
 void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
 {
+    if (AnimInstance == InAnimInstance)
+    {
+        return;
+    }
+
+    ReleaseAnimInstance();
+
     AnimInstance = InAnimInstance;
     if (AnimInstance)
     {
@@ -293,6 +303,23 @@ ULuaAnimInstance* USkeletalMeshComponent::BindLuaAnimInstance(const FString& Scr
     return LuaAnimInstance;
 }
 
+void USkeletalMeshComponent::ReleaseAnimInstance()
+{
+    if (!AnimInstance)
+    {
+        return;
+    }
+
+    UAnimInstance* InstanceToRelease = AnimInstance;
+    AnimInstance = nullptr;
+    InstanceToRelease->SetOwningComponent(nullptr);
+
+    if (UObjectManager::Get().ContainsObject(InstanceToRelease))
+    {
+        UObjectManager::Get().DestroyObject(InstanceToRelease);
+    }
+}
+
 UAnimSingleNodeInstance* USkeletalMeshComponent::EnsurePreviewAnimInstance()
 {
     if (UAnimSingleNodeInstance* PreviewInstance = GetPreviewAnimInstance())
@@ -309,7 +336,7 @@ void USkeletalMeshComponent::InitializeAnimation()
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
     {
-        AnimInstance = nullptr;
+        ReleaseAnimInstance();
         return;
     }
 
@@ -332,10 +359,14 @@ void USkeletalMeshComponent::InitializeAnimation()
                 SetAnimInstance(AssetAnimInstance);
                 return;
             }
+            if (AssetAnimInstance)
+            {
+                UObjectManager::Get().DestroyObject(AssetAnimInstance);
+            }
         }
     }
 
-    AnimInstance = nullptr;
+    ReleaseAnimInstance();
 }
 
 void USkeletalMeshComponent::ApplyAnimationPose(float DeltaTime)

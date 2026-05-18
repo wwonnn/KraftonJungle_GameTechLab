@@ -57,6 +57,7 @@ protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
 
 private:
+    void ReleaseAnimInstance();
     UAnimSingleNodeInstance* EnsurePreviewAnimInstance();
     void InitializeAnimation();
     void ApplyAnimationPose(float DeltaTime);
