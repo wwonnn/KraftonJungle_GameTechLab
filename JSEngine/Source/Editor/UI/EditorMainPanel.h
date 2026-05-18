@@ -172,6 +172,8 @@ private:
 	void ToggleContentBrowser();
 	void OpenDocument(std::unique_ptr<FEditorDocument> Document);
 	bool CloseDocument(const FEditorTabId& TabId);
+	void QueueCloseDocument(const FEditorTabId& TabId);
+	void FlushClosedDocuments();
 
 	void ApplyPIEViewportFullscreen();
 	void RestorePIEViewportLayout();
@@ -183,6 +185,7 @@ private:
 	FEditorMainPanelWidgetSet Widgets;
 	FEditorTabManager EditorTabs;
 	TArray<std::unique_ptr<FEditorDocument>> OpenDocuments;
+	TArray<FEditorTabId> PendingClosedDocuments;
     TArray<FEditorViewer*> PendingOpenViewers;
 
 	FEditorMainPanelVisibilityState PanelVisibility;

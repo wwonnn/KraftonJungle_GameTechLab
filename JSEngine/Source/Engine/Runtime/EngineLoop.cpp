@@ -1,7 +1,10 @@
 ﻿#include "Engine/Runtime/EngineLoop.h"
 
 #include "Core/Paths.h"
+#include "Core/ResourceManager.h"
 #include "Launch/LaunchModeFactory.h"
+#include "Object/FName.h"
+#include "Object/ObjectFactory.h"
 
 #include <objbase.h>
 
@@ -110,4 +113,9 @@ void FEngineLoop::Shutdown()
 		CoUninitialize();
 		bComInitialized = false;
 	}
+
+	FResourceManager::Get().Shutdown();
+	FObjectFactory::Get().Shutdown();
+	UObjectManager::Get().Shutdown();
+	FNamePool::Get().Shutdown();
 }

@@ -458,6 +458,10 @@ JSEngine/DerivedData/
 JSEngine/Saves/**
 Builds/
 
+# ignore Local User Settings
+Build/Local/
+Build/Local/*.props
+
 # Asset 폴더 관련 (그때그때 필요한 파일만 저장하도록 변경)
 !JSEngine/Asset/Mesh/**
 !JSEngine/Asset/**/*.meta

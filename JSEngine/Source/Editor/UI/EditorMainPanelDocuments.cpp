@@ -70,3 +70,31 @@ bool FEditorMainPanel::CloseDocument(const FEditorTabId& TabId)
     OpenDocuments.erase(It, OpenDocuments.end());
     return true;
 }
+
+void FEditorMainPanel::QueueCloseDocument(const FEditorTabId& TabId)
+{
+    for (const FEditorTabId& PendingTabId : PendingClosedDocuments)
+    {
+        if (PendingTabId.Matches(TabId))
+        {
+            return;
+        }
+    }
+
+    PendingClosedDocuments.push_back(TabId);
+}
+
+void FEditorMainPanel::FlushClosedDocuments()
+{
+    if (PendingClosedDocuments.empty())
+    {
+        return;
+    }
+
+    TArray<FEditorTabId> ClosedTabs = PendingClosedDocuments;
+    PendingClosedDocuments.clear();
+    for (const FEditorTabId& TabId : ClosedTabs)
+    {
+        CloseDocument(TabId);
+    }
+}

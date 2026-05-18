@@ -438,7 +438,8 @@ bool FEditorMainPanel::RequestCloseEditorTab(const FEditorTabId& TabId)
 		{
 			return false;
 		}
-		return CloseDocument(TabId);
+		QueueCloseDocument(TabId);
+		return true;
 	}
 
 	return EditorTabs.CloseTab(TabId);

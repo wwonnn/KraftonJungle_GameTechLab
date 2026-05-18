@@ -26,6 +26,7 @@ void FEditorMainPanel::Render(float DeltaTime)
     UpdateConsoleDrawerAnimation(EffectiveDeltaTime);
     RenderLateFrameOverlays(DeltaTime, EffectiveDeltaTime, bDrawEditorPanels);
     EndImGuiFrame();
+    FlushClosedDocuments();
 
     ClearRuntimeUIDrawCallbacks();
 }

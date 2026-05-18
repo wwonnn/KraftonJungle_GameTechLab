@@ -1090,6 +1090,15 @@
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Render\Resource\VertexFactoryTypes.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\BillboardRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\FireballRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\ProceduralMeshRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\SubUVRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\TextRenderProxy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -2096,6 +2105,17 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequenceBase.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimTypes.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\FireballRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\ProceduralMeshRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\RenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\SubUVRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\TextRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\Engine\Runtime\AppIcon.rc" />

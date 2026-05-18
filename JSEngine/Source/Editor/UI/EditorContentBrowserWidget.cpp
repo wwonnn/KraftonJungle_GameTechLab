@@ -1727,7 +1727,9 @@ void FEditorContentBrowserWidget::DrawAssetPreview()
 		ImGui::Text("Frames: %d", DataModel->NumberOfFrames);
 		ImGui::Text("Keys: %d", DataModel->NumberOfKeys);
 		ImGui::Text("Bone Tracks: %d", static_cast<int32>(DataModel->BoneAnimationTracks.size()));
-		ImGui::TextWrapped("Preview mesh resolution is pending importer metadata integration.");
+		ImGui::TextWrapped(
+			"Skeleton Asset: %s",
+			Sequence->GetSkeletonAssetPath().empty() ? "(none)" : Sequence->GetSkeletonAssetPath().c_str());
 		return;
 	}
 

@@ -1,6 +1,5 @@
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 
-#include "Core/ResourceManager.h"
 #include "Core/Paths.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -12,12 +11,6 @@ FAnimationSequenceEditorDocument::~FAnimationSequenceEditorDocument()
 {
     Widget.reset();
     PreviewController.reset();
-
-    if (!SequencePath.empty())
-    {
-        FResourceManager::Get().UnloadAnimSequence(SequencePath);
-    }
-
     Sequence = nullptr;
 }
 

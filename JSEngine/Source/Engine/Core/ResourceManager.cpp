@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <chrono>
 #include <cwctype>
+#include <unordered_set>
 #include "Asset/FileUtils.h"
 
 #include "DDSTextureLoader.h"
@@ -38,6 +39,13 @@ namespace
 #else
 		return true;
 #endif
+	}
+
+	template <typename T>
+	void ClearAndShrinkArray(TArray<T>& Array)
+	{
+		Array.clear();
+		Array.shrink_to_fit();
 	}
 }
 
@@ -485,15 +493,40 @@ void FResourceManager::ReleaseGPUResources()
 		UObjectManager::Get().DestroyObject(Sequence);
 	}
 	AnimSequenceMap.clear();
+	AnimSequenceMap.rehash(0);
 
+	std::unordered_set<USkeletalMesh*> DestroyedMeshes;
 	for (auto& [Path, Mesh] : SkeletalMeshMap)
 	{
+		// SkeletalMeshMap은 source path와 writable asset path를 같은 mesh 인스턴스에 alias로 걸 수 있다.
+		// shutdown에서 map 엔트리마다 delete하면 같은 UObject를 두 번 해제하게 된다.
+		if (!Mesh || DestroyedMeshes.find(Mesh) != DestroyedMeshes.end())
+		{
+			continue;
+		}
+
+		DestroyedMeshes.insert(Mesh);
 		UObjectManager::Get().DestroyObject(Mesh);
 	}
 	SkeletalMeshMap.clear();
+	SkeletalMeshMap.rehash(0);
 
 	DefaultWhiteTexture.Reset();
 	CachedDevice.Reset();
+}
+
+void FResourceManager::Shutdown()
+{
+	ReleaseGPUResources();
+	ClearDiscoveredResourceLists(true);
+	ClearAndShrinkArray(ObjFilePaths);
+	ClearAndShrinkArray(MaterialFilePaths);
+	ClearAndShrinkArray(ParticleFilePaths);
+	ClearAndShrinkArray(FontFilePaths);
+	ClearAndShrinkArray(TextureFilePaths);
+	ClearAndShrinkArray(SkeletalMeshFilePaths);
+	ClearAndShrinkArray(CurveFilePaths);
+	ClearAndShrinkArray(AnimSequenceFilePaths);
 }
 
 FVertexShader* FResourceManager::GetOrCreateVertexShader(

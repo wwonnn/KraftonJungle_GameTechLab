@@ -40,6 +40,54 @@ namespace
         return ParentPath.empty() ? FString() : FPaths::ToString(ParentPath.filename().generic_wstring());
     }
 
+    FString GetAssetStem(const FString& AssetPath)
+    {
+        if (AssetPath.empty())
+        {
+            return {};
+        }
+
+        const std::filesystem::path AssetFsPath(FPaths::ToWide(FPaths::Normalize(AssetPath)));
+        return FPaths::ToString(AssetFsPath.stem().generic_wstring());
+    }
+
+    bool TryBuildMeshPathFromSkeletonPath(
+        const FString& SkeletonAssetPath,
+        const TArray<FString>& SkeletalMeshPaths,
+        FString& OutMeshPath)
+    {
+        if (SkeletonAssetPath.empty())
+        {
+            return false;
+        }
+
+        std::filesystem::path MeshFsPath(FPaths::ToWide(FPaths::Normalize(SkeletonAssetPath)));
+        if (MeshFsPath.empty())
+        {
+            return false;
+        }
+
+        MeshFsPath.replace_extension(L".skmesh");
+        const std::filesystem::path BinDir = MeshFsPath.parent_path();
+        const std::filesystem::path AssetTypeDir = BinDir.parent_path();
+        if (!AssetTypeDir.empty())
+        {
+            MeshFsPath = AssetTypeDir.parent_path() / L"SkeletalMesh" / BinDir.filename() / MeshFsPath.filename();
+        }
+
+        const FString ExpectedMeshPath = FPaths::Normalize(FPaths::ToUtf8(MeshFsPath.generic_wstring()));
+        for (const FString& CandidatePath : SkeletalMeshPaths)
+        {
+            if (FPaths::Normalize(CandidatePath) == ExpectedMeshPath)
+            {
+                OutMeshPath = CandidatePath;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     float GetSequenceLengthSeconds(const UAnimSequence* Sequence)
     {
         if (!Sequence || !Sequence->DataModel)
@@ -100,7 +148,7 @@ bool FAnimationSequencePreviewController::Initialize(
     EditorEngine = InEditorEngine;
     SequencePath = FPaths::Normalize(InSequencePath);
     Sequence = InSequence;
-    PreviewResourceIndex = NextPreviewResourceIndex++;
+    PreviewResourceIndex = InvalidPreviewResourceIndex;
     CurrentTime = 0.0f;
     PlayRate = 1.0f;
     bPlaying = false;
@@ -119,8 +167,16 @@ bool FAnimationSequencePreviewController::Initialize(
 
     if (!ResolvePreviewMeshPath(PreviewMeshPath))
     {
-        PreviewStatusText =
-            "Preview mesh could not be resolved from the current .sequence path. Importer metadata is not integrated yet.";
+        if (Sequence && !Sequence->GetSkeletonAssetPath().empty())
+        {
+            PreviewStatusText =
+                "Preview mesh could not be resolved from SkeletonAssetPath: " + Sequence->GetSkeletonAssetPath();
+        }
+        else
+        {
+            PreviewStatusText =
+                "Preview mesh could not be resolved because the sequence has no SkeletonAssetPath metadata yet.";
+        }
         TimelineStatusText = "Playback controls are available after a preview mesh is resolved.";
         return false;
     }
@@ -175,10 +231,11 @@ void FAnimationSequencePreviewController::Shutdown()
     PreviewViewportClient.SetWorld(nullptr);
     PreviewViewportClient.ReleaseTransientEditorState();
 
-    if (EditorEngine)
+    if (EditorEngine && PreviewResourceIndex != InvalidPreviewResourceIndex)
     {
         EditorEngine->GetRenderer().ReleaseViewerViewportResource(PreviewResourceIndex);
     }
+    PreviewResourceIndex = InvalidPreviewResourceIndex;
 
     if (EditorEngine && PreviewWorldHandle.IsValid())
     {
@@ -376,9 +433,15 @@ void FAnimationSequencePreviewController::SetViewportSize(int32 InWidth, int32 I
     PreviewViewport.SetRect(ViewportRect);
     PreviewViewportClient.SetViewportSize(static_cast<float>(ViewportWidth), static_cast<float>(ViewportHeight));
 
-    if (!EditorEngine)
+    if (!EditorEngine || !HasValidPreview())
     {
+        PreviewViewport.SetRenderTargetSet(nullptr);
         return;
+    }
+
+    if (PreviewResourceIndex == InvalidPreviewResourceIndex)
+    {
+        PreviewResourceIndex = NextPreviewResourceIndex++;
     }
 
     FViewportRenderResource& Resource =
@@ -398,18 +461,71 @@ bool FAnimationSequencePreviewController::ResolvePreviewMeshPath(FString& OutMes
 {
     OutMeshPath.clear();
 
+    const TArray<FString> SkeletalMeshPaths = FResourceManager::Get().GetSkeletalMeshPaths();
+    const FString SkeletonAssetPath = Sequence ? FPaths::Normalize(Sequence->GetSkeletonAssetPath()) : FString();
+    if (!SkeletonAssetPath.empty())
+    {
+        if (TryBuildMeshPathFromSkeletonPath(SkeletonAssetPath, SkeletalMeshPaths, OutMeshPath))
+        {
+            return true;
+        }
+
+        const FString SkeletonStem = GetAssetStem(SkeletonAssetPath);
+        TArray<FString> CandidatePaths;
+        CandidatePaths.reserve(SkeletalMeshPaths.size());
+        for (const FString& CandidatePath : SkeletalMeshPaths)
+        {
+            if (SkeletonStem.empty() || GetAssetStem(CandidatePath) == SkeletonStem)
+            {
+                CandidatePaths.push_back(CandidatePath);
+            }
+        }
+
+        auto TryResolveFromCandidates = [&](const TArray<FString>& Paths) -> bool
+        {
+            for (const FString& CandidatePath : Paths)
+            {
+                USkeletalMesh* CandidateMesh = FResourceManager::Get().FindSkeletalMesh(CandidatePath);
+                if (!CandidateMesh)
+                {
+                    CandidateMesh = FResourceManager::Get().LoadSkeletalMesh(CandidatePath);
+                }
+
+                if (!CandidateMesh)
+                {
+                    continue;
+                }
+
+                if (FPaths::Normalize(CandidateMesh->GetSkeletonAssetPath()) == SkeletonAssetPath)
+                {
+                    OutMeshPath = CandidatePath;
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        if (TryResolveFromCandidates(CandidatePaths))
+        {
+            return true;
+        }
+
+        if (CandidatePaths.size() != SkeletalMeshPaths.size() && TryResolveFromCandidates(SkeletalMeshPaths))
+        {
+            return true;
+        }
+    }
+
     const FString MeshStem = GetMeshStemFromSequencePath(SequencePath);
     if (MeshStem.empty())
     {
         return false;
     }
 
-    const TArray<FString> SkeletalMeshPaths = FResourceManager::Get().GetSkeletalMeshPaths();
     for (const FString& CandidatePath : SkeletalMeshPaths)
     {
-        const std::filesystem::path CandidateFsPath(FPaths::ToWide(CandidatePath));
-        const FString CandidateStem = FPaths::ToString(CandidateFsPath.stem().generic_wstring());
-        if (CandidateStem == MeshStem)
+        if (GetAssetStem(CandidatePath) == MeshStem)
         {
             OutMeshPath = CandidatePath;
             return true;

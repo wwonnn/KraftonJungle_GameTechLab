@@ -174,6 +174,16 @@ public:
 		delete Obj;
 	}
 
+	void Shutdown()
+	{
+		NameCounters.clear();
+		NameCounters.rehash(0);
+		if (GUObjectArray.empty())
+		{
+			GUObjectArray.shrink_to_fit();
+		}
+	}
+
 private:
 	TMap<FString, uint32> NameCounters;
 

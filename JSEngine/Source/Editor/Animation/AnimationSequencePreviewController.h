@@ -66,6 +66,7 @@ private:
     void RefreshPreviewPose(float DeltaTime);
 
 private:
+    static constexpr uint32 InvalidPreviewResourceIndex = ~0u;
     inline static uint32 NextPreviewResourceIndex = 0;
 
     UEditorEngine* EditorEngine = nullptr;
@@ -81,7 +82,7 @@ private:
 
     FSceneViewport PreviewViewport;
     FSkeletalMeshViewportClient PreviewViewportClient;
-    uint32 PreviewResourceIndex = 0;
+    uint32 PreviewResourceIndex = InvalidPreviewResourceIndex;
     int32 ViewportWidth = 512;
     int32 ViewportHeight = 512;
 
