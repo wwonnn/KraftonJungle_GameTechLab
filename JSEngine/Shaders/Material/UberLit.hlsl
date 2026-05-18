@@ -89,6 +89,9 @@ struct PSInput
 #elif HAS_NORMAL_MAP
     float4 WorldTangent : TEXCOORD5;
 #endif
+    
+    nointerpolation uint4 BoneIndices : BLENDINDICES;
+    float4 BoneWeights : BLENDWEIGHT;
 };
 
 struct PSOutput
@@ -106,6 +109,8 @@ PSInput mainVS(VSInput input)
     output.ClipPos = ApplyMVP(input.Position);
     output.UV = input.UV + ScrollUV;
     output.WorldNormal = normalize(mul(input.Normal, (float3x3) WorldInvTrans));
+    output.BoneIndices = uint4(0, 0, 0, 0);
+    output.BoneWeights = float4(0, 0, 0, 0);
     
 #if HAS_NORMAL_MAP && !LIGHTING_MODEL_GOURAUD
     output.WorldTangent = float4(normalize(mul(input.Tangent.xyz, (float3x3)WorldInvTrans)), input.Tangent.w);
@@ -153,7 +158,11 @@ PSInput SkeletalMeshVS(SkeletalVSInput input)
     passThrough.UV = input.UV;
     passThrough.Color = input.Color;
 
-    return mainVS(passThrough);
+    PSInput output = mainVS(passThrough);
+    output.BoneIndices = input.BoneIndices;
+    output.BoneWeights = input.BoneWeights;
+    
+    return output;
 }
 
 #if HAS_NORMAL_MAP
@@ -168,7 +177,6 @@ float3 PerturbNormal(float3 worldNormal, float4 worldTangent, float2 uv)
 }
 #endif
 
-#if LIGHT_HEATMAP
 float3 GetHeatmapColor(float weight)
 {
     float3 color;
@@ -177,7 +185,6 @@ float3 GetHeatmapColor(float weight)
     color.b = 1.0f - smoothstep(0.0f, 0.4f, weight);
     return color;
 }
-#endif
 
 float GetCascadeSplitFarValue(uint CascadeIndex)
 {
@@ -344,6 +351,26 @@ float CalculateShadow(float4 worldPos)
 PSOutput mainPS(PSInput input) : SV_TARGET
 {
     PSOutput output;
+    
+    if (bShowBoneWeight > 0)
+    {
+        float boneWeight = 0.0f;
+        [unroll]
+        for (int i = 0; i < 4; i++)
+        {
+            if(input.BoneIndices[i] == (uint)SelectedBoneIndex)
+            {
+                boneWeight = input.BoneWeights[i];
+                break;
+            }
+        }
+        
+        float3 heatmapColor = GetHeatmapColor(boneWeight);
+        output.Color = float4(heatmapColor, 1.0f);
+        output.Normal = float4(input.WorldNormal * 0.5f + 0.5f, 1.f);
+        output.WorldPos = float4(input.WorldPos, 1.f);
+        return output;
+    }
     
     float4 DiffuseTex = float4(1.f, 1.f, 1.f, 1.f);
 #if HAS_DIFFUSE_MAP

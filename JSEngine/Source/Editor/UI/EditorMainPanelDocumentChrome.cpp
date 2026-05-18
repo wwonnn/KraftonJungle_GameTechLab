@@ -255,6 +255,16 @@ void FEditorMainPanel::RenderViewerToolbarControls(FEditorViewer* Viewer)
 		ImGui::MenuItem("Bounding Box", nullptr, &ShowFlags.bShowBoundingBox);
 		ImGui::MenuItem("Outline", nullptr, &ShowFlags.bShowOutline);
 		ImGui::EndPopup();
+
+		if (!ShowFlags.bShowBones)
+		{
+            ShowFlags.bShowOnlySelectedBone = false;
+		}
+
+		if (!ShowFlags.bShowOnlySelectedBone)
+		{
+            ShowFlags.bShowSelectedBoneWeight = false;
+		}
 	}
 	ImGui::PopID();
 }
