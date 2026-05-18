@@ -2,7 +2,6 @@
 #include "Component/StaticMeshComponent.h"
 #include "Render/Resource/Buffer.h" 
 #include "Asset/StaticMesh.h"
-#include "Render/Mesh/VertexFactory/StaticVertexFactoryData.h"
 
 namespace
 {

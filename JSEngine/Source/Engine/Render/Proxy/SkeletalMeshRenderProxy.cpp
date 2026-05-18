@@ -1,6 +1,5 @@
 ﻿#include "SkeletalMeshRenderProxy.h"
 #include "Component/SkeletalMeshComponent.h"
-#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& Context, FRenderBus& RenderBus)
 {

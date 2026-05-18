@@ -19,6 +19,8 @@
 #include "Render/Resource/Material.h"
 #include "Render/Resource/MeshBufferManager.h"
 #include "Render/Scene/RenderBus.h"
+#include "Render/Proxy/PrimitiveRenderProxy.h"
+#include "Render/Mesh/VertexFactory/VertexFactoryData.h"
 #include "Spatial/WorldSpatialIndex.h"
 
 namespace
@@ -260,8 +262,6 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                                                        FRenderBus& RenderBus, FMeshBufferManager& MeshBufferManager,
                                                        bool bIncludeEditorOnlyPrimitives) const
 {
-    (void)ViewMode;
-
     if (!Actor->IsVisible()) return false;
 
     bool bHasSelectionMask = false;
@@ -305,6 +305,9 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
             USkeletalMesh* SkeletalMesh = SkeletalMeshComp->GetSkeletalMesh();
             if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData()) continue;
 
+            const TArray<FSkeletalMeshVertex>& Vertices = SkeletalMeshComp->IsGPUSkinningEnabled() ?
+                SkeletalMesh->GetVertices() : SkeletalMeshComp->GetSkinnedVertices();
+
             // 메인 render pass(CollectWorld)가 이 함수 *전*에 같은 프레임에 돌면서
             // skinning + 버퍼 업로드를 이미 끝낸 상태. 여기서는 dirty flag를 소비하지 않고
             // bNeedsUpload=false로 캐시된 버퍼만 가져온다.
@@ -312,7 +315,7 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
             MeshBuffer = MeshBufferManager.GetSkeletalMeshBuffer(
                 SkeletalMeshComp->GetUUID(),
                 SkeletalMesh,
-                SkeletalMeshComp->GetSkinnedVertices(),
+                Vertices,
                 SkeletalMesh->GetIndices(),
                 /*bNeedsUpload=*/ false);
         }
@@ -333,6 +336,22 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
         BaseCmd.SectionIndexStart = 0;
         BaseCmd.SectionIndexCount = MeshBuffer->GetIndexBuffer().GetIndexCount();
         BaseCmd.VertexFactoryType = EVertexFactoryType::Primitive;
+
+        if (FPrimitiveRenderProxy* Proxy = primitiveComponent->GetOrCreateRenderProxy())
+        {
+            if (primitiveComponent->GetPrimitiveType() == EPrimitiveType::EPT_SkeletalMesh)
+            {
+                auto* SkelComp = static_cast<USkeletalMeshComponent*>(primitiveComponent);
+                if (SkelComp->IsGPUSkinningEnabled())
+                {
+                    BaseCmd.VertexFactoryData = Proxy->GetVertexFactoryData();
+                }
+            }
+            else
+            {
+                BaseCmd.VertexFactoryData = Proxy->GetVertexFactoryData();
+            }
+        }
 
         if (primitiveComponent->GetPrimitiveType() == EPrimitiveType::EPT_StaticMesh)
         {
@@ -455,9 +474,6 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                     MaskCmd.SectionIndexStart = Section.StartIndex;
                     MaskCmd.SectionIndexCount = Section.IndexCount;
                     MaskCmd.Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(SectionIdx));
-                    if (SkeletalMeshComp->IsGPUSkinningEnabled())
-                    {
-                    }
                     RenderBus.AddCommand(ERenderPass::SelectionMask, MaskCmd);
                 }
             }
@@ -466,9 +482,6 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                 FRenderCommand MaskCmd = BaseCmd;
                 MaskCmd.Type = ERenderCommandType::SelectionMask;
                 MaskCmd.Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(0));
-            if (SkeletalMeshComp->IsGPUSkinningEnabled())
-            {
-            }
                 RenderBus.AddCommand(ERenderPass::SelectionMask, MaskCmd);
             }
         }
