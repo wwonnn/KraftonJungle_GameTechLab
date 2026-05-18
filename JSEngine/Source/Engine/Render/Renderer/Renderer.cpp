@@ -22,6 +22,7 @@
 #include "Render/Resource/ShadowAtlasManager.h"
 #include "Render/Resource/VertexFactoryTypes.h"
 #include "Core/Logging/Log.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 #include <unordered_map>
 
@@ -127,9 +128,12 @@ namespace
 
 		uint32 PermutationKey = 0;
         TArray<D3D_SHADER_MACRO> Macros;
-		if (ShaderKey == 3 && !Cmd.SkinningMatrices)
+		if (ShaderKey == 3)
 		{
-            PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+			if (!Cmd.VertexFactoryData)
+			{
+                PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+			}
 		}
 
         Macros = FShaderHelper::BuildUberLitMacros(PermutationKey);

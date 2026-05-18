@@ -1,10 +1,11 @@
-#include "SkeletalMeshComponent.h"
+﻿#include "SkeletalMeshComponent.h"
 
 #include "Animation/AnimSingleNodeInstance.h"
 #include "Asset/Skeleton.h"
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/SkeletalMeshRenderProxy.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 #include "Core/Paths.h"
 
 #include <cstring>
@@ -298,6 +299,8 @@ FPrimitiveRenderProxy* USkeletalMeshComponent::CreateRenderProxy()
 {
     FSkeletalMeshRenderProxy* Proxy = new FSkeletalMeshRenderProxy;
 	Proxy->SkeletalMeshComp = this;
+    Proxy->SkelVFData = new FSkeletalVertexFactoryData;
+
     return Proxy;
 }
 

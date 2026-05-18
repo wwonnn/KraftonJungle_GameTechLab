@@ -8,6 +8,7 @@
 #include "Component/PostProcess/Light/LightComponent.h"
 #include "Component/PostProcess/Light/DirectionalLightComponent.h"
 #include "Component/PostProcess/Light/PointLightComponent.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 #include <algorithm>
 #include <cmath>
@@ -119,44 +120,50 @@ void FShadowPass::RenderShadowDepth(
 		uint32 Offset = 0;
 		DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
 
-	// Per-command choose whether GPU skinning will be used and select input layout
-	bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
-	const FVertexLayoutDesc* PositionLayout = nullptr;
-	if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
-	{
-		if (bUseGPUSkinning)
+		// Per-command choose whether GPU skinning will be used and select input layout
+		bool bUseGPUSkinning = false;
+		const FVertexLayoutDesc* PositionLayout = nullptr;
+		if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh && Cmd.VertexFactoryData)
 		{
-			PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
-		}
-		else
-		{
-			// For CPU skinning, use the full skeletal vertex layout so the shadow
-			// pass reads POSITION from the dynamic skinned vertex buffer.
-			const FVertexFactoryDesc& VF = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
-			PositionLayout = &VF.VertexLayout;
-		}
-	}
+			if (Cmd.VertexFactoryData)
+			{
+                FSkeletalVertexFactoryData* VFData = static_cast<FSkeletalVertexFactoryData*>(Cmd.VertexFactoryData);
+                bUseGPUSkinning = (VFData->SkinningMatrices != nullptr);
+			}
 
-	FShaderProgram* Program = GetShadowProgram(Cmd.VertexFactoryType, ShadowKey, bUseGPUSkinning, PositionLayout);
-		if (!Program)
-		{
-			continue;
+			if (bUseGPUSkinning)
+			{
+				PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
+			}
+			else
+			{
+				// For CPU skinning, use the full skeletal vertex layout so the shadow
+				// pass reads POSITION from the dynamic skinned vertex buffer.
+				const FVertexFactoryDesc& VF = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+				PositionLayout = &VF.VertexLayout;
+			}
 		}
 
-		Program->Bind(DeviceContext);
-		BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
-		CheckOverrideViewMode(Context);
+		FShaderProgram* Program = GetShadowProgram(Cmd.VertexFactoryType, ShadowKey, bUseGPUSkinning, PositionLayout);
+			if (!Program)
+			{
+				continue;
+			}
 
-		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
-		if (IndexBuffer != nullptr)
-		{
-			DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-			DeviceContext->DrawIndexed(Cmd.SectionIndexCount, Cmd.SectionIndexStart, 0);
-		}
-		else
-		{
-			DeviceContext->Draw(VertexCount, 0);
-		}
+			Program->Bind(DeviceContext);
+			BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
+			CheckOverrideViewMode(Context);
+
+			ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
+			if (IndexBuffer != nullptr)
+			{
+				DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+				DeviceContext->DrawIndexed(Cmd.SectionIndexCount, Cmd.SectionIndexStart, 0);
+			}
+			else
+			{
+				DeviceContext->Draw(VertexCount, 0);
+			}
 	}
 }
 

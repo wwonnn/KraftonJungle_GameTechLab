@@ -6,6 +6,7 @@
 #include "Render/Resource/VertexFactoryTypes.h"
 #include "Render/Resource/ShaderHelper.h"
 #include "Core/ResourceManager.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 namespace
 {
@@ -103,9 +104,16 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		// Select input layout & whether to compile GPU-skinning variant per-command.
 		const FVertexFactoryDesc& VFDesc = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
 		const FVertexLayoutDesc* PositionLayout = nullptr;
-		bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
+
+		bool bUseGPUSkinning = false;
 		if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
 		{
+			if (Cmd.VertexFactoryData)
+            {
+                FSkeletalVertexFactoryData* VFData = static_cast<FSkeletalVertexFactoryData*>(Cmd.VertexFactoryData);
+                bUseGPUSkinning = (VFData->SkinningMatrices != nullptr);
+			}
+
 			if (bUseGPUSkinning)
 			{
 				PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();

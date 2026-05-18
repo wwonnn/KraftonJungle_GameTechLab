@@ -1,5 +1,6 @@
 ﻿#include "SkeletalMeshRenderProxy.h"
 #include "Component/SkeletalMeshComponent.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& Context, FRenderBus& RenderBus)
 {
@@ -51,8 +52,11 @@ void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& 
         Cmd.Material = SkeletalMeshComp->GetMaterial(0);
         Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
 
-        if (SkeletalMeshComp->IsGPUSkinningEnabled())
-            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+		if (SkeletalMeshComp->IsGPUSkinningEnabled())
+        {
+            SkelVFData->SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+            Cmd.VertexFactoryData = SkelVFData;
+		}
 
         RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
         return;
@@ -81,9 +85,20 @@ void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& 
 
         Cmd.WorldAABB = SkeletalMeshComp->GetWorldAABB();
 
-        if (SkeletalMeshComp->IsGPUSkinningEnabled())
-            Cmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+		if (SkeletalMeshComp->IsGPUSkinningEnabled())
+		{
+            SkelVFData->SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
+            Cmd.VertexFactoryData = SkelVFData;
+		}
 
         RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
     }
+}
+
+void FSkeletalMeshRenderProxy::Release()
+{
+	if (SkelVFData)
+	{
+        delete SkelVFData;
+	}
 }

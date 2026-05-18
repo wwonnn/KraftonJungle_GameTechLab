@@ -6,6 +6,7 @@
 #include "Render/Resource/ShaderPaths.h"
 #include "Render/Resource/Texture.h"
 #include "Render/Resource/VertexFactoryTypes.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 static ID3D11ShaderResourceView* GetTextureSRVFromParam(const FMaterialParamValue& Param)
 {
@@ -99,9 +100,12 @@ static FShaderProgram* GetSelectionMaskProgram(const FRenderCommand& Cmd)
 
 	uint32 PermutationKey = 0;
     TArray<D3D_SHADER_MACRO> Macros;
-    if (ShaderKey == 3 && !Cmd.SkinningMatrices)
+    if (ShaderKey == 3)
     {
-        PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		if (!Cmd.VertexFactoryData)
+        {
+            PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		}
     }
 
     Macros = FShaderHelper::BuildUberLitMacros(PermutationKey);

@@ -457,7 +457,6 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                     MaskCmd.Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(SectionIdx));
                     if (SkeletalMeshComp->IsGPUSkinningEnabled())
                     {
-                        MaskCmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
                     }
                     RenderBus.AddCommand(ERenderPass::SelectionMask, MaskCmd);
                 }
@@ -469,7 +468,6 @@ bool FEditorOverlayCollector::CollectFromSelectedActor(AActor* Actor, const FSho
                 MaskCmd.Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(0));
             if (SkeletalMeshComp->IsGPUSkinningEnabled())
             {
-                MaskCmd.SkinningMatrices = &SkeletalMeshComp->GetSkinningMatrices();
             }
                 RenderBus.AddCommand(ERenderPass::SelectionMask, MaskCmd);
             }

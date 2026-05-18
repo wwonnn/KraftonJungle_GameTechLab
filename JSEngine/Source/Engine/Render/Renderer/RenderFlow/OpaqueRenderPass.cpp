@@ -8,6 +8,7 @@
 #include "Render/Resource/VertexFactoryTypes.h"
 #include "Core/ResourceManager.h"
 #include "Component/PostProcess/Light/LightComponent.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 bool FOpaqueRenderPass::Initialize()
 {
@@ -125,10 +126,13 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            PermutationKey |= (uint32)EShaderFeature::TileCull;
        bool bShadowApplied = false; // 추가
 
-       if (!Cmd.SkinningMatrices)
+	   if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
        {
-           // GPU 에 넘길 SkinningMatrices 가 없다 = CPU Skinning 쓰겠다
-           PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		   if (!Cmd.VertexFactoryData)
+		   {
+               // GPU 에 넘길 SkinningMatrices 가 없다 = CPU Skinning 쓰겠다
+               PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		   }
 	   }
 
 	   // ShadowMap Permutation Key 조합
