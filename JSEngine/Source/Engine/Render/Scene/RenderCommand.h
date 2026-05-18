@@ -384,6 +384,12 @@ struct FScreenOverlayConstants
     float Color[4];
 };
 
+struct FDebugConstants
+{
+    uint32 bShowBoneWeight;
+    uint32 SelectedBoneIndex;
+};
+
 struct FLightData
 {
     FVector WorldPos;

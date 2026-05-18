@@ -21,6 +21,12 @@ cbuffer StaticMeshBuffer : register(b2)
     float padding3;
 };
 
+cbuffer DebugBuffer : register(b13)
+{
+    uint bShowBoneWeight;
+    uint SelectedBoneIndex;
+}
+
 struct FDecalInfo
 {
     row_major matrix InvDecalWorld;

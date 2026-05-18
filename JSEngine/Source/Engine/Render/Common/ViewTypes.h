@@ -39,4 +39,6 @@ struct FShowFlags
     bool bShadow = true;
     bool bGammaCorrection = false;
     float GammaValue = 2.2f;
+    bool bShowSelectedBoneWeight = false;
+    int32 SelectedBoneIndex = -1;
 };
