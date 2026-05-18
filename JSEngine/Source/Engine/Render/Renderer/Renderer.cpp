@@ -695,6 +695,9 @@ void FRenderer::RenderEditorIdPickBuffer(const FRenderBus& InRenderBus, FViewpor
             Context->PSSetConstantBuffers(12, 1, &PickingBuffer);
 
             Context->PSSetShaderResources(0, 1, &TextureSRV);
+
+            BindVertexFactoryResources(Context, Command.VertexFactoryType, Command, &Resources);
+
             FShaderProgram* PickProgram = GetEditorIdPickProgram(ShaderKey, Command);
             if (!PickProgram)
             {
