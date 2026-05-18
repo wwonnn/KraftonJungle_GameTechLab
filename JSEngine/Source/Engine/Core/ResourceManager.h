@@ -57,6 +57,7 @@ public:
 
 	bool LoadGPUResources(ID3D11Device* Device);
 	void ReleaseGPUResources();
+	void Shutdown();
 
 	UTexture* GetTexture(const FString& Path) const;
 	UTexture* LoadTexture(const FString& Path, ID3D11Device* Device = nullptr);
@@ -129,6 +130,7 @@ public:
 
 	UAnimSequence* LoadAnimSequence(const FString& Path);
 	UAnimSequence* FindAnimSequence(const FString& Path) const;
+	bool UnloadAnimSequence(const FString& Path);
 	bool SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence);
 	TArray<FString> GetAnimSequencePaths() const;
 

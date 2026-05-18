@@ -16,10 +16,11 @@
 
 void FEditorWorldController::SetCamera(FViewportCamera* InCamera)
 {
-    if (!InCamera)
-        return;
     Camera = InCamera;
-    ResetTargetFromCamera();
+    if (Camera)
+    {
+        ResetTargetFromCamera();
+    }
 }
 
 void FEditorWorldController::SetCamera(FViewportCamera& InCamera)
@@ -392,23 +393,19 @@ void FEditorWorldController::OnMiddleMouseDrag(float DeltaX, float DeltaY)
 
 void FEditorWorldController::SetSelectionManager(FSelectionManager* InSM)
 {
-    if (InSM)
-        SelectionManager = InSM;
-    if (SelectionManager->GetGizmo())
-        Gizmo = SelectionManager->GetGizmo();
+    SelectionManager = InSM;
+    Gizmo = SelectionManager ? SelectionManager->GetGizmo() : nullptr;
 }
 
 void FEditorWorldController::SetSelectionManager(FSelectionManager& InSM)
 {
     SelectionManager = &InSM;
-    if (SelectionManager->GetGizmo())
-        Gizmo = SelectionManager->GetGizmo();
+    Gizmo = SelectionManager->GetGizmo();
 }
 
 void FEditorWorldController::SetGizmo(UGizmoComponent* InGizmo)
 {
-    if (InGizmo)
-        Gizmo = InGizmo;
+    Gizmo = InGizmo;
 }
 
 void FEditorWorldController::SetGizmo(UGizmoComponent& InGizmo) { Gizmo = &InGizmo; }

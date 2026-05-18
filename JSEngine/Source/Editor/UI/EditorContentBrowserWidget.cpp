@@ -2,12 +2,16 @@
 
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorRenderPipeline.h"
+#include "Editor/Document/AssetEditorRegistry.h"
 #include "Editor/UI/EditorChromeConstants.h"
 #include "Editor/UI/EditorMainPanel.h"
 #include "Editor/Settings/EditorSettings.h"
+#include "Animation/AnimData/AnimDataModel.h"
+#include "Animation/AnimData/AnimSequence.h"
 #include "Asset/CurveFloatAsset.h"
 #include "Asset/StaticMesh.h"
 #include "Core/ResourceManager.h"
+#include "Object/Object.h"
 #include "Runtime/Script/ScriptManager.h"
 #include "Render/Resource/Material.h"
 #include "Render/Renderer/Renderer.h"
@@ -24,6 +28,17 @@
 
 namespace
 {
+bool HasValidAnimSequenceData(const UAnimSequence* Sequence)
+{
+	if (!Sequence || !UObjectManager::Get().ContainsObject(Sequence))
+	{
+		return false;
+	}
+
+	const UAnimDataModel* DataModel = Sequence->DataModel;
+	return DataModel && UObjectManager::Get().ContainsObject(DataModel);
+}
+
 bool IsParentDirectoryReference(const std::filesystem::path& Path)
 {
 	for (const std::filesystem::path& Part : Path)
@@ -1143,6 +1158,10 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 		{
             EditorEngine->CreateViewer(MakeRelativeProjectPath(Item.Path));
 		}
+		else if (IsSequenceAsset(Item.Extension))
+		{
+			FAssetEditorRegistry::OpenAsset(EditorEngine, MakeRelativeProjectPath(Item.Path));
+		}
 		else if (Item.Extension == ".rml")
 		{
 			EditorEngine->GetMainPanel().OpenRuntimeUIPreviewAsset(MakeRelativeProjectPath(Item.Path));
@@ -1707,7 +1726,22 @@ void FEditorContentBrowserWidget::DrawAssetPreview()
 	{
 		ImGui::Spacing();
 		ImGui::TextDisabled("Sequence Asset");
-		ImGui::TextWrapped(".sequence is reserved for future Level Sequence / Animation Sequence assets.");
+		UAnimSequence* Sequence = FResourceManager::Get().LoadAnimSequence(RelativePath);
+		if (!HasValidAnimSequenceData(Sequence))
+		{
+			ImGui::TextWrapped("Sequence asset could not be loaded.");
+			return;
+		}
+
+		UAnimDataModel* DataModel = Sequence->DataModel;
+		ImGui::Text("Name: %s", Sequence->GetName().c_str());
+		ImGui::Text("Frame Rate: %d / %d", DataModel->FrameRate.Numerator, DataModel->FrameRate.Denominator);
+		ImGui::Text("Frames: %d", DataModel->NumberOfFrames);
+		ImGui::Text("Keys: %d", DataModel->NumberOfKeys);
+		ImGui::Text("Bone Tracks: %d", static_cast<int32>(DataModel->BoneAnimationTracks.size()));
+		ImGui::TextWrapped(
+			"Skeleton Asset: %s",
+			Sequence->GetSkeletonAssetPath().empty() ? "(none)" : Sequence->GetSkeletonAssetPath().c_str());
 		return;
 	}
 

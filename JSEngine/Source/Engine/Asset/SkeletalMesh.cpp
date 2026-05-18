@@ -7,6 +7,20 @@
 
 DEFINE_CLASS(USkeletalMesh, UObject)
 
+namespace
+{
+    void DestroyOwnedSkeleton(USkeleton*& Skeleton)
+    {
+        if (!Skeleton)
+        {
+            return;
+        }
+
+        UObjectManager::Get().DestroyObject(Skeleton);
+        Skeleton = nullptr;
+    }
+}
+
 const TArray<FBoneInfo>& FSkeletalMesh::GetBones() const
 {
     static const TArray<FBoneInfo> Empty = {};
@@ -38,6 +52,7 @@ USkeletalMesh::~USkeletalMesh()
 {
     if (MeshData != nullptr)
     {
+        DestroyOwnedSkeleton(MeshData->Skeleton);
         delete MeshData;
         MeshData = nullptr;
     }
@@ -50,6 +65,10 @@ void USkeletalMesh::SetMeshData(FSkeletalMesh* InMeshData)
         return;
     }
 
+    if (MeshData)
+    {
+        DestroyOwnedSkeleton(MeshData->Skeleton);
+    }
     delete MeshData;
     MeshData = InMeshData;
 
@@ -103,6 +122,12 @@ void USkeletalMesh::SetSkeleton(USkeleton* InSkeleton)
         return;
     }
 
+    if (MeshData->Skeleton == InSkeleton)
+    {
+        return;
+    }
+
+    DestroyOwnedSkeleton(MeshData->Skeleton);
     MeshData->Skeleton = InSkeleton;
 }
 

@@ -28,6 +28,14 @@ const FString& FNamePool::Resolve(uint32 Index) const
 	return Empty;
 }
 
+void FNamePool::Shutdown()
+{
+	Entries.clear();
+	Entries.shrink_to_fit();
+	LookupMap.clear();
+	LookupMap.rehash(0);
+}
+
 // ============================================================
 // FName
 // ============================================================

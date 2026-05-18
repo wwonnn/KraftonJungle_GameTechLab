@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 
@@ -7,6 +7,7 @@ enum class EEditorTabKind : uint8
 	LevelEditor,
 	StaticMeshViewer,
 	SkeletalMeshViewer,
+	AnimationSequenceEditor,
 	MaterialEditor,
 	CurveEditor,
 	ActorSequencer,
@@ -32,6 +33,8 @@ struct FEditorTabEntry
 
 FEditorTabId MakeEditorViewerTabId(const FString& ViewerFileName, const void* FallbackAddress = nullptr);
 FString MakeEditorViewerTabLabel(const FString& ViewerFileName);
+FEditorTabId MakeAnimationSequenceTabId(const FString& SequencePath);
+FString MakeAnimationSequenceTabLabel(const FString& SequencePath);
 FEditorTabId MakeRuntimeUIPreviewTabId();
 FString MakeRuntimeUIPreviewTabLabel(const FString& DocumentPath);
 

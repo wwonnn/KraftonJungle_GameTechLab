@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <chrono>
 #include <cwctype>
+#include <unordered_set>
 #include "Asset/FileUtils.h"
 
 #include "DDSTextureLoader.h"
@@ -38,6 +39,13 @@ namespace
 #else
 		return true;
 #endif
+	}
+
+	template <typename T>
+	void ClearAndShrinkArray(TArray<T>& Array)
+	{
+		Array.clear();
+		Array.shrink_to_fit();
 	}
 }
 
@@ -475,23 +483,51 @@ void FResourceManager::ReleaseGPUResources()
 
 	RenderStateCache.Release();
 
-	TSet<USkeletalMesh*> SkeletalMeshSet;
+	for (auto& [Path, Sequence] : AnimSequenceMap)
+	{
+		if (Sequence && Sequence->DataModel)
+		{
+			UObjectManager::Get().DestroyObject(Sequence->DataModel);
+			Sequence->DataModel = nullptr;
+		}
+		UObjectManager::Get().DestroyObject(Sequence);
+	}
+	AnimSequenceMap.clear();
+	AnimSequenceMap.rehash(0);
 
+	std::unordered_set<USkeletalMesh*> DestroyedMeshes;
 	for (auto& [Path, Mesh] : SkeletalMeshMap)
 	{
-		// 다른 Path, 동일 Mesh 인 경우가 있어 Set 으로 Unique Mesh 저장
-        SkeletalMeshSet.insert(Mesh);
-	}
+		// SkeletalMeshMap은 source path와 writable asset path를 같은 mesh 인스턴스에 alias로 걸 수 있다.
+		// shutdown에서 map 엔트리마다 delete하면 같은 UObject를 두 번 해제하게 된다.
+		if (!Mesh || DestroyedMeshes.find(Mesh) != DestroyedMeshes.end())
+		{
+			continue;
+		}
 
-	for (auto& Mesh : SkeletalMeshSet)
-    {
-        UObjectManager::Get().DestroyObject(Mesh);
+		DestroyedMeshes.insert(Mesh);
+		UObjectManager::Get().DestroyObject(Mesh);
 	}
 
 	SkeletalMeshMap.clear();
+	SkeletalMeshMap.rehash(0);
 
 	DefaultWhiteTexture.Reset();
 	CachedDevice.Reset();
+}
+
+void FResourceManager::Shutdown()
+{
+	ReleaseGPUResources();
+	ClearDiscoveredResourceLists(true);
+	ClearAndShrinkArray(ObjFilePaths);
+	ClearAndShrinkArray(MaterialFilePaths);
+	ClearAndShrinkArray(ParticleFilePaths);
+	ClearAndShrinkArray(FontFilePaths);
+	ClearAndShrinkArray(TextureFilePaths);
+	ClearAndShrinkArray(SkeletalMeshFilePaths);
+	ClearAndShrinkArray(CurveFilePaths);
+	ClearAndShrinkArray(AnimSequenceFilePaths);
 }
 
 FVertexShader* FResourceManager::GetOrCreateVertexShader(
@@ -930,6 +966,26 @@ UAnimSequence* FResourceManager::FindAnimSequence(const FString& Path) const
 	return It != AnimSequenceMap.end() ? It->second : nullptr;
 }
 
+bool FResourceManager::UnloadAnimSequence(const FString& Path)
+{
+	const FString NormalizedPath = FPaths::Normalize(Path);
+	auto It = AnimSequenceMap.find(NormalizedPath);
+	if (It == AnimSequenceMap.end())
+	{
+		return false;
+	}
+
+	if (It->second && It->second->DataModel)
+	{
+		UObjectManager::Get().DestroyObject(It->second->DataModel);
+		It->second->DataModel = nullptr;
+	}
+
+	UObjectManager::Get().DestroyObject(It->second);
+	AnimSequenceMap.erase(It);
+	return true;
+}
+
 bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence)
 {
 	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
@@ -939,7 +995,6 @@ bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence
 		return false;
 	}
 
-	AnimSequenceMap[NormalizedPath] = const_cast<UAnimSequence*>(Sequence);
 	if (std::find(AnimSequenceFilePaths.begin(), AnimSequenceFilePaths.end(), NormalizedPath) == AnimSequenceFilePaths.end())
 	{
 		AnimSequenceFilePaths.push_back(NormalizedPath);

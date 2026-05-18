@@ -1,4 +1,4 @@
-#include "Editor/UI/EditorTabManager.h"
+﻿#include "Editor/UI/EditorTabManager.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -32,6 +32,26 @@ FString MakeEditorViewerTabLabel(const FString& ViewerFileName)
 
 	const size_t SlashIndex = ViewerFileName.find_last_of("/\\");
 	return SlashIndex == FString::npos ? ViewerFileName : ViewerFileName.substr(SlashIndex + 1);
+}
+
+FEditorTabId MakeAnimationSequenceTabId(const FString& SequencePath)
+{
+	FEditorTabId TabId;
+	TabId.Kind = EEditorTabKind::AnimationSequenceEditor;
+	TabId.PayloadId = SequencePath;
+	return TabId;
+}
+
+FString MakeAnimationSequenceTabLabel(const FString& SequencePath)
+{
+	if (SequencePath.empty())
+	{
+		return "Animation Sequence";
+	}
+
+	const size_t SlashIndex = SequencePath.find_last_of("/\\");
+	const FString FileName = SlashIndex == FString::npos ? SequencePath : SequencePath.substr(SlashIndex + 1);
+	return FileName.empty() ? "Animation Sequence" : FileName;
 }
 
 FEditorTabId MakeRuntimeUIPreviewTabId()

@@ -49,8 +49,14 @@
     <Filter Include="Source\Editor\Asset">
       <UniqueIdentifier>{f58bcf52-84c0-49d7-8ad0-46f40fa28bbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Editor\Animation">
+      <UniqueIdentifier>{0b815042-94f3-44a2-a70d-fad8420ff57a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Editor\Command">
       <UniqueIdentifier>{b1f8c610-f6e8-42df-aeb9-aad8fa0d2d44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Editor\Document">
+      <UniqueIdentifier>{e1ee2a0d-a2fd-4ad6-b388-2802e3fa4c6b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Editor\Notification">
       <UniqueIdentifier>{ee3508aa-0746-43c0-9985-c4d7b423d7f4}</UniqueIdentifier>
@@ -222,8 +228,32 @@
     <ClCompile Include="Source\Editor\Asset\EditorAssetService.cpp">
       <Filter>Source\Editor\Asset</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorDocument.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequencePreviewController.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceTimelineWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Command\EditorCommandSystem.cpp">
       <Filter>Source\Editor\Command</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Document\AssetEditorRegistry.cpp">
+      <Filter>Source\Editor\Document</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Document\EditorDocument.cpp">
+      <Filter>Source\Editor\Document</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\Notification\EditorNotificationService.cpp">
       <Filter>Source\Editor\Notification</Filter>
@@ -292,6 +322,12 @@
       <Filter>Source\Editor\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\UI\EditorMainPanelMaterial.cpp">
+      <Filter>Source\Editor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\UI\EditorMainPanelAnimationSequence.cpp">
+      <Filter>Source\Editor\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\UI\EditorMainPanelDocuments.cpp">
       <Filter>Source\Editor\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\UI\EditorMainPanelPIE.cpp">
@@ -1054,6 +1090,15 @@
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Render\Resource\VertexFactoryTypes.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\BillboardRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\FireballRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\ProceduralMeshRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\SubUVRenderProxy.cpp" />
+    <ClCompile Include="Source\Engine\Render\Proxy\TextRenderProxy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -1071,8 +1116,32 @@
     <ClInclude Include="Source\Editor\Asset\EditorAssetService.h">
       <Filter>Source\Editor\Asset</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorDocument.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewController.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceTimelineWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Editor\Command\EditorCommandSystem.h">
       <Filter>Source\Editor\Command</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Document\AssetEditorRegistry.h">
+      <Filter>Source\Editor\Document</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Document\EditorDocument.h">
+      <Filter>Source\Editor\Document</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Notification\EditorNotificationService.h">
       <Filter>Source\Editor\Notification</Filter>
@@ -2036,6 +2105,17 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequenceBase.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimTypes.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\FireballRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\PrimitiveRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\ProceduralMeshRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\RenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\SkeletalMeshRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\StaticMeshRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\SubUVRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Render\Proxy\TextRenderProxy.h" />
+    <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\Engine\Runtime\AppIcon.rc" />

@@ -49,6 +49,11 @@ public:
 		}
 	}
 
+	void Shutdown() {
+		Registry.clear();
+		Registry.rehash(0);
+	}
+
 private:
 	TMap<std::string, FObjectFactoryEntry> Registry;
 };

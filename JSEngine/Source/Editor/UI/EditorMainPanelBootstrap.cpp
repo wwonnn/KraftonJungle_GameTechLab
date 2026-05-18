@@ -60,6 +60,8 @@ void FEditorMainPanel::InitializeImGuiBackend(FWindowsWindow* InWindow, FRendere
 
 void FEditorMainPanel::Release()
 {
+    PendingClosedDocuments.clear();
+    OpenDocuments.clear();
     ReleaseViewportToolIcons();
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();

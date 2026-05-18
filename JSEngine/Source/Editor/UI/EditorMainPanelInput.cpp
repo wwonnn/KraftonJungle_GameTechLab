@@ -1,8 +1,10 @@
 ﻿#include "Editor/UI/EditorMainPanel.h"
 
+#include "Editor/Document/EditorDocument.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/UI/EditorViewerWindowWidget.h"
 #include "Editor/Viewer/EditorViewer.h"
+#include "Editor/Viewport/FSceneViewport.h"
 #include "Editor/Viewport/ViewportLayout.h"
 #include "Component/GizmoComponent.h"
 #include "Engine/Input/InputSystem.h"
@@ -55,6 +57,12 @@ void FEditorMainPanel::BuildActiveEditorCommandList(FEditorCommandList& OutComma
 	OutCommands.Clear();
 
 	const FEditorTabId RoutingTabId = GetInputRoutingTabId();
+	if (FEditorDocument* Document = FindDocumentByTabId(RoutingTabId))
+	{
+		Document->BuildCommandList(OutCommands);
+		return;
+	}
+
 	if (RoutingTabId.Kind == EEditorTabKind::SkeletalMeshViewer ||
 		RoutingTabId.Kind == EEditorTabKind::StaticMeshViewer)
 	{
@@ -184,6 +192,21 @@ void FEditorMainPanel::Update()
                 break;
             }
 		}
+
+        if (!bMouseOverViewportRect)
+        {
+            if (FEditorDocument* ActiveDocument = GetActiveEditorDocument())
+            {
+                if (const FSceneViewport* DocumentViewport = ActiveDocument->GetSceneViewport())
+                {
+                    const FViewportRect& ViewportRect = DocumentViewport->GetRect();
+                    if (ViewportRect.Width > 0 && ViewportRect.Height > 0 && ViewportRect.Contains(MouseClientPos.x, MouseClientPos.y))
+                    {
+                        bMouseOverViewportRect = true;
+                    }
+                }
+            }
+        }
     }
 
     bool bHoveredViewportContentWindow = false;

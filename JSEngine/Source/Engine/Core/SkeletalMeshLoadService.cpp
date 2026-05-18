@@ -19,6 +19,54 @@
 
 namespace
 {
+    void DestroyImportedSequence(UAnimSequence*& Sequence)
+    {
+        if (!Sequence)
+        {
+            return;
+        }
+
+        UObjectManager::Get().DestroyObject(Sequence);
+        Sequence = nullptr;
+    }
+
+    void DestroyImportedSequences(TArray<UAnimSequence*>& Sequences)
+    {
+        for (UAnimSequence*& Sequence : Sequences)
+        {
+            DestroyImportedSequence(Sequence);
+        }
+        Sequences.clear();
+    }
+
+    void DestroyPhysicsAsset(UPhysicsAsset*& PhysicsAsset)
+    {
+        if (!PhysicsAsset)
+        {
+            return;
+        }
+
+        UObjectManager::Get().DestroyObject(PhysicsAsset);
+        PhysicsAsset = nullptr;
+    }
+
+    void DestroyLoadedMeshData(FSkeletalMesh*& MeshData)
+    {
+        if (!MeshData)
+        {
+            return;
+        }
+
+        if (MeshData->Skeleton)
+        {
+            UObjectManager::Get().DestroyObject(MeshData->Skeleton);
+            MeshData->Skeleton = nullptr;
+        }
+
+        delete MeshData;
+        MeshData = nullptr;
+    }
+
 	FString SanitizeAssetFileName(const FString& Name)
 	{
 		FString Result = Name.empty() ? FString("AnimSequence") : Name;
@@ -310,7 +358,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSkeletalMeshAssetFile(const FString
 	FSkeletalMesh* LoadedMeshData = new FSkeletalMesh();
 	if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(NormalizedPath, *LoadedMeshData))
 	{
-		delete LoadedMeshData;
+		DestroyLoadedMeshData(LoadedMeshData);
 		UE_LOG_WARNING("[SkeletalMeshLoad] Failed skeletal mesh asset load | Path=%s", NormalizedPath.c_str());
 		return nullptr;
 	}
@@ -327,7 +375,11 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSkeletalMeshAssetFile(const FString
 			!LoadedSkeleton ||
 			!ResourceManager.BinarySerializer.LoadSkeleton(SkeletonAssetPath, *LoadedSkeleton))
 		{
-			delete LoadedMeshData;
+			if (LoadedSkeleton)
+			{
+				UObjectManager::Get().DestroyObject(LoadedSkeleton);
+			}
+			DestroyLoadedMeshData(LoadedMeshData);
 			UE_LOG_WARNING("[SkeletalMeshLoad] Failed skeletal mesh asset skeleton load | Path=%s | Skeleton=%s",
 			               NormalizedPath.c_str(), SkeletonAssetPath.c_str());
 			return nullptr;
@@ -371,6 +423,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 
 	FSkeletalMesh* LoadedMeshData = nullptr;
 	TArray<UAnimSequence*> ImportedAnimationSequences;
+	UPhysicsAsset* ImportedPhysicsAsset = nullptr;
 	FString SavedPhysicsAssetPath;
 	bool bLoadedFromImportManifest = false;
 	bool bLoadedLegacyBinary = false;
@@ -393,8 +446,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		LoadedMeshData = new FSkeletalMesh();
 		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(CachedManifest.SkeletalMeshAssetPath, *LoadedMeshData))
 		{
-			delete LoadedMeshData;
-			LoadedMeshData = nullptr;
+			DestroyLoadedMeshData(LoadedMeshData);
 		}
 		else if (!LoadedMeshData->HasValidSkeletonData())
 		{
@@ -409,8 +461,11 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 			}
 			else
 			{
-				delete LoadedMeshData;
-				LoadedMeshData = nullptr;
+				if (LoadedSkeleton)
+				{
+					UObjectManager::Get().DestroyObject(LoadedSkeleton);
+				}
+				DestroyLoadedMeshData(LoadedMeshData);
 			}
 		}
 
@@ -443,8 +498,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		LoadedMeshData = new FSkeletalMesh();
 		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(LegacySkeletalMeshBinaryPath, *LoadedMeshData, &ImportedAnimationSequences))
 		{
-			delete LoadedMeshData;
-			LoadedMeshData = nullptr;
+			DestroyLoadedMeshData(LoadedMeshData);
 		}
 
 		if (LoadedMeshData && bLoadedLegacyBinary)
@@ -502,16 +556,14 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		FImportedSkeletalAsset ImportedAsset = ResourceManager.FbxImporter.ImportSkeletalAsset(NormalizedPath, LoadOptions);
 		LoadedMeshData = ImportedAsset.SkeletalMesh;
 		ImportedAnimationSequences = ImportedAsset.AnimationSequences;
-		UPhysicsAsset* ImportedPhysicsAsset = ImportedAsset.PhysicsAsset;
+		ImportedPhysicsAsset = ImportedAsset.PhysicsAsset;
 		const auto SourceEnd = std::chrono::steady_clock::now();
 		SourceLoadSec = std::chrono::duration<double>(SourceEnd - SourceStart).count();
 
 		if (!LoadedMeshData)
 		{
-			for (UAnimSequence* Sequence : ImportedAnimationSequences)
-			{
-				delete Sequence;
-			}
+			DestroyImportedSequences(ImportedAnimationSequences);
+			DestroyPhysicsAsset(ImportedPhysicsAsset);
 			UE_LOG_ERROR("[SkeletalMeshLoad] Failed | Path=%s | BinarySec=%.6f | FbxSec=%.6f",
 				NormalizedPath.c_str(), BinaryLoadSec, SourceLoadSec);
 			return nullptr;
@@ -620,6 +672,8 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		               ImportedAnimationSequences.size());
 	}
 
+	DestroyPhysicsAsset(ImportedPhysicsAsset);
+
 	return LoadedMesh;
 }
 
@@ -681,6 +735,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 			       CacheKey.c_str(),
 			       Sequence->GetName().c_str(),
 			       SequenceAssetPath.c_str());
+			DestroyImportedSequence(Sequence);
 		}
 		else
 		{
@@ -688,7 +743,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 			               CacheKey.c_str(),
 			               Sequence->GetName().c_str(),
 			               SequenceAssetPath.c_str());
-			delete Sequence;
+			DestroyImportedSequence(Sequence);
 		}
 	}
 

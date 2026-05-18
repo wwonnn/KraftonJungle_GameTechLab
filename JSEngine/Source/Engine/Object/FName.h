@@ -57,6 +57,8 @@ public:
 	// 인덱스로 문자열 조회
 	const FString& Resolve(uint32 Index) const;
 
+	void Shutdown();
+
 	// 풀에 등록된 고유 문자열(엔트리) 수 반환
 	uint32 GetEntryCount() const { return static_cast<uint32>(Entries.size()); }
 

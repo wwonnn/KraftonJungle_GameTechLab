@@ -31,6 +31,8 @@ namespace
 			return { ImVec4(0.22f, 0.78f, 0.45f, 1.0f), "Static Mesh Viewer" };
 		case EEditorTabKind::SkeletalMeshViewer:
 			return { ImVec4(0.18f, 0.70f, 0.95f, 1.0f), "Skeletal Mesh Viewer" };
+		case EEditorTabKind::AnimationSequenceEditor:
+			return { ImVec4(0.94f, 0.43f, 0.24f, 1.0f), "Animation Sequence Editor" };
 		case EEditorTabKind::MaterialEditor:
 			return { ImVec4(0.19f, 0.72f, 0.24f, 1.0f), "Material Editor" };
 		case EEditorTabKind::CurveEditor:
@@ -54,6 +56,8 @@ namespace
 			return "StaticMesh";
 		case EEditorTabKind::SkeletalMeshViewer:
 			return "SkeletalMesh";
+		case EEditorTabKind::AnimationSequenceEditor:
+			return "AnimSequence";
 		case EEditorTabKind::MaterialEditor:
 			return "Material";
 		case EEditorTabKind::CurveEditor:
@@ -306,7 +310,10 @@ void FEditorMainPanel::RenderEditorTabStrip()
 
 			if (Tab.bCanClose && ImGui::BeginPopupContextItem("##TabContext"))
 			{
-				const bool bCanDetach = FindViewerWidgetForTab(Tab.Id) != nullptr;
+				const FEditorDocument* Document = FindDocumentByTabId(Tab.Id);
+				const bool bCanDetach =
+					FindViewerWidgetForTab(Tab.Id) != nullptr ||
+					(Document && Document->IsDetachedSupported());
 				if (bCanDetach && ImGui::MenuItem(Tab.bDetached ? "Dock Tab" : "Detach Tab"))
 				{
 					PendingDetachTabId = Tab.Id;
@@ -421,6 +428,20 @@ bool FEditorMainPanel::RequestCloseEditorTab(const FEditorTabId& TabId)
 		}
 	}
 
+	if (const FEditorDocument* Document = FindDocumentByTabId(TabId))
+	{
+		if (!Document->CanClose())
+		{
+			return false;
+		}
+		if (!EditorTabs.CloseTab(TabId))
+		{
+			return false;
+		}
+		QueueCloseDocument(TabId);
+		return true;
+	}
+
 	return EditorTabs.CloseTab(TabId);
 }
 
@@ -430,7 +451,14 @@ void FEditorMainPanel::RequestDetachEditorTab(const FEditorTabId& TabId, bool bD
 	const bool bWasActive = ActiveBefore && ActiveBefore->Id.Matches(TabId);
 
 	FEditorViewerWindowWidget* ViewerWidget = FindViewerWidgetForTab(TabId);
-	if (!ViewerWidget)
+	if (const FEditorDocument* Document = FindDocumentByTabId(TabId))
+	{
+		if (!Document->IsDetachedSupported())
+		{
+			return;
+		}
+	}
+	else if (!ViewerWidget)
 	{
 		return;
 	}

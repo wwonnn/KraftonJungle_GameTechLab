@@ -15,7 +15,7 @@ public:
     DECLARE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 
     USkeletalMeshComponent() = default;
-    ~USkeletalMeshComponent() override = default;
+    ~USkeletalMeshComponent() override;
 
     void Serialize(FArchive& Ar) override;
     void PostEditProperty(const char* PropertyName) override;
@@ -26,6 +26,15 @@ public:
     EPrimitiveType GetPrimitiveType() const override { return EPrimitiveType::EPT_SkeletalMesh; }
 
     void ResetToBindPose();
+    void SetPreviewSequence(UAnimSequence* InSequence);
+    void SetPreviewLooping(bool bInLooping);
+    void SetPreviewPlaying(bool bInPlaying);
+    void SetPreviewPlayRate(float InPlayRate);
+    void SetPreviewTime(float InTime);
+    float GetPreviewTime() const;
+    float GetPreviewLength() const;
+    UAnimSingleNodeInstance* GetPreviewAnimInstance() const { return SingleNodeInstance; }
+    void TickPreviewAnimation(float DeltaTime);
 
     void SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform);
     const FMatrix& GetBoneLocalTransform(int32 BoneIndex) const;
@@ -39,8 +48,12 @@ protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
 
 private:
+    void ReleaseSingleNodeAnimation();
+    void EnsureSingleNodeAnimation();
     void InitializeSingleNodeAnimation();
     void ApplyAnimationPose(float DeltaTime);
+    void ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime);
+    void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:
     UPROPERTY(EditAnywhere, DisplayName = "AnimSequence", SerializeName = "AnimSequenceAsset")

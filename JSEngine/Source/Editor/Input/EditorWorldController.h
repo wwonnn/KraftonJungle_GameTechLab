@@ -66,8 +66,7 @@ class FEditorWorldController : public IBaseEditorController
     void ResetTargetFromCamera();
     void SetWorld(UWorld* InWorld)
     {
-        if (InWorld)
-            World = InWorld;
+        World = InWorld;
     }
     void NullifyWorld() { World = nullptr; }
     void SetSelectionPickResolver(std::function<bool(float, float, AActor*&)> Resolver)

@@ -24,6 +24,16 @@ public:
     void SetNextSequence(UAnimSequence* InNext, float InBlendSpeed);
     void SetLooping(bool bInLoop) { bLoop = bInLoop; }
     bool IsLooping() const { return bLoop; }
+    float GetCurrentTime() const { return CurrentTime; }
+    void SetCurrentTime(float InCurrentTime);
+    float GetPlayRate() const { return PlayRate; }
+    void SetPlayRate(float InPlayRate) { PlayRate = InPlayRate; }
+    bool IsPlaying() const { return bPlaying; }
+    void Play();
+    void Pause();
+    void Stop();
+    float GetSequenceLength() const;
+    bool HasValidSequence() const;
 
     virtual void UpdateAnimation(float DeltaTime);		// 재생 시간 관리
     virtual void EvaluatePose(FSkeletonPose& OutPose);	// 시간 t에서 Bone의 Pose 계산
@@ -33,6 +43,8 @@ protected:
     void EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms);
     FVector InterpolateKeys(const TArray<FVector>& Keys, float Time, float FrameRate);
     FQuat InterpolateKeys(const TArray<FQuat>& Keys, float Time, float FrameRate);
+    float GetSequenceLength(const UAnimSequence* Sequence) const;
+    float NormalizeTimeForSequence(const UAnimSequence* Sequence, float InTime) const;
 
 	// PoseA와 PoseB를 블렌딩하여 OutPose에 저장 -> Transition 용도
     void BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose);

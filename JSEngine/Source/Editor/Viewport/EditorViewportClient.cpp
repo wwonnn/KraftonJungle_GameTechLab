@@ -300,6 +300,19 @@ void FEditorViewportClient::SetSelectionManager(FSelectionManager* InSelectionMa
     InputRouter.GetEditorWorldController().SetSelectionManager(InSelectionManager);
 }
 
+void FEditorViewportClient::ReleaseTransientEditorState()
+{
+    InputTools.clear();
+    InputRouter.SetActiveController(EActiveEditorController::NilController);
+    InputRouter.GetEditorWorldController().SetSelectionPickResolver({});
+    InputRouter.GetEditorWorldController().NullifySelectionManager();
+    InputRouter.GetEditorWorldController().NullifyGizmo();
+    InputRouter.GetEditorWorldController().NullifyCamera();
+    InputRouter.GetEditorWorldController().NullifyWorld();
+    InputRouter.GetGameInputBridge().NullifyCamera();
+    InputRouter.GetGameInputBridge().ClearPlayerController();
+}
+
 void FEditorViewportClient::CreateCamera()
 {
 	bHasCamera = true;

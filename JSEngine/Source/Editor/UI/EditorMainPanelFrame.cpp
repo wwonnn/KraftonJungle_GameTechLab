@@ -26,6 +26,7 @@ void FEditorMainPanel::Render(float DeltaTime)
     UpdateConsoleDrawerAnimation(EffectiveDeltaTime);
     RenderLateFrameOverlays(DeltaTime, EffectiveDeltaTime, bDrawEditorPanels);
     EndImGuiFrame();
+    FlushClosedDocuments();
 
     ClearRuntimeUIDrawCallbacks();
 }
@@ -71,10 +72,16 @@ void FEditorMainPanel::RenderMainViewport(float DeltaTime)
 {
 	FlushOpenViewerWidgets();
 
-    if (IsLevelEditorTabActive())
+	if (IsLevelEditorTabActive())
     {
         RenderViewportHostWindow();
         Widgets.ViewportOverlayWidget.RenderViewportFrameOverlays(DeltaTime);
+        return;
+    }
+
+    if (GetActiveEditorDocument())
+    {
+        RenderActiveEditorDocument(DeltaTime);
         return;
     }
 
