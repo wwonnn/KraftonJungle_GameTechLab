@@ -21,6 +21,12 @@ cbuffer StaticMeshBuffer : register(b2)
     float padding3;
 };
 
+cbuffer DebugBuffer : register(b13)
+{
+    uint bShowBoneWeight;
+    uint SelectedBoneIndex;
+}
+
 struct FDecalInfo
 {
     row_major matrix InvDecalWorld;
@@ -83,6 +89,10 @@ struct PSInput
 #elif HAS_NORMAL_MAP
     float4 WorldTangent : TEXCOORD5;
 #endif
+    
+    nointerpolation uint4 BoneIndices : BLENDINDICES;
+    float4 BoneWeights : BLENDWEIGHT;
+    float HeatmapWeight : TEXCOORD6;
 };
 
 struct PSOutput
@@ -100,6 +110,9 @@ PSInput mainVS(VSInput input)
     output.ClipPos = ApplyMVP(input.Position);
     output.UV = input.UV + ScrollUV;
     output.WorldNormal = normalize(mul(input.Normal, (float3x3) WorldInvTrans));
+    output.BoneIndices = uint4(0, 0, 0, 0);
+    output.BoneWeights = float4(0, 0, 0, 0);
+    output.HeatmapWeight = 0.0f;
     
 #if HAS_NORMAL_MAP && !LIGHTING_MODEL_GOURAUD
     output.WorldTangent = float4(normalize(mul(input.Tangent.xyz, (float3x3)WorldInvTrans)), input.Tangent.w);
@@ -147,7 +160,24 @@ PSInput SkeletalMeshVS(SkeletalVSInput input)
     passThrough.UV = input.UV;
     passThrough.Color = input.Color;
 
-    return mainVS(passThrough);
+    PSInput output = mainVS(passThrough);
+    output.BoneIndices = input.BoneIndices;
+    output.BoneWeights = input.BoneWeights;
+    
+    // Calculate weight for the selected bone at vertex level for smooth interpolation
+    float boneWeight = 0.0f;
+    [unroll]
+    for (int i = 0; i < 4; i++)
+    {
+        if (input.BoneIndices[i] == (uint)SelectedBoneIndex)
+        {
+            boneWeight = input.BoneWeights[i];
+            break;
+        }
+    }
+    output.HeatmapWeight = boneWeight;
+    
+    return output;
 }
 
 #if HAS_NORMAL_MAP
@@ -162,16 +192,26 @@ float3 PerturbNormal(float3 worldNormal, float4 worldTangent, float2 uv)
 }
 #endif
 
-#if LIGHT_HEATMAP
 float3 GetHeatmapColor(float weight)
 {
-    float3 color;
-    color.r = smoothstep(0.4f, 0.7f, weight);
-    color.g = smoothstep(0.0f, 0.4f, weight) - smoothstep(0.7f, 1.0f, weight);
-    color.b = 1.0f - smoothstep(0.0f, 0.4f, weight);
-    return color;
+    weight = saturate(weight);
+    
+    // Professional 7-stop vibrant heatmap ramp (Deep Blue -> Blue -> Cyan -> Green -> Yellow -> Orange -> Red)
+    float3 c0 = float3(0.05, 0.05, 0.3); // 0.0: Deep Blue
+    float3 c1 = float3(0.0, 0.2, 1.0);   // 0.15: Blue
+    float3 c2 = float3(0.0, 1.0, 1.0);   // 0.35: Cyan
+    float3 c3 = float3(0.0, 1.0, 0.0);   // 0.5: Green
+    float3 c4 = float3(1.0, 1.0, 0.0);   // 0.65: Yellow
+    float3 c5 = float3(1.0, 0.5, 0.0);   // 0.85: Orange
+    float3 c6 = float3(1.0, 0.0, 0.0);   // 1.0: Red
+
+    if (weight < 0.15) return lerp(c0, c1, (weight - 0.00) / 0.15);
+    if (weight < 0.35) return lerp(c1, c2, (weight - 0.15) / 0.20);
+    if (weight < 0.50) return lerp(c2, c3, (weight - 0.35) / 0.15);
+    if (weight < 0.65) return lerp(c3, c4, (weight - 0.50) / 0.15);
+    if (weight < 0.85) return lerp(c4, c5, (weight - 0.65) / 0.20);
+    return lerp(c5, c6, (weight - 0.85) / 0.15);
 }
-#endif
 
 float GetCascadeSplitFarValue(uint CascadeIndex)
 {
@@ -338,6 +378,29 @@ float CalculateShadow(float4 worldPos)
 PSOutput mainPS(PSInput input) : SV_TARGET
 {
     PSOutput output;
+    
+    if (bShowBoneWeight > 0)
+    {
+        float boneWeight = input.HeatmapWeight;
+        
+        float3 heatmapColor = GetHeatmapColor(boneWeight);
+        
+        // Add subtle shading for better volume perception (Half-Lambert)
+        float3 N = normalize(input.WorldNormal);
+        float3 L = normalize(float3(0.5, 1.0, 0.5));
+        float diffuse = saturate(dot(N, L) * 0.5 + 0.5);
+        
+        output.Color = float4(heatmapColor * diffuse, 1.0f);
+        
+        if (bIsWireframe > 0.5f)
+        {
+            output.Color = float4(WireframeRGB, 1.f);
+        }
+
+        output.Normal = float4(input.WorldNormal * 0.5f + 0.5f, 1.f);
+        output.WorldPos = float4(input.WorldPos, 1.f);
+        return output;
+    }
     
     float4 DiffuseTex = float4(1.f, 1.f, 1.f, 1.f);
 #if HAS_DIFFUSE_MAP
