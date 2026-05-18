@@ -3,6 +3,9 @@
 #include "Animation/LuaAnimInstance.h"
 #include "Component/SkinnedMeshComponent.h"
 
+class UAnimSequence;
+class UAnimSingleNodeInstance;
+
 /**
  * @brief Unreal Engine 스타일에서는 skinned mesh가 skeleton을 이용하는 mesh를 표현하고,
  *        skeletal mesh는 실제로 actor에 붙어서 애니메이션을 붙일 수 있는 component로 사용되고 있으므로
@@ -35,7 +38,7 @@ public:
     void SetPreviewTime(float InTime);
     float GetPreviewTime() const;
     float GetPreviewLength() const;
-    UAnimSingleNodeInstance* GetPreviewAnimInstance() const { return SingleNodeInstance; }
+    UAnimSingleNodeInstance* GetPreviewAnimInstance() const;
     void TickPreviewAnimation(float DeltaTime);
 
     void SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform);
@@ -54,12 +57,10 @@ protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
 
 private:
-    void ReleaseSingleNodeAnimation();
-    void EnsureSingleNodeAnimation();
-    void InitializeSingleNodeAnimation();
+    UAnimSingleNodeInstance* EnsurePreviewAnimInstance();
     void InitializeAnimation();
     void ApplyAnimationPose(float DeltaTime);
-    void ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime);
+    void ApplyAnimationPoseFromInstance(UAnimInstance* InAnimInstance, float DeltaTime, bool bAdvanceTime);
     void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:

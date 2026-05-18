@@ -1439,7 +1439,7 @@ void FEditorPropertyWidget::RenderComponentProperties()
             continue;
         }
 
-		if (strcmp(Prop.Name, "Tags") == 0)
+		if (strcmp(Prop.Name, "Tags") == 0 || strcmp(Prop.Name, "TagsText") == 0)
 		{
 			continue;
 		}
