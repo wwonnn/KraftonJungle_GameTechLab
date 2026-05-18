@@ -171,6 +171,8 @@ namespace
     {
         OutObject = json::JSON::Make(json::JSON::Class::Object);
         OutObject["CurveName"] = Curve.CurveName.ToString();
+        OutObject["CurveType"] = AnimationCurveTypeToString(Curve.CurveType);
+        OutObject["SourceKind"] = AnimationCurveSourceKindToString(Curve.SourceKind);
 
         TArray<float> Times;
         TArray<float> Values;
@@ -222,6 +224,14 @@ namespace
             CurveName = SourceObject.at("Name").ToString();
         }
         Curve.CurveName = FName(CurveName);
+        if (SourceObject.hasKey("CurveType"))
+        {
+            Curve.CurveType = AnimationCurveTypeFromString(SourceObject.at("CurveType").ToString());
+        }
+        if (SourceObject.hasKey("SourceKind"))
+        {
+            Curve.SourceKind = AnimationCurveSourceKindFromString(SourceObject.at("SourceKind").ToString());
+        }
 
         TArray<float> Times;
         TArray<float> Values;
@@ -319,6 +329,9 @@ namespace
             EventObject["Time"] = Event.Time;
             EventObject["Duration"] = Event.Duration;
             EventObject["Color"] = MakeColorKey(Event.Color);
+            EventObject["EventType"] = AnimNotifyEventTypeToString(Event.EventType);
+            EventObject["NotifyClassName"] = Event.GetResolvedNotifyClassName();
+            EventObject["Payload"] = Event.Payload;
             OutObject["Events"].append(EventObject);
         }
     }
@@ -375,6 +388,22 @@ namespace
             if (EventObject.hasKey("Color"))
             {
                 Event.Color = ReadColorKey(EventObject.at("Color"));
+            }
+            if (EventObject.hasKey("EventType"))
+            {
+                Event.EventType = AnimNotifyEventTypeFromString(EventObject.at("EventType").ToString());
+            }
+            if (EventObject.hasKey("NotifyClassName"))
+            {
+                Event.NotifyClassName = EventObject.at("NotifyClassName").ToString();
+            }
+            if (EventObject.hasKey("Payload"))
+            {
+                Event.Payload = EventObject.at("Payload").ToString();
+            }
+            if (Event.NotifyClassName.empty())
+            {
+                Event.NotifyClassName = GetDefaultAnimNotifyClassName(Event.EventType);
             }
             Event.EnsureStableId();
             Track.Events.push_back(Event);

@@ -1,11 +1,8 @@
 #include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
 
-#include "Animation/AnimData/AnimDataModel.h"
-#include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceSequencerLayout.h"
 #include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
-#include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Engine/Asset/CurveFloatAsset.h"
 
 #include "ImGui/imgui.h"
@@ -55,25 +52,26 @@ namespace
         return Range;
     }
 
-    ImU32 GetCurveColor(int32 CurveIndex, bool bSelected)
+    ImU32 GetCurveColor(EAnimCurveType CurveType, bool bSelected)
     {
-        static constexpr ImU32 Palette[] =
+        ImU32 BaseColor = IM_COL32(144, 195, 255, 255);
+        switch (CurveType)
         {
-            IM_COL32(123, 176, 255, 255),
-            IM_COL32(163, 219, 103, 255),
-            IM_COL32(243, 213, 92, 255),
-            IM_COL32(239, 134, 226, 255),
-            IM_COL32(144, 195, 255, 255),
-            IM_COL32(255, 178, 107, 255),
-        };
-
-        const ImU32 Base = Palette[CurveIndex % (sizeof(Palette) / sizeof(Palette[0]))];
-        if (!bSelected)
-        {
-            return Base;
+        case EAnimCurveType::MorphTarget:
+            BaseColor = IM_COL32(109, 233, 209, 255);
+            break;
+        case EAnimCurveType::Material:
+            BaseColor = IM_COL32(243, 213, 92, 255);
+            break;
+        case EAnimCurveType::Attribute:
+            BaseColor = IM_COL32(123, 176, 255, 255);
+            break;
+        default:
+            BaseColor = IM_COL32(176, 148, 255, 255);
+            break;
         }
 
-        return IM_COL32(255, 255, 255, 255);
+        return bSelected ? IM_COL32(255, 255, 255, 255) : BaseColor;
     }
 
     float SampleCurveY(
@@ -92,15 +90,13 @@ namespace
 }
 
 void FAnimationSequenceCurveTrackWidget::RenderRows(
-    const UAnimSequence* Sequence,
     FAnimationSequenceEditorState& State,
     const FAnimationSequenceTimelineGeometry& Geometry,
-    float SectionTop) const
+    float SectionTop,
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups) const
 {
     State.HoveredCurveIndex = -1;
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    const UAnimDataModel* DataModel = AnimationSequenceViewer::GetValidAnimDataModel(Sequence);
-    const int32 CurveCount = DataModel ? static_cast<int32>(DataModel->CurveData.FloatCurves.size()) : 0;
 
     const ImVec2 HeaderMin(Geometry.CanvasPos.x + 4.0f, SectionTop);
     const ImVec2 HeaderMax(Geometry.CanvasEnd.x - 4.0f, SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight);
@@ -108,71 +104,116 @@ void FAnimationSequenceCurveTrackWidget::RenderRows(
     DrawList->AddRect(HeaderMin, HeaderMax, IM_COL32(255, 255, 255, 18), 4.0f);
     DrawList->AddText(ImVec2(HeaderMin.x + 8.0f, HeaderMin.y + 4.0f), IM_COL32(208, 214, 226, 255), "Curves");
 
-    if (!State.bCurvesExpanded || !DataModel || CurveCount <= 0)
+    if (!State.bCurvesExpanded)
     {
         return;
     }
 
-    const float RowsTop = SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
-    for (int32 CurveIndex = 0; CurveIndex < CurveCount; ++CurveIndex)
+    float RowCursorY = SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
+    for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
     {
-        const FFloatCurve& Curve = DataModel->CurveData.FloatCurves[CurveIndex];
-        const float RowTop =
-            RowsTop +
-            CurveIndex *
-            (FAnimationSequenceSequencerLayout::CurveTrackRowHeight + FAnimationSequenceSequencerLayout::CurveTrackRowSpacing);
-        const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::CurveTrackRowHeight;
-        const bool bSelected = State.SelectedCurveIndex == CurveIndex;
-        const bool bHovered = State.HoveredCurveIndex == CurveIndex;
+        const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
+        const ImVec2 GroupMin(Geometry.TimelineMinX, RowCursorY);
+        const ImVec2 GroupMax(Geometry.TimelineMaxX, RowCursorY + FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
+        DrawList->AddRectFilled(GroupMin, GroupMax, IM_COL32(26, 30, 37, 245), 4.0f);
+        DrawList->AddRect(GroupMin, GroupMax, IM_COL32(255, 255, 255, 18), 4.0f);
 
-        const ImVec2 RowMin(Geometry.TimelineMinX, RowTop);
-        const ImVec2 RowMax(Geometry.TimelineMaxX, RowBottom);
-        DrawList->AddRectFilled(
-            RowMin,
-            RowMax,
-            bSelected ? IM_COL32(38, 48, 64, 255) : (bHovered ? IM_COL32(28, 33, 40, 255) : IM_COL32(22, 25, 31, 220)),
-            4.0f);
-        DrawList->AddRect(RowMin, RowMax, IM_COL32(255, 255, 255, 18), 4.0f);
-
-        ImGui::SetCursorScreenPos(RowMin);
-        ImGui::PushID(CurveIndex + 7000);
-        ImGui::InvisibleButton(
-            "##CurveRow",
-            ImVec2(RowMax.x - RowMin.x, RowMax.y - RowMin.y));
-        if (ImGui::IsItemHovered())
-        {
-            State.HoveredCurveIndex = CurveIndex;
-        }
-        if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-        {
-            State.SelectedCurveIndex = CurveIndex;
-        }
-        ImGui::PopID();
-
-        const FCurveRange ValueRange = ComputeCurveRange(Curve, State.VisibleTimeStart, State.VisibleTimeEnd);
-        constexpr int32 SampleCount = 96;
-        ImVec2 PreviousPoint = {};
-        bool bHasPreviousPoint = false;
-
-        for (int32 SampleIndex = 0; SampleIndex < SampleCount; ++SampleIndex)
-        {
-            const float Alpha = SampleCount > 1 ? static_cast<float>(SampleIndex) / static_cast<float>(SampleCount - 1) : 0.0f;
-            const float Time = State.VisibleTimeStart + State.GetVisibleRange() * Alpha;
-            const float X = Geometry.TimeToX(State, Time);
-            const float Y = SampleCurveY(Curve, State, ValueRange, Time, RowTop + 6.0f, RowBottom - 6.0f);
-            const ImVec2 Point(X, Y);
-            if (bHasPreviousPoint)
-            {
-                DrawList->AddLine(PreviousPoint, Point, GetCurveColor(CurveIndex, bSelected), bSelected ? 2.4f : 1.8f);
-            }
-
-            PreviousPoint = Point;
-            bHasPreviousPoint = true;
-        }
-
+        const FString GroupLabel =
+            (Group.bVisible ? "[Shown] " : "[Hidden] ") +
+            Group.Label +
+            "  (" +
+            std::to_string(Group.TotalCount) +
+            ")";
         DrawList->AddText(
-            ImVec2(Geometry.TimelineMaxX - 112.0f, RowTop + 4.0f),
-            IM_COL32(140, 149, 163, 255),
-            (std::to_string(static_cast<int32>(Curve.Keys.size())) + " keys").c_str());
+            ImVec2(GroupMin.x + 8.0f, GroupMin.y + 3.0f),
+            Group.bVisible ? IM_COL32(214, 220, 230, 255) : IM_COL32(132, 139, 150, 255),
+            GroupLabel.c_str());
+
+        RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight;
+        if (Group.bVisible && !Group.VisibleEntries.empty())
+        {
+            RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+            for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
+            {
+                const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                if (!Entry.Curve)
+                {
+                    continue;
+                }
+
+                const float RowTop = RowCursorY;
+                const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::CurveTrackRowHeight;
+                const bool bSelected = State.SelectedCurveIndex == Entry.SourceIndex;
+                const bool bHovered = ImGui::IsMouseHoveringRect(
+                    ImVec2(Geometry.TimelineMinX, RowTop),
+                    ImVec2(Geometry.TimelineMaxX, RowBottom));
+
+                const ImVec2 RowMin(Geometry.TimelineMinX, RowTop);
+                const ImVec2 RowMax(Geometry.TimelineMaxX, RowBottom);
+                DrawList->AddRectFilled(
+                    RowMin,
+                    RowMax,
+                    bSelected ? IM_COL32(38, 48, 64, 255) : (bHovered ? IM_COL32(28, 33, 40, 255) : IM_COL32(22, 25, 31, 220)),
+                    4.0f);
+                DrawList->AddRect(RowMin, RowMax, IM_COL32(255, 255, 255, 18), 4.0f);
+
+                ImGui::SetCursorScreenPos(RowMin);
+                ImGui::PushID(Entry.SourceIndex + 7000);
+                ImGui::InvisibleButton(
+                    "##CurveRow",
+                    ImVec2(RowMax.x - RowMin.x, RowMax.y - RowMin.y));
+                if (bHovered)
+                {
+                    State.HoveredCurveIndex = Entry.SourceIndex;
+                }
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+                {
+                    State.SelectedCurveIndex = Entry.SourceIndex;
+                }
+                ImGui::PopID();
+
+                const FCurveRange ValueRange = ComputeCurveRange(*Entry.Curve, State.VisibleTimeStart, State.VisibleTimeEnd);
+                constexpr int32 SampleCount = 96;
+                ImVec2 PreviousPoint = {};
+                bool bHasPreviousPoint = false;
+
+                for (int32 SampleIndex = 0; SampleIndex < SampleCount; ++SampleIndex)
+                {
+                    const float Alpha = SampleCount > 1 ? static_cast<float>(SampleIndex) / static_cast<float>(SampleCount - 1) : 0.0f;
+                    const float Time = State.VisibleTimeStart + State.GetVisibleRange() * Alpha;
+                    const float X = Geometry.TimeToX(State, Time);
+                    const float Y = SampleCurveY(*Entry.Curve, State, ValueRange, Time, RowTop + 6.0f, RowBottom - 6.0f);
+                    const ImVec2 Point(X, Y);
+                    if (bHasPreviousPoint)
+                    {
+                        DrawList->AddLine(PreviousPoint, Point, GetCurveColor(Group.CurveType, bSelected), bSelected ? 2.4f : 1.8f);
+                    }
+
+                    PreviousPoint = Point;
+                    bHasPreviousPoint = true;
+                }
+
+                const FString KeyLabel =
+                    AnimationSequenceCurveFilter::GetCurveTypeBadge(Group.CurveType) +
+                    "  |  " +
+                    std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) +
+                    " keys";
+                DrawList->AddText(
+                    ImVec2(Geometry.TimelineMaxX - 150.0f, RowTop + 4.0f),
+                    IM_COL32(140, 149, 163, 255),
+                    KeyLabel.c_str());
+
+                RowCursorY = RowBottom;
+                if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
+                {
+                    RowCursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
+                }
+            }
+        }
+
+        if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
+        {
+            RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+        }
     }
 }

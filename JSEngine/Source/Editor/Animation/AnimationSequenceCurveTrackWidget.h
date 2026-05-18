@@ -1,6 +1,7 @@
 #pragma once
 
-class UAnimSequence;
+#include "Editor/Animation/AnimationSequenceCurveFilter.h"
+
 class FAnimationSequenceEditorState;
 struct FAnimationSequenceTimelineGeometry;
 
@@ -8,8 +9,8 @@ class FAnimationSequenceCurveTrackWidget
 {
 public:
     void RenderRows(
-        const UAnimSequence* Sequence,
         FAnimationSequenceEditorState& State,
         const FAnimationSequenceTimelineGeometry& Geometry,
-        float SectionTop) const;
+        float SectionTop,
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups) const;
 };

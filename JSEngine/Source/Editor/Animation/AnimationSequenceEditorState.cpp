@@ -24,6 +24,10 @@ void FAnimationSequenceEditorState::Reset()
     SequencerScrollY = 0.0f;
     bNotifiesExpanded = true;
     bCurvesExpanded = true;
+    bShowMorphTargetCurves = true;
+    bShowMaterialCurves = true;
+    bShowAttributeCurves = true;
+    bShowUnknownCurves = false;
     SelectedNotifyTrackIndex = -1;
     SelectedNotifyEventIndex = -1;
     HoveredNotifyTrackIndex = -1;
@@ -33,6 +37,7 @@ void FAnimationSequenceEditorState::Reset()
     SelectedCurveIndex = -1;
     HoveredCurveIndex = -1;
     bDraggingNotify = false;
+    DraggedNotifyGrabOffsetTime = 0.0f;
 }
 
 void FAnimationSequenceEditorState::InitializeFromSequence(

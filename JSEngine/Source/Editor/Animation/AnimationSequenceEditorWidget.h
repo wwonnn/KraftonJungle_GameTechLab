@@ -1,15 +1,19 @@
 #pragma once
 
 #include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
+#include "Editor/Animation/AnimationSequenceCurveFilter.h"
 #include "Editor/Animation/AnimationSequenceNotifyLaneWidget.h"
 #include "Editor/Animation/AnimationSequenceTrackOutlinerWidget.h"
 #include "Editor/Animation/AnimationSequenceTimelineWidget.h"
 #include "Editor/UI/EditorWidget.h"
 
+#include <array>
+
 class UAnimSequence;
 class FAnimationSequenceEditorState;
 class FAnimationSequencePreviewController;
 class FAnimationSequenceEditorDocument;
+struct FAnimNotifyEvent;
 struct ImVec2;
 
 class FAnimationSequenceEditorWidget : public FEditorWidget
@@ -33,9 +37,19 @@ private:
     void RenderPreviewToolbarOverlay(const ImVec2& Min, const ImVec2& Max) const;
     void RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight);
     void RenderTransportBar();
-    void RenderSequencerSplitPane(float SplitPaneHeight, float DetailsPaneHeight, float MaxOutlinerWidth);
-    void RenderTrackOutlinerPane(float Width, float Height);
-    void RenderTimelineCanvasPane(float Width, float Height);
+    void RenderSequencerSplitPane(
+        float SplitPaneHeight,
+        float DetailsPaneHeight,
+        float MaxOutlinerWidth,
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
+    void RenderTrackOutlinerPane(
+        float Width,
+        float Height,
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
+    void RenderTimelineCanvasPane(
+        float Width,
+        float Height,
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
     void RenderSelectionDetailsPane(float Height);
     void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl);
     void RenderPlaybackSummary() const;
@@ -43,6 +57,7 @@ private:
     void RenderCurveInspectionPanel() const;
     void RenderRecentNotifySummary() const;
     void RenderFooterStatus() const;
+    void SyncNotifyDetailsBuffers(const FAnimNotifyEvent& NotifyEvent);
 
 private:
     FAnimationSequenceEditorDocument* Document = nullptr;
@@ -54,4 +69,7 @@ private:
     FAnimationSequenceNotifyLaneWidget NotifyLaneWidget;
     FAnimationSequenceTrackOutlinerWidget TrackOutlinerWidget;
     FAnimationSequenceCurveTrackWidget CurveTrackWidget;
+    FString NotifyDetailsBoundStableId;
+    std::array<char, 256> NotifyNameEditBuffer = {};
+    std::array<char, 512> NotifyPayloadEditBuffer = {};
 };

@@ -2,6 +2,7 @@
 
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
+#include "Animation/AnimData/AnimCurveTypes.h"
 #include "Object/Object.h"
 
 enum class ECurveInterpMode : uint8
@@ -34,6 +35,8 @@ class FFloatCurve
 {
 public:
     FName CurveName;
+    EAnimCurveType CurveType = EAnimCurveType::Unknown;
+    EAnimCurveSourceKind SourceKind = EAnimCurveSourceKind::Unknown;
     TArray<FCurveKey> Keys;
 
     float Evaluate(float Time) const;

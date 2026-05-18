@@ -50,6 +50,9 @@ public:
     bool SetSelectedNotifyDuration(float DurationSeconds);
     bool SetSelectedNotifyName(const FName& Name);
     bool SetSelectedNotifyColor(const FColor& Color);
+    bool SetSelectedNotifyType(EAnimNotifyEventType EventType);
+    bool SetSelectedNotifyClassName(const FString& NotifyClassName);
+    bool SetSelectedNotifyPayload(const FString& Payload);
     void SelectNotify(int32 TrackIndex, int32 EventIndex);
     void ClearNotifySelection();
     void MarkDirty();

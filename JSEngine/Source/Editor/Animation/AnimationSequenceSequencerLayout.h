@@ -22,6 +22,8 @@ struct FAnimationSequenceSequencerLayout
 
     static constexpr float CurveTrackRowHeight = 48.0f;
     static constexpr float CurveTrackRowSpacing = 6.0f;
+    static constexpr float CurveGroupHeaderHeight = 22.0f;
+    static constexpr float CurveGroupHeaderSpacing = 4.0f;
 
     static constexpr float OutlinerMinWidth = 190.0f;
     static constexpr float OutlinerDefaultWidth = 260.0f;

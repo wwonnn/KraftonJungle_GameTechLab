@@ -1,11 +1,15 @@
 #pragma once
 
-class UAnimSequence;
+#include "Editor/Animation/AnimationSequenceCurveFilter.h"
+
 class FAnimationSequenceEditorState;
 class FAnimationSequenceEditorDocument;
 
 class FAnimationSequenceTrackOutlinerWidget
 {
 public:
-    void Render(FAnimationSequenceEditorState& State, FAnimationSequenceEditorDocument* Document, const UAnimSequence* Sequence);
+    void Render(
+        FAnimationSequenceEditorState& State,
+        FAnimationSequenceEditorDocument* Document,
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
 };

@@ -1,5 +1,6 @@
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 
+#include "Animation/AnimNotify.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
@@ -12,6 +13,7 @@
 #include "Editor/Viewport/EditorViewportClient.h"
 #include "Editor/Viewport/FSceneViewport.h"
 #include "Engine/Asset/CurveFloatAsset.h"
+#include "Object/ObjectFactory.h"
 #include "Engine/Runtime/WindowsWindow.h"
 #include "Render/Common/RenderTypes.h"
 
@@ -111,10 +113,95 @@ namespace
         }
     }
 
-    int32 GetCurveCount(const UAnimSequence* Sequence)
+    TArray<FString> CollectNotifyClassOptions(EAnimNotifyEventType EventType)
     {
-        const UAnimDataModel* DataModel = AnimationSequenceViewer::GetValidAnimDataModel(Sequence);
-        return DataModel ? static_cast<int32>(DataModel->CurveData.FloatCurves.size()) : 0;
+        TArray<const FTypeInfo*> RegisteredTypes;
+        FObjectFactory::Get().GetRegisteredTypeInfos(RegisteredTypes);
+
+        const FTypeInfo* RequiredBaseType =
+            EventType == EAnimNotifyEventType::NotifyState ? &UAnimNotifyState::s_TypeInfo : &UAnimNotify::s_TypeInfo;
+        const FTypeInfo* ExcludedBaseType =
+            EventType == EAnimNotifyEventType::NotifyState ? nullptr : &UAnimNotifyState::s_TypeInfo;
+
+        TArray<FString> Options;
+        for (const FTypeInfo* TypeInfo : RegisteredTypes)
+        {
+            if (!TypeInfo || !TypeInfo->name || !TypeInfo->IsA(RequiredBaseType))
+            {
+                continue;
+            }
+
+            if (ExcludedBaseType && TypeInfo->IsA(ExcludedBaseType))
+            {
+                continue;
+            }
+
+            Options.push_back(TypeInfo->name);
+        }
+
+        std::sort(Options.begin(), Options.end());
+        Options.erase(std::unique(Options.begin(), Options.end()), Options.end());
+        return Options;
+    }
+
+    bool ContainsNotifyClassOption(const TArray<FString>& Options, const FString& Value)
+    {
+        return std::find(Options.begin(), Options.end(), Value) != Options.end();
+    }
+
+    template <size_t BufferSize>
+    void CopyStringToBuffer(const FString& Source, std::array<char, BufferSize>& Buffer)
+    {
+        Buffer.fill('\0');
+        strncpy_s(Buffer.data(), Buffer.size(), Source.c_str(), _TRUNCATE);
+    }
+
+    int32 GetVisibleCurveCount(const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
+    {
+        int32 VisibleCount = 0;
+        for (const FAnimationSequenceCurveViewGroup& Group : CurveGroups)
+        {
+            if (Group.bVisible)
+            {
+                VisibleCount += static_cast<int32>(Group.VisibleEntries.size());
+            }
+        }
+
+        return VisibleCount;
+    }
+
+    float GetCurveSectionHeight(
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        const FAnimationSequenceEditorState& State)
+    {
+        float Height = FAnimationSequenceSequencerLayout::SectionHeaderHeight;
+        if (!State.bCurvesExpanded)
+        {
+            return Height;
+        }
+
+        Height += FAnimationSequenceSequencerLayout::TrackAreaPadding;
+        for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
+        {
+            const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
+            Height += FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight;
+
+            if (Group.bVisible && !Group.VisibleEntries.empty())
+            {
+                Height += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                Height +=
+                    FAnimationSequenceSequencerLayout::CurveTrackRowHeight * static_cast<float>(Group.VisibleEntries.size()) +
+                    FAnimationSequenceSequencerLayout::CurveTrackRowSpacing * static_cast<float>(std::max(0, static_cast<int32>(Group.VisibleEntries.size()) - 1));
+            }
+
+            if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
+            {
+                Height += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+            }
+        }
+
+        Height += FAnimationSequenceSequencerLayout::TrackAreaPadding;
+        return Height;
     }
 
     const FFloatCurve* GetSelectedCurve(const UAnimSequence* Sequence, const FAnimationSequenceEditorState* State)
@@ -148,6 +235,23 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     Sequence = InSequence;
     PreviewController = InPreviewController;
     EditorState = InEditorState;
+    NotifyDetailsBoundStableId.clear();
+    NotifyNameEditBuffer.fill('\0');
+    NotifyPayloadEditBuffer.fill('\0');
+}
+
+void FAnimationSequenceEditorWidget::SyncNotifyDetailsBuffers(const FAnimNotifyEvent& NotifyEvent)
+{
+    const FString StableId = NotifyEvent.StableId.ToString();
+    if (NotifyDetailsBoundStableId == StableId)
+    {
+        return;
+    }
+
+    NotifyDetailsBoundStableId = StableId;
+    const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString();
+    CopyStringToBuffer(NotifyName, NotifyNameEditBuffer);
+    CopyStringToBuffer(NotifyEvent.Payload, NotifyPayloadEditBuffer);
 }
 
 void FAnimationSequenceEditorWidget::Render(float DeltaTime)
@@ -374,6 +478,9 @@ void FAnimationSequenceEditorWidget::SyncEmbeddedViewportRectAndFocus(
 
 void FAnimationSequenceEditorWidget::RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight)
 {
+    const TArray<FAnimationSequenceCurveViewGroup> CurveGroups =
+        EditorState ? AnimationSequenceCurveFilter::BuildCurveViewGroups(Sequence, *EditorState) : TArray<FAnimationSequenceCurveViewGroup>();
+
     ImDrawList* SplitterDrawList = ImGui::GetWindowDrawList();
     const float SplitterWidth = std::max(ImGui::GetContentRegionAvail().x, 1.0f);
     ImGui::InvisibleButton(
@@ -413,7 +520,7 @@ void FAnimationSequenceEditorWidget::RenderSequencerRegion(float SequencerHeight
     const float MaxOutlinerWidth = std::max(
         FAnimationSequenceSequencerLayout::OutlinerMinWidth,
         ImGui::GetContentRegionAvail().x - 280.0f);
-    RenderSequencerSplitPane(SplitPaneHeight, DetailsPaneHeight, MaxOutlinerWidth);
+    RenderSequencerSplitPane(SplitPaneHeight, DetailsPaneHeight, MaxOutlinerWidth, CurveGroups);
     ImGui::EndChild();
 }
 
@@ -437,21 +544,19 @@ void FAnimationSequenceEditorWidget::RenderTransportBar()
 void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     float SplitPaneHeight,
     float DetailsPaneHeight,
-    float MaxOutlinerWidth)
+    float MaxOutlinerWidth,
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
 {
-    const float TotalWidth = std::max(ImGui::GetContentRegionAvail().x, 1.0f);
     EditorState->TrackOutlinerWidth = std::clamp(
         EditorState->TrackOutlinerWidth,
         FAnimationSequenceSequencerLayout::OutlinerMinWidth,
         MaxOutlinerWidth);
 
     const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
-    const int32 CurveCount = GetCurveCount(Sequence);
-    const float TrackBodyHeight = FAnimationSequenceSequencerLayout::GetTrackBodyHeight(
-        NotifyTrackCount,
-        CurveCount,
-        EditorState->bNotifiesExpanded,
-        EditorState->bCurvesExpanded);
+    const float TrackBodyHeight =
+        FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
+        FAnimationSequenceSequencerLayout::SectionGap +
+        GetCurveSectionHeight(CurveGroups, *EditorState);
     const float TrackViewportHeight =
         SplitPaneHeight -
         FAnimationSequenceSequencerLayout::RulerHeight -
@@ -462,7 +567,7 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     EditorState->SequencerScrollY = std::clamp(EditorState->SequencerScrollY, 0.0f, MaxScrollY);
 
     ImGui::BeginChild("##AnimationSequenceSequencerSplit", ImVec2(0.0f, SplitPaneHeight), false, ImGuiWindowFlags_NoScrollbar);
-    RenderTrackOutlinerPane(EditorState->TrackOutlinerWidth, SplitPaneHeight);
+    RenderTrackOutlinerPane(EditorState->TrackOutlinerWidth, SplitPaneHeight, CurveGroups);
 
     ImGui::SameLine(0.0f, 0.0f);
     ImGui::InvisibleButton(
@@ -492,20 +597,24 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     ImGui::SameLine(0.0f, 0.0f);
     RenderTimelineCanvasPane(
         std::max(ImGui::GetContentRegionAvail().x, 1.0f),
-        SplitPaneHeight);
+        SplitPaneHeight,
+        CurveGroups);
 
     ImGui::EndChild();
     RenderSelectionDetailsPane(DetailsPaneHeight);
 }
 
-void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(float Width, float Height)
+void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
+    float Width,
+    float Height,
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
 {
     ImGui::BeginChild(
         "##AnimationSequenceTrackOutlinerPane",
         ImVec2(Width, Height),
         true,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    TrackOutlinerWidget.Render(*EditorState, Document, Sequence);
+    TrackOutlinerWidget.Render(*EditorState, Document, CurveGroups);
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
         std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
     {
@@ -514,7 +623,10 @@ void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(float Width, float 
     ImGui::EndChild();
 }
 
-void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(float Width, float Height)
+void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
+    float Width,
+    float Height,
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
 {
     ImGui::BeginChild(
         "##AnimationSequenceTimelineCanvasPane",
@@ -523,25 +635,27 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(float Width, float
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
     const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
-    const int32 CurveCount = GetCurveCount(Sequence);
     const float RequiredCanvasHeight =
         FAnimationSequenceTimelineGeometry::VerticalPadding * 2.0f +
         TimelineWidget.GetRulerHeight() +
         FAnimationSequenceSequencerLayout::TrackAreaPadding * 2.0f +
-        FAnimationSequenceSequencerLayout::GetTrackBodyHeight(
-            NotifyTrackCount,
-            CurveCount,
-            EditorState->bNotifiesExpanded,
-            EditorState->bCurvesExpanded);
+        FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
+        FAnimationSequenceSequencerLayout::SectionGap +
+        GetCurveSectionHeight(CurveGroups, *EditorState);
 
     const ImVec2 CanvasPos = ImGui::GetCursorScreenPos();
     const ImVec2 CanvasSize(
         std::max(1.0f, ImGui::GetContentRegionAvail().x),
         std::max(std::max(Height - 2.0f, 1.0f), RequiredCanvasHeight));
-    ImGui::InvisibleButton("##AnimationSequenceSequencerCanvas", CanvasSize);
+    ImGui::Dummy(CanvasSize);
 
-    const bool bCanvasHovered = ImGui::IsItemHovered();
-    const bool bCanvasActive = ImGui::IsItemActive();
+    const ImVec2 CanvasEnd(CanvasPos.x + CanvasSize.x, CanvasPos.y + CanvasSize.y);
+    const bool bCanvasHovered =
+        ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
+        ImGui::IsMouseHoveringRect(CanvasPos, CanvasEnd, false);
+    const bool bCanvasActive =
+        bCanvasHovered &&
+        (ImGui::IsMouseDown(ImGuiMouseButton_Left) || ImGui::IsMouseDown(ImGuiMouseButton_Middle));
     const FAnimationSequenceTimelineGeometry Geometry =
         FAnimationSequenceTimelineGeometry::BuildSequencerCanvasGeometry(CanvasPos, CanvasSize, TimelineWidget.GetRulerHeight());
 
@@ -557,7 +671,7 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(float Width, float
         NotifySectionTop +
         FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
         FAnimationSequenceSequencerLayout::SectionGap;
-    CurveTrackWidget.RenderRows(Sequence, *EditorState, Geometry, CurveSectionTop);
+    CurveTrackWidget.RenderRows(*EditorState, Geometry, CurveSectionTop, CurveGroups);
     if (Document &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
         EditorState->HoveredCurveIndex >= 0)
@@ -735,18 +849,73 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     const FAnimNotifyEvent* SelectedNotify = Document->GetSelectedNotify();
     if (!SelectedNotify)
     {
+        NotifyDetailsBoundStableId.clear();
+        NotifyNameEditBuffer.fill('\0');
+        NotifyPayloadEditBuffer.fill('\0');
         ImGui::TextDisabled("Select a notify marker to edit it.");
         return;
     }
 
     const FAnimNotifyEvent NotifySnapshot = *SelectedNotify;
-
-    char NameBuffer[256] = {};
-    const FString NotifyName = NotifySnapshot.Name.IsValid() ? NotifySnapshot.Name.ToString() : FString();
-    strncpy_s(NameBuffer, sizeof(NameBuffer), NotifyName.c_str(), _TRUNCATE);
-    if (ImGui::InputText("Name", NameBuffer, sizeof(NameBuffer)))
+    SyncNotifyDetailsBuffers(NotifySnapshot);
+    if (ImGui::InputText("Name", NotifyNameEditBuffer.data(), NotifyNameEditBuffer.size()))
     {
-        Document->SetSelectedNotifyName(FName(NameBuffer));
+        Document->SetSelectedNotifyName(FName(NotifyNameEditBuffer.data()));
+    }
+
+    const char* NotifyTypeLabels[] = { "Notify", "Notify State" };
+    int32 NotifyTypeIndex = NotifySnapshot.EventType == EAnimNotifyEventType::NotifyState ? 1 : 0;
+    if (ImGui::Combo("Type", &NotifyTypeIndex, NotifyTypeLabels, 2))
+    {
+        Document->SetSelectedNotifyType(
+            NotifyTypeIndex == 1 ? EAnimNotifyEventType::NotifyState : EAnimNotifyEventType::Notify);
+    }
+
+    const FAnimNotifyEvent* CurrentNotify = Document->GetSelectedNotify();
+    const EAnimNotifyEventType CurrentNotifyType =
+        CurrentNotify ? CurrentNotify->EventType : NotifySnapshot.EventType;
+    const FString CurrentNotifyClassName =
+        CurrentNotify ? CurrentNotify->GetResolvedNotifyClassName() : NotifySnapshot.GetResolvedNotifyClassName();
+    const TArray<FString> NotifyClassOptions = CollectNotifyClassOptions(CurrentNotifyType);
+    const bool bHasRegisteredNotifyClass = ContainsNotifyClassOption(NotifyClassOptions, CurrentNotifyClassName);
+    const FString NotifyClassPreviewLabel =
+        CurrentNotifyClassName.empty()
+            ? FString("<None>")
+            : (bHasRegisteredNotifyClass ? CurrentNotifyClassName : CurrentNotifyClassName + " (missing)");
+
+    if (ImGui::BeginCombo("Notify Class", NotifyClassPreviewLabel.c_str()))
+    {
+        for (const FString& NotifyClassOption : NotifyClassOptions)
+        {
+            const bool bSelected = NotifyClassOption == CurrentNotifyClassName;
+            if (ImGui::Selectable(NotifyClassOption.c_str(), bSelected))
+            {
+                Document->SetSelectedNotifyClassName(NotifyClassOption);
+            }
+            if (bSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    if (!bHasRegisteredNotifyClass && !CurrentNotifyClassName.empty())
+    {
+        ImGui::TextDisabled("Registered class not found: %s", CurrentNotifyClassName.c_str());
+    }
+
+    if (!NotifyClassOptions.empty())
+    {
+        ImGui::TextDisabled(
+            "Sample classes: %s / %s",
+            "UAnimNotifyLog",
+            "UAnimNotifyStateLog");
+    }
+
+    if (ImGui::InputText("Payload", NotifyPayloadEditBuffer.data(), NotifyPayloadEditBuffer.size()))
+    {
+        Document->SetSelectedNotifyPayload(NotifyPayloadEditBuffer.data());
     }
 
     float NotifyTime = NotifySnapshot.Time;
@@ -799,9 +968,21 @@ void FAnimationSequenceEditorWidget::RenderCurveInspectionPanel() const
     const FFloatCurve* SelectedCurve = GetSelectedCurve(Sequence, EditorState);
     if (!SelectedCurve)
     {
+        const TArray<FAnimationSequenceCurveViewGroup> CurveGroups =
+            EditorState ? AnimationSequenceCurveFilter::BuildCurveViewGroups(Sequence, *EditorState) : TArray<FAnimationSequenceCurveViewGroup>();
+        const int32 VisibleCurveCount = GetVisibleCurveCount(CurveGroups);
         ImGui::TextDisabled(
-            "%d curves available. Select a curve from the outliner or graph row.",
+            "%d visible curves / %d total. Select a curve from the outliner or graph row.",
+            VisibleCurveCount,
             static_cast<int32>(DataModel->CurveData.FloatCurves.size()));
+        for (const FAnimationSequenceCurveViewGroup& Group : CurveGroups)
+        {
+            ImGui::BulletText(
+                "%s: %d %s",
+                Group.Label.c_str(),
+                Group.TotalCount,
+                Group.bVisible ? "shown" : "hidden");
+        }
         return;
     }
 
@@ -819,6 +1000,8 @@ void FAnimationSequenceEditorWidget::RenderCurveInspectionPanel() const
     }
 
     ImGui::BulletText("%s", SelectedCurve->CurveName.ToString().c_str());
+    ImGui::BulletText("Type %s", AnimationCurveTypeToString(SelectedCurve->CurveType).c_str());
+    ImGui::BulletText("Source %s", AnimationCurveSourceKindToString(SelectedCurve->SourceKind).c_str());
     ImGui::BulletText("%d keys", static_cast<int32>(SelectedCurve->Keys.size()));
     ImGui::BulletText("Range %.3fs - %.3fs", MinTime, MaxTime);
 }
@@ -847,6 +1030,21 @@ void FAnimationSequenceEditorWidget::RenderRecentNotifySummary() const
         const int32 RecentIndex = static_cast<int32>(RecentNotifies.size()) - 1 - Offset;
         const FAnimNotifyEvent& NotifyEvent = RecentNotifies[RecentIndex];
         const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString("(Unnamed)");
-        ImGui::BulletText("%s @ %.3fs", NotifyName.c_str(), NotifyEvent.Time);
+        const FString PhaseText = NotifyEvent.TriggerPhase == EAnimNotifyTriggerPhase::None
+            ? AnimNotifyEventTypeToString(NotifyEvent.EventType)
+            : AnimNotifyTriggerPhaseToString(NotifyEvent.TriggerPhase);
+        if (NotifyEvent.Payload.empty())
+        {
+            ImGui::BulletText("%s [%s] @ %.3fs", NotifyName.c_str(), PhaseText.c_str(), NotifyEvent.Time);
+        }
+        else
+        {
+            ImGui::BulletText(
+                "%s [%s] @ %.3fs | Payload=%s",
+                NotifyName.c_str(),
+                PhaseText.c_str(),
+                NotifyEvent.Time,
+                NotifyEvent.Payload.c_str());
+        }
     }
 }

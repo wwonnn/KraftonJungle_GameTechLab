@@ -278,6 +278,8 @@ bool FAnimationSequenceEditorDocument::AddNotifyAtTime(int32 TrackIndex, float T
     NotifyEvent.Time = EditorState.ClampOrSnapTime(TimeSeconds);
     NotifyEvent.Duration = 0.0f;
     NotifyEvent.Color = FColor(0.9490196f, 0.61960787f, 0.23921569f, 1.0f);
+    NotifyEvent.EventType = EAnimNotifyEventType::Notify;
+    NotifyEvent.NotifyClassName = GetDefaultAnimNotifyClassName(NotifyEvent.EventType);
 
     Track.Events.push_back(NotifyEvent);
     SortNotifyTrackEvents(Track);
@@ -371,6 +373,55 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyColor(const FColor& Colo
     }
 
     NotifyEvent->Color = Color;
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyType(EAnimNotifyEventType EventType)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    NotifyEvent->EventType = EventType;
+    const FString DefaultClassName = GetDefaultAnimNotifyClassName(EventType);
+    if (NotifyEvent->NotifyClassName.empty() ||
+        NotifyEvent->NotifyClassName == "UAnimNotify" ||
+        NotifyEvent->NotifyClassName == "UAnimNotifyState")
+    {
+        NotifyEvent->NotifyClassName = DefaultClassName;
+    }
+
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyClassName(const FString& NotifyClassName)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    NotifyEvent->NotifyClassName = NotifyClassName.empty()
+        ? GetDefaultAnimNotifyClassName(NotifyEvent->EventType)
+        : NotifyClassName;
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayload(const FString& Payload)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    NotifyEvent->Payload = Payload;
     MarkDirty();
     return true;
 }

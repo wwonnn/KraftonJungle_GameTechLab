@@ -32,6 +32,7 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
         State.bDraggingNotify = false;
         State.DraggedNotifyTrackIndex = -1;
         State.DraggedNotifyEventIndex = -1;
+        State.DraggedNotifyGrabOffsetTime = 0.0f;
     }
 
     const int32 TrackCount = Document ? Document->GetNotifyTrackCount() : 0;
@@ -111,6 +112,8 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
             {
                 State.SelectedCurveIndex = -1;
                 State.HoveredCurveIndex = -1;
+                State.DraggedNotifyGrabOffsetTime =
+                    Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - NotifyEvent.Time;
                 Document->SelectNotify(TrackIndex, EventIndex);
             }
 
@@ -141,7 +144,8 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
 
     if (State.bDraggingNotify && ImGui::IsMouseDown(ImGuiMouseButton_Left) && Document && Document->GetSelectedNotify())
     {
-        const float NewTime = Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x));
+        const float NewTime =
+            Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - State.DraggedNotifyGrabOffsetTime;
         Document->SetSelectedNotifyTime(NewTime, State.bSnapToFrames);
     }
 

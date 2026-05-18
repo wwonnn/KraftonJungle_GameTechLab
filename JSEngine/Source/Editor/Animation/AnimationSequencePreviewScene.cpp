@@ -56,6 +56,7 @@ bool FAnimationSequencePreviewScene::Initialize(
 
 void FAnimationSequencePreviewScene::Shutdown()
 {
+    ClearRecentNotifyHistory();
     PreviewComponent = nullptr;
     PreviewActor = nullptr;
     PreviewMesh = nullptr;
@@ -129,6 +130,7 @@ void FAnimationSequencePreviewScene::SetCurrentTime(float InTime)
         return;
     }
 
+    ClearRecentNotifyHistory();
     PreviewComponent->SetPreviewTime(InTime);
     if (PreviewWorld)
     {
@@ -148,10 +150,7 @@ float FAnimationSequencePreviewScene::GetPreviewLength() const
 
 const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewScene::GetRecentFiredNotifyEvents() const
 {
-    static const TArray<FAnimNotifyEvent> EmptyEvents = {};
-    return AnimationSequenceViewer::IsLiveObject(PreviewComponent)
-        ? PreviewComponent->GetRecentFiredNotifyEvents()
-        : EmptyEvents;
+    return RecentFiredNotifyHistory;
 }
 
 void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
@@ -162,6 +161,7 @@ void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
     }
 
     PreviewComponent->TickPreviewAnimation(DeltaTime);
+    CaptureRecentNotifyEvents();
     if (PreviewWorld)
     {
         PreviewWorld->SyncSpatialIndex();
@@ -288,10 +288,46 @@ bool FAnimationSequencePreviewScene::InitializePreviewActor(UAnimSequence* Seque
     PreviewComponent->SetPreviewPlayRate(1.0f);
     PreviewComponent->SetPreviewPlaying(false);
     PreviewComponent->EnsureSkinningUpdated();
+    ClearRecentNotifyHistory();
 
     PreviewWorld->SyncSpatialIndex();
     ConfigurePreviewCamera();
     return true;
+}
+
+void FAnimationSequencePreviewScene::ClearRecentNotifyHistory()
+{
+    RecentFiredNotifyHistory.clear();
+}
+
+void FAnimationSequencePreviewScene::CaptureRecentNotifyEvents()
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    const TArray<FAnimNotifyEvent>& FrameEvents = PreviewComponent->GetRecentFiredNotifyEvents();
+    if (FrameEvents.empty())
+    {
+        return;
+    }
+
+    for (const FAnimNotifyEvent& NotifyEvent : FrameEvents)
+    {
+        RecentFiredNotifyHistory.push_back(NotifyEvent);
+    }
+
+    if (static_cast<int32>(RecentFiredNotifyHistory.size()) <= MaxRecentNotifyHistoryCount)
+    {
+        return;
+    }
+
+    const int32 OverflowCount =
+        static_cast<int32>(RecentFiredNotifyHistory.size()) - MaxRecentNotifyHistoryCount;
+    RecentFiredNotifyHistory.erase(
+        RecentFiredNotifyHistory.begin(),
+        RecentFiredNotifyHistory.begin() + OverflowCount);
 }
 
 void FAnimationSequencePreviewScene::InitializeViewportClient()

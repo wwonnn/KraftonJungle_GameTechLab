@@ -164,6 +164,8 @@ void UCurveFloatAsset::Serialize(FArchive& Ar)
     TArray<int32> TangentModes;
     TArray<float> ArriveTangents;
     TArray<float> LeaveTangents;
+    int32 CurveTypeValue = static_cast<int32>(FloatCurve.CurveType);
+    int32 SourceKindValue = static_cast<int32>(FloatCurve.SourceKind);
 
     if (Ar.IsSaving())
     {
@@ -185,6 +187,8 @@ void UCurveFloatAsset::Serialize(FArchive& Ar)
         }
     }
 
+    Ar << "CurveType" << CurveTypeValue;
+    Ar << "SourceKind" << SourceKindValue;
     Ar << "Times" << Times;
     Ar << "Values" << Values;
     Ar << "InterpModes" << InterpModes;
@@ -194,6 +198,17 @@ void UCurveFloatAsset::Serialize(FArchive& Ar)
 
     if (Ar.IsLoading())
     {
+        FloatCurve.CurveType =
+            CurveTypeValue >= static_cast<int32>(EAnimCurveType::Attribute) &&
+            CurveTypeValue <= static_cast<int32>(EAnimCurveType::Unknown)
+                ? static_cast<EAnimCurveType>(CurveTypeValue)
+                : EAnimCurveType::Unknown;
+        FloatCurve.SourceKind =
+            SourceKindValue >= static_cast<int32>(EAnimCurveSourceKind::ImportedCustomAttribute) &&
+            SourceKindValue <= static_cast<int32>(EAnimCurveSourceKind::Unknown)
+                ? static_cast<EAnimCurveSourceKind>(SourceKindValue)
+                : EAnimCurveSourceKind::Unknown;
+
         const size_t KeyCount = Times.size();
         FloatCurve.Keys.clear();
         FloatCurve.Keys.reserve(KeyCount);

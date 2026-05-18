@@ -15,6 +15,10 @@ public:
 protected:
     void NativeInitializeAnimation() override;
     void NativeUpdateAnimation(float DeltaTime) override;
+    void NativeAnimNotify(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent) override;
+    void NativeAnimNotifyBegin(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent) override;
+    void NativeAnimNotifyTick(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent, float DeltaTime) override;
+    void NativeAnimNotifyEnd(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent) override;
 
 private:
     void ClearLuaStateReferences();
@@ -22,6 +26,10 @@ private:
     bool CreateLuaInstance(const sol::table& ScriptClass);
     void CallLuaFunction(const char* FunctionName);
     void CallLuaUpdate(float DeltaTime);
+    void CallLuaNotify(const char* FunctionName, const FAnimNotifyEvent& NotifyEvent);
+    void CallLuaNotifyTick(const char* FunctionName, const FAnimNotifyEvent& NotifyEvent, float DeltaTime);
+    void CallNamedLuaNotify(const char* Prefix, const FAnimNotifyEvent& NotifyEvent);
+    void CallNamedLuaNotifyTick(const char* Prefix, const FAnimNotifyEvent& NotifyEvent, float DeltaTime);
 
 private:
     FString ScriptName = "LuaAnimation";

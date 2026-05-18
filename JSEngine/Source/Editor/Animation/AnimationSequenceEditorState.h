@@ -51,6 +51,10 @@ public:
     float SequencerScrollY = 0.0f;
     bool bNotifiesExpanded = true;
     bool bCurvesExpanded = true;
+    bool bShowMorphTargetCurves = true;
+    bool bShowMaterialCurves = true;
+    bool bShowAttributeCurves = true;
+    bool bShowUnknownCurves = false;
     int32 SelectedNotifyTrackIndex = -1;
     int32 SelectedNotifyEventIndex = -1;
     int32 HoveredNotifyTrackIndex = -1;
@@ -60,4 +64,5 @@ public:
     int32 SelectedCurveIndex = -1;
     int32 HoveredCurveIndex = -1;
     bool bDraggingNotify = false;
+    float DraggedNotifyGrabOffsetTime = 0.0f;
 };

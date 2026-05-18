@@ -54,8 +54,13 @@ private:
     void ConfigurePreviewCamera();
 
 private:
+    void ClearRecentNotifyHistory();
+    void CaptureRecentNotifyEvents();
+
+private:
     static constexpr uint32 InvalidPreviewResourceIndex = ~0u;
     inline static uint32 NextPreviewResourceIndex = 0;
+    static constexpr int32 MaxRecentNotifyHistoryCount = 16;
 
     UEditorEngine* EditorEngine = nullptr;
     FString SequencePath;
@@ -72,4 +77,5 @@ private:
     uint32 PreviewResourceIndex = InvalidPreviewResourceIndex;
     int32 ViewportWidth = 512;
     int32 ViewportHeight = 512;
+    TArray<FAnimNotifyEvent> RecentFiredNotifyHistory;
 };

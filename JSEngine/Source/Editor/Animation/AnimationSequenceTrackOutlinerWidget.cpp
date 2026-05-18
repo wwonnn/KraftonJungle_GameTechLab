@@ -1,12 +1,9 @@
 #include "Editor/Animation/AnimationSequenceTrackOutlinerWidget.h"
 
-#include "Animation/AnimData/AnimDataModel.h"
-#include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceSequencerLayout.h"
 #include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
-#include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Engine/Asset/CurveFloatAsset.h"
 
 #include "ImGui/imgui.h"
@@ -97,12 +94,64 @@ namespace
         ImGui::PopID();
         return bClicked;
     }
+
+    bool DrawCurveGroupRow(
+        int32 UniqueId,
+        const FAnimationSequenceCurveViewGroup& Group,
+        const ImVec2& Min,
+        const ImVec2& Max)
+    {
+        ImGui::SetCursorScreenPos(Min);
+        ImGui::PushID(UniqueId);
+        ImGui::InvisibleButton("##CurveGroupRow", ImVec2(Max.x - Min.x, Max.y - Min.y));
+        const bool bHovered = ImGui::IsItemHovered();
+        const bool bClicked = ImGui::IsItemClicked(ImGuiMouseButton_Left);
+
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+        DrawList->AddRectFilled(
+            Min,
+            Max,
+            bHovered ? IM_COL32(33, 37, 45, 245) : IM_COL32(25, 28, 34, 230),
+            4.0f);
+        DrawList->AddRect(Min, Max, IM_COL32(255, 255, 255, 16), 4.0f);
+
+        const ImVec2 CheckboxMin(Min.x + 10.0f, Min.y + 4.0f);
+        const ImVec2 CheckboxMax(CheckboxMin.x + 12.0f, CheckboxMin.y + 12.0f);
+        DrawList->AddRect(CheckboxMin, CheckboxMax, IM_COL32(190, 198, 210, 180), 2.0f);
+        if (Group.bVisible)
+        {
+            DrawList->AddLine(
+                ImVec2(CheckboxMin.x + 2.0f, CheckboxMin.y + 6.0f),
+                ImVec2(CheckboxMin.x + 5.0f, CheckboxMin.y + 9.0f),
+                IM_COL32(98, 202, 255, 255),
+                2.0f);
+            DrawList->AddLine(
+                ImVec2(CheckboxMin.x + 5.0f, CheckboxMin.y + 9.0f),
+                ImVec2(CheckboxMax.x - 2.0f, CheckboxMin.y + 2.0f),
+                IM_COL32(98, 202, 255, 255),
+                2.0f);
+        }
+
+        DrawList->AddText(
+            ImVec2(CheckboxMax.x + 8.0f, Min.y + 3.0f),
+            IM_COL32(215, 220, 228, 255),
+            Group.Label.c_str());
+        const FString CountLabel = std::to_string(Group.TotalCount);
+        const ImVec2 CountSize = ImGui::CalcTextSize(CountLabel.c_str());
+        DrawList->AddText(
+            ImVec2(Max.x - CountSize.x - 10.0f, Min.y + 3.0f),
+            IM_COL32(143, 150, 161, 255),
+            CountLabel.c_str());
+
+        ImGui::PopID();
+        return bClicked;
+    }
 }
 
 void FAnimationSequenceTrackOutlinerWidget::Render(
     FAnimationSequenceEditorState& State,
     FAnimationSequenceEditorDocument* Document,
-    const UAnimSequence* Sequence)
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
 {
     const ImVec2 CanvasPos = ImGui::GetCursorScreenPos();
     const ImVec2 CanvasSize(
@@ -124,10 +173,7 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
         4.0f);
     DrawList->AddText(ImVec2(CanvasPos.x + 10.0f, HeaderTop + 4.0f), IM_COL32(220, 224, 232, 255), "Tracks");
 
-    const UAnimDataModel* DataModel = AnimationSequenceViewer::GetValidAnimDataModel(Sequence);
-    const int32 CurveCount = DataModel ? static_cast<int32>(DataModel->CurveData.FloatCurves.size()) : 0;
     const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
-
     const float TrackAreaTop =
         HeaderBottom +
         FAnimationSequenceSequencerLayout::TrackAreaPadding -
@@ -162,12 +208,12 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
             const bool bSelected = State.SelectedNotifyTrackIndex == TrackIndex;
 
             if (DrawSelectableRow(
-                1000 + TrackIndex,
-                TrackLabel,
-                EventCountLabel,
-                bSelected,
-                ImVec2(CanvasPos.x + 8.0f, RowTop),
-                ImVec2(CanvasEnd.x - 8.0f, RowBottom)))
+                    1000 + TrackIndex,
+                    TrackLabel,
+                    EventCountLabel,
+                    bSelected,
+                    ImVec2(CanvasPos.x + 8.0f, RowTop),
+                    ImVec2(CanvasEnd.x - 8.0f, RowBottom)))
             {
                 State.SelectedCurveIndex = -1;
                 State.HoveredCurveIndex = -1;
@@ -187,33 +233,62 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
         ImVec2(CanvasPos.x + 4.0f, CurveSectionTop),
         ImVec2(CanvasEnd.x - 4.0f, CurveSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight));
 
-    if (State.bCurvesExpanded && DataModel)
+    if (State.bCurvesExpanded)
     {
-        const float RowsTop = CurveSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
-        for (int32 CurveIndex = 0; CurveIndex < CurveCount; ++CurveIndex)
+        float RowCursorY = CurveSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
+        for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
         {
-            const FFloatCurve& Curve = DataModel->CurveData.FloatCurves[CurveIndex];
-            const float RowTop =
-                RowsTop +
-                CurveIndex *
-                (FAnimationSequenceSequencerLayout::CurveTrackRowHeight + FAnimationSequenceSequencerLayout::CurveTrackRowSpacing);
-            const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::CurveTrackRowHeight;
-            const bool bSelected = State.SelectedCurveIndex == CurveIndex;
+            const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
+            const float GroupTop = RowCursorY;
+            const float GroupBottom = GroupTop + FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight;
 
-            if (DrawSelectableRow(
-                2000 + CurveIndex,
-                Curve.CurveName.ToString(),
-                std::to_string(static_cast<int32>(Curve.Keys.size())) + " keys",
-                bSelected,
-                ImVec2(CanvasPos.x + 8.0f, RowTop),
-                ImVec2(CanvasEnd.x - 8.0f, RowBottom)))
+            if (DrawCurveGroupRow(
+                    3000 + GroupIndex,
+                    Group,
+                    ImVec2(CanvasPos.x + 8.0f, GroupTop),
+                    ImVec2(CanvasEnd.x - 8.0f, GroupBottom)))
             {
-                State.SelectedCurveIndex = CurveIndex;
-                State.HoveredCurveIndex = CurveIndex;
-                if (Document)
+                AnimationSequenceCurveFilter::SetCurveTypeEnabled(State, Group.CurveType, !Group.bVisible);
+            }
+
+            RowCursorY = GroupBottom;
+            if (Group.bVisible && !Group.VisibleEntries.empty())
+            {
+                RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
                 {
-                    Document->ClearNotifySelection();
+                    const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                    const float RowTop = RowCursorY;
+                    const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::CurveTrackRowHeight;
+                    const bool bSelected = State.SelectedCurveIndex == Entry.SourceIndex;
+
+                    if (DrawSelectableRow(
+                            4000 + Entry.SourceIndex,
+                            Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve"),
+                            Entry.Curve ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys") : FString(),
+                            bSelected,
+                            ImVec2(CanvasPos.x + 18.0f, RowTop),
+                            ImVec2(CanvasEnd.x - 8.0f, RowBottom)))
+                    {
+                        State.SelectedCurveIndex = Entry.SourceIndex;
+                        State.HoveredCurveIndex = Entry.SourceIndex;
+                        if (Document)
+                        {
+                            Document->ClearNotifySelection();
+                        }
+                    }
+
+                    RowCursorY = RowBottom;
+                    if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
+                    {
+                        RowCursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
+                    }
                 }
+            }
+
+            if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
+            {
+                RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
             }
         }
     }
