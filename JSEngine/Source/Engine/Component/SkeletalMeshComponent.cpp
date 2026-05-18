@@ -5,6 +5,7 @@
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/SkeletalMeshRenderProxy.h"
+#include "Core/Paths.h"
 
 #include <cstring>
 
@@ -169,8 +170,8 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
         return;
     }
 
-    const FString& MeshSkeletonPath = SkeletalMesh->GetSkeletonAssetPath();
-    const FString& SequenceSkeletonPath = AnimSequence->GetSkeletonAssetPath();
+    const FString& MeshSkeletonPath = FPaths::Normalize(SkeletalMesh->GetSkeletonAssetPath());
+    const FString& SequenceSkeletonPath = FPaths::Normalize(AnimSequence->GetSkeletonAssetPath());
     if (!MeshSkeletonPath.empty() &&
         !SequenceSkeletonPath.empty() &&
         MeshSkeletonPath != SequenceSkeletonPath)
