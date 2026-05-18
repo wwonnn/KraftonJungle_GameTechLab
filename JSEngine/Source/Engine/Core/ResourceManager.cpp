@@ -475,10 +475,19 @@ void FResourceManager::ReleaseGPUResources()
 
 	RenderStateCache.Release();
 
+	TSet<USkeletalMesh*> SkeletalMeshSet;
+
 	for (auto& [Path, Mesh] : SkeletalMeshMap)
 	{
-		UObjectManager::Get().DestroyObject(Mesh);
+		// 다른 Path, 동일 Mesh 인 경우가 있어 Set 으로 Unique Mesh 저장
+        SkeletalMeshSet.insert(Mesh);
 	}
+
+	for (auto& Mesh : SkeletalMeshSet)
+    {
+        UObjectManager::Get().DestroyObject(Mesh);
+	}
+
 	SkeletalMeshMap.clear();
 
 	DefaultWhiteTexture.Reset();
