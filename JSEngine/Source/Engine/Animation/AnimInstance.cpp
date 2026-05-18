@@ -1,8 +1,10 @@
-#include "AnimInstance.h"
+﻿#include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimationStateMachine.h"
+#include "Core/Logging/Log.h"
+#include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 
@@ -47,6 +49,11 @@ void UAnimInstance::SetOwningComponent(USkinnedMeshComponent* InOwner)
 
 void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 {
+    if (!PrepareSequenceForPlayback(InSequence))
+    {
+        return;
+    }
+
 	CurrentSequence = InSequence;
 	CurrentTime = 0.0f;
 	bPlaying = true;
@@ -58,7 +65,7 @@ void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 }
 void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 {
-    if (!InNext || InNext == CurrentSequence)
+    if (!InNext || InNext == CurrentSequence || !PrepareSequenceForPlayback(InNext))
     {
         return;
     }
@@ -123,6 +130,52 @@ UAnimationStateMachine* UAnimInstance::CreateStateMachine()
     return NewStateMachine;
 }
 
+bool UAnimInstance::PrepareSequenceForPlayback(UAnimSequence* Sequence)
+{
+    if (!Sequence)
+    {
+        return false;
+    }
+
+    if (!Owner)
+    {
+        return true;
+    }
+
+    const USkeletalMesh* Mesh = Owner->GetSkeletalMesh();
+    if (!Mesh || !Mesh->HasValidMeshData())
+    {
+        return false;
+    }
+
+    USkeleton* MeshSkeleton = Mesh->GetSkeleton();
+    if (!MeshSkeleton || !MeshSkeleton->HasValidSkeletonData())
+    {
+        return false;
+    }
+
+    const FString MeshSkeletonPath = FPaths::Normalize(Mesh->GetSkeletonAssetPath());
+    const FString SequenceSkeletonPath = FPaths::Normalize(Sequence->GetSkeletonAssetPath());
+    if (!MeshSkeletonPath.empty() &&
+        !SequenceSkeletonPath.empty() &&
+        MeshSkeletonPath != SequenceSkeletonPath)
+    {
+        UE_LOG_WARNING("[AnimInstance] Sequence skeleton mismatch | Sequence=%s | MeshSkeleton=%s | SequenceSkeleton=%s",
+            Sequence->GetName().c_str(),
+            MeshSkeletonPath.c_str(),
+            SequenceSkeletonPath.c_str());
+        return false;
+    }
+
+    Sequence->SetSkeleton(MeshSkeleton);
+    if (Sequence->GetSkeletonAssetPath().empty())
+    {
+        Sequence->SetSkeletonAssetPath(MeshSkeletonPath);
+    }
+
+    return true;
+}
+
 bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
 {
     if (!Asset)
@@ -161,7 +214,8 @@ bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
     for (const FAnimInstanceStateAssetData& State : Asset->States)
     {
         UAnimSequence* Sequence = FResourceManager::Get().LoadAnimSequence(State.AnimSequencePath);
-        if (NewStateMachine->AddState(State.Name, Sequence, State.bLoop, State.PlayRate))
+        if (PrepareSequenceForPlayback(Sequence) &&
+            NewStateMachine->AddState(State.Name, Sequence, State.bLoop, State.PlayRate))
         {
             bAddedAnyState = true;
         }
@@ -423,7 +477,7 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
 
         if (BoneIndex >= static_cast<int32>(OutLocalTransforms.size()))
         {
-            OutLocalTransforms.resize(BoneIndex + 1);
+            continue;
         }
 
         FVector Position = InterpolateKeys(RawTrack.PosKeys, CurrentTime, FrameRate);

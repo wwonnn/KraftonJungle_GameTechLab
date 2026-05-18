@@ -23,6 +23,10 @@ bool UAnimationStateMachine::AddState(const FName& StateName, UAnimSequence* Seq
     {
         return false;
     }
+    if (AnimInstance && !AnimInstance->PrepareSequenceForPlayback(Sequence))
+    {
+        return false;
+    }
 
     FAnimStateMachineState State;
     State.Name = StateName;
@@ -41,25 +45,7 @@ bool UAnimationStateMachine::AddStateByPath(const FString& StateName, const FStr
 
 bool UAnimationStateMachine::AddStateFromOwnerMesh(const FString& StateName, int32 SequenceIndex, bool bLoop, float InPlayRate)
 {
-    if (!AnimInstance || SequenceIndex < 0)
-    {
-        return false;
-    }
-
-    USkinnedMeshComponent* OwnerComponent = AnimInstance->GetOwningComponent();
-    USkeletalMesh* SkeletalMesh = OwnerComponent ? OwnerComponent->GetSkeletalMesh() : nullptr;
-    if (!SkeletalMesh)
-    {
-        return false;
-    }
-
-    const TArray<UAnimSequence*>& Sequences = SkeletalMesh->GetAnimationSequences();
-    if (SequenceIndex >= static_cast<int32>(Sequences.size()))
-    {
-        return false;
-    }
-
-    return AddState(FName(StateName), Sequences[SequenceIndex], bLoop, InPlayRate);
+    return false;
 }
 
 bool UAnimationStateMachine::SetEntryState(const FName& StateName)

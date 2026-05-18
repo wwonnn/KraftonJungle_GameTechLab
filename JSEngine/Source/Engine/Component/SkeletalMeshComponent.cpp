@@ -1,14 +1,11 @@
 #include "SkeletalMeshComponent.h"
 
 #include "Animation/AnimInstanceAsset.h"
-#include "Animation/AnimSingleNodeInstance.h"
 #include "Asset/Skeleton.h"
-#include "Core/ResourceManager.h"
 #include "Animation/LuaAnimInstance.h"
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/SkeletalMeshRenderProxy.h"
-#include "Core/Paths.h"
 
 #include <cstring>
 
@@ -82,7 +79,7 @@ void USkeletalMeshComponent::Serialize(FArchive& Ar)
 
     if (Ar.IsLoading())
     {
-        InitializeSingleNodeAnimation();
+        InitializeAnimation();
     }
 }
 
@@ -105,8 +102,11 @@ void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
 
     if (std::strcmp(PropertyName, "AnimSequencePath") == 0 ||
         std::strcmp(PropertyName, "SkeletalMeshPath") == 0)
+    if (PropertyName &&
+        (std::strcmp(PropertyName, "SkeletalMeshPath") == 0 ||
+         std::strcmp(PropertyName, "AnimInstanceAssetPath") == 0))
     {
-        InitializeSingleNodeAnimation();
+        InitializeAnimation();
     }
 }
 
@@ -353,16 +353,6 @@ ULuaAnimInstance* USkeletalMeshComponent::BindLuaAnimInstance(const FString& Scr
     return LuaAnimInstance;
 }
 
-void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
-{
-    USkinnedMeshComponent::PostEditProperty(PropertyName);
-
-    if (PropertyName && strcmp(PropertyName, "AnimInstanceAssetPath") == 0)
-    {
-        InitializeAnimation();
-    }
-}
-
 void USkeletalMeshComponent::InitializeAnimation()
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
@@ -383,9 +373,12 @@ void USkeletalMeshComponent::InitializeAnimation()
         if (UAnimInstanceAsset* AnimAsset = FResourceManager::Get().LoadAnimInstanceAsset(AnimInstanceAssetPath))
         {
             UAnimInstance* AssetAnimInstance = UObjectManager::Get().CreateObject<UAnimInstance>();
+            if (AssetAnimInstance)
+            {
+                AssetAnimInstance->SetOwningComponent(this);
+            }
             if (AssetAnimInstance && AssetAnimInstance->BuildStateMachineFromAsset(AnimAsset))
             {
-                SingleNodeInstance = nullptr;
                 SetAnimInstance(AssetAnimInstance);
                 return;
             }
@@ -467,6 +460,7 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
     ApplyAnimationPoseFromInstance(0.0f, false);
     SingleNodeInstance->Intialize();
     AnimInstance = SingleNodeInstance;
+    AnimInstance = nullptr;
 }
 
 void USkeletalMeshComponent::ApplyAnimationPose(float DeltaTime)

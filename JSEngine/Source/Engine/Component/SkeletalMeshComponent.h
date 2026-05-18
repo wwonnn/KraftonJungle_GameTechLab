@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Animation/AnimSingleNodeInstance.h"
 #include "Animation/LuaAnimInstance.h"
 #include "Component/SkinnedMeshComponent.h"
 
@@ -45,11 +44,6 @@ public:
     FMatrix GetBoneGlobalTransform(int32 BoneIndex) const;
     void SetBoneGlobalTransform(int32 BoneIndex, const FMatrix& NewGlobalTransform);
 
-    void SetAnimSequencePath(const FString& InAnimSequencePath);
-    const FString& GetAnimSequencePath() const { return AnimSequencePath; }
-protected:
-    FPrimitiveRenderProxy* CreateRenderProxy() override;
-
     void SetAnimInstance(UAnimInstance* InAnimInstance);
     UAnimInstance* GetAnimInstance() const { return AnimInstance; }
     void SetAnimInstanceAssetPath(const FString& InPath);
@@ -58,7 +52,6 @@ protected:
 
 protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
-    void PostEditProperty(const char* PropertyName) override;
 
 private:
     void ReleaseSingleNodeAnimation();
@@ -70,8 +63,6 @@ private:
     void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:
-    UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
-
     UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")
     FString AnimInstanceAssetPath;
 

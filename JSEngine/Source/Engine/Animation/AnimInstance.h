@@ -31,6 +31,7 @@ public:
     UAnimationStateMachine* GetStateMachine() const { return StateMachine; }
     UAnimationStateMachine* CreateStateMachine();
     bool BuildStateMachineFromAsset(UAnimInstanceAsset* Asset);
+    bool PrepareSequenceForPlayback(UAnimSequence* Sequence);
     void SetLooping(bool bInLoop) { bLoop = bInLoop; }
     bool IsLooping() const { return bLoop; }
     bool IsCurrentAnimationFinished() const { return CurrentSequence && !NextSequence && !bLoop && !bPlaying; }
