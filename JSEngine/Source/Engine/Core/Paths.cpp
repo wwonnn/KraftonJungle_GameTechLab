@@ -156,6 +156,30 @@ std::string FPaths::ToAbsoluteString(const std::wstring &RelativePath)
 	return ToUtf8(ToAbsolute(RelativePath));
 }
 
+FString FPaths::ToProjectRelativePath(const FString& Path)
+{
+    if (Path.empty())
+    {
+        return {};
+    }
+
+    const FString NormalizedPath = Normalize(Path);
+    const std::filesystem::path FsPath(ToWide(NormalizedPath));
+    if (!FsPath.is_absolute())
+    {
+        return NormalizedPath;
+    }
+
+    const std::filesystem::path RootPath = std::filesystem::path(RootDir()).lexically_normal();
+    const std::filesystem::path RelativePath = FsPath.lexically_normal().lexically_relative(RootPath);
+    if (RelativePath.empty())
+    {
+        return NormalizedPath;
+    }
+
+    return Normalize(ToUtf8(RelativePath.generic_wstring()));
+}
+
 FString FPaths::Normalize(const FString& Path)
 {
     if (Path.empty())

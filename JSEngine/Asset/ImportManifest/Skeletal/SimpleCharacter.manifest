@@ -1,9 +1,9 @@
 {
         "AnimationSequencePaths" : [],
         "PhysicsAssetPath" : "",
-        "SkeletalMeshAssetPath" : "C:/W11_Team3_Engine/JSEngine/Asset/SkeletalMesh/Bin/SimpleCharacter.skmesh",
-        "SkeletonAssetPath" : "C:/W11_Team3_Engine/JSEngine/Asset/Skeleton/Bin/SimpleCharacter.skeleton",
-        "SourceFileWriteTime" : "13423228732",
+        "SkeletalMeshAssetPath" : "Asset/SkeletalMesh/Bin/SimpleCharacter.skmesh",
+        "SkeletonAssetPath" : "Asset/Skeleton/Bin/SimpleCharacter.skeleton",
+        "SourceFileWriteTime" : "13423416746",
         "SourcePath" : "Asset/SkeletalMesh/SimpleCharacter.fbx",
         "Type" : "SkeletalImportManifest",
         "Version" : 1

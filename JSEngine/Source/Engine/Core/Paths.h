@@ -32,6 +32,7 @@ public:
 	static std::wstring ToAbsolute(const std::wstring& RelativePath);
 	static std::string ToRelativeString(const std::wstring& AbsolutePath);
 	static std::string ToAbsoluteString(const std::wstring& RelativePath);
+	static FString ToProjectRelativePath(const FString& Path);
 
 	// 경로 결합: FPaths::Combine(L"Asset/Scene", L"Default.Scene")
 	static std::wstring Combine(const std::wstring& Base, const std::wstring& Child);

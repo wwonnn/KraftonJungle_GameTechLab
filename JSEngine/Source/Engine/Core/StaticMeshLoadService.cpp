@@ -18,7 +18,7 @@ FStaticMeshLoadService::FStaticMeshLoadService(FResourceManager& InResourceManag
 
 UStaticMesh* FStaticMeshLoadService::Load(const FString& Path)
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	if (UStaticMesh* FoundMesh = ResourceManager.FindStaticMesh(NormalizedPath))
 	{
 		return FoundMesh;
@@ -110,7 +110,7 @@ UStaticMesh* FStaticMeshLoadService::LoadBinaryDrop(const FString& NormalizedPat
 		return nullptr;
 	}
 
-	const FString SourcePath = FPaths::Normalize(LoadedMeshData->PathFileName);
+	const FString SourcePath = FPaths::ToProjectRelativePath(LoadedMeshData->PathFileName);
 	if (!SourcePath.empty())
 	{
 		if (UStaticMesh* FoundSourceMesh = ResourceManager.FindStaticMesh(SourcePath))

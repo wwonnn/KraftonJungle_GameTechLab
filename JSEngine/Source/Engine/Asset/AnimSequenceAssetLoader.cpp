@@ -16,7 +16,7 @@ namespace
 {
     FString NormalizeSequencePath(const FString& Path)
     {
-        return FPaths::Normalize(Path);
+        return FPaths::ToProjectRelativePath(Path);
     }
 
     bool IsSequenceAssetPath(const FString& Path)
@@ -285,7 +285,7 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
         return nullptr;
     }
 
-    std::ifstream SequenceFile(FPaths::ToWide(NormalizedPath));
+    std::ifstream SequenceFile(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))));
     if (!SequenceFile.is_open())
     {
         UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to open sequence asset: %s", NormalizedPath.c_str());
@@ -307,7 +307,7 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
     Sequence->SetFName(FName(SequenceName.empty() ? "AnimSequence" : SequenceName));
     if (Root.hasKey("SkeletonAssetPath"))
     {
-        Sequence->SetSkeletonAssetPath(FPaths::Normalize(Root["SkeletonAssetPath"].ToString()));
+        Sequence->SetSkeletonAssetPath(FPaths::ToProjectRelativePath(Root["SkeletonAssetPath"].ToString()));
     }
 
     DataModel->SetFName(FName(Sequence->GetName() + FString("_Data")));
@@ -387,7 +387,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     json::JSON Root = json::JSON::Make(json::JSON::Class::Object);
     Root["Type"] = "UAnimSequence";
     Root["ObjectName"] = Sequence->GetName();
-    Root["SkeletonAssetPath"] = FPaths::Normalize(Sequence->GetSkeletonAssetPath());
+    Root["SkeletonAssetPath"] = FPaths::ToProjectRelativePath(Sequence->GetSkeletonAssetPath());
     Root["FrameRateNumerator"] = DataModel->FrameRate.Numerator;
     Root["FrameRateDenominator"] = DataModel->FrameRate.Denominator;
     Root["NumberOfFrames"] = DataModel->NumberOfFrames;
@@ -414,7 +414,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     }
 
     std::error_code ErrorCode;
-    const std::filesystem::path FilePath(FPaths::ToWide(NormalizedPath));
+    const std::filesystem::path FilePath(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath)));
     std::filesystem::create_directories(FilePath.parent_path(), ErrorCode);
 
     std::ofstream OutFile(FilePath);

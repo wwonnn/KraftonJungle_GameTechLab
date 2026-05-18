@@ -75,6 +75,11 @@ constexpr uint32 MAX_SKELETON_CURVE_METADATA_COUNT = 4096;
 constexpr uint32 MAX_PHYSICS_BODY_COUNT            = 65'536;
 constexpr uint32 MAX_PHYSICS_CONSTRAINT_COUNT      = 65'536;
 
+static FString ToStoredAssetPath(const FString& Path)
+{
+	return FPaths::ToProjectRelativePath(Path);
+}
+
 static bool IsValidStaticMeshHeader(const FStaticMeshBinaryHeader& Header)
 {
 	if (Header.MagicNumber != STATIC_MESH_BINARY_MAGIC)
@@ -649,7 +654,7 @@ bool FBinarySerializer::SaveStaticMesh(const FString& BinaryPath, const FString&
 
 	WriteHeader(Out, Header);
 
-	WriteString(Out, Data.PathFileName);
+	WriteString(Out, ToStoredAssetPath(Data.PathFileName));
 	WriteVertices(Out, Data);
 	WriteIndexArray(Out, Data.Indices);
 	WriteSections(Out, Data);
@@ -689,6 +694,7 @@ bool FBinarySerializer::LoadStaticMesh(const FString& BinaryPath, FStaticMesh& O
 	{
 		return false;
 	}
+	OutData.PathFileName = ToStoredAssetPath(OutData.PathFileName);
 
 	if (!ReadVertices(In, OutData, Header.VertexCount))
 	{
@@ -945,7 +951,7 @@ bool FBinarySerializer::ReadTransform(std::ifstream& In, FTransform& OutTransfor
 
 void FBinarySerializer::WriteSkeletonData(std::ofstream& Out, const FSkeletonData& Data)
 {
-	WriteString(Out, Data.PathFileName);
+	WriteString(Out, ToStoredAssetPath(Data.PathFileName));
 
 	WriteUInt32LE(Out, static_cast<uint32>(Data.Bones.size()));
 	for (const FSkeletonBone& Bone : Data.Bones)
@@ -991,6 +997,7 @@ bool FBinarySerializer::ReadSkeletonData(std::ifstream& In, FSkeletonData& OutDa
 	{
 		return false;
 	}
+	OutData.PathFileName = ToStoredAssetPath(OutData.PathFileName);
 
 	uint32 BoneCount = 0;
 	if (!ReadUInt32LE(In, BoneCount) || BoneCount != Header.BoneCount || BoneCount > MAX_SKELETON_BONE_COUNT)
@@ -1335,7 +1342,8 @@ bool FBinarySerializer::ReadBones(std::ifstream& In, FSkeletalMesh& OutData, uin
 	{
 		USkeleton* Skeleton = UObjectManager::Get().CreateObject<USkeleton>();
 		FSkeletonData* SkeletonData = new FSkeletonData();
-		SkeletonData->PathFileName = OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath;
+		SkeletonData->PathFileName = ToStoredAssetPath(
+			OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath);
 		Skeleton->SetSkeletonData(SkeletonData);
 		OutData.Skeleton = Skeleton;
 	}
@@ -1514,7 +1522,8 @@ bool FBinarySerializer::ReadAnimationSequences(
 		UAnimSequence* Sequence = new UAnimSequence();
 		Sequence->SetFName(FName(SequenceName));
 		Sequence->SetSkeleton(OutData.Skeleton);
-		Sequence->SetSkeletonAssetPath(OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath);
+		Sequence->SetSkeletonAssetPath(ToStoredAssetPath(
+			OutData.SkeletonAssetPath.empty() ? OutData.PathFileName : OutData.SkeletonAssetPath));
 
 		UAnimDataModel* DataModel = new UAnimDataModel();
 		DataModel->SetFName(FName(SequenceName + "_Data"));
@@ -1665,8 +1674,8 @@ bool FBinarySerializer::SaveSkeletalMesh(const FString& BinaryPath, const FStrin
 
 	WriteSkeletalHeader(Out, Header);
 
-	WriteString(Out, Data.PathFileName);
-	WriteString(Out, Data.SkeletonAssetPath);
+	WriteString(Out, ToStoredAssetPath(Data.PathFileName));
+	WriteString(Out, ToStoredAssetPath(Data.SkeletonAssetPath));
 	WriteSkeletalVertices(Out, Data);
 	WriteIndexArray(Out, Data.Indices);
 	WriteSkeletalSections(Out, Data);
@@ -1716,6 +1725,7 @@ bool FBinarySerializer::LoadSkeletalMesh(
 	{
 		return false;
 	}
+	OutData.PathFileName = ToStoredAssetPath(OutData.PathFileName);
 
 	if (Header.Version >= 4)
 	{
@@ -1723,10 +1733,11 @@ bool FBinarySerializer::LoadSkeletalMesh(
 		{
 			return false;
 		}
+		OutData.SkeletonAssetPath = ToStoredAssetPath(OutData.SkeletonAssetPath);
 	}
 	else
 	{
-		OutData.SkeletonAssetPath = OutData.PathFileName;
+		OutData.SkeletonAssetPath = ToStoredAssetPath(OutData.PathFileName);
 	}
 
 	if (!ReadSkeletalVertices(In, OutData, Header.VertexCount))
@@ -1859,8 +1870,8 @@ bool FBinarySerializer::LoadSkeletalMesh(
 
 void FBinarySerializer::WritePhysicsAssetData(std::ofstream& Out, const FPhysicsAssetData& Data)
 {
-	WriteString(Out, Data.PathFileName);
-	WriteString(Out, Data.SkeletonAssetPath);
+	WriteString(Out, ToStoredAssetPath(Data.PathFileName));
+	WriteString(Out, ToStoredAssetPath(Data.SkeletonAssetPath));
 
 	WriteUInt32LE(Out, static_cast<uint32>(Data.Bodies.size()));
 	for (const FPhysicsBody& Body : Data.Bodies)
@@ -1896,6 +1907,8 @@ bool FBinarySerializer::ReadPhysicsAssetData(std::ifstream& In, FPhysicsAssetDat
 	{
 		return false;
 	}
+	OutData.PathFileName = ToStoredAssetPath(OutData.PathFileName);
+	OutData.SkeletonAssetPath = ToStoredAssetPath(OutData.SkeletonAssetPath);
 
 	uint32 BodyCount = 0;
 	if (!ReadUInt32LE(In, BodyCount) || BodyCount != Header.BodyCount || BodyCount > MAX_PHYSICS_BODY_COUNT)

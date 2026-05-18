@@ -140,12 +140,13 @@ FPrimitiveRenderProxy* USkeletalMeshComponent::CreateRenderProxy()
 
 void USkeletalMeshComponent::SetAnimSequencePath(const FString& InAnimSequencePath)
 {
-    if (AnimSequencePath == InAnimSequencePath)
+    const FString StoredAnimSequencePath = FPaths::ToProjectRelativePath(InAnimSequencePath);
+    if (AnimSequencePath == StoredAnimSequencePath)
     {
         return;
     }
 
-    AnimSequencePath = InAnimSequencePath;
+    AnimSequencePath = StoredAnimSequencePath;
     InitializeSingleNodeAnimation();
 }
 
@@ -158,6 +159,7 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
         return;
     }
 
+    AnimSequencePath = FPaths::ToProjectRelativePath(AnimSequencePath);
     UAnimSequence* AnimSequence = FResourceManager::Get().LoadAnimSequence(AnimSequencePath);
     if (!AnimSequence)
     {
@@ -170,8 +172,8 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
         return;
     }
 
-    const FString& MeshSkeletonPath = FPaths::Normalize(SkeletalMesh->GetSkeletonAssetPath());
-    const FString& SequenceSkeletonPath = FPaths::Normalize(AnimSequence->GetSkeletonAssetPath());
+    const FString MeshSkeletonPath = FPaths::ToProjectRelativePath(SkeletalMesh->GetSkeletonAssetPath());
+    const FString SequenceSkeletonPath = FPaths::ToProjectRelativePath(AnimSequence->GetSkeletonAssetPath());
     if (!MeshSkeletonPath.empty() &&
         !SequenceSkeletonPath.empty() &&
         MeshSkeletonPath != SequenceSkeletonPath)

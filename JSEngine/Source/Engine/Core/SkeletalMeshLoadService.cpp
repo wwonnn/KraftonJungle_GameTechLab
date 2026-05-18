@@ -77,15 +77,20 @@ namespace
 		}
 	}
 
+	FString ToStoredAssetPath(const FString& Path)
+	{
+		return FPaths::ToProjectRelativePath(Path);
+	}
+
 	FString ReadManifestPath(json::JSON& Root, const char* Key, const char* LegacyKey)
 	{
 		if (Root.hasKey(Key))
 		{
-			return FPaths::Normalize(Root[Key].ToString());
+			return ToStoredAssetPath(Root[Key].ToString());
 		}
 		if (LegacyKey && Root.hasKey(LegacyKey))
 		{
-			return FPaths::Normalize(Root[LegacyKey].ToString());
+			return ToStoredAssetPath(Root[LegacyKey].ToString());
 		}
 		return FString();
 	}
@@ -102,10 +107,13 @@ namespace
 			return;
 		}
 
-		MeshData->SkeletonAssetPath = SkeletonAssetPath;
+		const FString StoredSkeletonAssetPath = ToStoredAssetPath(SkeletonAssetPath);
+		const FString StoredPhysicsAssetPath = ToStoredAssetPath(PhysicsAssetPath);
+
+		MeshData->SkeletonAssetPath = StoredSkeletonAssetPath;
 		if (MeshData->Skeleton && MeshData->Skeleton->GetSkeletonData())
 		{
-			MeshData->Skeleton->GetSkeletonData()->PathFileName = SkeletonAssetPath;
+			MeshData->Skeleton->GetSkeletonData()->PathFileName = StoredSkeletonAssetPath;
 		}
 
 		for (UAnimSequence* Sequence : AnimationSequences)
@@ -116,13 +124,13 @@ namespace
 			}
 
 			Sequence->SetSkeleton(MeshData->Skeleton);
-			Sequence->SetSkeletonAssetPath(SkeletonAssetPath);
+			Sequence->SetSkeletonAssetPath(StoredSkeletonAssetPath);
 		}
 
 		if (PhysicsAsset && PhysicsAsset->GetPhysicsAssetData())
 		{
-			PhysicsAsset->GetPhysicsAssetData()->PathFileName = PhysicsAssetPath;
-			PhysicsAsset->GetPhysicsAssetData()->SkeletonAssetPath = SkeletonAssetPath;
+			PhysicsAsset->GetPhysicsAssetData()->PathFileName = StoredPhysicsAssetPath;
+			PhysicsAsset->GetPhysicsAssetData()->SkeletonAssetPath = StoredSkeletonAssetPath;
 			PhysicsAsset->SetSkeleton(MeshData->Skeleton);
 		}
 	}
@@ -153,7 +161,7 @@ namespace
 			return false;
 		}
 
-		OutManifest.SourcePath = Root.hasKey("SourcePath") ? FPaths::Normalize(Root["SourcePath"].ToString()) : FString();
+		OutManifest.SourcePath = Root.hasKey("SourcePath") ? ToStoredAssetPath(Root["SourcePath"].ToString()) : FString();
 		OutManifest.SourceFileWriteTime = Root.hasKey("SourceFileWriteTime")
 			? ParseUInt64String(Root["SourceFileWriteTime"].ToString())
 			: 0;
@@ -168,7 +176,7 @@ namespace
 			json::JSON& SequencePaths = Root["AnimationSequencePaths"];
 			for (int32 Index = 0; Index < SequencePaths.length(); ++Index)
 			{
-				OutManifest.AnimationSequencePaths.push_back(FPaths::Normalize(SequencePaths.at(static_cast<unsigned>(Index)).ToString()));
+				OutManifest.AnimationSequencePaths.push_back(ToStoredAssetPath(SequencePaths.at(static_cast<unsigned>(Index)).ToString()));
 			}
 		}
 
@@ -191,16 +199,16 @@ namespace
 		json::JSON Root = json::JSON::Make(json::JSON::Class::Object);
 		Root["Type"] = "SkeletalImportManifest";
 		Root["Version"] = 1;
-		Root["SourcePath"] = FPaths::Normalize(Manifest.SourcePath);
+		Root["SourcePath"] = ToStoredAssetPath(Manifest.SourcePath);
 		Root["SourceFileWriteTime"] = std::to_string(Manifest.SourceFileWriteTime);
-		Root["SkeletalMeshAssetPath"] = FPaths::Normalize(Manifest.SkeletalMeshAssetPath);
-		Root["SkeletonAssetPath"] = FPaths::Normalize(Manifest.SkeletonAssetPath);
-		Root["PhysicsAssetPath"] = FPaths::Normalize(Manifest.PhysicsAssetPath);
+		Root["SkeletalMeshAssetPath"] = ToStoredAssetPath(Manifest.SkeletalMeshAssetPath);
+		Root["SkeletonAssetPath"] = ToStoredAssetPath(Manifest.SkeletonAssetPath);
+		Root["PhysicsAssetPath"] = ToStoredAssetPath(Manifest.PhysicsAssetPath);
 
 		Root["AnimationSequencePaths"] = json::Array();
 		for (const FString& SequencePath : Manifest.AnimationSequencePaths)
 		{
-			Root["AnimationSequencePaths"].append(FPaths::Normalize(SequencePath));
+			Root["AnimationSequencePaths"].append(ToStoredAssetPath(SequencePath));
 		}
 
 		std::error_code ErrorCode;
@@ -225,21 +233,21 @@ namespace
 		const FString& ExpectedSkeletonAssetPath,
 		const FString& ExpectedPhysicsAssetPath)
 	{
-		if (FPaths::Normalize(Manifest.SourcePath) != NormalizedSourcePath ||
+		if (ToStoredAssetPath(Manifest.SourcePath) != ToStoredAssetPath(NormalizedSourcePath) ||
 			Manifest.SourceFileWriteTime != SourceWriteTime ||
 			SourceWriteTime == 0)
 		{
 			return false;
 		}
 
-		if (FPaths::Normalize(Manifest.SkeletalMeshAssetPath) != FPaths::Normalize(ExpectedSkeletalMeshAssetPath) ||
-			FPaths::Normalize(Manifest.SkeletonAssetPath) != FPaths::Normalize(ExpectedSkeletonAssetPath))
+		if (ToStoredAssetPath(Manifest.SkeletalMeshAssetPath) != ToStoredAssetPath(ExpectedSkeletalMeshAssetPath) ||
+			ToStoredAssetPath(Manifest.SkeletonAssetPath) != ToStoredAssetPath(ExpectedSkeletonAssetPath))
 		{
 			return false;
 		}
 
 		if (!Manifest.PhysicsAssetPath.empty() &&
-			FPaths::Normalize(Manifest.PhysicsAssetPath) != FPaths::Normalize(ExpectedPhysicsAssetPath))
+			ToStoredAssetPath(Manifest.PhysicsAssetPath) != ToStoredAssetPath(ExpectedPhysicsAssetPath))
 		{
 			return false;
 		}
@@ -275,7 +283,7 @@ FSkeletalMeshLoadService::FSkeletalMeshLoadService(FResourceManager& InResourceM
 
 USkeletalMesh* FSkeletalMeshLoadService::Load(const FString& Path)
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = ToStoredAssetPath(Path);
 
 	if (USkeletalMesh* FoundMesh = ResourceManager.FindSkeletalMesh(NormalizedPath))
 	{
@@ -309,11 +317,11 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSkeletalMeshAssetFile(const FString
 
 	const FString ResolvePath = LoadedMeshData->PathFileName.empty()
 		? NormalizedPath
-		: FPaths::Normalize(LoadedMeshData->PathFileName);
+		: ToStoredAssetPath(LoadedMeshData->PathFileName);
 
 	if (!LoadedMeshData->HasValidSkeletonData())
 	{
-		const FString SkeletonAssetPath = FPaths::Normalize(LoadedMeshData->SkeletonAssetPath);
+		const FString SkeletonAssetPath = ToStoredAssetPath(LoadedMeshData->SkeletonAssetPath);
 		USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
 		if (SkeletonAssetPath.empty() ||
 			!LoadedSkeleton ||
@@ -396,7 +404,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 				LoadedMeshData->Skeleton = LoadedSkeleton;
 				if (LoadedMeshData->SkeletonAssetPath.empty())
 				{
-					LoadedMeshData->SkeletonAssetPath = LoadedSkeleton->GetAssetPathFileName();
+					LoadedMeshData->SkeletonAssetPath = ToStoredAssetPath(LoadedSkeleton->GetAssetPathFileName());
 				}
 			}
 			else
@@ -634,7 +642,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 		ResourceManager.SkeletalMeshFilePaths.push_back(CacheKey);
 	}
 
-	const FString MeshAssetPath = LoadedMesh->GetAssetPathFileName();
+	const FString MeshAssetPath = ToStoredAssetPath(LoadedMesh->GetAssetPathFileName());
 	if (!MeshAssetPath.empty() && MeshAssetPath != CacheKey)
 	{
 		ResourceManager.SkeletalMeshMap[MeshAssetPath] = LoadedMesh;
@@ -659,7 +667,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 		}
 		if (Sequence->GetSkeletonAssetPath().empty())
 		{
-			Sequence->SetSkeletonAssetPath(LoadedMesh->GetSkeletonAssetPath());
+			Sequence->SetSkeletonAssetPath(ToStoredAssetPath(LoadedMesh->GetSkeletonAssetPath()));
 		}
 
 		const FString SequenceAssetPath = MakeSequenceAssetPath(ResolvePath, Sequence, SequenceIndex);

@@ -2,6 +2,7 @@
 #include "Asset/Skeleton.h"
 #include "Asset/StaticMeshTypes.h"
 #include "Core/Logging/Log.h"
+#include "Core/Paths.h"
 #include "Core/PlatformTime.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
@@ -721,7 +722,7 @@ FStaticMesh* FFbxImporter::Load(const FString& Path, const FStaticMeshLoadOption
 	Converter.Triangulate(Scene, /*pReplace=*/true);
 
 	FStaticMesh* StaticMesh = new FStaticMesh();
-	StaticMesh->PathFileName = Path;
+	StaticMesh->PathFileName = FPaths::ToProjectRelativePath(Path);
 
 	if (FbxNode* RootNode = Scene->GetRootNode())
 	{
@@ -811,12 +812,13 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
     Converter.Triangulate(Scene, true);
 
     FSkeletalMesh* SkeletalMesh = new FSkeletalMesh();
-    SkeletalMesh->PathFileName = Path;
-    SkeletalMesh->SkeletonAssetPath = Path;
+    const FString StoredPath = FPaths::ToProjectRelativePath(Path);
+    SkeletalMesh->PathFileName = StoredPath;
+    SkeletalMesh->SkeletonAssetPath = StoredPath;
 
     USkeleton* ImportedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
     FSkeletonData* ImportedSkeletonData = new FSkeletonData();
-    ImportedSkeletonData->PathFileName = Path;
+    ImportedSkeletonData->PathFileName = StoredPath;
     ImportedSkeleton->SetSkeletonData(ImportedSkeletonData);
     SkeletalMesh->Skeleton = ImportedSkeleton;
     ImportedAsset.Skeleton = ImportedSkeleton;
@@ -1111,9 +1113,10 @@ FFbxMeshContentInfo FFbxImporter::InspectMeshContent(const FString& Path)
 bool FFbxImporter::ImportScene(const FString& Path, FbxManager* Manager, FbxScene* Scene)
 {
 	FbxImporter* Importer = FbxImporter::Create(Manager, "");
-	if (!Importer->Initialize(Path.c_str(), -1, Manager->GetIOSettings()))
+	const FString ImportPath = FPaths::ToAbsoluteString(FPaths::ToWide(FPaths::ToProjectRelativePath(Path)));
+	if (!Importer->Initialize(ImportPath.c_str(), -1, Manager->GetIOSettings()))
 	{
-		UE_LOG_ERROR("[FbxImporter] Initialize failed: %s (%s)", Path.c_str(), Importer->GetStatus().GetErrorString());
+		UE_LOG_ERROR("[FbxImporter] Initialize failed: %s (%s)", ImportPath.c_str(), Importer->GetStatus().GetErrorString());
 		Importer->Destroy();
 		return false;
 	}
@@ -1121,7 +1124,7 @@ bool FFbxImporter::ImportScene(const FString& Path, FbxManager* Manager, FbxScen
 	const bool bResult = Importer->Import(Scene);
 	if (!bResult)
 	{
-		UE_LOG_ERROR("[FbxImporter] Import failed: %s (%s)", Path.c_str(), Importer->GetStatus().GetErrorString());
+		UE_LOG_ERROR("[FbxImporter] Import failed: %s (%s)", ImportPath.c_str(), Importer->GetStatus().GetErrorString());
 	}
 
 	Importer->Destroy();

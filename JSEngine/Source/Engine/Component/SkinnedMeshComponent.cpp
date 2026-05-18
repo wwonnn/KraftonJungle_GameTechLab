@@ -1,6 +1,7 @@
 ﻿#include "SkinnedMeshComponent.h"
 
 #include "Asset/Skeleton.h"
+#include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Render/Resource/Material.h"
 
@@ -55,6 +56,7 @@ void USkinnedMeshComponent::Serialize(FArchive& Ar)
 
     if (Ar.IsLoading() && !SkeletalMeshPath.empty())
     {
+        SkeletalMeshPath = FPaths::ToProjectRelativePath(SkeletalMeshPath);
         TArray<UMaterialInterface*> LoadedMaterials = Materials;
         SetSkeletalMesh(FResourceManager::Get().LoadSkeletalMesh(SkeletalMeshPath));
         if (!LoadedMaterials.empty())
@@ -82,6 +84,7 @@ void USkinnedMeshComponent::PostEditProperty(const char* PropertyName)
             return;
         }
 
+        SkeletalMeshPath = FPaths::ToProjectRelativePath(SkeletalMeshPath);
         SetSkeletalMesh(FResourceManager::Get().LoadSkeletalMesh(SkeletalMeshPath));
     }
     else if (std::strcmp(PropertyName, "Materials") == 0)
@@ -115,7 +118,7 @@ void USkinnedMeshComponent::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
 
     if (SkeletalMesh)
     {
-        SkeletalMeshPath = SkeletalMesh->GetAssetPathFileName();
+        SkeletalMeshPath = FPaths::ToProjectRelativePath(SkeletalMesh->GetAssetPathFileName());
 
         const TArray<FStaticMeshSection>& Sections = SkeletalMesh->GetSections();
         const TArray<FStaticMeshMaterialSlot>& Slots = SkeletalMesh->GetMaterialSlots();

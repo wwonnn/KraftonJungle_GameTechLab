@@ -3,6 +3,7 @@
 #include "Asset/StaticMeshTypes.h"
 #include "Math/Utils.h"
 #include "Core/Logging/Log.h"
+#include "Core/Paths.h"
 #include "Core/PlatformTime.h"
 #include "Core/ResourceManager.h"
 
@@ -173,7 +174,7 @@ bool FObjLoader::BuildStaticMesh(const FString& Path, FStaticMesh* InStaticMesh,
 		return false;
 	}
 
-	InStaticMesh->PathFileName = Path;
+	InStaticMesh->PathFileName = FPaths::ToProjectRelativePath(Path);
 	InStaticMesh->Vertices.clear();
 	InStaticMesh->Indices.clear();
 	InStaticMesh->Sections.clear();

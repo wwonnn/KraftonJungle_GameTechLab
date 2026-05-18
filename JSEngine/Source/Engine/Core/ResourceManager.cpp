@@ -47,7 +47,7 @@ namespace fs = std::filesystem;
 
 uint64 FResourceManager::GetFileWriteTimeTicks(const FString& Path) const
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	fs::path FilePath(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath)));
 	if (!fs::exists(FilePath))
 	{
@@ -64,13 +64,13 @@ uint64 FResourceManager::GetFileWriteTimeTicks(const FString& Path) const
 bool FResourceManager::IsStaticMeshBinaryValid(const FString& SourcePath, const FString& BinaryPath) const
 {
 	FStaticMeshBinaryHeader Header;
-	const FString NormalizedBinaryPath = FPaths::Normalize(BinaryPath);
+	const FString NormalizedBinaryPath = FPaths::ToProjectRelativePath(BinaryPath);
 	if (!BinarySerializer.ReadStaticMeshHeader(NormalizedBinaryPath, Header))
 	{
 		return false;
 	}
 
-	const uint64 SourceWriteTime = GetFileWriteTimeTicks(FPaths::Normalize(SourcePath));
+	const uint64 SourceWriteTime = GetFileWriteTimeTicks(FPaths::ToProjectRelativePath(SourcePath));
 	if (SourceWriteTime == 0)
 	{
 		return false;
@@ -82,13 +82,13 @@ bool FResourceManager::IsStaticMeshBinaryValid(const FString& SourcePath, const 
 bool FResourceManager::IsSkeletalMeshBinaryValid(const FString& SourcePath, const FString& BinaryPath) const
 {
 	FSkeletalMeshBinaryHeader Header;
-	const FString NormalizedBinaryPath = FPaths::Normalize(BinaryPath);
+	const FString NormalizedBinaryPath = FPaths::ToProjectRelativePath(BinaryPath);
 	if (!BinarySerializer.ReadSkeletalMeshHeader(NormalizedBinaryPath, Header))
 	{
 		return false;
 	}
 
-	const uint64 SourceWriteTime = GetFileWriteTimeTicks(FPaths::Normalize(SourcePath));
+	const uint64 SourceWriteTime = GetFileWriteTimeTicks(FPaths::ToProjectRelativePath(SourcePath));
 	if (SourceWriteTime == 0)
 	{
 		return false;
@@ -805,7 +805,7 @@ UStaticMesh* FResourceManager::LoadStaticMesh(const FString& Path)
 
 UStaticMesh* FResourceManager::FindStaticMesh(const FString& Path) const
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	return StaticMeshCache.Find(NormalizedPath);
 }
 
@@ -821,7 +821,7 @@ USkeletalMesh* FResourceManager::LoadSkeletalMesh(const FString& Path)
 
 USkeletalMesh* FResourceManager::FindSkeletalMesh(const FString& Path) const
 {
-    const FString NormalizedPath = FPaths::Normalize(Path);
+    const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 
     auto It = SkeletalMeshMap.find(NormalizedPath);
     if (It != SkeletalMeshMap.end())
@@ -848,7 +848,7 @@ bool FResourceManager::SaveSkeletalMesh(USkeletalMesh* Mesh)
     FSkeletalMesh* Data = Mesh->GetMeshData();
     if (!Data) return false;
 
-    const FString FbxPath = Mesh->GetAssetPathFileName();
+    const FString FbxPath = FPaths::ToProjectRelativePath(Mesh->GetAssetPathFileName());
     if (FbxPath.empty()) return false;
 
     const FString BinPath = FAssetPathPolicy::MakeWritableSkeletalMeshCacheBinaryPath(FbxPath);
@@ -900,7 +900,7 @@ TArray<FString> FResourceManager::GetCurvePaths() const
 
 UAnimSequence* FResourceManager::LoadAnimSequence(const FString& Path)
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	auto It = AnimSequenceMap.find(NormalizedPath);
 	if (It != AnimSequenceMap.end())
 	{
@@ -925,14 +925,14 @@ UAnimSequence* FResourceManager::LoadAnimSequence(const FString& Path)
 
 UAnimSequence* FResourceManager::FindAnimSequence(const FString& Path) const
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	auto It = AnimSequenceMap.find(NormalizedPath);
 	return It != AnimSequenceMap.end() ? It->second : nullptr;
 }
 
 bool FResourceManager::SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence)
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	FAnimSequenceAssetLoader Loader;
 	if (!Loader.Save(NormalizedPath, Sequence))
 	{
