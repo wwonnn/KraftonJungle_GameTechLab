@@ -508,6 +508,7 @@ void FResourceManager::ReleaseGPUResources()
 		DestroyedMeshes.insert(Mesh);
 		UObjectManager::Get().DestroyObject(Mesh);
 	}
+
 	SkeletalMeshMap.clear();
 	SkeletalMeshMap.rehash(0);
 

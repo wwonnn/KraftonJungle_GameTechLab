@@ -1,4 +1,4 @@
-#include "Asset/AnimSequenceAssetLoader.h"
+﻿#include "Asset/AnimSequenceAssetLoader.h"
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
@@ -307,7 +307,7 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
     Sequence->SetFName(FName(SequenceName.empty() ? "AnimSequence" : SequenceName));
     if (Root.hasKey("SkeletonAssetPath"))
     {
-        Sequence->SetSkeletonAssetPath(Root["SkeletonAssetPath"].ToString());
+        Sequence->SetSkeletonAssetPath(FPaths::Normalize(Root["SkeletonAssetPath"].ToString()));
     }
 
     DataModel->SetFName(FName(Sequence->GetName() + FString("_Data")));
@@ -387,7 +387,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     json::JSON Root = json::JSON::Make(json::JSON::Class::Object);
     Root["Type"] = "UAnimSequence";
     Root["ObjectName"] = Sequence->GetName();
-    Root["SkeletonAssetPath"] = Sequence->GetSkeletonAssetPath();
+    Root["SkeletonAssetPath"] = FPaths::Normalize(Sequence->GetSkeletonAssetPath());
     Root["FrameRateNumerator"] = DataModel->FrameRate.Numerator;
     Root["FrameRateDenominator"] = DataModel->FrameRate.Denominator;
     Root["NumberOfFrames"] = DataModel->NumberOfFrames;

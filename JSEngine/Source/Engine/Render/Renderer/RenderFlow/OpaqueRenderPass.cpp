@@ -16,7 +16,6 @@ bool FOpaqueRenderPass::Initialize()
 
 bool FOpaqueRenderPass::Begin(const FRenderPassContext* Context)
 {
-
     const FRenderTargetSet* RenderTargets = Context->RenderTargets;
     ID3D11RenderTargetView* RTVs[3] = { 
 		RenderTargets->SceneColorRTV, 
@@ -24,6 +23,12 @@ bool FOpaqueRenderPass::Begin(const FRenderPassContext* Context)
 		RenderTargets->SceneWorldPosRTV
     };
     ID3D11DepthStencilView* DSV = RenderTargets->DepthStencilView;
+    ID3D11SamplerState* ShadowSampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Shadow);
+    ID3D11ShaderResourceView* VSMSRV = FShadowAtlasManager::Get().GetVarianceSRV();
+    ID3D11ShaderResourceView* ShadowInfoSRVs[] = {
+        Context->RenderResources->LightShadowIndexBuffer.GetSRV(),
+        Context->RenderResources->AtlasShadowBuffer.GetSRV(),
+    };
 
     // DepthPrePass is used as an input for earlier screen-space/light-culling work.
     // Opaque rendering must not depend on exact depth equality with that prepass,
@@ -35,26 +40,11 @@ bool FOpaqueRenderPass::Begin(const FRenderPassContext* Context)
 
 	Context->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	ID3D11SamplerState* ShadowSampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Shadow);
 	Context->DeviceContext->PSSetSamplers(1, 1, &ShadowSampler);
 
-	///// debugging
-	/*ID3D11ShaderResourceView* VSMSRV = FShadowAtlasManager::Get().VarianceShadowSRV.Get();
-    Context->DeviceContext->PSSetShaderResources(11, 1, &VSMSRV);
-    *////// debugging
-    ID3D11ShaderResourceView* VSMSRV = FShadowAtlasManager::Get().GetVarianceSRV();
     Context->DeviceContext->PSSetShaderResources(11, 1, &VSMSRV);
 
-
-
-	ID3D11ShaderResourceView* ShadowInfoSRVs[] = {
-		Context->RenderResources->LightShadowIndexBuffer.GetSRV(),
-		Context->RenderResources->AtlasShadowBuffer.GetSRV(),
-	};
 	Context->DeviceContext->PSSetShaderResources(14, 2, ShadowInfoSRVs);
-
-	//ID3D11ShaderResourceView* VSMSRV = FShadowAtlasManager::Get().VarianceShadowSRV.Get();
- //   Context->DeviceContext->PSSetShaderResources(16, 1, &VSMSRV);
 
     return true;
 }
@@ -69,14 +59,14 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
 
    for (const FRenderCommand& Cmd : Commands)  
    {  
+	   ID3D11Buffer* cb1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();
+       ID3D11ShaderResourceView* ShadowSRV = FShadowAtlasManager::Get().GetSRV();
+       ID3D11ShaderResourceView* PointShadowCubeSRV = FShadowAtlasManager::Get().GetCubeSRV();
+
        Context->RenderResources->PerObjectConstantBuffer.Update(Context->DeviceContext, &Cmd.PerObjectConstants, sizeof(FPerObjectConstants));  
-       ID3D11Buffer* cb1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();  
        Context->DeviceContext->VSSetConstantBuffers(1, 1, &cb1);  
        Context->DeviceContext->PSSetConstantBuffers(1, 1, &cb1);
-
-	   ID3D11ShaderResourceView *ShadowSRV = FShadowAtlasManager::Get().GetSRV();
 	   Context->DeviceContext->PSSetShaderResources(10, 1, &ShadowSRV);
-       ID3D11ShaderResourceView* PointShadowCubeSRV = FShadowAtlasManager::Get().GetCubeSRV();
        Context->DeviceContext->PSSetShaderResources(12, 1, &PointShadowCubeSRV);
 
        if (Cmd.Type == ERenderCommandType::PostProcessOutline)  
@@ -242,11 +232,8 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
 
 bool FOpaqueRenderPass::End(const FRenderPassContext* Context)
 {
-	//ID3D11ShaderResourceView* nullSRVs[] = { nullptr, nullptr, nullptr };
-	//Context->DeviceContext->VSSetShaderResources(4, 3, nullSRVs);
-	//Context->DeviceContext->PSSetShaderResources(4, 3, nullSRVs);
     ID3D11ShaderResourceView* nullSRV = nullptr;
-    Context->DeviceContext->PSSetShaderResources(16, 1, &nullSRV);
+    Context->DeviceContext->VSSetShaderResources(16, 1, &nullSRV);
     return true;
 }
 
