@@ -7,7 +7,10 @@
 
 void FStaticMeshResourceCache::RegisterResource(const FStaticMeshResource& Resource)
 {
-	StaticMeshRegistry[Resource.Name] = Resource;
+	FStaticMeshResource StoredResource = Resource;
+	StoredResource.Name = FPaths::ToProjectRelativePath(Resource.Name);
+	StoredResource.Path = FPaths::ToProjectRelativePath(Resource.Path);
+	StaticMeshRegistry[StoredResource.Name] = StoredResource;
 }
 
 void FStaticMeshResourceCache::ClearRegistry()
@@ -23,7 +26,7 @@ const TMap<FString, FStaticMeshResource>& FStaticMeshResourceCache::GetRegistry(
 FStaticMeshLoadOptions FStaticMeshResourceCache::GetLoadOptions(const FString& Path) const
 {
 	FStaticMeshLoadOptions LoadOptions = {};
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	for (const auto& [Key, Resource] : StaticMeshRegistry)
 	{
 		if (Resource.Path == NormalizedPath)
@@ -37,7 +40,7 @@ FStaticMeshLoadOptions FStaticMeshResourceCache::GetLoadOptions(const FString& P
 
 UStaticMesh* FStaticMeshResourceCache::Find(const FString& Path) const
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	auto It = StaticMeshes.find(NormalizedPath);
 	if (It == StaticMeshes.end())
 	{
@@ -49,7 +52,7 @@ UStaticMesh* FStaticMeshResourceCache::Find(const FString& Path) const
 
 void FStaticMeshResourceCache::RegisterLoaded(const FString& Path, UStaticMesh* StaticMesh)
 {
-	const FString NormalizedPath = FPaths::Normalize(Path);
+	const FString NormalizedPath = FPaths::ToProjectRelativePath(Path);
 	if (NormalizedPath.empty() || StaticMesh == nullptr)
 	{
 		return;

@@ -4229,7 +4229,7 @@
         "NumberOfFrames" : 69,
         "NumberOfKeys" : 69,
         "ObjectName" : "Take 001",
-        "SkeletonAssetPath" : "C:/development/W11_Team3_Engine/JSEngine/Asset/Skeleton/Bin/rp_nathan_animated_003_walking.skeleton",
+        "SkeletonAssetPath" : "Asset/Skeleton/Bin/rp_nathan_animated_003_walking.skeleton",
         "Tracks" : [{
             "BoneTreeIndex" : 0,
             "Name" : "rp_nathan_animated_003_walking_root",

@@ -5,16 +5,24 @@
 #include <filesystem>
 #include "Core/Paths.h"
 
+namespace
+{
+	std::filesystem::path ResolveFilePath(const FString& FileName)
+	{
+		return std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(FPaths::ToProjectRelativePath(FileName))));
+	}
+}
+
 bool FFileUtils::FileExists(const FString& FileName)
 {
-	return std::filesystem::exists(std::filesystem::path(FPaths::ToWide(FileName)));
+	return std::filesystem::exists(ResolveFilePath(FileName));
 }
 
 bool FFileUtils::LoadFileToString(const FString& FileName, FString& OutText)
 {
 	OutText.clear();
 	
-	std::ifstream File(std::filesystem::path(FPaths::ToWide(FileName)), std::ios::in);
+	std::ifstream File(ResolveFilePath(FileName), std::ios::in);
 	if (!File.is_open())
 	{
 		return false;
@@ -33,7 +41,7 @@ bool FFileUtils::LoadFileToLines(const FString& FileName, TArray<FString>& OutLi
 {
 	OutLines.clear();
 	
-	std::ifstream File(std::filesystem::path(FPaths::ToWide(FileName)), std::ios::in);
+	std::ifstream File(ResolveFilePath(FileName), std::ios::in);
 	if (!File.is_open())
 	{
 		return false;
@@ -64,7 +72,7 @@ bool FFileUtils::LoadFileToLines(const FString& FileName, TArray<FString>& OutLi
 */
 bool FFileUtils::FindFileRecursively(const FString& SearchRootPath, const FString& TargetFileName, FString& OutFoundPath)
 {
-	std::filesystem::path RootPath = FPaths::ToWide(SearchRootPath);
+	std::filesystem::path RootPath = ResolveFilePath(SearchRootPath);
 	std::filesystem::path TargetName = FPaths::ToWide(TargetFileName);
 	OutFoundPath.clear();
 

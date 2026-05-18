@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "Core/ResourceManager.h"
+#include "Core/Paths.h"
 #include "Render/Proxy/StaticMeshRenderProxy.h"
 
 DEFINE_CLASS(UStaticMeshComponent, UMeshComponent)
@@ -48,6 +49,7 @@ void UStaticMeshComponent::Serialize(FArchive& Ar)
 
 	if (Ar.IsLoading() && !StaticMeshAssetPath.empty())
 	{
+		StaticMeshAssetPath = FPaths::ToProjectRelativePath(StaticMeshAssetPath);
 		TArray<UMaterialInterface*> LoadedMaterials = Materials;
 		SetStaticMesh(FResourceManager::Get().LoadStaticMesh(StaticMeshAssetPath));
 		if (!LoadedMaterials.empty())
@@ -69,7 +71,7 @@ void UStaticMeshComponent::SetStaticMesh(UStaticMesh* InStaticMesh)
 
     if (StaticMeshAsset != nullptr)
     {
-        StaticMeshAssetPath = StaticMeshAsset->GetAssetPathFileName();
+        StaticMeshAssetPath = FPaths::ToProjectRelativePath(StaticMeshAsset->GetAssetPathFileName());
 
 		const auto& Slots = StaticMeshAsset->GetMaterialSlots();
         const auto& Sections = StaticMeshAsset->GetSections();
@@ -119,6 +121,7 @@ void UStaticMeshComponent::PostEditProperty(const char* PropertyName)
 			return;
 		}
 
+		StaticMeshAssetPath = FPaths::ToProjectRelativePath(StaticMeshAssetPath);
 		UStaticMesh* Mesh = FResourceManager::Get().LoadStaticMesh(StaticMeshAssetPath);
 
 		SetStaticMesh(Mesh);
