@@ -253,11 +253,24 @@ void FEditorMainPanel::RenderViewerToolbarControls(FEditorViewer* Viewer)
 		ImGui::MenuItem("Bones", nullptr, &ShowFlags.bShowBones);
 		ImGui::BeginDisabled(!ShowFlags.bShowBones);
 		ImGui::MenuItem("Selected Bone Only", nullptr, &ShowFlags.bShowOnlySelectedBone);
-		ImGui::EndDisabled();
+        ImGui::EndDisabled();
+        ImGui::BeginDisabled(!ShowFlags.bShowOnlySelectedBone);
+        ImGui::MenuItem("Selected Bone Weights", nullptr, &ShowFlags.bShowSelectedBoneWeight);
+        ImGui::EndDisabled();
 		ImGui::Separator();
 		ImGui::MenuItem("Bounding Box", nullptr, &ShowFlags.bShowBoundingBox);
 		ImGui::MenuItem("Outline", nullptr, &ShowFlags.bShowOutline);
 		ImGui::EndPopup();
+
+		if (!ShowFlags.bShowBones)
+		{
+            ShowFlags.bShowOnlySelectedBone = false;
+		}
+
+		if (!ShowFlags.bShowOnlySelectedBone)
+		{
+            ShowFlags.bShowSelectedBoneWeight = false;
+		}
 	}
 	ImGui::PopID();
 }

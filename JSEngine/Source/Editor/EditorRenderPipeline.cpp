@@ -411,6 +411,8 @@ void FEditorRenderPipeline::RenderViewerViewport(FRenderer& Renderer)
         ShowFlags.bShadow = false;
         ShowFlags.bGammaCorrection = false;
         ShowFlags.GammaValue = Settings.ShowFlags.GammaValue;
+        ShowFlags.bShowSelectedBoneWeight = VFlags.bShowSelectedBoneWeight;
+        ShowFlags.SelectedBoneIndex = Viewers[i]->GetSelectedBoneIndex();
         const FEditorViewportState* ViewportState = VC->GetViewportState();
         const EViewMode ViewMode = ViewportState ? ViewportState->ViewMode : EViewMode::Lit_BlinnPhong;
 

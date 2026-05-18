@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Viewport/EditorViewportClient.h"
 
@@ -10,6 +10,7 @@ struct FSkeletalViewerShowFlags
 	bool bShowSkeletalMesh     = true;
 	bool bShowBones            = false;
 	bool bShowOnlySelectedBone = false;
+    bool bShowSelectedBoneWeight = false;
 	bool bShowBoundingBox      = false;
 	bool bShowOutline          = false;
 };

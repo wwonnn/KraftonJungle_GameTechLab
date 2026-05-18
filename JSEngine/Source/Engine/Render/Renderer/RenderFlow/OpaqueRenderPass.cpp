@@ -69,6 +69,15 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
 	   Context->DeviceContext->PSSetShaderResources(10, 1, &ShadowSRV);
        Context->DeviceContext->PSSetShaderResources(12, 1, &PointShadowCubeSRV);
 
+	   const FShowFlags ShowFlags = Context->RenderBus->GetShowFlags();
+	   FDebugConstants DebugConstants;
+       DebugConstants.bShowBoneWeight = (ShowFlags.bShowSelectedBoneWeight && ShowFlags.SelectedBoneIndex >= 0);
+       DebugConstants.SelectedBoneIndex = ShowFlags.SelectedBoneIndex;
+       Context->RenderResources->DebugBuffer.Update(Context->DeviceContext, &DebugConstants, sizeof(DebugConstants));
+       ID3D11Buffer* DebugCB = Context->RenderResources->DebugBuffer.GetBuffer();
+       Context->DeviceContext->VSSetConstantBuffers(13, 1, &DebugCB);
+       Context->DeviceContext->PSSetConstantBuffers(13, 1, &DebugCB);
+
        if (Cmd.Type == ERenderCommandType::PostProcessOutline)  
        {  
            continue;  
