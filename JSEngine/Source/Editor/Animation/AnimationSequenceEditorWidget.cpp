@@ -2,6 +2,7 @@
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Editor/Animation/AnimationSequenceEditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
@@ -14,6 +15,7 @@
 #include "ImGui/imgui.h"
 
 #include <algorithm>
+#include <cstring>
 
 #ifdef GetCurrentTime
 #undef GetCurrentTime
@@ -106,11 +108,13 @@ namespace
 }
 
 void FAnimationSequenceEditorWidget::BindDocumentContext(
+    FAnimationSequenceEditorDocument* InDocument,
     const FString& InSequencePath,
     UAnimSequence* InSequence,
     FAnimationSequencePreviewController* InPreviewController,
     FAnimationSequenceEditorState* InEditorState)
 {
+    Document = InDocument;
     SequencePath = InSequencePath;
     Sequence = InSequence;
     PreviewController = InPreviewController;
@@ -184,6 +188,10 @@ TArray<FString> FAnimationSequenceEditorWidget::BuildPreviewOverlayLines() const
         PreviewOverlayLines.push_back("Number Of Keys: " + std::to_string(DataModel->NumberOfKeys));
         PreviewOverlayLines.push_back(
             "Bone Track Count: " + std::to_string(static_cast<int32>(DataModel->BoneAnimationTracks.size())));
+        PreviewOverlayLines.push_back(
+            "Notify Count: " + std::to_string(AnimationSequenceViewer::GetNotifyEventCount(Sequence)));
+        PreviewOverlayLines.push_back(
+            "Curve Count: " + std::to_string(static_cast<int32>(DataModel->CurveData.FloatCurves.size())));
     }
     else
     {
@@ -338,7 +346,10 @@ void FAnimationSequenceEditorWidget::RenderTransportAndTimelinePanel(
     TimelineWidget.Render(*EditorState, PreviewController);
 
     ImGui::Spacing();
-    NotifyLaneWidget.Render(*EditorState);
+    NotifyLaneWidget.Render(*EditorState, Document);
+    RenderNotifyDetailsPanel();
+    RenderRecentNotifySummary();
+    RenderCurveInspectionPanel();
     ImGui::EndChild();
 }
 
@@ -451,5 +462,150 @@ void FAnimationSequenceEditorWidget::RenderFooterStatus() const
     if (!(PreviewController && PreviewController->HasSequence()))
     {
         ImGui::TextDisabled("Animation sequence is unavailable.");
+    }
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
+{
+    ImGui::Spacing();
+    ImGui::TextDisabled("Notify Details");
+
+    if (!Document || !EditorState)
+    {
+        ImGui::TextDisabled("Notify editing is unavailable.");
+        return;
+    }
+
+    const int32 DefaultTrackIndex = std::max(EditorState->SelectedNotifyTrackIndex, 0);
+    if (ImGui::Button("Add Notify"))
+    {
+        Document->AddNotifyAtTime(DefaultTrackIndex, EditorState->CurrentTime);
+    }
+
+    const bool bHasSelection = Document->GetSelectedNotify() != nullptr;
+    ImGui::SameLine();
+    if (!bHasSelection)
+    {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Button("Delete Selected"))
+    {
+        Document->DeleteSelectedNotify();
+    }
+    if (!bHasSelection)
+    {
+        ImGui::EndDisabled();
+    }
+
+    const FAnimNotifyEvent* SelectedNotify = Document->GetSelectedNotify();
+    if (!SelectedNotify)
+    {
+        ImGui::TextDisabled("Select a notify marker to edit it.");
+        return;
+    }
+
+    const FAnimNotifyEvent NotifySnapshot = *SelectedNotify;
+
+    char NameBuffer[256] = {};
+    const FString NotifyName = NotifySnapshot.Name.IsValid() ? NotifySnapshot.Name.ToString() : FString();
+    strncpy_s(NameBuffer, sizeof(NameBuffer), NotifyName.c_str(), _TRUNCATE);
+    if (ImGui::InputText("Name", NameBuffer, sizeof(NameBuffer)))
+    {
+        Document->SetSelectedNotifyName(FName(NameBuffer));
+    }
+
+    float NotifyTime = NotifySnapshot.Time;
+    const float MaxTime = std::max(EditorState->SequenceLength, 0.0f);
+    if (ImGui::DragFloat("Time", &NotifyTime, 0.001f, 0.0f, MaxTime, "%.3f s"))
+    {
+        Document->SetSelectedNotifyTime(NotifyTime, EditorState->bSnapToFrames);
+    }
+
+    float NotifyDuration = NotifySnapshot.Duration;
+    if (ImGui::DragFloat("Duration", &NotifyDuration, 0.001f, 0.0f, MaxTime, "%.3f s"))
+    {
+        Document->SetSelectedNotifyDuration(NotifyDuration);
+    }
+
+    float Color[4] =
+    {
+        NotifySnapshot.Color.R,
+        NotifySnapshot.Color.G,
+        NotifySnapshot.Color.B,
+        NotifySnapshot.Color.A
+    };
+    if (ImGui::ColorEdit4("Color", Color))
+    {
+        Document->SetSelectedNotifyColor(FColor(
+            std::clamp(Color[0], 0.0f, 1.0f),
+            std::clamp(Color[1], 0.0f, 1.0f),
+            std::clamp(Color[2], 0.0f, 1.0f),
+            std::clamp(Color[3], 0.0f, 1.0f)));
+    }
+
+    ImGui::TextDisabled(
+        "Track %d  StableId %s",
+        EditorState->SelectedNotifyTrackIndex + 1,
+        NotifySnapshot.StableId.ToString().c_str());
+}
+
+void FAnimationSequenceEditorWidget::RenderCurveInspectionPanel() const
+{
+    ImGui::Spacing();
+    ImGui::TextDisabled("Curves");
+
+    const UAnimDataModel* DataModel = AnimationSequenceViewer::GetValidAnimDataModel(Sequence);
+    if (!DataModel || DataModel->CurveData.FloatCurves.empty())
+    {
+        ImGui::TextDisabled("No float curves in this sequence.");
+        return;
+    }
+
+    constexpr int32 MaxVisibleCurves = 6;
+    const int32 CurveCount = static_cast<int32>(DataModel->CurveData.FloatCurves.size());
+    ImGui::TextDisabled("Float Curves: %d", CurveCount);
+
+    const int32 VisibleCurveCount = std::min(CurveCount, MaxVisibleCurves);
+    for (int32 CurveIndex = 0; CurveIndex < VisibleCurveCount; ++CurveIndex)
+    {
+        const FFloatCurve& Curve = DataModel->CurveData.FloatCurves[CurveIndex];
+        ImGui::BulletText(
+            "%s  (%d keys)",
+            Curve.CurveName.ToString().c_str(),
+            static_cast<int32>(Curve.Keys.size()));
+    }
+
+    if (CurveCount > VisibleCurveCount)
+    {
+        ImGui::TextDisabled("%d more curves...", CurveCount - VisibleCurveCount);
+    }
+}
+
+void FAnimationSequenceEditorWidget::RenderRecentNotifySummary() const
+{
+    ImGui::Spacing();
+    ImGui::TextDisabled("Recent Fired Notifies");
+
+    if (!PreviewController)
+    {
+        ImGui::TextDisabled("Preview controller is unavailable.");
+        return;
+    }
+
+    const TArray<FAnimNotifyEvent>& RecentNotifies = PreviewController->GetRecentFiredNotifyEvents();
+    if (RecentNotifies.empty())
+    {
+        ImGui::TextDisabled("No notify fired during the latest preview update.");
+        return;
+    }
+
+    constexpr int32 MaxVisibleEntries = 4;
+    const int32 VisibleCount = std::min(static_cast<int32>(RecentNotifies.size()), MaxVisibleEntries);
+    for (int32 Offset = 0; Offset < VisibleCount; ++Offset)
+    {
+        const int32 RecentIndex = static_cast<int32>(RecentNotifies.size()) - 1 - Offset;
+        const FAnimNotifyEvent& NotifyEvent = RecentNotifies[RecentIndex];
+        const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString("(Unnamed)");
+        ImGui::BulletText("%s @ %.3fs", NotifyName.c_str(), NotifyEvent.Time);
     }
 }

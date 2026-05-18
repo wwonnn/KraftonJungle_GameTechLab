@@ -287,6 +287,12 @@ bool FAnimationSequencePreviewController::HasValidPreview() const
     return PreviewScene && PreviewScene->HasValidPreview();
 }
 
+const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewController::GetRecentFiredNotifyEvents() const
+{
+    static const TArray<FAnimNotifyEvent> EmptyEvents = {};
+    return PreviewScene ? PreviewScene->GetRecentFiredNotifyEvents() : EmptyEvents;
+}
+
 void FAnimationSequencePreviewController::SetViewportSize(int32 InWidth, int32 InHeight)
 {
     if (PreviewScene)

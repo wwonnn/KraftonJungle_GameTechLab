@@ -19,8 +19,13 @@ void FAnimationSequenceEditorState::Reset()
     VisibleTimeStart = 0.0f;
     VisibleTimeEnd = 1.0f;
     PreviewPaneHeight = 0.0f;
-    SelectedNotifyIndex = -1;
-    HoveredNotifyIndex = -1;
+    SelectedNotifyTrackIndex = -1;
+    SelectedNotifyEventIndex = -1;
+    HoveredNotifyTrackIndex = -1;
+    HoveredNotifyEventIndex = -1;
+    DraggedNotifyTrackIndex = -1;
+    DraggedNotifyEventIndex = -1;
+    bDraggingNotify = false;
 }
 
 void FAnimationSequenceEditorState::InitializeFromSequence(

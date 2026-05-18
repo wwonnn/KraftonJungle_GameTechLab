@@ -97,6 +97,7 @@ void USkeletalMeshComponent::SetPreviewSequence(UAnimSequence* InSequence)
         {
             PreviewInstance->SetSequence(nullptr);
         }
+        RecentFiredNotifyEvents.clear();
         ResetToBindPose();
         return;
     }
@@ -272,6 +273,7 @@ void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
     ReleaseAnimInstance();
 
     AnimInstance = InAnimInstance;
+    RecentFiredNotifyEvents.clear();
     if (AnimInstance)
     {
         AnimInstance->SetOwningComponent(this);
@@ -307,11 +309,13 @@ void USkeletalMeshComponent::ReleaseAnimInstance()
 {
     if (!AnimInstance)
     {
+        RecentFiredNotifyEvents.clear();
         return;
     }
 
     UAnimInstance* InstanceToRelease = AnimInstance;
     AnimInstance = nullptr;
+    RecentFiredNotifyEvents.clear();
     InstanceToRelease->SetOwningComponent(nullptr);
 
     if (UObjectManager::Get().ContainsObject(InstanceToRelease))
@@ -336,6 +340,7 @@ void USkeletalMeshComponent::InitializeAnimation()
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData())
     {
+        RecentFiredNotifyEvents.clear();
         ReleaseAnimInstance();
         return;
     }
@@ -378,6 +383,7 @@ void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(UAnimInstance* InAni
 {
     if (!InAnimInstance)
     {
+        RecentFiredNotifyEvents.clear();
         return;
     }
 
@@ -385,6 +391,8 @@ void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(UAnimInstance* InAni
     {
         InAnimInstance->UpdateAnimation(DeltaTime);
     }
+
+    RecentFiredNotifyEvents = InAnimInstance->GetRecentNotifyEvents();
 
     FSkeletonPose Pose;
     InAnimInstance->EvaluatePose(Pose);

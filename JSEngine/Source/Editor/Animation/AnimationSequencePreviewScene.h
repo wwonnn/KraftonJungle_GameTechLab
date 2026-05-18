@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Core/CoreMinimal.h"
 #include "Editor/Viewport/FSceneViewport.h"
 #include "Editor/Viewport/SkeletalMeshViewportClient.h"
@@ -37,6 +38,7 @@ public:
     void SetCurrentTime(float InTime);
     float GetCurrentTime() const;
     float GetPreviewLength() const;
+    const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
     void RefreshPreviewPose(float DeltaTime);
 
     void SetViewportSize(int32 InWidth, int32 InHeight);

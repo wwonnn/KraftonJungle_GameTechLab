@@ -2142,6 +2142,7 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimationAsset.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequence.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequenceBase.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimNotifyTypes.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimTypes.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />

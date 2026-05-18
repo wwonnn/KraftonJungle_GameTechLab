@@ -7,6 +7,7 @@
 class UAnimSequence;
 class FAnimationSequenceEditorState;
 class FAnimationSequencePreviewController;
+class FAnimationSequenceEditorDocument;
 struct ImVec2;
 
 class FAnimationSequenceEditorWidget : public FEditorWidget
@@ -15,6 +16,7 @@ public:
     void Render(float DeltaTime) override;
 
     void BindDocumentContext(
+        FAnimationSequenceEditorDocument* InDocument,
         const FString& InSequencePath,
         UAnimSequence* InSequence,
         FAnimationSequencePreviewController* InPreviewController,
@@ -29,9 +31,13 @@ private:
     void RenderTransportAndTimelinePanel(float TransportPanelHeight, float MaxPreviewHeight);
     void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl);
     void RenderPlaybackSummary() const;
+    void RenderNotifyDetailsPanel();
+    void RenderCurveInspectionPanel() const;
+    void RenderRecentNotifySummary() const;
     void RenderFooterStatus() const;
 
 private:
+    FAnimationSequenceEditorDocument* Document = nullptr;
     FString SequencePath;
     UAnimSequence* Sequence = nullptr;
     FAnimationSequencePreviewController* PreviewController = nullptr;

@@ -31,6 +31,10 @@ public:
 
     int32 ChooseMajorFrameStep(float TimelinePixelWidth) const;
     int32 ChooseMinorFrameStep(float TimelinePixelWidth) const;
+    bool HasSelectedNotify() const
+    {
+        return SelectedNotifyTrackIndex >= 0 && SelectedNotifyEventIndex >= 0;
+    }
 
 public:
     float CurrentTime = 0.0f;
@@ -43,6 +47,11 @@ public:
     float VisibleTimeStart = 0.0f;
     float VisibleTimeEnd = 1.0f;
     float PreviewPaneHeight = 0.0f;
-    int32 SelectedNotifyIndex = -1;
-    int32 HoveredNotifyIndex = -1;
+    int32 SelectedNotifyTrackIndex = -1;
+    int32 SelectedNotifyEventIndex = -1;
+    int32 HoveredNotifyTrackIndex = -1;
+    int32 HoveredNotifyEventIndex = -1;
+    int32 DraggedNotifyTrackIndex = -1;
+    int32 DraggedNotifyEventIndex = -1;
+    bool bDraggingNotify = false;
 };

@@ -8,6 +8,9 @@
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace
 {
     bool IsLiveObject(const UObject* Object)
@@ -24,6 +27,16 @@ namespace
 
         const UAnimDataModel* DataModel = Sequence->DataModel;
         return IsLiveObject(DataModel) ? DataModel : nullptr;
+    }
+
+    bool IsNotifyTriggeredForward(float NotifyTime, float StartTime, float EndTime)
+    {
+        return NotifyTime > StartTime && NotifyTime <= EndTime;
+    }
+
+    bool IsNotifyTriggeredBackward(float NotifyTime, float StartTime, float EndTime)
+    {
+        return NotifyTime < StartTime && NotifyTime >= EndTime;
     }
 }
 
@@ -62,6 +75,7 @@ void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 	NextSequence = nullptr;
 	NextTime = 0.0f;
 	BlendFactor = 0.0f;
+    RecentNotifyEvents.clear();
 }
 void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 {
@@ -80,6 +94,7 @@ void UAnimInstance::SetCurrentTime(float InCurrentTime)
 {
     CurrentTime = NormalizeTimeForSequence(CurrentSequence, InCurrentTime);
     NextTime = NormalizeTimeForSequence(NextSequence, InCurrentTime);
+    RecentNotifyEvents.clear();
 }
 
 void UAnimInstance::Play()
@@ -102,6 +117,7 @@ void UAnimInstance::Stop()
     NextSequence = nullptr;
     BlendFactor = 0.0f;
     bPlaying = false;
+    RecentNotifyEvents.clear();
 }
 
 float UAnimInstance::GetSequenceLength() const
@@ -304,9 +320,13 @@ bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
 
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
+    RecentNotifyEvents.clear();
+
     if (!bPlaying || !HasValidSequence())
-	// 서브 클래스에서 변수 업데이트
-	NativeUpdateAnimation(DeltaTime);
+    {
+	    // 서브 클래스에서 변수 업데이트
+	    NativeUpdateAnimation(DeltaTime);
+    }
 
 	// State Machine Tick 및 Transition 처리
     if (StateMachine)
@@ -336,6 +356,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     }
 
 	// Current Sequence Time
+    const UAnimSequence* NotifySequence = CurrentSequence;
+    const float PreviousTime = CurrentTime;
     const float Length = GetSequenceLength(CurrentSequence);
 
 	CurrentTime += DeltaTime * PlayRate;
@@ -355,6 +377,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
 		if ((PlayRate >= 0.0f && CurrentTime >= Length) || (PlayRate < 0.0f && CurrentTime <= 0.0f))
             bPlaying = false;
     }
+
+    UpdateRecentNotifyEvents(NotifySequence, PreviousTime, CurrentTime);
 
 	// Next Sequence Time (Blending)
     if (GetValidAnimDataModel(NextSequence))
@@ -589,4 +613,105 @@ float UAnimInstance::NormalizeTimeForSequence(const UAnimSequence* Sequence, flo
     }
 
     return std::clamp(InTime, 0.0f, Length);
+}
+
+void UAnimInstance::UpdateRecentNotifyEvents(const UAnimSequence* Sequence, float PreviousTime, float NewTime)
+{
+    CollectNotifyEventsCrossed(Sequence, PreviousTime, NewTime, RecentNotifyEvents);
+}
+
+void UAnimInstance::CollectNotifyEventsCrossed(
+    const UAnimSequence* Sequence,
+    float PreviousTime,
+    float NewTime,
+    TArray<FAnimNotifyEvent>& OutEvents) const
+{
+    const UAnimDataModel* Model = GetValidAnimDataModel(Sequence);
+    if (!Model || Model->NotifyTracks.empty())
+    {
+        return;
+    }
+
+    const float Length = GetSequenceLength(Sequence);
+    if (Length <= 0.0f || PreviousTime == NewTime)
+    {
+        return;
+    }
+
+    const bool bForwardPlayback = PlayRate >= 0.0f;
+    const bool bWrapped = bLoop && ((bForwardPlayback && NewTime < PreviousTime) || (!bForwardPlayback && NewTime > PreviousTime));
+
+    auto AppendTrackEvents =
+        [&OutEvents](const FAnimNotifyTrack& Track, auto&& Predicate)
+        {
+            for (const FAnimNotifyEvent& NotifyEvent : Track.Events)
+            {
+                if (Predicate(NotifyEvent.Time))
+                {
+                    OutEvents.push_back(NotifyEvent);
+                }
+            }
+        };
+
+    auto AppendForwardRange =
+        [&Model, &AppendTrackEvents](float StartTime, float EndTime)
+        {
+            if (EndTime <= StartTime)
+            {
+                return;
+            }
+
+            for (const FAnimNotifyTrack& Track : Model->NotifyTracks)
+            {
+                AppendTrackEvents(
+                    Track,
+                    [StartTime, EndTime](float NotifyTime)
+                    {
+                        return IsNotifyTriggeredForward(NotifyTime, StartTime, EndTime);
+                    });
+            }
+        };
+
+    auto AppendBackwardRange =
+        [&Model, &AppendTrackEvents](float StartTime, float EndTime)
+        {
+            if (EndTime >= StartTime)
+            {
+                return;
+            }
+
+            for (const FAnimNotifyTrack& Track : Model->NotifyTracks)
+            {
+                AppendTrackEvents(
+                    Track,
+                    [StartTime, EndTime](float NotifyTime)
+                    {
+                        return IsNotifyTriggeredBackward(NotifyTime, StartTime, EndTime);
+                    });
+            }
+        };
+
+    if (!bLoop || !bWrapped)
+    {
+        if (bForwardPlayback)
+        {
+            AppendForwardRange(PreviousTime, NewTime);
+        }
+        else
+        {
+            AppendBackwardRange(PreviousTime, NewTime);
+        }
+        return;
+    }
+
+    if (bForwardPlayback)
+    {
+        AppendForwardRange(PreviousTime, Length);
+        AppendForwardRange(0.0f, NewTime);
+    }
+    else
+    {
+        AppendBackwardRange(PreviousTime, 0.0f);
+        AppendBackwardRange(Length, NewTime);
+    }
 }

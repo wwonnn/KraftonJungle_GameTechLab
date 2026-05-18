@@ -1,11 +1,61 @@
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 
+#include "Animation/AnimData/AnimDataModel.h"
+#include "Animation/AnimData/AnimSequence.h"
 #include "Core/Paths.h"
+#include "Core/ResourceManager.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
+#include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
 
 #include "ImGui/imgui.h"
+
+#include <algorithm>
+
+namespace
+{
+    FAnimNotifyTrack MakeDefaultNotifyTrack(int32 TrackIndex)
+    {
+        FAnimNotifyTrack Track;
+        Track.TrackName = FName(("Track " + std::to_string(TrackIndex + 1)).c_str());
+        return Track;
+    }
+
+    int32 FindNotifyEventIndexById(const FAnimNotifyTrack& Track, const FGuid& StableId)
+    {
+        if (!StableId.IsValid())
+        {
+            return -1;
+        }
+
+        for (int32 Index = 0; Index < static_cast<int32>(Track.Events.size()); ++Index)
+        {
+            if (Track.Events[Index].StableId == StableId)
+            {
+                return Index;
+            }
+        }
+
+        return -1;
+    }
+
+    void SortNotifyTrackEvents(FAnimNotifyTrack& Track)
+    {
+        std::stable_sort(
+            Track.Events.begin(),
+            Track.Events.end(),
+            [](const FAnimNotifyEvent& Left, const FAnimNotifyEvent& Right)
+            {
+                if (Left.Time == Right.Time)
+                {
+                    return Left.Name.ToString() < Right.Name.ToString();
+                }
+
+                return Left.Time < Right.Time;
+            });
+    }
+}
 
 FAnimationSequenceEditorDocument::~FAnimationSequenceEditorDocument()
 {
@@ -26,6 +76,7 @@ bool FAnimationSequenceEditorDocument::Initialize(UEditorEngine* InEditorEngine,
     Sequence = InSequence;
     TabId = MakeAnimationSequenceTabId(SequencePath);
     TabLabel = MakeAnimationSequenceTabLabel(SequencePath);
+    bDirty = false;
 
     PreviewController = std::make_unique<FAnimationSequencePreviewController>();
     PreviewController->Initialize(InEditorEngine, SequencePath, Sequence);
@@ -38,7 +89,7 @@ bool FAnimationSequenceEditorDocument::Initialize(UEditorEngine* InEditorEngine,
 
     Widget = std::make_unique<FAnimationSequenceEditorWidget>();
     Widget->Initialize(InEditorEngine);
-    Widget->BindDocumentContext(SequencePath, Sequence, PreviewController.get(), &EditorState);
+    Widget->BindDocumentContext(this, SequencePath, Sequence, PreviewController.get(), &EditorState);
     return true;
 }
 
@@ -73,14 +124,36 @@ void FAnimationSequenceEditorDocument::RenderToolbar()
 {
     ImGui::TextDisabled("Animation Sequence");
     ImGui::SameLine();
-    ImGui::TextUnformatted(TabLabel.c_str());
+    ImGui::Text("%s%s", TabLabel.c_str(), bDirty ? " *" : "");
 }
 
 void FAnimationSequenceEditorDocument::BuildCommandList(FEditorCommandList& OutCommands)
 {
-    // Transport remains widget-driven for now. Adding global editor shortcuts
-    // here would require broader command-id/input work outside this refactor.
-    (void)OutCommands;
+    OutCommands.Clear();
+
+    OutCommands.MapAction(
+        EEditorCommandId::Save,
+        { static_cast<int32>(ImGuiKey_S), true, false, false },
+        [this]()
+        {
+            Save();
+        },
+        [this]()
+        {
+            return CanSave();
+        });
+
+    OutCommands.MapAction(
+        EEditorCommandId::DeleteSelection,
+        { static_cast<int32>(ImGuiKey_Delete), false, false, false },
+        [this]()
+        {
+            DeleteSelectedNotify();
+        },
+        [this]()
+        {
+            return GetSelectedNotify() != nullptr;
+        });
 }
 
 FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport()
@@ -91,6 +164,239 @@ FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport()
 const FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport() const
 {
     return PreviewController ? PreviewController->GetSceneViewport() : nullptr;
+}
+
+bool FAnimationSequenceEditorDocument::CanSave() const
+{
+    return AnimationSequenceViewer::IsLiveObject(Sequence) && bDirty;
+}
+
+bool FAnimationSequenceEditorDocument::Save()
+{
+    if (!AnimationSequenceViewer::IsLiveObject(Sequence))
+    {
+        return false;
+    }
+
+    if (!FResourceManager::Get().SaveAnimSequence(SequencePath, Sequence))
+    {
+        return false;
+    }
+
+    bDirty = false;
+    return true;
+}
+
+int32 FAnimationSequenceEditorDocument::GetNotifyTrackCount() const
+{
+    const TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    return Tracks ? static_cast<int32>(Tracks->size()) : 0;
+}
+
+const FAnimNotifyTrack* FAnimationSequenceEditorDocument::GetNotifyTrack(int32 TrackIndex) const
+{
+    const TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || TrackIndex < 0 || TrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        return nullptr;
+    }
+
+    return &(*Tracks)[TrackIndex];
+}
+
+FAnimNotifyTrack* FAnimationSequenceEditorDocument::GetNotifyTrack(int32 TrackIndex)
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || TrackIndex < 0 || TrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        return nullptr;
+    }
+
+    return &(*Tracks)[TrackIndex];
+}
+
+const FAnimNotifyEvent* FAnimationSequenceEditorDocument::GetSelectedNotify() const
+{
+    const_cast<FAnimationSequenceEditorDocument*>(this)->ValidateNotifySelection();
+
+    const FAnimNotifyTrack* Track = GetNotifyTrack(EditorState.SelectedNotifyTrackIndex);
+    if (!Track)
+    {
+        return nullptr;
+    }
+
+    if (EditorState.SelectedNotifyEventIndex < 0 ||
+        EditorState.SelectedNotifyEventIndex >= static_cast<int32>(Track->Events.size()))
+    {
+        return nullptr;
+    }
+
+    return &Track->Events[EditorState.SelectedNotifyEventIndex];
+}
+
+FAnimNotifyEvent* FAnimationSequenceEditorDocument::GetSelectedNotify()
+{
+    ValidateNotifySelection();
+
+    FAnimNotifyTrack* Track = GetNotifyTrack(EditorState.SelectedNotifyTrackIndex);
+    if (!Track)
+    {
+        return nullptr;
+    }
+
+    if (EditorState.SelectedNotifyEventIndex < 0 ||
+        EditorState.SelectedNotifyEventIndex >= static_cast<int32>(Track->Events.size()))
+    {
+        return nullptr;
+    }
+
+    return &Track->Events[EditorState.SelectedNotifyEventIndex];
+}
+
+bool FAnimationSequenceEditorDocument::AddNotifyAtTime(int32 TrackIndex, float TimeSeconds)
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || TrackIndex < 0)
+    {
+        return false;
+    }
+
+    while (TrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        Tracks->push_back(MakeDefaultNotifyTrack(static_cast<int32>(Tracks->size())));
+    }
+
+    FAnimNotifyTrack& Track = (*Tracks)[TrackIndex];
+    if (!Track.TrackName.IsValid())
+    {
+        Track.TrackName = MakeDefaultNotifyTrack(TrackIndex).TrackName;
+    }
+
+    FAnimNotifyEvent NotifyEvent;
+    NotifyEvent.StableId = FGuid::NewGuid();
+    NotifyEvent.Name = FName("Notify");
+    NotifyEvent.Time = EditorState.ClampOrSnapTime(TimeSeconds);
+    NotifyEvent.Duration = 0.0f;
+    NotifyEvent.Color = FColor(0.9490196f, 0.61960787f, 0.23921569f, 1.0f);
+
+    Track.Events.push_back(NotifyEvent);
+    SortNotifyTrackEvents(Track);
+
+    const int32 NewEventIndex = FindNotifyEventIndexById(Track, NotifyEvent.StableId);
+    SelectNotify(TrackIndex, NewEventIndex);
+    MarkDirty();
+    return NewEventIndex >= 0;
+}
+
+bool FAnimationSequenceEditorDocument::DeleteSelectedNotify()
+{
+    ValidateNotifySelection();
+
+    FAnimNotifyTrack* Track = GetNotifyTrack(EditorState.SelectedNotifyTrackIndex);
+    if (!Track)
+    {
+        return false;
+    }
+
+    const int32 EventIndex = EditorState.SelectedNotifyEventIndex;
+    if (EventIndex < 0 || EventIndex >= static_cast<int32>(Track->Events.size()))
+    {
+        return false;
+    }
+
+    Track->Events.erase(Track->Events.begin() + EventIndex);
+    if (Track->Events.empty())
+    {
+        ClearNotifySelection();
+    }
+    else
+    {
+        SelectNotify(EditorState.SelectedNotifyTrackIndex, std::min(EventIndex, static_cast<int32>(Track->Events.size()) - 1));
+    }
+
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyTime(float TimeSeconds, bool bApplySnap)
+{
+    FAnimNotifyTrack* Track = GetNotifyTrack(EditorState.SelectedNotifyTrackIndex);
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!Track || !NotifyEvent)
+    {
+        return false;
+    }
+
+    const FGuid StableId = NotifyEvent->StableId;
+    NotifyEvent->Time = bApplySnap ? EditorState.ClampOrSnapTime(TimeSeconds) : EditorState.ClampTime(TimeSeconds);
+    SortNotifyTrackEvents(*Track);
+    const int32 NewEventIndex = FindNotifyEventIndexById(*Track, StableId);
+    SelectNotify(EditorState.SelectedNotifyTrackIndex, NewEventIndex);
+    MarkDirty();
+    return NewEventIndex >= 0;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyDuration(float DurationSeconds)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    NotifyEvent->Duration = std::max(0.0f, DurationSeconds);
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyName(const FName& Name)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    NotifyEvent->Name = Name;
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyColor(const FColor& Color)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    NotifyEvent->Color = Color;
+    MarkDirty();
+    return true;
+}
+
+void FAnimationSequenceEditorDocument::SelectNotify(int32 TrackIndex, int32 EventIndex)
+{
+    EditorState.SelectedNotifyTrackIndex = TrackIndex;
+    EditorState.SelectedNotifyEventIndex = EventIndex;
+    EditorState.HoveredNotifyTrackIndex = TrackIndex;
+    EditorState.HoveredNotifyEventIndex = EventIndex;
+}
+
+void FAnimationSequenceEditorDocument::ClearNotifySelection()
+{
+    EditorState.SelectedNotifyTrackIndex = -1;
+    EditorState.SelectedNotifyEventIndex = -1;
+    EditorState.HoveredNotifyTrackIndex = -1;
+    EditorState.HoveredNotifyEventIndex = -1;
+    EditorState.DraggedNotifyTrackIndex = -1;
+    EditorState.DraggedNotifyEventIndex = -1;
+    EditorState.bDraggingNotify = false;
+}
+
+void FAnimationSequenceEditorDocument::MarkDirty()
+{
+    bDirty = true;
 }
 
 void FAnimationSequenceEditorDocument::SyncEditorState()
@@ -109,4 +415,42 @@ void FAnimationSequenceEditorDocument::SyncEditorState()
     EditorState.PlayRate = PreviewController->GetPlayRate();
     EditorState.SetCurrentTime(PreviewController->GetCurrentTime(), false);
     EditorState.SetVisibleRange(EditorState.VisibleTimeStart, EditorState.VisibleTimeEnd);
+    ValidateNotifySelection();
+}
+
+void FAnimationSequenceEditorDocument::ValidateNotifySelection()
+{
+    const TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || Tracks->empty())
+    {
+        ClearNotifySelection();
+        return;
+    }
+
+    if (EditorState.SelectedNotifyTrackIndex < 0 ||
+        EditorState.SelectedNotifyTrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        ClearNotifySelection();
+        return;
+    }
+
+    const FAnimNotifyTrack& Track = (*Tracks)[EditorState.SelectedNotifyTrackIndex];
+    if (EditorState.SelectedNotifyEventIndex < 0 ||
+        EditorState.SelectedNotifyEventIndex >= static_cast<int32>(Track.Events.size()))
+    {
+        EditorState.SelectedNotifyEventIndex = -1;
+    }
+
+    if (EditorState.HoveredNotifyTrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        EditorState.HoveredNotifyTrackIndex = -1;
+        EditorState.HoveredNotifyEventIndex = -1;
+    }
+
+    if (EditorState.DraggedNotifyTrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        EditorState.DraggedNotifyTrackIndex = -1;
+        EditorState.DraggedNotifyEventIndex = -1;
+        EditorState.bDraggingNotify = false;
+    }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Animation/LuaAnimInstance.h"
 #include "Component/SkinnedMeshComponent.h"
 
@@ -39,6 +40,7 @@ public:
     float GetPreviewTime() const;
     float GetPreviewLength() const;
     UAnimSingleNodeInstance* GetPreviewAnimInstance() const;
+    const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const { return RecentFiredNotifyEvents; }
     void TickPreviewAnimation(float DeltaTime);
 
     void SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform);
@@ -71,4 +73,5 @@ private:
     bool bDeferAnimationInitialization = false;
 
     UAnimInstance* AnimInstance = nullptr;
+    TArray<FAnimNotifyEvent> RecentFiredNotifyEvents;
 };

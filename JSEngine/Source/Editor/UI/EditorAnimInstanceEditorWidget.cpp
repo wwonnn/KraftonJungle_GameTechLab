@@ -1,12 +1,15 @@
 #include "Editor/UI/EditorAnimInstanceEditorWidget.h"
 
 #include "Animation/AnimInstanceAsset.h"
+#include "Asset/AnimSequenceAssetLoader.h"
+#include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Editor/EditorEngine.h"
 #include "ImGui/imgui.h"
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 namespace
 {
@@ -30,6 +33,34 @@ namespace
             }
         }
         return -1;
+    }
+
+    FString NormalizeSequenceAssetPath(const FString& Path)
+    {
+        return FPaths::Normalize(Path);
+    }
+
+    bool IsSequenceAssetPath(const FString& Path)
+    {
+        if (Path.empty())
+        {
+            return false;
+        }
+
+        return std::filesystem::path(FPaths::ToWide(Path)).extension() == L".sequence";
+    }
+
+    bool SequenceAssetExistsOnDisk(const FString& Path)
+    {
+        if (Path.empty())
+        {
+            return false;
+        }
+
+        std::error_code ErrorCode;
+        return std::filesystem::exists(
+            std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(Path))),
+            ErrorCode);
     }
 
     const char* ToConditionLabel(EAnimTransitionConditionType Type)
@@ -373,6 +404,54 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
         bool bChanged = false;
         InputFName("Name", State.Name, bChanged);
         InputFString("Anim Sequence", State.AnimSequencePath, bChanged);
+        const FString NormalizedSequencePath = NormalizeSequenceAssetPath(State.AnimSequencePath);
+        const FString ProjectRelativeSequencePath = FPaths::ToProjectRelativePath(NormalizedSequencePath);
+        const bool bLooksLikeSequence = IsSequenceAssetPath(ProjectRelativeSequencePath);
+        const bool bSequenceExistsOnDisk = bLooksLikeSequence && SequenceAssetExistsOnDisk(ProjectRelativeSequencePath);
+        FAnimSequenceAssetMetadata SequenceMetadata;
+        const bool bHasSequenceMetadata =
+            bSequenceExistsOnDisk && FAnimSequenceAssetLoader().LoadMetadata(ProjectRelativeSequencePath, SequenceMetadata);
+
+        if (NormalizedSequencePath.empty())
+        {
+            ImGui::TextDisabled("Assign a .sequence asset path for this state.");
+        }
+        else if (!bLooksLikeSequence)
+        {
+            ImGui::TextColored(ImVec4(0.92f, 0.63f, 0.32f, 1.0f), "Expected a .sequence asset path.");
+        }
+        else if (!bSequenceExistsOnDisk)
+        {
+            ImGui::TextColored(ImVec4(0.89f, 0.38f, 0.34f, 1.0f), "Sequence asset file was not found on disk.");
+        }
+        else if (!bHasSequenceMetadata)
+        {
+            ImGui::TextColored(ImVec4(0.92f, 0.63f, 0.32f, 1.0f), "Sequence metadata could not be read.");
+        }
+        else
+        {
+            ImGui::TextDisabled(
+                "Sequence: %s | Frames: %d | Skeleton: %s",
+                SequenceMetadata.ObjectName.c_str(),
+                SequenceMetadata.NumberOfFrames,
+                SequenceMetadata.SkeletonAssetPath.empty()
+                    ? "<None>"
+                    : SequenceMetadata.SkeletonAssetPath.c_str());
+        }
+
+        if (!bSequenceExistsOnDisk || !EditorEngine)
+        {
+            ImGui::BeginDisabled();
+        }
+        if (ImGui::Button("Open Sequence") && EditorEngine)
+        {
+            EditorEngine->GetMainPanel().OpenAnimationSequenceAsset(ProjectRelativeSequencePath);
+        }
+        if (!bSequenceExistsOnDisk || !EditorEngine)
+        {
+            ImGui::EndDisabled();
+        }
+
         bChanged |= ImGui::Checkbox("Loop", &State.bLoop);
         bChanged |= ImGui::DragFloat("Play Rate", &State.PlayRate, 0.01f, 0.0f, 10.0f);
 

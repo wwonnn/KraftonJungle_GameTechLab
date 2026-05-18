@@ -146,6 +146,14 @@ float FAnimationSequencePreviewScene::GetPreviewLength() const
     return AnimationSequenceViewer::IsLiveObject(PreviewComponent) ? PreviewComponent->GetPreviewLength() : 0.0f;
 }
 
+const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewScene::GetRecentFiredNotifyEvents() const
+{
+    static const TArray<FAnimNotifyEvent> EmptyEvents = {};
+    return AnimationSequenceViewer::IsLiveObject(PreviewComponent)
+        ? PreviewComponent->GetRecentFiredNotifyEvents()
+        : EmptyEvents;
+}
+
 void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
 {
     if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
