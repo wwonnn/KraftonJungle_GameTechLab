@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequencePreviewController.h"
+﻿#include "Editor/Animation/AnimationSequencePreviewController.h"
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
@@ -17,11 +17,45 @@
 #include "Render/Renderer/Renderer.h"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <functional>
 
 namespace
 {
+    FString NormalizeProjectAssetPath(const FString& Path)
+    {
+        const FString NormalizedPath = FPaths::Normalize(Path);
+        if (NormalizedPath.empty())
+        {
+            return {};
+        }
+
+        const std::filesystem::path FsPath(FPaths::ToWide(NormalizedPath));
+        if (!FsPath.is_absolute())
+        {
+            return NormalizedPath;
+        }
+
+        const std::filesystem::path RootPath(FPaths::RootDir());
+        std::error_code ErrorCode;
+        const std::filesystem::path RelativePath = std::filesystem::relative(FsPath, RootPath, ErrorCode);
+        if (ErrorCode || RelativePath.empty())
+        {
+            return NormalizedPath;
+        }
+
+        for (const std::filesystem::path& Part : RelativePath)
+        {
+            if (Part == L"..")
+            {
+                return NormalizedPath;
+            }
+        }
+
+        return FPaths::Normalize(FPaths::ToUtf8(RelativePath.generic_wstring()));
+    }
+
     bool IsLiveObject(const UObject* Object)
     {
         return Object != nullptr && UObjectManager::Get().ContainsObject(Object);
@@ -68,6 +102,26 @@ namespace
         return FPaths::ToString(AssetFsPath.stem().generic_wstring());
     }
 
+    FString GetLowerExtension(const FString& AssetPath)
+    {
+        if (AssetPath.empty())
+        {
+            return {};
+        }
+
+        FString Extension = FPaths::ToString(
+            std::filesystem::path(FPaths::ToWide(FPaths::Normalize(AssetPath))).extension().generic_wstring());
+        std::transform(
+            Extension.begin(),
+            Extension.end(),
+            Extension.begin(),
+            [](unsigned char Character)
+            {
+                return static_cast<char>(std::tolower(Character));
+            });
+        return Extension;
+    }
+
     bool TryBuildMeshPathFromSkeletonPath(
         const FString& SkeletonAssetPath,
         const TArray<FString>& SkeletalMeshPaths,
@@ -93,9 +147,12 @@ namespace
         }
 
         const FString ExpectedMeshPath = FPaths::Normalize(FPaths::ToUtf8(MeshFsPath.generic_wstring()));
+        const FString ExpectedRelativeMeshPath = NormalizeProjectAssetPath(ExpectedMeshPath);
         for (const FString& CandidatePath : SkeletalMeshPaths)
         {
-            if (FPaths::Normalize(CandidatePath) == ExpectedMeshPath)
+            const FString NormalizedCandidatePath = NormalizeProjectAssetPath(CandidatePath);
+            if (NormalizedCandidatePath == ExpectedMeshPath ||
+                NormalizedCandidatePath == ExpectedRelativeMeshPath)
             {
                 OutMeshPath = CandidatePath;
                 return true;
@@ -486,7 +543,9 @@ bool FAnimationSequencePreviewController::ResolvePreviewMeshPath(FString& OutMes
     OutMeshPath.clear();
 
     const TArray<FString> SkeletalMeshPaths = FResourceManager::Get().GetSkeletalMeshPaths();
-    const FString SkeletonAssetPath = Sequence ? FPaths::Normalize(Sequence->GetSkeletonAssetPath()) : FString();
+    const FString SkeletonAssetPath = Sequence
+        ? NormalizeProjectAssetPath(Sequence->GetSkeletonAssetPath())
+        : FString();
     if (!SkeletonAssetPath.empty())
     {
         if (TryBuildMeshPathFromSkeletonPath(SkeletonAssetPath, SkeletalMeshPaths, OutMeshPath))
@@ -505,6 +564,28 @@ bool FAnimationSequencePreviewController::ResolvePreviewMeshPath(FString& OutMes
             }
         }
 
+        std::stable_sort(
+            CandidatePaths.begin(),
+            CandidatePaths.end(),
+            [](const FString& Left, const FString& Right)
+            {
+                const bool bLeftIsBinary = GetLowerExtension(Left) == ".skmesh";
+                const bool bRightIsBinary = GetLowerExtension(Right) == ".skmesh";
+                if (bLeftIsBinary != bRightIsBinary)
+                {
+                    return bLeftIsBinary;
+                }
+
+                const bool bLeftIsFbx = GetLowerExtension(Left) == ".fbx";
+                const bool bRightIsFbx = GetLowerExtension(Right) == ".fbx";
+                if (bLeftIsFbx != bRightIsFbx)
+                {
+                    return !bLeftIsFbx;
+                }
+
+                return Left < Right;
+            });
+
         auto TryResolveFromCandidates = [&](const TArray<FString>& Paths) -> bool
         {
             for (const FString& CandidatePath : Paths)
@@ -520,7 +601,7 @@ bool FAnimationSequencePreviewController::ResolvePreviewMeshPath(FString& OutMes
                     continue;
                 }
 
-                if (FPaths::Normalize(CandidateMesh->GetSkeletonAssetPath()) == SkeletonAssetPath)
+                if (NormalizeProjectAssetPath(CandidateMesh->GetSkeletonAssetPath()) == SkeletonAssetPath)
                 {
                     OutMeshPath = CandidatePath;
                     return true;

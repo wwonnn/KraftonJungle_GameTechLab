@@ -275,6 +275,89 @@ namespace
 
         return Curve;
     }
+
+    FString TrimJsonToken(FString Value)
+    {
+        auto IsTrimChar = [](unsigned char Ch)
+        {
+            return std::isspace(Ch) != 0 || Ch == ',' || Ch == '"';
+        };
+
+        while (!Value.empty() && IsTrimChar(static_cast<unsigned char>(Value.front())))
+        {
+            Value.erase(Value.begin());
+        }
+
+        while (!Value.empty() && IsTrimChar(static_cast<unsigned char>(Value.back())))
+        {
+            Value.pop_back();
+        }
+
+        return Value;
+    }
+
+    bool TryReadJsonStringValue(const FString& Line, const char* Key, FString& OutValue)
+    {
+        const FString KeyPattern = FString("\"") + Key + "\"";
+        const size_t KeyPos = Line.find(KeyPattern);
+        if (KeyPos == FString::npos)
+        {
+            return false;
+        }
+
+        const size_t ColonPos = Line.find(':', KeyPos + KeyPattern.size());
+        if (ColonPos == FString::npos)
+        {
+            return false;
+        }
+
+        const size_t FirstQuotePos = Line.find('"', ColonPos + 1);
+        if (FirstQuotePos == FString::npos)
+        {
+            return false;
+        }
+
+        const size_t SecondQuotePos = Line.find('"', FirstQuotePos + 1);
+        if (SecondQuotePos == FString::npos || SecondQuotePos <= FirstQuotePos + 1)
+        {
+            return false;
+        }
+
+        OutValue = Line.substr(FirstQuotePos + 1, SecondQuotePos - FirstQuotePos - 1);
+        return true;
+    }
+
+    bool TryReadJsonIntValue(const FString& Line, const char* Key, int32& OutValue)
+    {
+        const FString KeyPattern = FString("\"") + Key + "\"";
+        const size_t KeyPos = Line.find(KeyPattern);
+        if (KeyPos == FString::npos)
+        {
+            return false;
+        }
+
+        const size_t ColonPos = Line.find(':', KeyPos + KeyPattern.size());
+        if (ColonPos == FString::npos)
+        {
+            return false;
+        }
+
+        FString Token = TrimJsonToken(Line.substr(ColonPos + 1));
+        if (Token.empty())
+        {
+            return false;
+        }
+
+        try
+        {
+            OutValue = static_cast<int32>(std::stoi(Token));
+            return true;
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
 }
 
 UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
@@ -368,6 +451,75 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
 
     Sequence->DataModel = DataModel;
     return Sequence;
+}
+
+bool FAnimSequenceAssetLoader::LoadMetadata(const FString& Path, FAnimSequenceAssetMetadata& OutMetadata) const
+{
+    OutMetadata = {};
+
+    const FString NormalizedPath = NormalizeSequencePath(Path);
+    if (NormalizedPath.empty() || !IsSequenceAssetPath(NormalizedPath))
+    {
+        return false;
+    }
+
+    std::ifstream SequenceFile(FPaths::ToWide(NormalizedPath));
+    if (!SequenceFile.is_open())
+    {
+        return false;
+    }
+
+    FString Line;
+    while (std::getline(SequenceFile, Line))
+    {
+        FString StringValue;
+        int32 IntValue = 0;
+
+        if (TryReadJsonStringValue(Line, "ObjectName", StringValue))
+        {
+            OutMetadata.ObjectName = StringValue;
+            continue;
+        }
+
+        if (TryReadJsonStringValue(Line, "SkeletonAssetPath", StringValue))
+        {
+            OutMetadata.SkeletonAssetPath = FPaths::Normalize(StringValue);
+            continue;
+        }
+
+        if (TryReadJsonIntValue(Line, "FrameRateNumerator", IntValue))
+        {
+            OutMetadata.FrameRateNumerator = IntValue;
+            continue;
+        }
+
+        if (TryReadJsonIntValue(Line, "FrameRateDenominator", IntValue))
+        {
+            OutMetadata.FrameRateDenominator = IntValue;
+            continue;
+        }
+
+        if (TryReadJsonIntValue(Line, "NumberOfFrames", IntValue))
+        {
+            OutMetadata.NumberOfFrames = IntValue;
+            continue;
+        }
+
+        if (TryReadJsonIntValue(Line, "NumberOfKeys", IntValue))
+        {
+            OutMetadata.NumberOfKeys = IntValue;
+            continue;
+        }
+
+        size_t SearchPos = 0;
+        while ((SearchPos = Line.find("\"BoneTreeIndex\"", SearchPos)) != FString::npos)
+        {
+            ++OutMetadata.BoneTrackCount;
+            SearchPos += 15;
+        }
+    }
+
+    return OutMetadata.IsValid();
 }
 
 bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Sequence) const

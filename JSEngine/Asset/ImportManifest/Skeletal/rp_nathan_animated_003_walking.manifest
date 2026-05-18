@@ -1,9 +1,9 @@
 {
         "AnimationSequencePaths" : ["Asset/Animation/rp_nathan_animated_003_walking/Take 001.sequence"],
         "PhysicsAssetPath" : "",
-        "SkeletalMeshAssetPath" : "C:/W11_Team3_Engine/JSEngine/Asset/SkeletalMesh/Bin/rp_nathan_animated_003_walking.skmesh",
-        "SkeletonAssetPath" : "C:/W11_Team3_Engine/JSEngine/Asset/Skeleton/Bin/rp_nathan_animated_003_walking.skeleton",
-        "SourceFileWriteTime" : "13423386115",
+        "SkeletalMeshAssetPath" : "C:/development/W11_Team3_Engine/JSEngine/Asset/SkeletalMesh/Bin/rp_nathan_animated_003_walking.skmesh",
+        "SkeletonAssetPath" : "C:/development/W11_Team3_Engine/JSEngine/Asset/Skeleton/Bin/rp_nathan_animated_003_walking.skeleton",
+        "SourceFileWriteTime" : "13423380888",
         "SourcePath" : "Asset/SkeletalMesh/NathanFBX/rp_nathan_animated_003_walking.fbx",
         "Type" : "SkeletalImportManifest",
         "Version" : 1

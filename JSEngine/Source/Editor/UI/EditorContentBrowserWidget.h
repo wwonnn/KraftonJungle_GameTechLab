@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Asset/AnimSequenceAssetLoader.h"
 #include "Editor/UI/EditorWidget.h"
 #include "Render/Common/ComPtr.h"
 #include "ImGui/imgui.h"
@@ -135,4 +136,7 @@ private:
 	std::filesystem::path RenameSourcePath;
 	FString ActiveDragPayloadType;
 	FString ActiveDragPayloadPath;
+    FString CachedSequenceMetadataPath;
+    FAnimSequenceAssetMetadata CachedSequenceMetadata;
+    bool bCachedSequenceMetadataValid = false;
 };

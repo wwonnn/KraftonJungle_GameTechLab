@@ -14,6 +14,11 @@ REGISTER_FACTORY(USkeletalMeshComponent)
 
 namespace
 {
+bool IsLiveSingleNodeInstance(const UAnimSingleNodeInstance* Instance)
+{
+    return Instance != nullptr && UObjectManager::Get().ContainsObject(Instance);
+}
+
 bool BindSequenceToMeshSkeleton(USkeletalMesh* SkeletalMesh, UAnimSequence* AnimSequence)
 {
     if (!SkeletalMesh || !SkeletalMesh->HasValidMeshData() || !AnimSequence)
@@ -51,6 +56,23 @@ USkeletalMeshComponent::~USkeletalMeshComponent()
     ReleaseSingleNodeAnimation();
 }
 
+UObject* USkeletalMeshComponent::Duplicate()
+{
+    UObject* DuplicatedObject = FObjectFactory::Get().Create(GetTypeInfo()->name);
+    USkeletalMeshComponent* DuplicatedComponent = Cast<USkeletalMeshComponent>(DuplicatedObject);
+    if (!DuplicatedComponent)
+    {
+        return DuplicatedObject;
+    }
+
+    DuplicatedComponent->bDeferAnimationInitialization = true;
+    DuplicatedComponent->CopyPropertiesFrom(this);
+    DuplicatedComponent->bDeferAnimationInitialization = false;
+    DuplicatedComponent->SingleNodeInstance = nullptr;
+    DuplicatedComponent->PostDuplicate(this);
+    return DuplicatedComponent;
+}
+
 void USkeletalMeshComponent::Serialize(FArchive& Ar)
 {
     USkinnedMeshComponent::Serialize(Ar);
@@ -61,9 +83,22 @@ void USkeletalMeshComponent::Serialize(FArchive& Ar)
     }
 }
 
+void USkeletalMeshComponent::PostDuplicate(UObject* Original)
+{
+    USkinnedMeshComponent::PostDuplicate(Original);
+
+    SingleNodeInstance = nullptr;
+    InitializeSingleNodeAnimation();
+}
+
 void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
 {
     USkinnedMeshComponent::PostEditProperty(PropertyName);
+
+    if (bDeferAnimationInitialization)
+    {
+        return;
+    }
 
     if (std::strcmp(PropertyName, "AnimSequencePath") == 0 ||
         std::strcmp(PropertyName, "SkeletalMeshPath") == 0)
@@ -109,7 +144,7 @@ void USkeletalMeshComponent::SetPreviewSequence(UAnimSequence* InSequence)
     }
 
     EnsureSingleNodeAnimation();
-    if (!SingleNodeInstance)
+    if (!IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         return;
     }
@@ -121,7 +156,7 @@ void USkeletalMeshComponent::SetPreviewSequence(UAnimSequence* InSequence)
 void USkeletalMeshComponent::SetPreviewLooping(bool bInLooping)
 {
     EnsureSingleNodeAnimation();
-    if (SingleNodeInstance)
+    if (IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         SingleNodeInstance->SetLooping(bInLooping);
     }
@@ -130,7 +165,7 @@ void USkeletalMeshComponent::SetPreviewLooping(bool bInLooping)
 void USkeletalMeshComponent::SetPreviewPlaying(bool bInPlaying)
 {
     EnsureSingleNodeAnimation();
-    if (!SingleNodeInstance)
+    if (!IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         return;
     }
@@ -148,7 +183,7 @@ void USkeletalMeshComponent::SetPreviewPlaying(bool bInPlaying)
 void USkeletalMeshComponent::SetPreviewPlayRate(float InPlayRate)
 {
     EnsureSingleNodeAnimation();
-    if (SingleNodeInstance)
+    if (IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         SingleNodeInstance->SetPlayRate(InPlayRate);
     }
@@ -157,7 +192,7 @@ void USkeletalMeshComponent::SetPreviewPlayRate(float InPlayRate)
 void USkeletalMeshComponent::SetPreviewTime(float InTime)
 {
     EnsureSingleNodeAnimation();
-    if (!SingleNodeInstance)
+    if (!IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         return;
     }
@@ -169,12 +204,12 @@ void USkeletalMeshComponent::SetPreviewTime(float InTime)
 
 float USkeletalMeshComponent::GetPreviewTime() const
 {
-    return SingleNodeInstance ? SingleNodeInstance->GetCurrentTime() : 0.0f;
+    return IsLiveSingleNodeInstance(SingleNodeInstance) ? SingleNodeInstance->GetCurrentTime() : 0.0f;
 }
 
 float USkeletalMeshComponent::GetPreviewLength() const
 {
-    return SingleNodeInstance ? SingleNodeInstance->GetSequenceLength() : 0.0f;
+    return IsLiveSingleNodeInstance(SingleNodeInstance) ? SingleNodeInstance->GetSequenceLength() : 0.0f;
 }
 
 void USkeletalMeshComponent::TickPreviewAnimation(float DeltaTime)
@@ -279,11 +314,13 @@ void USkeletalMeshComponent::SetAnimSequencePath(const FString& InAnimSequencePa
 
 void USkeletalMeshComponent::EnsureSingleNodeAnimation()
 {
-    if (SingleNodeInstance)
+    if (IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         SingleNodeInstance->SetOwningComponent(this);
         return;
     }
+
+    SingleNodeInstance = nullptr;
 
     SingleNodeInstance = UObjectManager::Get().CreateObject<UAnimSingleNodeInstance>();
     if (!SingleNodeInstance)
@@ -296,15 +333,17 @@ void USkeletalMeshComponent::EnsureSingleNodeAnimation()
 
 void USkeletalMeshComponent::ReleaseSingleNodeAnimation()
 {
-    if (!SingleNodeInstance)
+    UAnimSingleNodeInstance* Instance = SingleNodeInstance;
+    SingleNodeInstance = nullptr;
+
+    if (!IsLiveSingleNodeInstance(Instance))
     {
         return;
     }
 
-    SingleNodeInstance->SetOwningComponent(nullptr);
-    SingleNodeInstance->SetSequence(nullptr);
-    UObjectManager::Get().DestroyObject(SingleNodeInstance);
-    SingleNodeInstance = nullptr;
+    Instance->SetOwningComponent(nullptr);
+    Instance->SetSequence(nullptr);
+    UObjectManager::Get().DestroyObject(Instance);
 }
 
 void USkeletalMeshComponent::InitializeSingleNodeAnimation()
@@ -325,7 +364,7 @@ void USkeletalMeshComponent::InitializeSingleNodeAnimation()
     }
 
     EnsureSingleNodeAnimation();
-    if (!SingleNodeInstance)
+    if (!IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         ResetToBindPose();
         return;
@@ -343,7 +382,7 @@ void USkeletalMeshComponent::ApplyAnimationPose(float DeltaTime)
 
 void USkeletalMeshComponent::ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime)
 {
-    if (!SingleNodeInstance)
+    if (!IsLiveSingleNodeInstance(SingleNodeInstance))
     {
         return;
     }

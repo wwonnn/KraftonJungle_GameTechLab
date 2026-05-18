@@ -8,6 +8,7 @@
 #include "Editor/Settings/EditorSettings.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/AnimSequenceAssetLoader.h"
 #include "Asset/CurveFloatAsset.h"
 #include "Asset/StaticMesh.h"
 #include "Core/ResourceManager.h"
@@ -795,6 +796,9 @@ void FEditorContentBrowserWidget::Refresh()
 	RebuildRootNode();
 	RefreshContent();
 	bPendingMaterialPreviewCacheClear = true;
+    CachedSequenceMetadataPath.clear();
+    CachedSequenceMetadata = {};
+    bCachedSequenceMetadataValid = false;
 	bNeedsRefresh = false;
 }
 
@@ -1726,22 +1730,52 @@ void FEditorContentBrowserWidget::DrawAssetPreview()
 	{
 		ImGui::Spacing();
 		ImGui::TextDisabled("Sequence Asset");
-		UAnimSequence* Sequence = FResourceManager::Get().LoadAnimSequence(RelativePath);
-		if (!HasValidAnimSequenceData(Sequence))
-		{
-			ImGui::TextWrapped("Sequence asset could not be loaded.");
-			return;
-		}
 
-		UAnimDataModel* DataModel = Sequence->DataModel;
-		ImGui::Text("Name: %s", Sequence->GetName().c_str());
-		ImGui::Text("Frame Rate: %d / %d", DataModel->FrameRate.Numerator, DataModel->FrameRate.Denominator);
-		ImGui::Text("Frames: %d", DataModel->NumberOfFrames);
-		ImGui::Text("Keys: %d", DataModel->NumberOfKeys);
-		ImGui::Text("Bone Tracks: %d", static_cast<int32>(DataModel->BoneAnimationTracks.size()));
-		ImGui::TextWrapped(
-			"Skeleton Asset: %s",
-			Sequence->GetSkeletonAssetPath().empty() ? "(none)" : Sequence->GetSkeletonAssetPath().c_str());
+        if (HasValidAnimSequenceData(FResourceManager::Get().FindAnimSequence(RelativePath)))
+        {
+            UAnimSequence* Sequence = FResourceManager::Get().FindAnimSequence(RelativePath);
+            UAnimDataModel* DataModel = Sequence ? Sequence->DataModel : nullptr;
+            if (!Sequence || !DataModel)
+            {
+                ImGui::TextWrapped("Sequence asset could not be loaded.");
+                return;
+            }
+
+            ImGui::Text("Name: %s", Sequence->GetName().c_str());
+            ImGui::Text("Frame Rate: %d / %d", DataModel->FrameRate.Numerator, DataModel->FrameRate.Denominator);
+            ImGui::Text("Frames: %d", DataModel->NumberOfFrames);
+            ImGui::Text("Keys: %d", DataModel->NumberOfKeys);
+            ImGui::Text("Bone Tracks: %d", static_cast<int32>(DataModel->BoneAnimationTracks.size()));
+            ImGui::TextWrapped(
+                "Skeleton Asset: %s",
+                Sequence->GetSkeletonAssetPath().empty() ? "(none)" : Sequence->GetSkeletonAssetPath().c_str());
+            return;
+        }
+
+        if (!bCachedSequenceMetadataValid || CachedSequenceMetadataPath != RelativePath)
+        {
+            CachedSequenceMetadataPath = RelativePath;
+            CachedSequenceMetadata = {};
+            bCachedSequenceMetadataValid = FAnimSequenceAssetLoader().LoadMetadata(RelativePath, CachedSequenceMetadata);
+        }
+
+        if (!bCachedSequenceMetadataValid)
+        {
+            ImGui::TextWrapped("Sequence metadata could not be read.");
+            return;
+        }
+
+        ImGui::Text("Name: %s", CachedSequenceMetadata.ObjectName.empty() ? "(unnamed)" : CachedSequenceMetadata.ObjectName.c_str());
+        ImGui::Text(
+            "Frame Rate: %d / %d",
+            CachedSequenceMetadata.FrameRateNumerator,
+            CachedSequenceMetadata.FrameRateDenominator);
+        ImGui::Text("Frames: %d", CachedSequenceMetadata.NumberOfFrames);
+        ImGui::Text("Keys: %d", CachedSequenceMetadata.NumberOfKeys);
+        ImGui::Text("Bone Tracks: %d", CachedSequenceMetadata.BoneTrackCount);
+        ImGui::TextWrapped(
+            "Skeleton Asset: %s",
+            CachedSequenceMetadata.SkeletonAssetPath.empty() ? "(none)" : CachedSequenceMetadata.SkeletonAssetPath.c_str());
 		return;
 	}
 

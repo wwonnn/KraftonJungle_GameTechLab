@@ -17,7 +17,9 @@ public:
     USkeletalMeshComponent() = default;
     ~USkeletalMeshComponent() override;
 
+    UObject* Duplicate() override;
     void Serialize(FArchive& Ar) override;
+    void PostDuplicate(UObject* Original) override;
     void PostEditProperty(const char* PropertyName) override;
 
     void BeginPlay() override;
@@ -61,4 +63,6 @@ private:
 
     UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")
     UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
+
+    bool bDeferAnimationInitialization = false;
 };
