@@ -1,26 +1,11 @@
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 
-#include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
-#include "Object/Object.h"
+#include "Editor/Animation/AnimationSequenceViewerUtils.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
-
-namespace
-{
-    const UAnimDataModel* GetValidAnimDataModel(const UAnimSequence* Sequence)
-    {
-        if (!Sequence || !UObjectManager::Get().ContainsObject(Sequence))
-        {
-            return nullptr;
-        }
-
-        const UAnimDataModel* DataModel = Sequence->DataModel;
-        return (DataModel && UObjectManager::Get().ContainsObject(DataModel)) ? DataModel : nullptr;
-    }
-}
 
 void FAnimationSequenceEditorState::Reset()
 {
@@ -50,7 +35,7 @@ void FAnimationSequenceEditorState::InitializeFromSequence(
     bLoop = bInLoop;
     PlayRate = InPlayRate;
 
-    const UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
+    const UAnimDataModel* DataModel = AnimationSequenceViewer::GetValidAnimDataModel(Sequence);
     if (DataModel)
     {
         DisplayFrameRate = DataModel->FrameRate;

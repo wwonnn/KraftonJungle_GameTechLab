@@ -1,4 +1,4 @@
-#include "Editor/UI/EditorControlWidget.h"
+﻿#include "Editor/UI/EditorControlWidget.h"
 
 #include "Editor/EditorEngine.h"
 #include "Camera/ViewportCamera.h"
@@ -76,10 +76,10 @@ bool FEditorControlWidget::DrawPlaceActorMenu(const FVector& SpawnPoint, bool bC
 	DrawSpawnItem(5, "Decal");
 	DrawSpawnItem(12, "Fog");
 	DrawSpawnItem(6, "Fireball");
-    DrawSpawnItem(7, "Decal Spotlight");
-    DrawSpawnItem(14, "Cube");
-    DrawSpawnItem(15, "Destructible");
-    DrawSpawnItem(16, "BondingBox");
+	DrawSpawnItem(7, "Decal Spotlight");
+	DrawSpawnItem(14, "Cube");
+	DrawSpawnItem(15, "Destructible");
+	DrawSpawnItem(16, "BondingBox");
 	DrawSpawnItem(17, "Main Scene Destructible");
 	ImGui::Separator();
 	DrawSpawnItem(8, "Ambient Light");
@@ -226,25 +226,25 @@ bool FEditorControlWidget::SpawnPrimitive(int32 PrimitiveType, const FVector& Sp
 			break;
 		}
 		case 15:
-        {
-            ADestructibleActor* Actor = World->SpawnActor<ADestructibleActor>();
-            Actor->InitDefaultComponents();
-            Actor->SetActorLocation(SpawnPoint);
-            break;
+		{
+			ADestructibleActor* Actor = World->SpawnActor<ADestructibleActor>();
+			Actor->InitDefaultComponents();
+			Actor->SetActorLocation(SpawnPoint);
+			break;
 		}
 		case 16:
-        {
-            ABoundsBoxActor* Actor = World->SpawnActor<ABoundsBoxActor>();
-            Actor->InitDefaultComponents();
-            Actor->SetActorLocation(SpawnPoint);
-            break;
+		{
+			ABoundsBoxActor* Actor = World->SpawnActor<ABoundsBoxActor>();
+			Actor->InitDefaultComponents();
+			Actor->SetActorLocation(SpawnPoint);
+			break;
 		}
 		case 17:
 		{
-		    AMainSceneDestructibleActor* Actor = World->SpawnActor<AMainSceneDestructibleActor>();
-		    Actor->InitDefaultComponents();
-		    Actor->SetActorLocation(SpawnPoint);
-		    break;
+			AMainSceneDestructibleActor* Actor = World->SpawnActor<AMainSceneDestructibleActor>();
+			Actor->InitDefaultComponents();
+			Actor->SetActorLocation(SpawnPoint);
+			break;
 		}
 		case 18:
 		{
@@ -297,7 +297,7 @@ void FEditorControlWidget::Render(float DeltaTime)
 	if (ImGui::DragFloat3("Camera Rotation", CameraRotation, 0.1f, 0.0f, 0.0f, "%.1f"))
 	{
 		CameraRotation[1] = MathUtil::Clamp(CameraRotation[1], -89.9f, 89.9f);
-        FRotator NewRotation = FRotator::MakeFromEuler(FVector(CameraRotation[0], CameraRotation[1], CameraRotation[2]));
+		FRotator NewRotation = FRotator::MakeFromEuler(FVector(CameraRotation[0], CameraRotation[1], CameraRotation[2]));
 
 		NewRotation.Normalize();
 		Camera->SetRotation(NewRotation);

@@ -296,21 +296,21 @@ void FEditorViewportClient::ClearPIEPlayerController()
 
 void FEditorViewportClient::SetSelectionManager(FSelectionManager* InSelectionManager)
 {
-    SelectionManager = InSelectionManager;
-    InputRouter.GetEditorWorldController().SetSelectionManager(InSelectionManager);
+	SelectionManager = InSelectionManager;
+	InputRouter.GetEditorWorldController().SetSelectionManager(InSelectionManager);
 }
 
 void FEditorViewportClient::ReleaseTransientEditorState()
 {
-    InputTools.clear();
-    InputRouter.SetActiveController(EActiveEditorController::NilController);
-    InputRouter.GetEditorWorldController().SetSelectionPickResolver({});
-    InputRouter.GetEditorWorldController().NullifySelectionManager();
-    InputRouter.GetEditorWorldController().NullifyGizmo();
-    InputRouter.GetEditorWorldController().NullifyCamera();
-    InputRouter.GetEditorWorldController().NullifyWorld();
-    InputRouter.GetGameInputBridge().NullifyCamera();
-    InputRouter.GetGameInputBridge().ClearPlayerController();
+	InputTools.clear();
+	InputRouter.SetActiveController(EActiveEditorController::NilController);
+	InputRouter.GetEditorWorldController().SetSelectionPickResolver({});
+	InputRouter.GetEditorWorldController().NullifySelectionManager();
+	InputRouter.GetEditorWorldController().NullifyGizmo();
+	InputRouter.GetEditorWorldController().NullifyCamera();
+	InputRouter.GetEditorWorldController().NullifyWorld();
+	InputRouter.GetGameInputBridge().NullifyCamera();
+	InputRouter.GetGameInputBridge().ClearPlayerController();
 }
 
 void FEditorViewportClient::CreateCamera()
@@ -641,7 +641,7 @@ void FEditorViewportClient::BuildSceneView(FSceneView& OutView) const
 
 	OutView.bOrthographic = RenderCamera->IsOrthographic();
 
-    OutView.CameraOrthoHeight = RenderCamera->GetOrthoHeight();
+	OutView.CameraOrthoHeight = RenderCamera->GetOrthoHeight();
 
 	OutView.CameraFrustum = RenderCamera->GetFrustum();
 
@@ -679,11 +679,11 @@ void FEditorViewportClient::TickInput(const FViewportInputContext& Context)
 		FEditorWorldController& WorldController = InputRouter.GetEditorWorldController();
 		if (FEditorSettings::Get().bEnableCameraSmoothing && WorldController.HasPendingCameraTransition())
 		{
-            WorldController.Tick(Context.DeltaSeconds);
+			WorldController.Tick(Context.DeltaSeconds);
 		}
 		else
 		{
-            WorldController.ResetTargetFromCamera();
+			WorldController.ResetTargetFromCamera();
 		}
 		return;
 	}
@@ -719,12 +719,12 @@ void FEditorViewportClient::TickCursorCapture()
 		return;
 	}
 
-    const InputSystem& IS = InputSystem::Get();
-    const bool bAnyMouseReleased = IS.GetKeyUp(VK_LBUTTON) || IS.GetKeyUp(VK_RBUTTON) || IS.GetKeyUp(VK_MBUTTON);
-    if (bAnyMouseReleased && !IS.GetKey(VK_LBUTTON) && !IS.GetKey(VK_RBUTTON) && !IS.GetKey(VK_MBUTTON))
-    {
-        InputSystem::Get().LockMouse(false);
-    }
+	const InputSystem& IS = InputSystem::Get();
+	const bool bAnyMouseReleased = IS.GetKeyUp(VK_LBUTTON) || IS.GetKeyUp(VK_RBUTTON) || IS.GetKeyUp(VK_MBUTTON);
+	if (bAnyMouseReleased && !IS.GetKey(VK_LBUTTON) && !IS.GetKey(VK_RBUTTON) && !IS.GetKey(VK_MBUTTON))
+	{
+		InputSystem::Get().LockMouse(false);
+	}
 }
 
 void FEditorViewportClient::TickKeyboardInput(const FViewportInputContext& Context)
@@ -1429,8 +1429,8 @@ void FEditorViewportClient::TickInteraction(float DeltaTime)
 	}
 
 	if (Window) MousePoint = Window->ScreenToClientPoint(MousePoint);
-    const float VX = State ? static_cast<float>(Viewport->GetRect().X) : 0.f;
-    const float VY = State ? static_cast<float>(Viewport->GetRect().Y) : 0.f;
+	const float VX = State ? static_cast<float>(Viewport->GetRect().X) : 0.f;
+	const float VY = State ? static_cast<float>(Viewport->GetRect().Y) : 0.f;
 	const float LocalX = static_cast<float>(MousePoint.x) - VX;
 	const float LocalY = static_cast<float>(MousePoint.y) - VY;
 
@@ -1482,11 +1482,11 @@ void FEditorViewportClient::TickInteraction(float DeltaTime)
 void FEditorViewportClient::LockCursorToViewport()
 {
 	// State->Rect is in client space; LockMouse needs screen space.
-    POINT Origin = { Viewport->GetRect().X, Viewport->GetRect().Y };
+	POINT Origin = { Viewport->GetRect().X, Viewport->GetRect().Y };
 	if (Window)
 		::ClientToScreen(Window->GetHWND(), &Origin);
 	InputSystem::Get().LockMouse(true, (float)Origin.x, (float)Origin.y,
-                                 (float)Viewport->GetRect().Width, (float)Viewport->GetRect().Height);
+								 (float)Viewport->GetRect().Width, (float)Viewport->GetRect().Height);
 }
 
 void FEditorViewportClient::HandleBoxSelection()

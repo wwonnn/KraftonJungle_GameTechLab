@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Editor/Animation/AnimationSequenceEditorState.h"
-#include "Editor/Document/EditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
+#include "Editor/Document/EditorDocument.h"
 
 #include <memory>
 

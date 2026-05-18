@@ -1,0 +1,330 @@
+#include "Editor/Animation/AnimationSequencePreviewScene.h"
+
+#include "Animation/AnimData/AnimSequence.h"
+#include "Asset/SkeletalMesh.h"
+#include "Component/PostProcess/Light/AmbientLightComponent.h"
+#include "Component/SkeletalMeshComponent.h"
+#include "Core/ResourceManager.h"
+#include "Editor/Animation/AnimationSequenceViewerUtils.h"
+#include "Editor/EditorEngine.h"
+#include "Editor/Selection/SelectionManager.h"
+#include "GameFramework/PrimitiveActors.h"
+#include "GameFramework/World.h"
+#include "Math/Utils.h"
+#include "Object/FName.h"
+#include "Render/Renderer/Renderer.h"
+
+#include <functional>
+#include <string>
+
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+
+FAnimationSequencePreviewScene::~FAnimationSequencePreviewScene()
+{
+    Shutdown();
+}
+
+bool FAnimationSequencePreviewScene::Initialize(
+    UEditorEngine* InEditorEngine,
+    const FString& InSequencePath,
+    UAnimSequence* InSequence,
+    const FString& InPreviewMeshPath)
+{
+    Shutdown();
+
+    EditorEngine = InEditorEngine;
+    SequencePath = InSequencePath;
+    PreviewMeshPath = InPreviewMeshPath;
+    PreviewMesh = FResourceManager::Get().LoadSkeletalMesh(PreviewMeshPath);
+    if (!PreviewMesh || !PreviewMesh->HasValidMeshData())
+    {
+        Shutdown();
+        return false;
+    }
+
+    if (!InitializePreviewWorld() || !InitializePreviewActor(InSequence))
+    {
+        Shutdown();
+        return false;
+    }
+
+    SetViewportSize(ViewportWidth, ViewportHeight);
+    return true;
+}
+
+void FAnimationSequencePreviewScene::Shutdown()
+{
+    PreviewComponent = nullptr;
+    PreviewActor = nullptr;
+    PreviewMesh = nullptr;
+    PreviewMeshPath.clear();
+
+    PreviewViewport.SetRenderTargetSet(nullptr);
+    PreviewViewport.SetEditorIdPickActors({});
+    PreviewViewport.SetClient(nullptr);
+    PreviewViewportClient.SetBonePickHandler(nullptr);
+    PreviewViewportClient.DestroyCamera();
+    PreviewViewportClient.SetGizmo(nullptr);
+    PreviewViewportClient.SetSelectionManager(nullptr);
+    PreviewViewportClient.SetViewport(nullptr);
+    PreviewViewportClient.SetState(nullptr);
+    PreviewViewportClient.SetWorld(nullptr);
+    PreviewViewportClient.ReleaseTransientEditorState();
+
+    if (EditorEngine && PreviewResourceIndex != InvalidPreviewResourceIndex)
+    {
+        EditorEngine->GetRenderer().ReleaseViewerViewportResource(PreviewResourceIndex);
+    }
+    PreviewResourceIndex = InvalidPreviewResourceIndex;
+
+    if (EditorEngine && PreviewWorldHandle.IsValid())
+    {
+        if (EditorEngine->GetWorldContextFromHandle(PreviewWorldHandle))
+        {
+            EditorEngine->DestroyWorldContext(PreviewWorldHandle);
+        }
+    }
+
+    PreviewWorld = nullptr;
+    PreviewWorldHandle = FName();
+    SequencePath.clear();
+    EditorEngine = nullptr;
+}
+
+bool FAnimationSequencePreviewScene::HasValidPreview() const
+{
+    return AnimationSequenceViewer::IsLiveObject(PreviewMesh) &&
+        PreviewWorld != nullptr &&
+        AnimationSequenceViewer::IsLiveObject(PreviewComponent);
+}
+
+void FAnimationSequencePreviewScene::TickViewportClient(float DeltaTime)
+{
+    if (!HasValidPreview())
+    {
+        return;
+    }
+
+    PreviewViewportClient.Tick(DeltaTime);
+}
+
+void FAnimationSequencePreviewScene::ApplyPlaybackSettings(bool bLooping, float PlayRate, bool bPlaying)
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    PreviewComponent->SetPreviewLooping(bLooping);
+    PreviewComponent->SetPreviewPlayRate(PlayRate);
+    PreviewComponent->SetPreviewPlaying(bPlaying);
+}
+
+void FAnimationSequencePreviewScene::SetCurrentTime(float InTime)
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    PreviewComponent->SetPreviewTime(InTime);
+    if (PreviewWorld)
+    {
+        PreviewWorld->SyncSpatialIndex();
+    }
+}
+
+float FAnimationSequencePreviewScene::GetCurrentTime() const
+{
+    return AnimationSequenceViewer::IsLiveObject(PreviewComponent) ? PreviewComponent->GetPreviewTime() : 0.0f;
+}
+
+float FAnimationSequencePreviewScene::GetPreviewLength() const
+{
+    return AnimationSequenceViewer::IsLiveObject(PreviewComponent) ? PreviewComponent->GetPreviewLength() : 0.0f;
+}
+
+void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    PreviewComponent->TickPreviewAnimation(DeltaTime);
+    if (PreviewWorld)
+    {
+        PreviewWorld->SyncSpatialIndex();
+    }
+}
+
+void FAnimationSequencePreviewScene::SetViewportSize(int32 InWidth, int32 InHeight)
+{
+    ViewportWidth = std::max(InWidth, 1);
+    ViewportHeight = std::max(InHeight, 1);
+
+    FViewportRect ViewportRect = {};
+    ViewportRect.X = 0;
+    ViewportRect.Y = 0;
+    ViewportRect.Width = ViewportWidth;
+    ViewportRect.Height = ViewportHeight;
+
+    PreviewViewport.SetRect(ViewportRect);
+    PreviewViewportClient.SetViewportSize(static_cast<float>(ViewportWidth), static_cast<float>(ViewportHeight));
+
+    if (!EditorEngine || !HasValidPreview())
+    {
+        PreviewViewport.SetRenderTargetSet(nullptr);
+        return;
+    }
+
+    // The preview scene owns the offscreen viewer resource. The embedded ImGui
+    // panel only mirrors this rect; it does not own the render target lifecycle.
+    if (PreviewResourceIndex == InvalidPreviewResourceIndex)
+    {
+        PreviewResourceIndex = NextPreviewResourceIndex++;
+    }
+
+    FViewportRenderResource& Resource =
+        EditorEngine->GetRenderer().AcquireViewerViewportResource(
+            PreviewResourceIndex,
+            static_cast<uint32>(ViewportWidth),
+            static_cast<uint32>(ViewportHeight));
+    PreviewViewport.SetRenderTargetSet(&Resource.GetView());
+}
+
+ID3D11ShaderResourceView* FAnimationSequencePreviewScene::GetPreviewSRV() const
+{
+    return PreviewViewport.GetOutSRV();
+}
+
+bool FAnimationSequencePreviewScene::InitializePreviewWorld()
+{
+    if (!EditorEngine)
+    {
+        return false;
+    }
+
+    const size_t PathHash = std::hash<FString>{}(SequencePath);
+    PreviewWorldHandle = FName(("__AnimSequencePreview_" + std::to_string(PathHash)).c_str());
+    FWorldContext& PreviewContext =
+        EditorEngine->CreateWorldContext(EWorldType::ViewerPreview, PreviewWorldHandle, "Animation Sequence Preview");
+    PreviewContext.bPaused = true;
+    EditorEngine->ApplySpatialIndexMaintenanceSettings(PreviewContext.World);
+    PreviewWorld = PreviewContext.World;
+    if (!PreviewWorld)
+    {
+        return false;
+    }
+
+    InitializeViewportClient();
+    if (PreviewContext.SelectionManager)
+    {
+        PreviewViewportClient.SetGizmo(PreviewContext.SelectionManager->GetGizmo());
+        PreviewViewportClient.SetSelectionManager(PreviewContext.SelectionManager);
+    }
+
+    ADirectionalLightActor* DirectionalLight = PreviewWorld->SpawnActor<ADirectionalLightActor>();
+    if (DirectionalLight)
+    {
+        DirectionalLight->InitDefaultComponents();
+        DirectionalLight->SetFName(FName("Anim Preview Directional Light"));
+        DirectionalLight->SetActorLocation(FVector(100000.0f, 100000.0f, 100000.0f));
+        DirectionalLight->SetActorRotation(FVector(0.0f, 44.0f, 0.0f));
+    }
+
+    AAmbientLightActor* AmbientLight = PreviewWorld->SpawnActor<AAmbientLightActor>();
+    if (AmbientLight)
+    {
+        AmbientLight->InitDefaultComponents();
+        AmbientLight->SetFName(FName("Anim Preview Ambient Light"));
+        AmbientLight->SetActorLocation(FVector(100000.0f, 100000.0f, 100000.0f));
+
+        if (UAmbientLightComponent* AmbientLightComponent = AmbientLight->FindComponent<UAmbientLightComponent>())
+        {
+            AmbientLightComponent->Intensity = 0.7f;
+        }
+    }
+
+    return true;
+}
+
+bool FAnimationSequencePreviewScene::InitializePreviewActor(UAnimSequence* Sequence)
+{
+    if (!PreviewWorld || !PreviewMesh)
+    {
+        return false;
+    }
+
+    PreviewActor = PreviewWorld->SpawnActor<ASkeletalMeshActor>();
+    if (!PreviewActor)
+    {
+        return false;
+    }
+
+    PreviewActor->InitDefaultComponents();
+    PreviewActor->SetFName(FName("AnimationSequencePreviewActor"));
+    PreviewActor->SetActorLocation(FVector::ZeroVector);
+
+    PreviewComponent = PreviewActor->GetSkeletalMeshComponent();
+    if (!PreviewComponent)
+    {
+        return false;
+    }
+
+    PreviewComponent->SetSkeletalMesh(PreviewMesh);
+    PreviewComponent->SetPreviewSequence(Sequence);
+    PreviewComponent->SetPreviewLooping(true);
+    PreviewComponent->SetPreviewPlayRate(1.0f);
+    PreviewComponent->SetPreviewPlaying(false);
+    PreviewComponent->EnsureSkinningUpdated();
+
+    PreviewWorld->SyncSpatialIndex();
+    ConfigurePreviewCamera();
+    return true;
+}
+
+void FAnimationSequencePreviewScene::InitializeViewportClient()
+{
+    PreviewViewport.SetClient(&PreviewViewportClient);
+
+    PreviewViewportClient.Initialize(EditorEngine->GetWindow(), EditorEngine);
+    PreviewViewportClient.SetWorld(PreviewWorld);
+    PreviewViewportClient.SetViewport(&PreviewViewport);
+    PreviewViewportClient.SetState(&PreviewViewport.GetState());
+    PreviewViewportClient.SetSceneEditingShortcutsEnabled(false);
+    PreviewViewportClient.SetViewportType(EEditorViewportType::EVT_Perspective);
+    PreviewViewportClient.CreateCamera();
+    PreviewViewportClient.ApplyCameraMode();
+
+    PreviewViewport.GetState().ViewMode = EViewMode::Lit_BlinnPhong;
+    PreviewViewport.GetState().LightCullMode = ELightCullMode::None;
+}
+
+void FAnimationSequencePreviewScene::ConfigurePreviewCamera()
+{
+    if (!PreviewMesh)
+    {
+        return;
+    }
+
+    FViewportCamera* Camera = PreviewViewportClient.GetCamera();
+    if (!Camera)
+    {
+        return;
+    }
+
+    const FAABB& MeshBounds = PreviewMesh->GetLocalBounds();
+    const FVector Center = MeshBounds.GetCenter();
+    const float Radius = std::max(MeshBounds.GetExtent().Size(), 40.0f);
+    const float Distance = std::max(Radius * 2.25f, 160.0f);
+    constexpr float DegreesToRadians = 3.14159265358979323846f / 180.0f;
+
+    Camera->SetLookAt(Center);
+    Camera->SetLocation(Center + FVector(Distance, Distance * 0.35f, Radius * 0.75f));
+    Camera->SetNearPlane(1.0f);
+    Camera->SetFarPlane(std::max(5000.0f, Distance * 8.0f));
+    Camera->SetFOV(60.0f * DegreesToRadians);
+}

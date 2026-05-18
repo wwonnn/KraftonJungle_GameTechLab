@@ -7,6 +7,7 @@
 class UAnimSequence;
 class FAnimationSequenceEditorState;
 class FAnimationSequencePreviewController;
+struct ImVec2;
 
 class FAnimationSequenceEditorWidget : public FEditorWidget
 {
@@ -18,6 +19,17 @@ public:
         UAnimSequence* InSequence,
         FAnimationSequencePreviewController* InPreviewController,
         FAnimationSequenceEditorState* InEditorState);
+
+private:
+    TArray<FString> BuildPreviewOverlayLines() const;
+    void RenderPreviewPane(float PreviewHeight, const TArray<FString>& PreviewOverlayLines);
+    void RenderPreviewImage(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines);
+    void RenderPreviewFallback(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines) const;
+    void SyncEmbeddedViewportRectAndFocus(const ImVec2& Min, const ImVec2& Max, bool bViewportClicked);
+    void RenderTransportAndTimelinePanel(float TransportPanelHeight, float MaxPreviewHeight);
+    void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl);
+    void RenderPlaybackSummary() const;
+    void RenderFooterStatus() const;
 
 private:
     FString SequencePath;

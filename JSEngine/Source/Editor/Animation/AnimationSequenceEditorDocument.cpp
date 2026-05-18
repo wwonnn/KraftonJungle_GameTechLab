@@ -54,6 +54,9 @@ void FAnimationSequenceEditorDocument::Tick(float DeltaTime)
 
 void FAnimationSequenceEditorDocument::RenderEmbedded(float DeltaTime)
 {
+    // The render pipeline ticks the active document before rendering its preview
+    // viewport. We synchronize once more here so the ImGui panels reflect the
+    // latest playback time even when the document has no active preview scene.
     SyncEditorState();
 
     if (Widget)
@@ -75,6 +78,8 @@ void FAnimationSequenceEditorDocument::RenderToolbar()
 
 void FAnimationSequenceEditorDocument::BuildCommandList(FEditorCommandList& OutCommands)
 {
+    // Transport remains widget-driven for now. Adding global editor shortcuts
+    // here would require broader command-id/input work outside this refactor.
     (void)OutCommands;
 }
 
@@ -95,6 +100,8 @@ void FAnimationSequenceEditorDocument::SyncEditorState()
         return;
     }
 
+    // PreviewController owns runtime playback authority. EditorState mirrors
+    // that data for timeline rendering and UI-only interactions.
     EditorState.SequenceLength = PreviewController->GetLength();
     EditorState.DisplayFrameRate = PreviewController->GetFrameRate();
     EditorState.TotalFrames = PreviewController->GetFrameCount();
