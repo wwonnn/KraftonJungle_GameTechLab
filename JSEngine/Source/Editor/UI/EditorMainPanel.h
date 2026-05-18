@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "ImGui/imgui.h"
 #include "Editor/Document/EditorDocument.h"
@@ -54,6 +54,7 @@ public:
 	void OpenMaterialSlot(UPrimitiveComponent* PrimitiveComp, int32 SlotIndex);
 	void OpenCurveAsset(const FString& CurvePath);
 	void OpenAnimationSequenceAsset(const FString& SequencePath);
+	void OpenAnimInstanceAsset(const FString& AnimInstancePath);
 	void OpenRuntimeUIPreviewAsset(const FString& RmlPath = "");
 	void OpenViewer(FEditorViewer* Viewer);
 	void RequestDockViewer(FEditorViewer* Viewer);

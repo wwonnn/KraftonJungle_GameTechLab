@@ -18,6 +18,45 @@
 
 namespace
 {
+	bool IsWindowInHierarchy(ImGuiWindow* Candidate, ImGuiWindow* Root)
+	{
+		for (ImGuiWindow* Window = Candidate; Window; Window = Window->ParentWindow)
+		{
+			if (Window == Root)
+			{
+				return true;
+			}
+			if (Window->RootWindow == Root || Window->RootWindowDockTree == Root)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool IsViewportContentWindow(ImGuiWindow* Window)
+	{
+		if (!Window)
+		{
+			return false;
+		}
+
+		const char* WindowName = Window->Name ? Window->Name : "";
+		if (std::strcmp(WindowName, "Viewport") == 0 ||
+			std::strncmp(WindowName, "Viewport###", 11) == 0 ||
+			std::strncmp(WindowName, "Viewer##", 8) == 0 ||
+			std::strcmp(WindowName, "ViewportPanel") == 0)
+		{
+			return true;
+		}
+
+		if (ImGuiWindow* ViewportRoot = ImGui::FindWindowByName("Viewport"))
+		{
+			return IsWindowInHierarchy(Window, ViewportRoot);
+		}
+		return false;
+	}
+
 	bool CanExecuteLevelEditorSceneCommand(UEditorEngine* EditorEngine)
 	{
 		return EditorEngine && EditorEngine->GetEditorState() == EViewportPlayState::Editing;
@@ -215,12 +254,7 @@ void FEditorMainPanel::Update()
     {
         if (ImGuiWindow* HoveredWindow = Context->HoveredWindow)
         {
-            const char* HoveredName = HoveredWindow->Name ? HoveredWindow->Name : "";
-            bHoveredViewportContentWindow =
-                (std::strcmp(HoveredName, "Viewport") == 0) 
-				|| (std::strncmp(HoveredName, "Viewport###", 11) == 0) 
-				|| (std::strncmp(HoveredName, "Viewer##", 8) == 0) 
-				|| (std::strcmp(HoveredName, "ViewportPanel") == 0);
+            bHoveredViewportContentWindow = IsViewportContentWindow(HoveredWindow);
             bHoveredNonViewportWindow = !bHoveredViewportContentWindow;
         }
     }
@@ -230,6 +264,7 @@ void FEditorMainPanel::Update()
     // name-based hover checks are only a hint.
     if (bMouseOverViewportRect
         && !bMouseOverContentBrowser
+        && (!bAnyWindowHovered || bHoveredViewportContentWindow)
         && !bAnyUIItemActive
         && !bAnyPopupOpen
         && !bAnyDragDropActive)

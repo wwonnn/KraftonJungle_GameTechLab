@@ -3,6 +3,7 @@
 #include "Asset/BinarySerializer.h"
 #include "Asset/CurveFloatAsset.h"
 #include "Asset/FbxImporter.h"
+#include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/ObjLoader.h"
 #include "Asset/SkeletalMesh.h"
@@ -134,6 +135,11 @@ public:
 	bool SaveAnimSequence(const FString& Path, const UAnimSequence* Sequence);
 	TArray<FString> GetAnimSequencePaths() const;
 
+	UAnimInstanceAsset* LoadAnimInstanceAsset(const FString& Path);
+	UAnimInstanceAsset* FindAnimInstanceAsset(const FString& Path) const;
+	bool SaveAnimInstanceAsset(const FString& Path, const UAnimInstanceAsset* Asset);
+	TArray<FString> GetAnimInstanceAssetPaths() const;
+
 	ID3D11SamplerState* GetOrCreateSamplerState(ESamplerType Type, ID3D11Device* Device = nullptr);
 	ID3D11DepthStencilState* GetOrCreateDepthStencilState(EDepthStencilType Type, ID3D11Device* Device = nullptr);
 	ID3D11BlendState* GetOrCreateBlendState(EBlendType Type, ID3D11Device* Device = nullptr);
@@ -184,6 +190,7 @@ private:
 
 	TMap<FString, USkeletalMesh*> SkeletalMeshMap;
 	TMap<FString, UAnimSequence*> AnimSequenceMap;
+	TMap<FString, UAnimInstanceAsset*> AnimInstanceAssetMap;
 
 	/* Paths */
 	TArray<FString> ObjFilePaths;
@@ -194,4 +201,5 @@ private:
 	TArray<FString> SkeletalMeshFilePaths;
 	TArray<FString> CurveFilePaths;
 	TArray<FString> AnimSequenceFilePaths;
+	TArray<FString> AnimInstanceAssetFilePaths;
 };

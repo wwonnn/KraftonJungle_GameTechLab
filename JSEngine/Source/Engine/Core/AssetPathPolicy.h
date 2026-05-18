@@ -9,6 +9,7 @@ public:
 	static bool FileExists(const FString& Path);
 	static bool IsCurveAssetPath(const FString& Path);
 	static bool IsSequenceAssetPath(const FString& Path);
+	static bool IsAnimInstanceAssetPath(const FString& Path);
 	static bool IsSerializedMaterialAssetPath(const FString& Path);
 	static FString MakeCookedStaticMeshBinaryPath(const FString& SourcePath);
 	static FString MakeSiblingStaticMeshBinaryPath(const FString& SourcePath);

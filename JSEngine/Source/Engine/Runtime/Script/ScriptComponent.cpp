@@ -1,5 +1,6 @@
 ﻿#include "ScriptComponent.h"
 #include "ScriptManager.h"
+#include "Animation/LuaAnimInstance.h"
 #include "Camera/CameraModifier_CameraShake.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Camera/ShakePattern/SequenceCameraShakePattern.h"
@@ -11,6 +12,7 @@
 #include "GameFramework/World.h"
 #include "Asset/CurveFloatAsset.h"
 #include "Component/PrimitiveComponent.h"
+#include "Component/SkeletalMeshComponent.h"
 #include "Core/Paths.h"
 #include "Core/CollisionTypes.h"
 #include "Core/ResourceManager.h"
@@ -788,6 +790,7 @@ bool UScriptComponent::LoadScript()
     BindCoroutineHelpers(ScriptEnv, this);
     bScriptLoaded = true;
     RegisterScript();
+    TryBindLuaAnimInstanceFromScript();
 
     return true;
 }
@@ -822,8 +825,35 @@ bool UScriptComponent::HotReloadScript()
 
     BindCoroutineHelpers(ScriptEnv, this);
     bScriptLoaded = true;
+    TryBindLuaAnimInstanceFromScript();
 
     return true;
+}
+
+void UScriptComponent::TryBindLuaAnimInstanceFromScript()
+{
+    if (ScriptName.empty() || !ScriptInstance.valid())
+    {
+        return;
+    }
+
+    const sol::object InitializeObj = ScriptInstance["NativeInitializeAnimation"];
+    const sol::object UpdateObj = ScriptInstance["NativeUpdateAnimation"];
+    if ((!InitializeObj.valid() || InitializeObj.get_type() != sol::type::function)
+        && (!UpdateObj.valid() || UpdateObj.get_type() != sol::type::function))
+    {
+        return;
+    }
+
+    AActor* OwnerActor = GetOwner();
+    USkeletalMeshComponent* SkeletalMeshComponent = OwnerActor ? OwnerActor->FindComponent<USkeletalMeshComponent>() : nullptr;
+    if (!SkeletalMeshComponent)
+    {
+        UE_LOG_WARNING("[ScriptComponent] Lua animation script '%s' found, but owner has no SkeletalMeshComponent", ScriptName.c_str());
+        return;
+    }
+
+    SkeletalMeshComponent->BindLuaAnimInstance(ScriptName);
 }
 
 void UScriptComponent::StartCoroutine(sol::function Function)

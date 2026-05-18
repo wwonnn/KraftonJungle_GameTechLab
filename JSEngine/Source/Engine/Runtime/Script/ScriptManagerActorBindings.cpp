@@ -25,6 +25,8 @@
 #include "Component/ProceduralMeshComponent.h"
 #include "Component/SceneComponent.h"
 #include "Component/ShapeComponent.h"
+#include "Component/SkeletalMeshComponent.h"
+#include "Component/SkinnedMeshComponent.h"
 #include "Component/SoundComponent.h"
 #include "Component/SphereComponent.h"
 #include "Component/SpringArmComponent.h"
@@ -54,6 +56,8 @@ namespace
         if (MatchLuaTypeName(TypeName, "UShapeComponent", "ShapeComponent")) return &UShapeComponent::s_TypeInfo;
         if (MatchLuaTypeName(TypeName, "UMeshComponent", "MeshComponent")) return &UMeshComponent::s_TypeInfo;
         if (MatchLuaTypeName(TypeName, "UStaticMeshComponent", "StaticMeshComponent")) return &UStaticMeshComponent::s_TypeInfo;
+        if (MatchLuaTypeName(TypeName, "USkinnedMeshComponent", "SkinnedMeshComponent")) return &USkinnedMeshComponent::s_TypeInfo;
+        if (MatchLuaTypeName(TypeName, "USkeletalMeshComponent", "SkeletalMeshComponent")) return &USkeletalMeshComponent::s_TypeInfo;
         if (MatchLuaTypeName(TypeName, "UActorSequenceComponent", "ActorSequenceComponent")) return &UActorSequenceComponent::s_TypeInfo;
         if (MatchLuaTypeName(TypeName, "UProceduralMeshComponent", "ProceduralMeshComponent")) return &UProceduralMeshComponent::s_TypeInfo;
         if (MatchLuaTypeName(TypeName, "UBillboardComponent", "BillboardComponent")) return &UBillboardComponent::s_TypeInfo;
@@ -350,6 +354,10 @@ void FScriptManager::BindActorTypes()
     LUA_SET(GetTags, &ActorTagsToLuaTable);
     LUA_SET(Get_Static_Mesh_Component, [](AActor& Actor)
             { return Cast<UStaticMeshComponent>(GetComponentByType(Actor, "StaticMeshComponent")); });
+    LUA_SET(GetSkeletalMeshComponent, [](AActor& Actor)
+            { return Cast<USkeletalMeshComponent>(GetComponentByType(Actor, "SkeletalMeshComponent")); });
+    LUA_SET(Get_Skeletal_Mesh_Component, [](AActor& Actor)
+            { return Cast<USkeletalMeshComponent>(GetComponentByType(Actor, "SkeletalMeshComponent")); });
     LUA_SET(GetActorSequenceComponent, [](AActor& Actor)
             { return Cast<UActorSequenceComponent>(GetComponentByType(Actor, "ActorSequenceComponent")); });
     LUA_END_TYPE();

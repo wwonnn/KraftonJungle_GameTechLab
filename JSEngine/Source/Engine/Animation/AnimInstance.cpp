@@ -1,6 +1,11 @@
 ﻿#include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
+#include "Animation/AnimInstanceAsset.h"
+#include "Animation/AnimationStateMachine.h"
+#include "Core/Logging/Log.h"
+#include "Core/Paths.h"
+#include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 
 namespace
@@ -25,6 +30,18 @@ namespace
 DEFINE_CLASS(UAnimInstance, UObject)
 REGISTER_FACTORY(UAnimInstance)
 
+void UAnimInstance::Intialize()
+{
+	NativeInitializeAnimation();
+
+    if (StateMachine && StateMachine->GetCurrentSequence() && !CurrentSequence)
+    {
+        SetSequence(StateMachine->GetCurrentSequence());
+        SetLooping(StateMachine->GetCurrentStateLooping());
+        PlayRate = StateMachine->GetCurrentStatePlayRate();
+    }
+}
+
 void UAnimInstance::SetOwningComponent(USkinnedMeshComponent* InOwner)
 {
     Owner = InOwner;
@@ -32,6 +49,11 @@ void UAnimInstance::SetOwningComponent(USkinnedMeshComponent* InOwner)
 
 void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 {
+    if (!PrepareSequenceForPlayback(InSequence))
+    {
+        return;
+    }
+
 	CurrentSequence = InSequence;
 	CurrentTime = 0.0f;
 	bPlaying = true;
@@ -43,6 +65,11 @@ void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 }
 void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 {
+    if (!InNext || InNext == CurrentSequence || !PrepareSequenceForPlayback(InNext))
+    {
+        return;
+    }
+
     NextSequence = InNext;
     NextTime = 0.0f;
     BlendFactor = 0.0f;
@@ -87,9 +114,223 @@ bool UAnimInstance::HasValidSequence() const
     return GetValidAnimDataModel(CurrentSequence) != nullptr;
 }
 
+void UAnimInstance::SetStateMachine(UAnimationStateMachine* InStateMachine)
+{
+    StateMachine = InStateMachine;
+    if (StateMachine)
+    {
+        StateMachine->SetOwningAnimInstance(this);
+    }
+}
+
+UAnimationStateMachine* UAnimInstance::CreateStateMachine()
+{
+    UAnimationStateMachine* NewStateMachine = UObjectManager::Get().CreateObject<UAnimationStateMachine>();
+    SetStateMachine(NewStateMachine);
+    return NewStateMachine;
+}
+
+bool UAnimInstance::PrepareSequenceForPlayback(UAnimSequence* Sequence)
+{
+    if (!Sequence)
+    {
+        return false;
+    }
+
+    if (!Owner)
+    {
+        return true;
+    }
+
+    const USkeletalMesh* Mesh = Owner->GetSkeletalMesh();
+    if (!Mesh || !Mesh->HasValidMeshData())
+    {
+        return false;
+    }
+
+    USkeleton* MeshSkeleton = Mesh->GetSkeleton();
+    if (!MeshSkeleton || !MeshSkeleton->HasValidSkeletonData())
+    {
+        return false;
+    }
+
+    const FString MeshSkeletonPath = FPaths::Normalize(Mesh->GetSkeletonAssetPath());
+    const FString SequenceSkeletonPath = FPaths::Normalize(Sequence->GetSkeletonAssetPath());
+    if (!MeshSkeletonPath.empty() &&
+        !SequenceSkeletonPath.empty() &&
+        MeshSkeletonPath != SequenceSkeletonPath)
+    {
+        UE_LOG_WARNING("[AnimInstance] Sequence skeleton mismatch | Sequence=%s | MeshSkeleton=%s | SequenceSkeleton=%s",
+            Sequence->GetName().c_str(),
+            MeshSkeletonPath.c_str(),
+            SequenceSkeletonPath.c_str());
+        return false;
+    }
+
+    Sequence->SetSkeleton(MeshSkeleton);
+    if (Sequence->GetSkeletonAssetPath().empty())
+    {
+        Sequence->SetSkeletonAssetPath(MeshSkeletonPath);
+    }
+
+    return true;
+}
+
+bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
+{
+    if (!Asset)
+    {
+        return false;
+    }
+
+    UAnimationStateMachine* NewStateMachine = CreateStateMachine();
+    if (!NewStateMachine)
+    {
+        return false;
+    }
+
+    for (const FAnimInstanceParameterAssetData& Param : Asset->Parameters)
+    {
+        switch (Param.Type)
+        {
+        case EAnimStateParameterType::Bool:
+            NewStateMachine->RegisterParameterBool(Param.Name, Param.BoolDefault);
+            break;
+        case EAnimStateParameterType::Float:
+            NewStateMachine->RegisterParameterFloat(Param.Name, Param.FloatDefault);
+            break;
+        case EAnimStateParameterType::Int:
+            NewStateMachine->RegisterParameterInt(Param.Name, Param.IntDefault);
+            break;
+        case EAnimStateParameterType::Trigger:
+            NewStateMachine->RegisterParameterTrigger(Param.Name);
+            break;
+        default:
+            break;
+        }
+    }
+
+    bool bAddedAnyState = false;
+    for (const FAnimInstanceStateAssetData& State : Asset->States)
+    {
+        UAnimSequence* Sequence = FResourceManager::Get().LoadAnimSequence(State.AnimSequencePath);
+        if (PrepareSequenceForPlayback(Sequence) &&
+            NewStateMachine->AddState(State.Name, Sequence, State.bLoop, State.PlayRate))
+        {
+            bAddedAnyState = true;
+        }
+    }
+
+    if (!bAddedAnyState)
+    {
+        return false;
+    }
+
+    if (!NewStateMachine->SetEntryState(Asset->EntryState) && !Asset->States.empty())
+    {
+        NewStateMachine->SetEntryState(Asset->States[0].Name);
+    }
+
+    for (const FAnimInstanceTransitionAssetData& Transition : Asset->Transitions)
+    {
+        switch (Transition.ConditionType)
+        {
+        case EAnimTransitionConditionType::BoolEquals:
+            NewStateMachine->AddBoolEqualsTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.ExpectedBool,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::FloatGreater:
+            NewStateMachine->AddFloatGreaterTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.CompareFloat,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::FloatLessEqual:
+            NewStateMachine->AddFloatLessEqualTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.CompareFloat,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::IntEquals:
+            NewStateMachine->AddIntEqualsTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.ExpectedInt,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::Trigger:
+            NewStateMachine->AddTriggerTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.ParameterName,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::StateFinished:
+            NewStateMachine->AddStateFinishedTransition(
+                Transition.FromState,
+                Transition.ToState,
+                Transition.BlendSpeed,
+                Transition.Priority);
+            break;
+        case EAnimTransitionConditionType::Native:
+        default:
+            break;
+        }
+    }
+
+    if (UAnimSequence* EntrySequence = NewStateMachine->GetCurrentSequence())
+    {
+        SetSequence(EntrySequence);
+        SetLooping(NewStateMachine->GetCurrentStateLooping());
+        PlayRate = NewStateMachine->GetCurrentStatePlayRate();
+    }
+
+    return true;
+}
+
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
     if (!bPlaying || !HasValidSequence())
+	// 서브 클래스에서 변수 업데이트
+	NativeUpdateAnimation(DeltaTime);
+
+	// State Machine Tick 및 Transition 처리
+    if (StateMachine)
+    {
+        StateMachine->Tick(DeltaTime);
+
+        FAnimStateTransitionResult TransitionResult;
+        if (StateMachine->ConsumeTransition(TransitionResult))
+        {
+            SetLooping(TransitionResult.bLoop);
+            PlayRate = TransitionResult.PlayRate;
+
+            if (!CurrentSequence || !bPlaying)
+            {
+                SetSequence(TransitionResult.TargetSequence);
+            }
+            else
+            {
+                SetNextSequence(TransitionResult.TargetSequence, TransitionResult.BlendSpeed);
+            }
+        }
+    }
+
+    if (!bPlaying || CurrentSequence == nullptr || !CurrentSequence->DataModel)
     {
         return;
     }
@@ -236,7 +477,7 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
 
         if (BoneIndex >= static_cast<int32>(OutLocalTransforms.size()))
         {
-            OutLocalTransforms.resize(BoneIndex + 1);
+            continue;
         }
 
         FVector Position = InterpolateKeys(RawTrack.PosKeys, CurrentTime, FrameRate);

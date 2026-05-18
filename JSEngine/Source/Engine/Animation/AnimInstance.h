@@ -1,10 +1,13 @@
-﻿#pragma once
+#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Object/Object.h"
 #include "Core/PropertyTypes.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Component/SkinnedMeshComponent.h"
+
+class UAnimationStateMachine;
+class UAnimInstanceAsset;
 
 // 시간 t에서의 Skeleton Pose (매 프레임 계산)
 struct FSkeletonPose
@@ -19,11 +22,19 @@ public:
 	DECLARE_CLASS(UAnimInstance, UObject)
 
 public:
+    void Intialize();
     void SetOwningComponent(USkinnedMeshComponent* InOwner);
+    USkinnedMeshComponent* GetOwningComponent() const { return Owner; }
     void SetSequence(UAnimSequence* InSequence);
     void SetNextSequence(UAnimSequence* InNext, float InBlendSpeed);
+    void SetStateMachine(UAnimationStateMachine* InStateMachine);
+    UAnimationStateMachine* GetStateMachine() const { return StateMachine; }
+    UAnimationStateMachine* CreateStateMachine();
+    bool BuildStateMachineFromAsset(UAnimInstanceAsset* Asset);
+    bool PrepareSequenceForPlayback(UAnimSequence* Sequence);
     void SetLooping(bool bInLoop) { bLoop = bInLoop; }
     bool IsLooping() const { return bLoop; }
+    bool IsCurrentAnimationFinished() const { return CurrentSequence && !NextSequence && !bLoop && !bPlaying; }
     float GetCurrentTime() const { return CurrentTime; }
     void SetCurrentTime(float InCurrentTime);
     float GetPlayRate() const { return PlayRate; }
@@ -39,6 +50,9 @@ public:
     virtual void EvaluatePose(FSkeletonPose& OutPose);	// 시간 t에서 Bone의 Pose 계산
 
 protected:
+    virtual void NativeInitializeAnimation() {}
+    virtual void NativeUpdateAnimation(float DeltaTime) {}
+
     void InitializeReferencePose(FSkeletonPose& OutPose);
     void EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms);
     FVector InterpolateKeys(const TArray<FVector>& Keys, float Time, float FrameRate);
@@ -51,10 +65,10 @@ protected:
 
 	// TODO
 	// Animation Notify
-	// Animation State Machine
 
 protected:
     USkinnedMeshComponent* Owner = nullptr;
+    UAnimationStateMachine* StateMachine = nullptr;
 
     UAnimSequence* CurrentSequence = nullptr;
     UAnimSequence* NextSequence = nullptr;

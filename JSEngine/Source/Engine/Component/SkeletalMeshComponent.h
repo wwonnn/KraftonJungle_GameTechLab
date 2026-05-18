@@ -1,7 +1,10 @@
-﻿#pragma once
+#pragma once
 
-#include "Animation/AnimSingleNodeInstance.h"
+#include "Animation/LuaAnimInstance.h"
 #include "Component/SkinnedMeshComponent.h"
+
+class UAnimSequence;
+class UAnimSingleNodeInstance;
 
 /**
  * @brief Unreal Engine 스타일에서는 skinned mesh가 skeleton을 이용하는 mesh를 표현하고,
@@ -35,7 +38,7 @@ public:
     void SetPreviewTime(float InTime);
     float GetPreviewTime() const;
     float GetPreviewLength() const;
-    UAnimSingleNodeInstance* GetPreviewAnimInstance() const { return SingleNodeInstance; }
+    UAnimSingleNodeInstance* GetPreviewAnimInstance() const;
     void TickPreviewAnimation(float DeltaTime);
 
     void SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform);
@@ -44,25 +47,28 @@ public:
     FMatrix GetBoneGlobalTransform(int32 BoneIndex) const;
     void SetBoneGlobalTransform(int32 BoneIndex, const FMatrix& NewGlobalTransform);
 
-    void SetAnimSequencePath(const FString& InAnimSequencePath);
-    const FString& GetAnimSequencePath() const { return AnimSequencePath; }
+    void SetAnimInstance(UAnimInstance* InAnimInstance);
+    UAnimInstance* GetAnimInstance() const { return AnimInstance; }
+    void SetAnimInstanceAssetPath(const FString& InPath);
+    const FString& GetAnimInstanceAssetPath() const { return AnimInstanceAssetPath; }
+    ULuaAnimInstance* BindLuaAnimInstance(const FString& ScriptName);
+
 protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
 
 private:
-    void ReleaseSingleNodeAnimation();
-    void EnsureSingleNodeAnimation();
-    void InitializeSingleNodeAnimation();
+    void ReleaseAnimInstance();
+    UAnimSingleNodeInstance* EnsurePreviewAnimInstance();
+    void InitializeAnimation();
     void ApplyAnimationPose(float DeltaTime);
-    void ApplyAnimationPoseFromInstance(float DeltaTime, bool bAdvanceTime);
+    void ApplyAnimationPoseFromInstance(UAnimInstance* InAnimInstance, float DeltaTime, bool bAdvanceTime);
     void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:
-    UPROPERTY(EditAnywhere, DisplayName = "AnimSequence", SerializeName = "AnimSequenceAsset")
-    FString AnimSequencePath;
-
     UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")
-    UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
+    FString AnimInstanceAssetPath;
 
     bool bDeferAnimationInitialization = false;
+
+    UAnimInstance* AnimInstance = nullptr;
 };
