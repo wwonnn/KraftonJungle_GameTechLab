@@ -100,31 +100,31 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		uint32 Offset = 0;
 		Context->DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
 
-	// Select input layout & whether to compile GPU-skinning variant per-command.
-	const FVertexFactoryDesc& VFDesc = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
-	const FVertexLayoutDesc* PositionLayout = nullptr;
-	bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
-	if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
-	{
-		if (bUseGPUSkinning)
+		// Select input layout & whether to compile GPU-skinning variant per-command.
+		const FVertexFactoryDesc& VFDesc = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+		const FVertexLayoutDesc* PositionLayout = nullptr;
+		bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
+		if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
 		{
-			PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
+			if (bUseGPUSkinning)
+			{
+				PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
+			}
+			else
+			{
+				// For CPU skinning, ensure depth prepass reads the same full skeletal
+				// vertex layout that the mesh buffer provides so POSITION is sourced
+				// correctly from the dynamic skeletal vertex buffer.
+				const FVertexFactoryDesc& VF = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+				PositionLayout = &VF.VertexLayout;
+			}
 		}
-		else
-		{
-			// For CPU skinning, ensure depth prepass reads the same full skeletal
-			// vertex layout that the mesh buffer provides so POSITION is sourced
-			// correctly from the dynamic skeletal vertex buffer.
-			const FVertexFactoryDesc& VF = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
-			PositionLayout = &VF.VertexLayout;
-		}
-	}
 
-	FShaderProgram* Program = GetDepthPrepassProgram(Cmd.VertexFactoryType, bUseGPUSkinning, PositionLayout);
-		if (!Program)
-		{
-			continue;
-		}
+		FShaderProgram* Program = GetDepthPrepassProgram(Cmd.VertexFactoryType, bUseGPUSkinning, PositionLayout);
+			if (!Program)
+			{
+				continue;
+			}
 
 		Program->Bind(Context->DeviceContext);
 		BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
