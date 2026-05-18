@@ -3,6 +3,25 @@
 #include "Asset/Skeleton.h"
 #include "Object/ObjectFactory.h"
 
+namespace
+{
+    bool IsLiveObject(const UObject* Object)
+    {
+        return Object != nullptr && UObjectManager::Get().ContainsObject(Object);
+    }
+
+    const UAnimDataModel* GetValidAnimDataModel(const UAnimSequence* Sequence)
+    {
+        if (!IsLiveObject(Sequence))
+        {
+            return nullptr;
+        }
+
+        const UAnimDataModel* DataModel = Sequence->DataModel;
+        return IsLiveObject(DataModel) ? DataModel : nullptr;
+    }
+}
+
 DEFINE_CLASS(UAnimInstance, UObject)
 REGISTER_FACTORY(UAnimInstance)
 
@@ -65,12 +84,12 @@ float UAnimInstance::GetSequenceLength() const
 
 bool UAnimInstance::HasValidSequence() const
 {
-    return CurrentSequence != nullptr && CurrentSequence->DataModel != nullptr;
+    return GetValidAnimDataModel(CurrentSequence) != nullptr;
 }
 
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
-    if (!bPlaying || CurrentSequence == nullptr || !CurrentSequence->DataModel)
+    if (!bPlaying || !HasValidSequence())
     {
         return;
     }
@@ -97,7 +116,7 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     }
 
 	// Next Sequence Time (Blending)
-    if (NextSequence && NextSequence->DataModel)
+    if (GetValidAnimDataModel(NextSequence))
     {
         const float NextLength = GetSequenceLength(NextSequence);
 
@@ -178,7 +197,8 @@ void UAnimInstance::InitializeReferencePose(FSkeletonPose& OutPose)
 
 void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms)
 {
-    if (!Sequence || !Sequence->DataModel)
+    const UAnimDataModel* Model = GetValidAnimDataModel(Sequence);
+    if (!Model)
     {
         return;
     }
@@ -198,7 +218,6 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
         }
     }
 
-    const UAnimDataModel* Model = Sequence->DataModel;
     const float FrameRate = Model->FrameRate.AsDecimal();
     if (FrameRate <= 0.0f)
     {
@@ -294,12 +313,12 @@ void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& 
 
 float UAnimInstance::GetSequenceLength(const UAnimSequence* Sequence) const
 {
-    if (!Sequence || !Sequence->DataModel)
+    const UAnimDataModel* Model = GetValidAnimDataModel(Sequence);
+    if (!Model)
     {
         return 0.0f;
     }
 
-    const UAnimDataModel* Model = Sequence->DataModel;
     const float FrameRate = Model->FrameRate.AsDecimal();
     if (FrameRate <= 0.0f || Model->NumberOfKeys <= 1)
     {

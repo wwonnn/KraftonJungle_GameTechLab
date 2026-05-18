@@ -11,6 +11,7 @@
 #include "Asset/CurveFloatAsset.h"
 #include "Asset/StaticMesh.h"
 #include "Core/ResourceManager.h"
+#include "Object/Object.h"
 #include "Runtime/Script/ScriptManager.h"
 #include "Render/Resource/Material.h"
 #include "Render/Renderer/Renderer.h"
@@ -27,6 +28,17 @@
 
 namespace
 {
+bool HasValidAnimSequenceData(const UAnimSequence* Sequence)
+{
+	if (!Sequence || !UObjectManager::Get().ContainsObject(Sequence))
+	{
+		return false;
+	}
+
+	const UAnimDataModel* DataModel = Sequence->DataModel;
+	return DataModel && UObjectManager::Get().ContainsObject(DataModel);
+}
+
 bool IsParentDirectoryReference(const std::filesystem::path& Path)
 {
 	for (const std::filesystem::path& Part : Path)
@@ -1715,7 +1727,7 @@ void FEditorContentBrowserWidget::DrawAssetPreview()
 		ImGui::Spacing();
 		ImGui::TextDisabled("Sequence Asset");
 		UAnimSequence* Sequence = FResourceManager::Get().LoadAnimSequence(RelativePath);
-		if (!Sequence || !Sequence->DataModel)
+		if (!HasValidAnimSequenceData(Sequence))
 		{
 			ImGui::TextWrapped("Sequence asset could not be loaded.");
 			return;

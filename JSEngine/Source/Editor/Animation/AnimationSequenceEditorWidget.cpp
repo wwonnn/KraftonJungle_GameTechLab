@@ -8,6 +8,7 @@
 #include "Editor/Viewport/EditorViewportClient.h"
 #include "Editor/Viewport/FSceneViewport.h"
 #include "Engine/Runtime/WindowsWindow.h"
+#include "Object/Object.h"
 #include "Render/Common/RenderTypes.h"
 
 #include "ImGui/imgui.h"
@@ -16,6 +17,22 @@
 
 namespace
 {
+    bool IsLiveSequence(UAnimSequence* Sequence)
+    {
+        return Sequence != nullptr && UObjectManager::Get().ContainsObject(Sequence);
+    }
+
+    UAnimDataModel* GetValidAnimDataModel(UAnimSequence* Sequence)
+    {
+        if (!IsLiveSequence(Sequence))
+        {
+            return nullptr;
+        }
+
+        UAnimDataModel* DataModel = Sequence->DataModel;
+        return (DataModel && UObjectManager::Get().ContainsObject(DataModel)) ? DataModel : nullptr;
+    }
+
     constexpr float PreviewSectionMinHeight = 180.0f;
     constexpr float TransportSectionMinHeight = 180.0f;
     constexpr float SectionSplitterHeight = 6.0f;
@@ -116,7 +133,7 @@ void FAnimationSequenceEditorWidget::Render(float DeltaTime)
 {
     (void)DeltaTime;
 
-    UAnimDataModel* DataModel = Sequence ? Sequence->DataModel : nullptr;
+    UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
     const bool bHasController = PreviewController != nullptr;
     const bool bHasSequence = bHasController && PreviewController->HasSequence();
     const bool bHasPreview = bHasController && PreviewController->HasValidPreview();
@@ -126,7 +143,7 @@ void FAnimationSequenceEditorWidget::Render(float DeltaTime)
     TArray<FString> PreviewOverlayLines;
     PreviewOverlayLines.push_back("Animation Sequence");
     PreviewOverlayLines.push_back("Asset Path: " + (SequencePath.empty() ? FString("(none)") : SequencePath));
-    PreviewOverlayLines.push_back("Sequence Name: " + (Sequence ? Sequence->GetName() : FString("(unloaded)")));
+    PreviewOverlayLines.push_back("Sequence Name: " + (IsLiveSequence(Sequence) ? Sequence->GetName() : FString("(unloaded)")));
     if (DataModel)
     {
         PreviewOverlayLines.push_back(

@@ -13,6 +13,7 @@
 #include "GameFramework/World.h"
 #include "Math/Utils.h"
 #include "Object/FName.h"
+#include "Object/Object.h"
 #include "Render/Renderer/Renderer.h"
 
 #include <algorithm>
@@ -21,6 +22,22 @@
 
 namespace
 {
+    bool IsLiveObject(const UObject* Object)
+    {
+        return Object != nullptr && UObjectManager::Get().ContainsObject(Object);
+    }
+
+    const UAnimDataModel* GetValidAnimDataModel(const UAnimSequence* Sequence)
+    {
+        if (!IsLiveObject(Sequence))
+        {
+            return nullptr;
+        }
+
+        const UAnimDataModel* DataModel = Sequence->DataModel;
+        return IsLiveObject(DataModel) ? DataModel : nullptr;
+    }
+
     FName MakePreviewWorldHandle(const FString& SequencePath)
     {
         const FString NormalizedPath = FPaths::Normalize(SequencePath);
@@ -90,12 +107,12 @@ namespace
 
     float GetSequenceLengthSeconds(const UAnimSequence* Sequence)
     {
-        if (!Sequence || !Sequence->DataModel)
+        const UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
+        if (!DataModel)
         {
             return 0.0f;
         }
 
-        const UAnimDataModel* DataModel = Sequence->DataModel;
         const float FrameRate = DataModel->FrameRate.AsDecimal();
         if (FrameRate <= 0.0f || DataModel->NumberOfKeys <= 1)
         {
@@ -107,17 +124,19 @@ namespace
 
     FFrameRate GetSequenceFrameRate(const UAnimSequence* Sequence)
     {
-        return Sequence && Sequence->DataModel ? Sequence->DataModel->FrameRate : FFrameRate();
+        const UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
+        return DataModel ? DataModel->FrameRate : FFrameRate();
     }
 
     int32 GetSequenceFrameCount(const UAnimSequence* Sequence)
     {
-        if (!Sequence || !Sequence->DataModel)
+        const UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
+        if (!DataModel)
         {
             return 0;
         }
 
-        return std::max(Sequence->DataModel->NumberOfFrames, Sequence->DataModel->NumberOfKeys);
+        return std::max(DataModel->NumberOfFrames, DataModel->NumberOfKeys);
     }
 
     float FrameIndexToTime(int32 FrameIndex, const FFrameRate& FrameRate)
@@ -136,6 +155,11 @@ namespace
 FAnimationSequencePreviewController::~FAnimationSequencePreviewController()
 {
     Shutdown();
+}
+
+bool FAnimationSequencePreviewController::HasSequence() const
+{
+    return IsLiveObject(Sequence);
 }
 
 bool FAnimationSequencePreviewController::Initialize(
@@ -272,7 +296,7 @@ void FAnimationSequencePreviewController::Tick(float DeltaTime)
 void FAnimationSequencePreviewController::SetCurrentTime(float InTime)
 {
     CurrentTime = std::clamp(InTime, 0.0f, GetLength());
-    if (!PreviewComponent)
+    if (!IsLiveObject(PreviewComponent))
     {
         bPoseDirty = true;
         return;
@@ -289,7 +313,7 @@ void FAnimationSequencePreviewController::SetCurrentTime(float InTime)
 
 float FAnimationSequencePreviewController::GetLength() const
 {
-    if (PreviewComponent)
+    if (IsLiveObject(PreviewComponent))
     {
         return PreviewComponent->GetPreviewLength();
     }
@@ -328,7 +352,7 @@ int32 FAnimationSequencePreviewController::GetCurrentFrameIndex() const
 void FAnimationSequencePreviewController::Play()
 {
     bPlaying = HasValidPreview();
-    if (PreviewComponent)
+    if (IsLiveObject(PreviewComponent))
     {
         PreviewComponent->SetPreviewPlaying(true);
     }
@@ -337,7 +361,7 @@ void FAnimationSequencePreviewController::Play()
 void FAnimationSequencePreviewController::Pause()
 {
     bPlaying = false;
-    if (PreviewComponent)
+    if (IsLiveObject(PreviewComponent))
     {
         PreviewComponent->SetPreviewPlaying(false);
     }
@@ -396,7 +420,7 @@ void FAnimationSequencePreviewController::JumpToEnd()
 void FAnimationSequencePreviewController::SetLooping(bool bInLooping)
 {
     bLooping = bInLooping;
-    if (PreviewComponent)
+    if (IsLiveObject(PreviewComponent))
     {
         PreviewComponent->SetPreviewLooping(bLooping);
     }
@@ -405,7 +429,7 @@ void FAnimationSequencePreviewController::SetLooping(bool bInLooping)
 void FAnimationSequencePreviewController::SetPlayRate(float InPlayRate)
 {
     PlayRate = InPlayRate;
-    if (PreviewComponent)
+    if (IsLiveObject(PreviewComponent))
     {
         PreviewComponent->SetPreviewPlayRate(PlayRate);
     }
@@ -413,10 +437,10 @@ void FAnimationSequencePreviewController::SetPlayRate(float InPlayRate)
 
 bool FAnimationSequencePreviewController::HasValidPreview() const
 {
-    return Sequence != nullptr &&
-        PreviewMesh != nullptr &&
+    return IsLiveObject(Sequence) &&
+        IsLiveObject(PreviewMesh) &&
         PreviewWorld != nullptr &&
-        PreviewComponent != nullptr;
+        IsLiveObject(PreviewComponent);
 }
 
 void FAnimationSequencePreviewController::SetViewportSize(int32 InWidth, int32 InHeight)
@@ -670,7 +694,7 @@ void FAnimationSequencePreviewController::ConfigurePreviewCamera()
 
 void FAnimationSequencePreviewController::RefreshPreviewPose(float DeltaTime)
 {
-    if (!PreviewComponent)
+    if (!IsLiveObject(PreviewComponent))
     {
         return;
     }

@@ -45,7 +45,7 @@ public:
     float GetPlayRate() const { return PlayRate; }
 
     bool IsPlaying() const { return bPlaying; }
-    bool HasSequence() const { return Sequence != nullptr; }
+    bool HasSequence() const;
     bool HasValidPreview() const;
 
     const FString& GetPreviewStatusText() const { return PreviewStatusText; }
