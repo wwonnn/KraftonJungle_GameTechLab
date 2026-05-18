@@ -1790,6 +1790,43 @@ void FEditorPropertyWidget::RenderPropertyWidget(FPropertyDescriptor& Prop)
 				}
 			}
 		}
+		else if (strcmp(Prop.Name, "AnimSequence") == 0 || strcmp(Prop.Name, "AnimSequencePath") == 0)
+		{
+			const TArray<FString>& SequencePaths = EditorEngine
+				? EditorEngine->GetAssetService().GetAnimSequenceAssetPaths()
+				: EmptyAssetNames();
+			if (!SequencePaths.empty())
+			{
+				const FString Current = *Val;
+				if (ImGui::BeginCombo(Label.c_str(), Current.empty() ? "<None>" : Current.c_str()))
+				{
+					for (const FString& Path : SequencePaths)
+					{
+						const bool bSelected = (Current == Path);
+						if (ImGui::Selectable(Path.c_str(), bSelected))
+						{
+							*Val = Path;
+							bChanged = true;
+						}
+						if (bSelected)
+						{
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+					ImGui::EndCombo();
+				}
+			}
+			else
+			{
+				char Buf[256];
+				strncpy_s(Buf, sizeof(Buf), Val->c_str(), _TRUNCATE);
+				if (ImGui::InputText(Label.c_str(), Buf, sizeof(Buf)))
+				{
+					*Val = Buf;
+					bChanged = true;
+				}
+			}
+		}
         else if (strcmp(Prop.Name, "ScriptName") == 0)
         {
             if (!Val)

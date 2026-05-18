@@ -1,5 +1,6 @@
-#include "SkinnedMeshComponent.h"
+﻿#include "SkinnedMeshComponent.h"
 
+#include "Asset/Skeleton.h"
 #include "Core/ResourceManager.h"
 #include "Render/Resource/Material.h"
 
@@ -92,6 +93,10 @@ void USkinnedMeshComponent::PostEditProperty(const char* PropertyName)
 
         MarkRenderStateDirty();
     }
+	else if (std::strcmp(PropertyName, "bEnableCPUSkinning") == 0)
+	{
+        MarkSkinningDirty();
+	}
 }
 
 void USkinnedMeshComponent::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
@@ -298,11 +303,6 @@ bool USkinnedMeshComponent::ConsumeRenderStateDirty()
 
 void USkinnedMeshComponent::EnsureSkinningUpdated()
 {
-    if (!bEnableCPUSkinning)
-    {
-        return;
-    }
-
     if (!bSkinningDirty)
     {
         return;
@@ -313,9 +313,12 @@ void USkinnedMeshComponent::EnsureSkinningUpdated()
         return;
     }
 
+	// Matrix Update 는 CPU/GPU Skinning 공통
     UpdateCurrentGlobalPose();
     UpdateSkinningMatrices();
-    SkinVerticesCPU();
+
+	if (bEnableCPUSkinning)
+	    SkinVerticesCPU();
 
     bSkinningDirty = false;
     MarkBoundsDirty();
@@ -389,7 +392,13 @@ void USkinnedMeshComponent::InitializePoseFromBindPose()
         return;
     }
 
-    const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton || !Skeleton->HasValidSkeletonData())
+    {
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
 
     CurrentLocalPose.resize(BoneCount);
@@ -411,7 +420,13 @@ void USkinnedMeshComponent::UpdateCurrentGlobalPose()
         return;
     }
 
-    const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton || !Skeleton->HasValidSkeletonData())
+    {
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
 
     if (CurrentLocalPose.size() != Bones.size())
@@ -441,7 +456,13 @@ void USkinnedMeshComponent::UpdateSkinningMatrices()
         return;
     }
 
-    const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton || !Skeleton->HasValidSkeletonData())
+    {
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
 
     SkinningMatrices.resize(BoneCount);
@@ -465,7 +486,14 @@ void USkinnedMeshComponent::SkinVerticesCPU()
 	// 아직 변형되지 않은 bind pose 기준 정점 목록
 	// index buffer는 당연히 재사용!
     const TArray<FSkeletalMeshVertex>& SourceVertices = SkeletalMesh->GetVertices();
-    const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton || !Skeleton->HasValidSkeletonData())
+    {
+        SkinnedVertices.clear();
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
 
     SkinnedVertices.resize(SourceVertices.size());

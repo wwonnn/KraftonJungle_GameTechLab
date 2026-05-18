@@ -56,6 +56,9 @@ public:
 
 	///////////////////////////////////////////////////////////
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
 	UPROPERTY(EditAnywhere, DisplayName="Particle")
 	FName TextureName;

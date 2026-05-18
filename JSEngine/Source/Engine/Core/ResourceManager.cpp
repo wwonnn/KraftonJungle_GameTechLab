@@ -168,7 +168,11 @@ void FResourceManager::RegisterDiscoveredAssetFile(const std::filesystem::path& 
 	std::wstring Extension = FilePath.extension().wstring();
 	std::transform(Extension.begin(), Extension.end(), Extension.begin(), ::towlower);
 
-	if (Extension == L".meta" || Extension == L".bin")
+	if (Extension == L".meta" ||
+		Extension == L".bin" ||
+		Extension == L".manifest" ||
+		Extension == L".skeleton" ||
+		Extension == L".physic")
 	{
 		return;
 	}
@@ -182,6 +186,10 @@ void FResourceManager::RegisterDiscoveredAssetFile(const std::filesystem::path& 
 	else if (FAssetPathPolicy::IsSequenceAssetPath(FPaths::ToUtf8(FilePath.generic_wstring())))
 	{
 		AnimSequenceFilePaths.push_back(RelativePath);
+	}
+	else if (Extension == L".skmesh")
+	{
+		SkeletalMeshFilePaths.push_back(RelativePath);
 	}
 	else if (Extension == L".obj" || Extension == L".fbx")
 	{

@@ -1,14 +1,21 @@
 #include "Core/SkeletalMeshLoadService.h"
 
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/PhysicsAsset.h"
+#include "Asset/Skeleton.h"
 #include "Core/AssetPathPolicy.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
+#include "Object/ObjectFactory.h"
+#include "SimpleJSON/json.hpp"
 
 #include <algorithm>
 #include <chrono>
+#include <cwctype>
 #include <filesystem>
+#include <fstream>
+#include <string>
 
 namespace
 {
@@ -47,6 +54,218 @@ namespace
 
 		return FPaths::Normalize(FPaths::ToUtf8(AssetPath.generic_wstring()));
 	}
+
+	struct FSkeletalImportManifest
+	{
+		FString SourcePath;
+		uint64 SourceFileWriteTime = 0;
+		FString SkeletalMeshAssetPath;
+		FString SkeletonAssetPath;
+		FString PhysicsAssetPath;
+		TArray<FString> AnimationSequencePaths;
+	};
+
+	uint64 ParseUInt64String(const FString& Value)
+	{
+		try
+		{
+			return static_cast<uint64>(std::stoull(Value));
+		}
+		catch (...)
+		{
+			return 0;
+		}
+	}
+
+	FString ReadManifestPath(json::JSON& Root, const char* Key, const char* LegacyKey)
+	{
+		if (Root.hasKey(Key))
+		{
+			return FPaths::Normalize(Root[Key].ToString());
+		}
+		if (LegacyKey && Root.hasKey(LegacyKey))
+		{
+			return FPaths::Normalize(Root[LegacyKey].ToString());
+		}
+		return FString();
+	}
+
+	void ApplySplitAssetPaths(
+		FSkeletalMesh* MeshData,
+		const FString& SkeletonAssetPath,
+		TArray<UAnimSequence*>& AnimationSequences,
+		UPhysicsAsset* PhysicsAsset,
+		const FString& PhysicsAssetPath)
+	{
+		if (!MeshData)
+		{
+			return;
+		}
+
+		MeshData->SkeletonAssetPath = SkeletonAssetPath;
+		if (MeshData->Skeleton && MeshData->Skeleton->GetSkeletonData())
+		{
+			MeshData->Skeleton->GetSkeletonData()->PathFileName = SkeletonAssetPath;
+		}
+
+		for (UAnimSequence* Sequence : AnimationSequences)
+		{
+			if (!Sequence)
+			{
+				continue;
+			}
+
+			Sequence->SetSkeleton(MeshData->Skeleton);
+			Sequence->SetSkeletonAssetPath(SkeletonAssetPath);
+		}
+
+		if (PhysicsAsset && PhysicsAsset->GetPhysicsAssetData())
+		{
+			PhysicsAsset->GetPhysicsAssetData()->PathFileName = PhysicsAssetPath;
+			PhysicsAsset->GetPhysicsAssetData()->SkeletonAssetPath = SkeletonAssetPath;
+			PhysicsAsset->SetSkeleton(MeshData->Skeleton);
+		}
+	}
+
+	bool LoadSkeletalImportManifest(const FString& ManifestPath, FSkeletalImportManifest& OutManifest)
+	{
+		std::ifstream ManifestFile(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(ManifestPath))));
+		if (!ManifestFile.is_open())
+		{
+			return false;
+		}
+
+		FString FileContent((std::istreambuf_iterator<char>(ManifestFile)), std::istreambuf_iterator<char>());
+		json::JSON Root = json::JSON::Load(FileContent);
+		if (Root.JSONType() != json::JSON::Class::Object)
+		{
+			return false;
+		}
+
+		if (!Root.hasKey("Type") || Root["Type"].ToString() != "SkeletalImportManifest")
+		{
+			return false;
+		}
+
+		const long Version = Root.hasKey("Version") ? Root["Version"].ToInt() : 0;
+		if (Version != 1)
+		{
+			return false;
+		}
+
+		OutManifest.SourcePath = Root.hasKey("SourcePath") ? FPaths::Normalize(Root["SourcePath"].ToString()) : FString();
+		OutManifest.SourceFileWriteTime = Root.hasKey("SourceFileWriteTime")
+			? ParseUInt64String(Root["SourceFileWriteTime"].ToString())
+			: 0;
+		OutManifest.SkeletalMeshAssetPath = ReadManifestPath(Root, "SkeletalMeshAssetPath", "SkeletalMeshBinaryPath");
+		OutManifest.SkeletonAssetPath = ReadManifestPath(Root, "SkeletonAssetPath", "SkeletonBinaryPath");
+		OutManifest.PhysicsAssetPath = ReadManifestPath(Root, "PhysicsAssetPath", "PhysicsAssetBinaryPath");
+		OutManifest.AnimationSequencePaths.clear();
+
+		if (Root.hasKey("AnimationSequencePaths") &&
+			Root["AnimationSequencePaths"].JSONType() == json::JSON::Class::Array)
+		{
+			json::JSON& SequencePaths = Root["AnimationSequencePaths"];
+			for (int32 Index = 0; Index < SequencePaths.length(); ++Index)
+			{
+				OutManifest.AnimationSequencePaths.push_back(FPaths::Normalize(SequencePaths.at(static_cast<unsigned>(Index)).ToString()));
+			}
+		}
+
+		return !OutManifest.SourcePath.empty() &&
+			OutManifest.SourceFileWriteTime != 0 &&
+			!OutManifest.SkeletalMeshAssetPath.empty() &&
+			!OutManifest.SkeletonAssetPath.empty();
+	}
+
+	bool SaveSkeletalImportManifest(const FString& ManifestPath, const FSkeletalImportManifest& Manifest)
+	{
+		if (Manifest.SourcePath.empty() ||
+			Manifest.SourceFileWriteTime == 0 ||
+			Manifest.SkeletalMeshAssetPath.empty() ||
+			Manifest.SkeletonAssetPath.empty())
+		{
+			return false;
+		}
+
+		json::JSON Root = json::JSON::Make(json::JSON::Class::Object);
+		Root["Type"] = "SkeletalImportManifest";
+		Root["Version"] = 1;
+		Root["SourcePath"] = FPaths::Normalize(Manifest.SourcePath);
+		Root["SourceFileWriteTime"] = std::to_string(Manifest.SourceFileWriteTime);
+		Root["SkeletalMeshAssetPath"] = FPaths::Normalize(Manifest.SkeletalMeshAssetPath);
+		Root["SkeletonAssetPath"] = FPaths::Normalize(Manifest.SkeletonAssetPath);
+		Root["PhysicsAssetPath"] = FPaths::Normalize(Manifest.PhysicsAssetPath);
+
+		Root["AnimationSequencePaths"] = json::Array();
+		for (const FString& SequencePath : Manifest.AnimationSequencePaths)
+		{
+			Root["AnimationSequencePaths"].append(FPaths::Normalize(SequencePath));
+		}
+
+		std::error_code ErrorCode;
+		const std::filesystem::path FilePath(FPaths::ToAbsolute(FPaths::ToWide(ManifestPath)));
+		std::filesystem::create_directories(FilePath.parent_path(), ErrorCode);
+
+		std::ofstream OutFile(FilePath);
+		if (!OutFile.is_open())
+		{
+			return false;
+		}
+
+		OutFile << Root.dump(4);
+		return OutFile.good();
+	}
+
+	bool IsSkeletalImportManifestFresh(
+		const FSkeletalImportManifest& Manifest,
+		const FString& NormalizedSourcePath,
+		uint64 SourceWriteTime,
+		const FString& ExpectedSkeletalMeshAssetPath,
+		const FString& ExpectedSkeletonAssetPath,
+		const FString& ExpectedPhysicsAssetPath)
+	{
+		if (FPaths::Normalize(Manifest.SourcePath) != NormalizedSourcePath ||
+			Manifest.SourceFileWriteTime != SourceWriteTime ||
+			SourceWriteTime == 0)
+		{
+			return false;
+		}
+
+		if (FPaths::Normalize(Manifest.SkeletalMeshAssetPath) != FPaths::Normalize(ExpectedSkeletalMeshAssetPath) ||
+			FPaths::Normalize(Manifest.SkeletonAssetPath) != FPaths::Normalize(ExpectedSkeletonAssetPath))
+		{
+			return false;
+		}
+
+		if (!Manifest.PhysicsAssetPath.empty() &&
+			FPaths::Normalize(Manifest.PhysicsAssetPath) != FPaths::Normalize(ExpectedPhysicsAssetPath))
+		{
+			return false;
+		}
+
+		if (!FAssetPathPolicy::FileExists(Manifest.SkeletalMeshAssetPath) ||
+			!FAssetPathPolicy::FileExists(Manifest.SkeletonAssetPath))
+		{
+			return false;
+		}
+
+		if (!Manifest.PhysicsAssetPath.empty() &&
+			!FAssetPathPolicy::FileExists(Manifest.PhysicsAssetPath))
+		{
+			return false;
+		}
+
+		for (const FString& SequencePath : Manifest.AnimationSequencePaths)
+		{
+			if (!FAssetPathPolicy::FileExists(SequencePath))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 }
 
 FSkeletalMeshLoadService::FSkeletalMeshLoadService(FResourceManager& InResourceManager)
@@ -63,74 +282,345 @@ USkeletalMesh* FSkeletalMeshLoadService::Load(const FString& Path)
 		return FoundMesh;
 	}
 
+	std::filesystem::path RequestedFsPath(FPaths::ToWide(NormalizedPath));
+	std::wstring RequestedExt = RequestedFsPath.extension().wstring();
+	std::transform(RequestedExt.begin(), RequestedExt.end(), RequestedExt.begin(), ::towlower);
+	if (RequestedExt == L".skmesh")
+	{
+		return LoadSkeletalMeshAssetFile(NormalizedPath);
+	}
+
 	ResourceManager.LoadMaterial(NormalizedPath, EMaterialShaderType::SurfaceLit);
 
 	return LoadSourceOrCachedBinary(NormalizedPath);
 }
 
+USkeletalMesh* FSkeletalMeshLoadService::LoadSkeletalMeshAssetFile(const FString& NormalizedPath)
+{
+	const auto BinaryStart = std::chrono::steady_clock::now();
+
+	FSkeletalMesh* LoadedMeshData = new FSkeletalMesh();
+	if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(NormalizedPath, *LoadedMeshData))
+	{
+		delete LoadedMeshData;
+		UE_LOG_WARNING("[SkeletalMeshLoad] Failed skeletal mesh asset load | Path=%s", NormalizedPath.c_str());
+		return nullptr;
+	}
+
+	const FString ResolvePath = LoadedMeshData->PathFileName.empty()
+		? NormalizedPath
+		: FPaths::Normalize(LoadedMeshData->PathFileName);
+
+	if (!LoadedMeshData->HasValidSkeletonData())
+	{
+		const FString SkeletonAssetPath = FPaths::Normalize(LoadedMeshData->SkeletonAssetPath);
+		USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
+		if (SkeletonAssetPath.empty() ||
+			!LoadedSkeleton ||
+			!ResourceManager.BinarySerializer.LoadSkeleton(SkeletonAssetPath, *LoadedSkeleton))
+		{
+			delete LoadedMeshData;
+			UE_LOG_WARNING("[SkeletalMeshLoad] Failed skeletal mesh asset skeleton load | Path=%s | Skeleton=%s",
+			               NormalizedPath.c_str(), SkeletonAssetPath.c_str());
+			return nullptr;
+		}
+
+		LoadedMeshData->Skeleton = LoadedSkeleton;
+	}
+
+	if (!ResolvePath.empty() && FAssetPathPolicy::FileExists(ResolvePath))
+	{
+		ResourceManager.LoadMaterial(ResolvePath, EMaterialShaderType::SurfaceLit);
+	}
+
+	LoadedMeshData->PathFileName = NormalizedPath;
+	USkeletalMesh* LoadedMesh = FinalizeLoadedMesh(
+		LoadedMeshData,
+		ResolvePath,
+		NormalizedPath,
+		TArray<UAnimSequence*>{},
+		nullptr);
+
+	const auto BinaryEnd = std::chrono::steady_clock::now();
+	const double BinaryLoadSec = std::chrono::duration<double>(BinaryEnd - BinaryStart).count();
+	UE_LOG("[SkeletalMeshLoad] Source=SkeletalMeshAsset | Path=%s | BinarySec=%.6f | Source=%s",
+	       NormalizedPath.c_str(),
+	       BinaryLoadSec,
+	       ResolvePath.c_str());
+
+	return LoadedMesh;
+}
+
 USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString& NormalizedPath)
 {
 	FStaticMeshLoadOptions LoadOptions;
-	const FString BinaryPath = FAssetPathPolicy::MakeWritableSkeletalMeshCacheBinaryPath(NormalizedPath);
+	const FString SkeletalMeshAssetPath = FAssetPathPolicy::MakeWritableSkeletalMeshCacheBinaryPath(NormalizedPath);
+	const FString SkeletonAssetPath = FAssetPathPolicy::MakeWritableSkeletonCacheBinaryPath(NormalizedPath);
+	const FString PhysicsAssetPath = FAssetPathPolicy::MakeWritablePhysicsAssetCacheBinaryPath(NormalizedPath);
+	const FString LegacySkeletalMeshBinaryPath = FAssetPathPolicy::MakeWritableLegacySkeletalMeshCacheBinaryPath(NormalizedPath);
+	const FString ImportManifestPath = FAssetPathPolicy::MakeWritableSkeletalImportManifestPath(NormalizedPath);
+	const uint64 SourceWriteTime = ResourceManager.GetFileWriteTimeTicks(NormalizedPath);
 
 	FSkeletalMesh* LoadedMeshData = nullptr;
+	TArray<UAnimSequence*> ImportedAnimationSequences;
+	FString SavedPhysicsAssetPath;
+	bool bLoadedFromImportManifest = false;
+	bool bLoadedLegacyBinary = false;
+	bool bSplitCacheReadyForManifest = false;
 	double BinaryLoadSec = 0.0;
 	double SourceLoadSec = 0.0;
 
-	// 1) Binary 캐시가 소스보다 신선하면 그걸 우선 시도.
-	if (ResourceManager.IsSkeletalMeshBinaryValid(NormalizedPath, BinaryPath))
+	FSkeletalImportManifest CachedManifest;
+	if (LoadSkeletalImportManifest(ImportManifestPath, CachedManifest) &&
+		IsSkeletalImportManifestFresh(
+			CachedManifest,
+			NormalizedPath,
+			SourceWriteTime,
+			SkeletalMeshAssetPath,
+			SkeletonAssetPath,
+			PhysicsAssetPath))
 	{
 		const auto BinaryStart = std::chrono::steady_clock::now();
 
 		LoadedMeshData = new FSkeletalMesh();
-		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(BinaryPath, *LoadedMeshData))
+		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(CachedManifest.SkeletalMeshAssetPath, *LoadedMeshData))
 		{
 			delete LoadedMeshData;
 			LoadedMeshData = nullptr;
+		}
+		else if (!LoadedMeshData->HasValidSkeletonData())
+		{
+			USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
+			if (LoadedSkeleton && ResourceManager.BinarySerializer.LoadSkeleton(CachedManifest.SkeletonAssetPath, *LoadedSkeleton))
+			{
+				LoadedMeshData->Skeleton = LoadedSkeleton;
+				if (LoadedMeshData->SkeletonAssetPath.empty())
+				{
+					LoadedMeshData->SkeletonAssetPath = LoadedSkeleton->GetAssetPathFileName();
+				}
+			}
+			else
+			{
+				delete LoadedMeshData;
+				LoadedMeshData = nullptr;
+			}
+		}
+
+		const auto BinaryEnd = std::chrono::steady_clock::now();
+		BinaryLoadSec = std::chrono::duration<double>(BinaryEnd - BinaryStart).count();
+
+		if (LoadedMeshData)
+		{
+			LoadedMeshData->PathFileName = CachedManifest.SkeletalMeshAssetPath;
+			bLoadedFromImportManifest = true;
+			UE_LOG("[SkeletalMeshLoad] Source=ImportManifest | Path=%s | BinarySec=%.6f | Manifest=%s",
+			       NormalizedPath.c_str(), BinaryLoadSec, ImportManifestPath.c_str());
+		}
+	}
+
+	// Manifest 도입 이전의 v1~v3 embedded .bin만 migration 후보로 수용한다.
+	if (LoadedMeshData == nullptr && SourceWriteTime != 0)
+	{
+		FSkeletalMeshBinaryHeader BinaryHeader;
+		const bool bHasBinaryHeader = ResourceManager.BinarySerializer.ReadSkeletalMeshHeader(LegacySkeletalMeshBinaryPath, BinaryHeader);
+		bLoadedLegacyBinary = bHasBinaryHeader &&
+			BinaryHeader.Version < 4 &&
+			BinaryHeader.SourceFileWriteTime == SourceWriteTime;
+	}
+
+	if (LoadedMeshData == nullptr && bLoadedLegacyBinary)
+	{
+		const auto BinaryStart = std::chrono::steady_clock::now();
+
+		LoadedMeshData = new FSkeletalMesh();
+		if (!ResourceManager.BinarySerializer.LoadSkeletalMesh(LegacySkeletalMeshBinaryPath, *LoadedMeshData, &ImportedAnimationSequences))
+		{
+			delete LoadedMeshData;
+			LoadedMeshData = nullptr;
+		}
+
+		if (LoadedMeshData && bLoadedLegacyBinary)
+		{
+			ApplySplitAssetPaths(LoadedMeshData, SkeletonAssetPath, ImportedAnimationSequences, nullptr, FString());
+
+			bool bSaveSkeletonOk = false;
+			if (LoadedMeshData->Skeleton)
+			{
+				bSaveSkeletonOk = ResourceManager.BinarySerializer.SaveSkeleton(
+					SkeletonAssetPath,
+					NormalizedPath,
+					*LoadedMeshData->Skeleton);
+			}
+
+			if (bSaveSkeletonOk)
+			{
+				const bool bSaveConvertedMeshOk = ResourceManager.BinarySerializer.SaveSkeletalMesh(
+					SkeletalMeshAssetPath,
+					NormalizedPath,
+					*LoadedMeshData);
+				bSplitCacheReadyForManifest = bSaveConvertedMeshOk;
+				if (bSaveConvertedMeshOk)
+				{
+					LoadedMeshData->PathFileName = SkeletalMeshAssetPath;
+					UE_LOG("[SkeletalMeshLoad] Legacy skeletal cache converted | Path=%s | Skeleton=%s | Mesh=%s | Animations=%zu",
+					       NormalizedPath.c_str(),
+					       SkeletonAssetPath.c_str(),
+					       SkeletalMeshAssetPath.c_str(),
+					       ImportedAnimationSequences.size());
+				}
+				else
+				{
+					UE_LOG_WARNING("[SkeletalMeshLoad] Legacy skeletal mesh cache conversion failed; legacy cache kept | Path=%s | BinaryPath=%s",
+					               NormalizedPath.c_str(),
+					               SkeletalMeshAssetPath.c_str());
+				}
+			}
+			else
+			{
+				UE_LOG_WARNING("[SkeletalMeshLoad] Legacy skeleton cache conversion failed; legacy mesh cache kept | Path=%s | SkeletonBinaryPath=%s",
+				               NormalizedPath.c_str(),
+				               SkeletonAssetPath.c_str());
+			}
 		}
 
 		const auto BinaryEnd = std::chrono::steady_clock::now();
 		BinaryLoadSec = std::chrono::duration<double>(BinaryEnd - BinaryStart).count();
 	}
 
-	// 2) Binary 실패/누락이면 FBX에서 import 후 캐시 굽기.
+	// Binary/manifest 실패 또는 누락이면 FBX에서 import 후 split cache와 manifest를 굽는다.
 	if (LoadedMeshData == nullptr)
 	{
 		const auto SourceStart = std::chrono::steady_clock::now();
-		LoadedMeshData = ResourceManager.FbxImporter.LoadSkeletalMesh(NormalizedPath, LoadOptions);
+		FImportedSkeletalAsset ImportedAsset = ResourceManager.FbxImporter.ImportSkeletalAsset(NormalizedPath, LoadOptions);
+		LoadedMeshData = ImportedAsset.SkeletalMesh;
+		ImportedAnimationSequences = ImportedAsset.AnimationSequences;
+		UPhysicsAsset* ImportedPhysicsAsset = ImportedAsset.PhysicsAsset;
 		const auto SourceEnd = std::chrono::steady_clock::now();
 		SourceLoadSec = std::chrono::duration<double>(SourceEnd - SourceStart).count();
 
 		if (!LoadedMeshData)
 		{
+			for (UAnimSequence* Sequence : ImportedAnimationSequences)
+			{
+				delete Sequence;
+			}
 			UE_LOG_ERROR("[SkeletalMeshLoad] Failed | Path=%s | BinarySec=%.6f | FbxSec=%.6f",
 				NormalizedPath.c_str(), BinaryLoadSec, SourceLoadSec);
 			return nullptr;
 		}
 
+		ApplySplitAssetPaths(LoadedMeshData, SkeletonAssetPath, ImportedAnimationSequences, ImportedPhysicsAsset, PhysicsAssetPath);
+
+		bool bSaveSkeletonOk = false;
+		if (LoadedMeshData->Skeleton)
+		{
+			bSaveSkeletonOk = ResourceManager.BinarySerializer.SaveSkeleton(
+				SkeletonAssetPath,
+				NormalizedPath,
+				*LoadedMeshData->Skeleton);
+			if (bSaveSkeletonOk)
+			{
+				UE_LOG("[SkeletalMeshLoad] Skeleton cache saved | Path=%s | BinaryPath=%s",
+				       NormalizedPath.c_str(), SkeletonAssetPath.c_str());
+			}
+			else
+			{
+				UE_LOG_WARNING("[SkeletalMeshLoad] Skeleton cache save failed | Path=%s | BinaryPath=%s",
+				               NormalizedPath.c_str(), SkeletonAssetPath.c_str());
+			}
+		}
+
+		bool bSavePhysicsAssetOk = false;
+		if (ImportedPhysicsAsset)
+		{
+			bSavePhysicsAssetOk = ResourceManager.BinarySerializer.SavePhysicsAsset(
+				PhysicsAssetPath,
+				NormalizedPath,
+				*ImportedPhysicsAsset);
+			if (bSavePhysicsAssetOk)
+			{
+				SavedPhysicsAssetPath = PhysicsAssetPath;
+				UE_LOG("[SkeletalMeshLoad] Physics asset saved | Path=%s | AssetPath=%s",
+				       NormalizedPath.c_str(), PhysicsAssetPath.c_str());
+			}
+			else
+			{
+				UE_LOG_WARNING("[SkeletalMeshLoad] Physics asset save failed | Path=%s | AssetPath=%s",
+				               NormalizedPath.c_str(), PhysicsAssetPath.c_str());
+			}
+		}
+
 		// Material 포인터는 직렬화 대상이 아니므로 이 시점에 그대로 굽고, resolve는 Finalize에서 한 번만.
-		const bool bSaveBinaryOk = ResourceManager.BinarySerializer.SaveSkeletalMesh(BinaryPath, NormalizedPath, *LoadedMeshData);
+		const bool bSaveBinaryOk = ResourceManager.BinarySerializer.SaveSkeletalMesh(SkeletalMeshAssetPath, NormalizedPath, *LoadedMeshData);
+		bSplitCacheReadyForManifest = bSaveSkeletonOk && bSaveBinaryOk && (!ImportedPhysicsAsset || bSavePhysicsAssetOk);
 		if (bSaveBinaryOk)
 		{
+			LoadedMeshData->PathFileName = SkeletalMeshAssetPath;
 			UE_LOG("[SkeletalMeshLoad] Source=FBX | Path=%s | FbxSec=%.6f | BinarySave=OK | BinaryPath=%s",
-			       NormalizedPath.c_str(), SourceLoadSec, BinaryPath.c_str());
+			       NormalizedPath.c_str(), SourceLoadSec, SkeletalMeshAssetPath.c_str());
 		}
 		else
 		{
 			UE_LOG_WARNING("[SkeletalMeshLoad] Source=FBX | Path=%s | FbxSec=%.6f | BinarySave=FAIL | BinaryPath=%s",
-			               NormalizedPath.c_str(), SourceLoadSec, BinaryPath.c_str());
+			               NormalizedPath.c_str(), SourceLoadSec, SkeletalMeshAssetPath.c_str());
 		}
 	}
 	else
 	{
-		UE_LOG("[SkeletalMeshLoad] Source=Binary | Path=%s | BinarySec=%.6f | BinaryPath=%s",
-		       NormalizedPath.c_str(), BinaryLoadSec, BinaryPath.c_str());
+		if (!bLoadedFromImportManifest)
+		{
+			UE_LOG("[SkeletalMeshLoad] Source=Binary | Path=%s | BinarySec=%.6f | BinaryPath=%s",
+			       NormalizedPath.c_str(), BinaryLoadSec, LegacySkeletalMeshBinaryPath.c_str());
+		}
 	}
 
-	return FinalizeLoadedMesh(LoadedMeshData, NormalizedPath, NormalizedPath);
+	TArray<FString> SavedAnimationSequencePaths;
+	USkeletalMesh* LoadedMesh = FinalizeLoadedMesh(
+		LoadedMeshData,
+		NormalizedPath,
+		NormalizedPath,
+		ImportedAnimationSequences,
+		&SavedAnimationSequencePaths);
+
+	const bool bAllImportedSequencesSaved = SavedAnimationSequencePaths.size() == ImportedAnimationSequences.size();
+	if (LoadedMesh && bSplitCacheReadyForManifest && bAllImportedSequencesSaved)
+	{
+		FSkeletalImportManifest NewManifest;
+		NewManifest.SourcePath = NormalizedPath;
+		NewManifest.SourceFileWriteTime = SourceWriteTime;
+		NewManifest.SkeletalMeshAssetPath = SkeletalMeshAssetPath;
+		NewManifest.SkeletonAssetPath = SkeletonAssetPath;
+		NewManifest.PhysicsAssetPath = SavedPhysicsAssetPath;
+		NewManifest.AnimationSequencePaths = SavedAnimationSequencePaths;
+
+		if (SaveSkeletalImportManifest(ImportManifestPath, NewManifest))
+		{
+			UE_LOG("[SkeletalMeshLoad] Import manifest saved | Path=%s | Manifest=%s",
+			       NormalizedPath.c_str(), ImportManifestPath.c_str());
+		}
+		else
+		{
+			UE_LOG_WARNING("[SkeletalMeshLoad] Failed to save import manifest | Path=%s | Manifest=%s",
+			               NormalizedPath.c_str(), ImportManifestPath.c_str());
+		}
+	}
+	else if (LoadedMesh && bSplitCacheReadyForManifest && !bAllImportedSequencesSaved)
+	{
+		UE_LOG_WARNING("[SkeletalMeshLoad] Import manifest skipped because not all animation sequences were saved | Path=%s | Saved=%zu | Imported=%zu",
+		               NormalizedPath.c_str(),
+		               SavedAnimationSequencePaths.size(),
+		               ImportedAnimationSequences.size());
+	}
+
+	return LoadedMesh;
 }
 
-USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshData, const FString& ResolvePath, const FString& CacheKey)
+USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
+	FSkeletalMesh* MeshData,
+	const FString& ResolvePath,
+	const FString& CacheKey,
+	const TArray<UAnimSequence*>& ImportedAnimationSequences,
+	TArray<FString>* OutSavedAnimationSequencePaths)
 {
 	ResourceManager.ResolveSkeletalMeshMaterialSlots(ResolvePath, MeshData);
 
@@ -144,18 +634,41 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshD
 		ResourceManager.SkeletalMeshFilePaths.push_back(CacheKey);
 	}
 
-	const TArray<UAnimSequence*>& AnimationSequences = LoadedMesh->GetAnimationSequences();
-	for (int32 SequenceIndex = 0; SequenceIndex < static_cast<int32>(AnimationSequences.size()); ++SequenceIndex)
+	const FString MeshAssetPath = LoadedMesh->GetAssetPathFileName();
+	if (!MeshAssetPath.empty() && MeshAssetPath != CacheKey)
 	{
-		UAnimSequence* Sequence = AnimationSequences[SequenceIndex];
+		ResourceManager.SkeletalMeshMap[MeshAssetPath] = LoadedMesh;
+		if (std::find(ResourceManager.SkeletalMeshFilePaths.begin(), ResourceManager.SkeletalMeshFilePaths.end(), MeshAssetPath)
+			== ResourceManager.SkeletalMeshFilePaths.end())
+		{
+			ResourceManager.SkeletalMeshFilePaths.push_back(MeshAssetPath);
+		}
+	}
+
+	for (int32 SequenceIndex = 0; SequenceIndex < static_cast<int32>(ImportedAnimationSequences.size()); ++SequenceIndex)
+	{
+		UAnimSequence* Sequence = ImportedAnimationSequences[SequenceIndex];
 		if (!Sequence)
 		{
 			continue;
 		}
 
+		if (!Sequence->GetSkeleton())
+		{
+			Sequence->SetSkeleton(LoadedMesh->GetSkeleton());
+		}
+		if (Sequence->GetSkeletonAssetPath().empty())
+		{
+			Sequence->SetSkeletonAssetPath(LoadedMesh->GetSkeletonAssetPath());
+		}
+
 		const FString SequenceAssetPath = MakeSequenceAssetPath(ResolvePath, Sequence, SequenceIndex);
 		if (ResourceManager.SaveAnimSequence(SequenceAssetPath, Sequence))
 		{
+			if (OutSavedAnimationSequencePaths)
+			{
+				OutSavedAnimationSequencePaths->push_back(SequenceAssetPath);
+			}
 			UE_LOG("[SkeletalMeshLoad] Animation sequence asset saved | Mesh=%s | Sequence=%s | Path=%s",
 			       CacheKey.c_str(),
 			       Sequence->GetName().c_str(),
@@ -167,6 +680,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(FSkeletalMesh* MeshD
 			               CacheKey.c_str(),
 			               Sequence->GetName().c_str(),
 			               SequenceAssetPath.c_str());
+			delete Sequence;
 		}
 	}
 

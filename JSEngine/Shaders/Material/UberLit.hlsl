@@ -1,6 +1,7 @@
 #include "../Common/Common.hlsli"
 #include "../Common/Lighting.hlsli"
 #include "../Common/ShadowFunction.hlsli"
+#include "../Common/Skinning.hlsli"
 
 cbuffer StaticMeshBuffer : register(b2)
 {
@@ -131,12 +132,21 @@ PSInput mainVS(VSInput input)
 
 PSInput SkeletalMeshVS(SkeletalVSInput input)
 {
+    SkinnedVertex v = ApplySkinning(
+        input.Position,
+        input.Normal,
+        input.Tangent.xyz,
+        input.BoneIndices,
+        input.BoneWeights
+    );
+
     VSInput passThrough;
-    passThrough.Position = input.Position;
-    passThrough.Color = input.Color;
-    passThrough.Normal = input.Normal;
+    passThrough.Position = v.Position;
+    passThrough.Normal = v.Normal;
+    passThrough.Tangent = float4(v.Tangent, input.Tangent.w);
     passThrough.UV = input.UV;
-    passThrough.Tangent = input.Tangent;
+    passThrough.Color = input.Color;
+
     return mainVS(passThrough);
 }
 

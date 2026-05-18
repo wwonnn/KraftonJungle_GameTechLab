@@ -47,6 +47,9 @@ public:
     void Serialize(FArchive& Ar) override;
     void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
     TArray<FMeshSection> Sections;
     TArray<UMaterialInterface*> Materials;

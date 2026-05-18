@@ -1,5 +1,6 @@
 ﻿#include "AnimInstance.h"
 
+#include "Asset/Skeleton.h"
 #include "Object/ObjectFactory.h"
 
 DEFINE_CLASS(UAnimInstance, UObject)
@@ -160,7 +161,11 @@ void UAnimInstance::InitializeReferencePose(FSkeletonPose& OutPose)
 	if (!Mesh || !Mesh->HasValidMeshData())
 		return;
 
-	const TArray<FBoneInfo>& Bones = Mesh->GetBones();
+	USkeleton* Skeleton = Mesh->GetSkeleton();
+	if (!Skeleton || !Skeleton->HasValidSkeletonData())
+		return;
+
+	const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
 
 	OutPose.LocalTransforms.resize(BoneCount);
@@ -178,13 +183,18 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
         return;
     }
 
-    if (Owner && Owner->GetSkeletalMesh() && Owner->GetSkeletalMesh()->HasValidMeshData())
+    if (Owner)
     {
-        const TArray<FBoneInfo>& Bones = Owner->GetSkeletalMesh()->GetBones();
-        OutLocalTransforms.resize(Bones.size());
-        for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(Bones.size()); ++BoneIndex)
+        const USkeletalMesh* Mesh = Owner->GetSkeletalMesh();
+        USkeleton* Skeleton = Mesh ? Mesh->GetSkeleton() : nullptr;
+        if (Skeleton && Skeleton->HasValidSkeletonData())
         {
-            OutLocalTransforms[BoneIndex] = FTransform(Bones[BoneIndex].LocalBindTransform);
+            const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
+            OutLocalTransforms.resize(Bones.size());
+            for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(Bones.size()); ++BoneIndex)
+            {
+                OutLocalTransforms[BoneIndex] = FTransform(Bones[BoneIndex].LocalBindTransform);
+            }
         }
     }
 

@@ -691,6 +691,7 @@ void RegisterGeneratedReflection_USkeletalMeshComponent()
 {
     static const FPropertyMeta Properties[] =
     {
+        { "AnimSequencePath", "AnimSequence", "AnimSequenceAsset", EPropertyType::String, offsetof(USkeletalMeshComponent, AnimSequencePath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
         { "SingleNodeInstance", "AnimInstance", nullptr, EPropertyType::ObjectRef, offsetof(USkeletalMeshComponent, SingleNodeInstance), EPropertyAccess::EditAnywhere, &UAnimSingleNodeInstance::s_TypeInfo, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
@@ -702,6 +703,7 @@ void RegisterGeneratedReflection_USkinnedMeshComponent()
     static const FPropertyMeta Properties[] =
     {
         { "SkeletalMeshPath", "SkeletalMesh", "SkeletalMeshAsset", EPropertyType::String, offsetof(USkinnedMeshComponent, SkeletalMeshPath), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
+        { "bEnableCPUSkinning", "Enable CPU Skinning", nullptr, EPropertyType::Bool, offsetof(USkinnedMeshComponent, bEnableCPUSkinning), EPropertyAccess::EditAnywhere, nullptr, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None },
     };
 
     FReflectionRegistry::Get().RegisterProperties(&USkinnedMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));

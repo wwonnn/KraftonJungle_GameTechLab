@@ -477,6 +477,12 @@
     <ClCompile Include="Source\Engine\Asset\ParticleAtlasLoader.cpp">
       <Filter>Source\Engine\Asset</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Asset\PhysicsAsset.cpp">
+      <Filter>Source\Engine\Asset</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Asset\Skeleton.cpp">
+      <Filter>Source\Engine\Asset</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Asset\StaticMesh.cpp">
       <Filter>Source\Engine\Asset</Filter>
     </ClCompile>
@@ -1083,6 +1089,7 @@
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
+    <ClCompile Include="Source\Engine\Render\Resource\VertexFactoryTypes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -1314,6 +1321,15 @@
       <Filter>Source\Engine\Asset</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Asset\StaticMeshTypes.h">
+      <Filter>Source\Engine\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Asset\PhysicsAsset.h">
+      <Filter>Source\Engine\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Asset\Skeleton.h">
+      <Filter>Source\Engine\Asset</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Asset\SkeletonTypes.h">
       <Filter>Source\Engine\Asset</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Animation\CurvePlayback.h">
@@ -2075,6 +2091,11 @@
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimationAsset.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequence.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequenceBase.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimTypes.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Source\Engine\Runtime\AppIcon.rc" />
@@ -2087,6 +2108,7 @@
     <None Include="Shaders\UI\ScreenOverlay.hlsl">
       <Filter>Shaders\UI</Filter>
     </None>
+    <None Include="Shaders\Common\Skinning.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Engine\UI\RmlUi\RmlUiSystem.cpp">

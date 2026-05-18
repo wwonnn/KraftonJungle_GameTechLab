@@ -37,6 +37,9 @@ public:
 	void SetRadius(float InRadius) { if (InRadius) Radius = InRadius; }
 	void SetRadiusFallOff(float InFallOff) { if (InFallOff) RadiusFallOff = InFallOff; }
 
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
 	UPROPERTY(EditAnywhere, DisplayName="Intensity")
 	float  Intensity		= 1.f;

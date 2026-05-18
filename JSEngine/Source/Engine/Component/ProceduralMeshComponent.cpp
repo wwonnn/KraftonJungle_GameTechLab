@@ -6,6 +6,7 @@
 #include "GameFramework/AActor.h"
 #include "Core/ResourceManager.h"
 #include "Core/Paths.h"
+#include "Render/Proxy/ProceduralMeshRenderProxy.h"
 #include <filesystem>
 
 DEFINE_CLASS(UProceduralMeshComponent, UPrimitiveComponent)
@@ -201,6 +202,13 @@ void UProceduralMeshComponent::GetEditableProperties(TArray<FPropertyDescriptor>
     UPrimitiveComponent::GetEditableProperties(OutProps);
 
     OutProps.push_back({ "Materials", EPropertyType::Material, &Materials });
+}
+
+FPrimitiveRenderProxy* UProceduralMeshComponent::CreateRenderProxy()
+{
+    FProceduralMeshRenderProxy* Proxy = new FProceduralMeshRenderProxy;
+    Proxy->ProcMeshComp = this;
+    return Proxy;
 }
 
 void FMeshSlicer::Slice(const FSliceMeshData& InMesh, const FPlane& Plane, FSliceMeshData& OutFront, FSliceMeshData& OutBack)

@@ -39,6 +39,7 @@ public:
 
 	const TArray<FString>& GetStaticMeshAssetPaths() const { return StaticMeshPaths; }
 	const TArray<FString>& GetSkeletalMeshAssetPaths() const { return SkeletalMeshPaths; }
+	const TArray<FString>& GetAnimSequenceAssetPaths() const { return AnimSequencePaths; }
 	const TArray<FString>& GetTextureAssetPaths() const { return TexturePaths; }
 	const TArray<FString>& GetMaterialInterfaceNames() const { return MaterialInterfaceNames; }
 	const TArray<FString>& GetFontNames() const { return FontNames; }
@@ -63,6 +64,7 @@ private:
 
 	TArray<FString> StaticMeshPaths;
 	TArray<FString> SkeletalMeshPaths;
+	TArray<FString> AnimSequencePaths;
 	TArray<FString> TexturePaths;
 	TArray<FString> MaterialInterfaceNames;
 	TArray<FString> FontNames;

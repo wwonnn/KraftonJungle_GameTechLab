@@ -1,9 +1,11 @@
 ﻿#include "FbxImporter.h"
+#include "Asset/Skeleton.h"
 #include "Asset/StaticMeshTypes.h"
 #include "Core/Logging/Log.h"
 #include "Core/PlatformTime.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Object/ObjectFactory.h"
 
 #include <fbxsdk.h>
 
@@ -772,9 +774,11 @@ FString FFbxImporter::GetLoaderName() const
 	return FString{ "FFbxImporter" };
 }
 
-FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStaticMeshLoadOptions& LoadOptions)
+FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, const FStaticMeshLoadOptions& LoadOptions)
 {
     (void)LoadOptions;
+
+    FImportedSkeletalAsset ImportedAsset;
 
     const double StartTime = FPlatformTime::Seconds();
     UE_LOG("[FbxImporter] Start loading Skeletal FBX: %s", Path.c_str());
@@ -783,7 +787,7 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
     if (!Manager)
     {
         UE_LOG_ERROR("[FbxImporter] Failed to create FbxManager");
-        return nullptr;
+        return ImportedAsset;
     }
 
     FbxIOSettings* IOSettings = FbxIOSettings::Create(Manager, IOSROOT);
@@ -794,13 +798,13 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
     {
         UE_LOG_ERROR("[FbxImporter] Failed to create FbxScene");
         Manager->Destroy();
-        return nullptr;
+        return ImportedAsset;
     }
 
     if (!ImportScene(Path, Manager, Scene))
     {
         Manager->Destroy();
-        return nullptr;
+        return ImportedAsset;
     }
 
     FbxGeometryConverter Converter(Manager);
@@ -808,6 +812,15 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
 
     FSkeletalMesh* SkeletalMesh = new FSkeletalMesh();
     SkeletalMesh->PathFileName = Path;
+    SkeletalMesh->SkeletonAssetPath = Path;
+
+    USkeleton* ImportedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
+    FSkeletonData* ImportedSkeletonData = new FSkeletonData();
+    ImportedSkeletonData->PathFileName = Path;
+    ImportedSkeleton->SetSkeletonData(ImportedSkeletonData);
+    SkeletalMesh->Skeleton = ImportedSkeleton;
+    ImportedAsset.Skeleton = ImportedSkeleton;
+    ImportedAsset.SkeletalMesh = SkeletalMesh;
 
     TMap<FbxNode*, int32> BoneNodeToIndex;
 
@@ -839,7 +852,7 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
     }
 
 	TArray<FbxNode*> IndexToBoneNode;
-    IndexToBoneNode.resize(SkeletalMesh->Bones.size());
+    IndexToBoneNode.resize(SkeletalMesh->GetBones().size());
 	for (const auto& Pair : BoneNodeToIndex)
 	{
 		const int32 BoneIndex = Pair.second;
@@ -900,6 +913,8 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
         UAnimSequence* AnimSequence = new UAnimSequence();
         UAnimDataModel* AnimDataModel = new UAnimDataModel();
         AnimSequence->DataModel = AnimDataModel;
+        AnimSequence->SetSkeleton(ImportedSkeleton);
+        AnimSequence->SetSkeletonAssetPath(SkeletalMesh->SkeletonAssetPath);
 
         const FString StackName = CurAnimStack->GetName() && CurAnimStack->GetName()[0] != '\0'
             ? FString(CurAnimStack->GetName())
@@ -955,7 +970,7 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
             Track.InternalTrackData.RotKeys.reserve(FrameCount);
             Track.InternalTrackData.ScaleKeys.reserve(FrameCount);
 
-			const int32 ParentIndex = SkeletalMesh->Bones[BoneIndex].ParentIndex;
+			const int32 ParentIndex = SkeletalMesh->GetBones()[BoneIndex].ParentIndex;
 
 			for (int32 Frame = 0; Frame < FrameCount; ++Frame)
 			{
@@ -1013,16 +1028,23 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
             continue;
         }
 
-        SkeletalMesh->AnimationSequences.push_back(AnimSequence);
+        ImportedAsset.AnimationSequences.push_back(AnimSequence);
     }
 
     Manager->Destroy();
 
-    if (SkeletalMesh->Vertices.empty() || SkeletalMesh->Indices.empty() || SkeletalMesh->Bones.empty())
+    if (SkeletalMesh->Vertices.empty() || SkeletalMesh->Indices.empty() || SkeletalMesh->GetBones().empty())
     {
         UE_LOG_ERROR("[FbxImporter] No skeletal geometry or bones found: %s", Path.c_str());
+        for (UAnimSequence* AnimSequence : ImportedAsset.AnimationSequences)
+        {
+            delete AnimSequence;
+        }
+        ImportedAsset.AnimationSequences.clear();
         delete SkeletalMesh;
-        return nullptr;
+        ImportedAsset.SkeletalMesh = nullptr;
+        ImportedAsset.Skeleton = nullptr;
+        return ImportedAsset;
     }
 
     SkeletalMesh->LocalBounds = BuildLocalBounds(SkeletalMesh);
@@ -1033,12 +1055,23 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
            Path.c_str(),
            SkeletalMesh->Vertices.size(),
            SkeletalMesh->Indices.size(),
-           SkeletalMesh->Bones.size(),
+           SkeletalMesh->GetBones().size(),
            SkeletalMesh->Sections.size(),
            SkeletalMesh->MaterialSlots.size(),
            EndTime - StartTime);
 
-    return SkeletalMesh;
+    return ImportedAsset;
+}
+
+FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStaticMeshLoadOptions& LoadOptions)
+{
+    FImportedSkeletalAsset ImportedAsset = ImportSkeletalAsset(Path, LoadOptions);
+    for (UAnimSequence* AnimSequence : ImportedAsset.AnimationSequences)
+    {
+        delete AnimSequence;
+    }
+    ImportedAsset.AnimationSequences.clear();
+    return ImportedAsset.SkeletalMesh;
 }
 
 FFbxMeshContentInfo FFbxImporter::InspectMeshContent(const FString& Path)
@@ -1470,6 +1503,12 @@ void FFbxImporter::ProcessSkeletalMesh(
     TArray<TArray<FTempInfluence>> InfluencesByControlPoint;
     InfluencesByControlPoint.resize(ControlPointCount);
 
+    TArray<FBoneInfo>* Bones = InSkeletalMesh->GetMutableBones();
+    if (!Bones)
+    {
+        return;
+    }
+
     // cluster link node를 bone으로 등록
     for (int32 SkinIndex = 0; SkinIndex < SkinCount; ++SkinIndex)
     {
@@ -1513,7 +1552,7 @@ void FFbxImporter::ProcessSkeletalMesh(
                 continue;
             }
 
-            const int32 NewBoneIndex = static_cast<int32>(InSkeletalMesh->Bones.size());
+            const int32 NewBoneIndex = static_cast<int32>(Bones->size());
             BoneNodeToIndex[BoneNode] = NewBoneIndex;
 
             FBoneInfo Bone = {};
@@ -1524,7 +1563,7 @@ void FFbxImporter::ProcessSkeletalMesh(
             Bone.InverseBindPose = Bone.GlobalBindTransform.GetInverse();
             Bone.LocalBindTransform = Bone.GlobalBindTransform;
 
-            InSkeletalMesh->Bones.push_back(Bone);
+            Bones->push_back(Bone);
         }
     }
 
@@ -1557,13 +1596,13 @@ void FFbxImporter::ProcessSkeletalMesh(
             ParentNode = ParentNode->GetParent();
         }
 
-        FBoneInfo& Bone = InSkeletalMesh->Bones[BoneIndex];
+        FBoneInfo& Bone = (*Bones)[BoneIndex];
         Bone.ParentIndex = ParentIndex;
 
         if (ParentIndex >= 0)
         {
             const FMatrix ParentGlobalInv =
-                InSkeletalMesh->Bones[ParentIndex].GlobalBindTransform.GetInverse();
+                (*Bones)[ParentIndex].GlobalBindTransform.GetInverse();
 
             Bone.LocalBindTransform = Bone.GlobalBindTransform * ParentGlobalInv;
         }

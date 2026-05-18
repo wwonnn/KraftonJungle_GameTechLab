@@ -119,7 +119,7 @@ public:
 	TArray<FString> GetSkeletalMeshPaths() const;
 	FFbxMeshContentInfo InspectFbxMeshContent(const FString& Path);
 
-	// 에디터에서 socket 등 mesh data 변경 후 writable cache(.bin)에 저장.
+	// 에디터에서 socket 등 mesh data 변경 후 writable skeletal mesh asset(.skmesh)에 저장.
 	bool SaveSkeletalMesh(USkeletalMesh* Mesh);
 
 	UCurveFloatAsset* LoadCurve(const FString& Path);

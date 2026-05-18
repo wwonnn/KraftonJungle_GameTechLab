@@ -6,6 +6,8 @@
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 
+#include "Render/Proxy/BillboardRenderProxy.h"
+
 DEFINE_CLASS(UBillboardComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UBillboardComponent)
 
@@ -217,6 +219,13 @@ bool UBillboardComponent::RaycastMesh(const FRay& Ray, FHitResult& OutHitResult)
 void UBillboardComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UPrimitiveComponent::GetEditableProperties(OutProps);
+}
+
+FPrimitiveRenderProxy* UBillboardComponent::CreateRenderProxy()
+{
+    FBillboardRenderProxy* Proxy = new FBillboardRenderProxy;
+    Proxy->BillboardComp = this;
+    return Proxy;
 }
 
 void UBillboardComponent::TickComponent(float DeltaTime)

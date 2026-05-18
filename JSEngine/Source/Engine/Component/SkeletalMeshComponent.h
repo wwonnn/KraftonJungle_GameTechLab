@@ -17,6 +17,9 @@ public:
     USkeletalMeshComponent() = default;
     ~USkeletalMeshComponent() override;
 
+    void Serialize(FArchive& Ar) override;
+    void PostEditProperty(const char* PropertyName) override;
+
     void BeginPlay() override;
     void TickComponent(float DeltaTime) override;
 
@@ -39,6 +42,11 @@ public:
     FMatrix GetBoneGlobalTransform(int32 BoneIndex) const;
     void SetBoneGlobalTransform(int32 BoneIndex, const FMatrix& NewGlobalTransform);
 
+    void SetAnimSequencePath(const FString& InAnimSequencePath);
+    const FString& GetAnimSequencePath() const { return AnimSequencePath; }
+protected:
+    FPrimitiveRenderProxy* CreateRenderProxy() override;
+
 private:
     void ReleaseSingleNodeAnimation();
     void EnsureSingleNodeAnimation();
@@ -48,6 +56,9 @@ private:
     void ApplyEvaluatedPose(const FSkeletonPose& Pose);
 
 private:
+    UPROPERTY(EditAnywhere, DisplayName = "AnimSequence", SerializeName = "AnimSequenceAsset")
+    FString AnimSequencePath;
+
     UPROPERTY(EditAnywhere, DisplayName = "AnimInstance")
     UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
 };

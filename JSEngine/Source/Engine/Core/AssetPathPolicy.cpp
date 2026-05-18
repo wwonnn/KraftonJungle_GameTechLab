@@ -127,8 +127,84 @@ FString FAssetPathPolicy::MakeWritableSkeletalMeshCacheBinaryPath(const FString&
 	}
 
 	std::filesystem::path BinaryFileName = SourceFsPath.stem();
+	BinaryFileName += ".skmesh";
+
+	std::filesystem::path BinaryPath = BinDir / BinaryFileName;
+	return FPaths::ToString(BinaryPath.wstring());
+}
+
+FString FAssetPathPolicy::MakeWritableSkeletonCacheBinaryPath(const FString& SourcePath)
+{
+	const FString NormalizedSourcePath = FPaths::Normalize(SourcePath);
+	std::filesystem::path SourceFsPath(FPaths::ToWide(NormalizedSourcePath));
+
+	std::filesystem::path BinDir = std::filesystem::path(FPaths::RootDir()) / "Asset" / "Skeleton" / "Bin";
+
+	if (!std::filesystem::exists(BinDir))
+	{
+		std::filesystem::create_directories(BinDir);
+	}
+
+	std::filesystem::path BinaryFileName = SourceFsPath.stem();
+	BinaryFileName += ".skeleton";
+
+	std::filesystem::path BinaryPath = BinDir / BinaryFileName;
+	return FPaths::ToString(BinaryPath.wstring());
+}
+
+FString FAssetPathPolicy::MakeWritablePhysicsAssetCacheBinaryPath(const FString& SourcePath)
+{
+	const FString NormalizedSourcePath = FPaths::Normalize(SourcePath);
+	std::filesystem::path SourceFsPath(FPaths::ToWide(NormalizedSourcePath));
+
+	std::filesystem::path BinDir = std::filesystem::path(FPaths::RootDir()) / "Asset" / "PhysicsAsset" / "Bin";
+
+	if (!std::filesystem::exists(BinDir))
+	{
+		std::filesystem::create_directories(BinDir);
+	}
+
+	std::filesystem::path BinaryFileName = SourceFsPath.stem();
+	BinaryFileName += ".physic";
+
+	std::filesystem::path BinaryPath = BinDir / BinaryFileName;
+	return FPaths::ToString(BinaryPath.wstring());
+}
+
+FString FAssetPathPolicy::MakeWritableLegacySkeletalMeshCacheBinaryPath(const FString& SourcePath)
+{
+	const FString NormalizedSourcePath = FPaths::Normalize(SourcePath);
+	std::filesystem::path SourceFsPath(FPaths::ToWide(NormalizedSourcePath));
+
+	std::filesystem::path BinDir = std::filesystem::path(FPaths::RootDir()) / "Asset" / "SkeletalMesh" / "Bin";
+
+	if (!std::filesystem::exists(BinDir))
+	{
+		std::filesystem::create_directories(BinDir);
+	}
+
+	std::filesystem::path BinaryFileName = SourceFsPath.stem();
 	BinaryFileName += ".bin";
 
 	std::filesystem::path BinaryPath = BinDir / BinaryFileName;
 	return FPaths::ToString(BinaryPath.wstring());
+}
+
+FString FAssetPathPolicy::MakeWritableSkeletalImportManifestPath(const FString& SourcePath)
+{
+	const FString NormalizedSourcePath = FPaths::Normalize(SourcePath);
+	std::filesystem::path SourceFsPath(FPaths::ToWide(NormalizedSourcePath));
+
+	std::filesystem::path ManifestDir = std::filesystem::path(FPaths::RootDir()) / "Asset" / "ImportManifest" / "Skeletal";
+
+	if (!std::filesystem::exists(ManifestDir))
+	{
+		std::filesystem::create_directories(ManifestDir);
+	}
+
+	std::filesystem::path ManifestFileName = SourceFsPath.stem();
+	ManifestFileName += ".manifest";
+
+	std::filesystem::path ManifestPath = ManifestDir / ManifestFileName;
+	return FPaths::ToString(ManifestPath.wstring());
 }

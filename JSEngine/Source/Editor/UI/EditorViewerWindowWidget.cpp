@@ -291,8 +291,9 @@ uint64 FEditorViewerWindowWidget::ComputeEditableMeshSignature(const FSkeletalMe
 
 	uint64 Hash = MeshEditHashOffset;
 
-	Hash = HashValue(Hash, static_cast<uint64>(MeshData->Bones.size()));
-	for (const FBoneInfo& Bone : MeshData->Bones)
+	const TArray<FBoneInfo>& Bones = MeshData->GetBones();
+	Hash = HashValue(Hash, static_cast<uint64>(Bones.size()));
+	for (const FBoneInfo& Bone : Bones)
 	{
 		Hash = HashString(Hash, Bone.Name);
 		Hash = HashValue(Hash, Bone.ParentIndex);
@@ -719,11 +720,12 @@ void FEditorViewerWindowWidget::RenderContent(float DeltaTime)
 		if (MeshData)
 		{
             ApplyPendingBoneTreeOpenState(MeshData);
-			for (int32 j = 0; j < MeshData->Bones.size(); ++j)
+			const TArray<FBoneInfo>& Bones = MeshData->GetBones();
+			for (int32 j = 0; j < static_cast<int32>(Bones.size()); ++j)
 			{
-				if (MeshData->Bones[j].ParentIndex == -1)
+				if (Bones[j].ParentIndex == -1)
 				{
-					DrawBoneNode(j, MeshData->Bones, Children);
+					DrawBoneNode(j, Bones, Children);
 				}
 			}
 		}
@@ -852,7 +854,10 @@ void FEditorViewerWindowWidget::RenderBoneDetails(USkeletalMeshComponent* SkelCo
     const int32 SelectedBoneIndex = Viewer ? Viewer->GetSelectedBoneIndex() : -1;
     if (!SkelComp || SelectedBoneIndex == -1) return;
 
-    const FBoneInfo& Bone = SkelComp->GetSkeletalMesh()->GetMeshData()->Bones[SelectedBoneIndex];
+    const TArray<FBoneInfo>& Bones = SkelComp->GetSkeletalMesh()->GetMeshData()->GetBones();
+    if (SelectedBoneIndex < 0 || SelectedBoneIndex >= static_cast<int32>(Bones.size())) return;
+
+    const FBoneInfo& Bone = Bones[SelectedBoneIndex];
     ImGui::Text("Bone: %s (Index: %d)", Bone.Name.c_str(), SelectedBoneIndex);
     ImGui::Spacing();
 
@@ -1113,12 +1118,13 @@ void FEditorViewerWindowWidget::RebuildBoneTreeCaches(const FSkeletalMesh* MeshD
     BoneToSocketIndices.clear();
     if (!MeshData) return;
 
-    const int32 BoneCount = static_cast<int32>(MeshData->Bones.size());
+    const TArray<FBoneInfo>& Bones = MeshData->GetBones();
+    const int32 BoneCount = static_cast<int32>(Bones.size());
     Children.resize(BoneCount);
 
     for (int32 i = 0; i < BoneCount; ++i)
     {
-        const int32 Parent = MeshData->Bones[i].ParentIndex;
+        const int32 Parent = Bones[i].ParentIndex;
         if (Parent >= 0)
         {
             Children[Parent].push_back(i);
@@ -1133,7 +1139,7 @@ void FEditorViewerWindowWidget::RebuildBoneToSocketIndices(const FSkeletalMesh* 
     BoneToSocketIndices.clear();
     if (!MeshData) return;
 
-    const int32 BoneCount = static_cast<int32>(MeshData->Bones.size());
+    const int32 BoneCount = static_cast<int32>(MeshData->GetBones().size());
     BoneToSocketIndices.resize(BoneCount);
 
     for (int32 i = 0; i < static_cast<int32>(MeshData->Sockets.size()); ++i)
@@ -1149,7 +1155,7 @@ void FEditorViewerWindowWidget::RebuildBoneToSocketIndices(const FSkeletalMesh* 
 void FEditorViewerWindowWidget::AddSocketOnBone(int32 BoneIdx)
 {
     if (!CachedMesh) return;
-    if (BoneIdx < 0 || BoneIdx >= static_cast<int32>(CachedMesh->Bones.size())) return;
+    if (BoneIdx < 0 || BoneIdx >= static_cast<int32>(CachedMesh->GetBones().size())) return;
 
     FSkeletalMeshSocket NewSocket;
     NewSocket.Name = FName(GenerateUniqueSocketName());
@@ -1264,7 +1270,7 @@ void FEditorViewerWindowWidget::DrawSocketInspector()
     ImGui::Text("Socket: %s", Socket.Name.ToString().c_str());
 
     // Bone 콤보
-    const TArray<FBoneInfo>& Bones = CachedMesh->Bones;
+    const TArray<FBoneInfo>& Bones = CachedMesh->GetBones();
     const char* CurrentBoneName = (Socket.BoneIndex >= 0 && Socket.BoneIndex < (int32)Bones.size())
         ? Bones[Socket.BoneIndex].Name.c_str()
         : "<invalid>";
