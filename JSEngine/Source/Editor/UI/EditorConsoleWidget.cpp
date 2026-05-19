@@ -558,6 +558,9 @@ void FEditorConsoleWidget::CmdSuggest(const TArray<FString>& Args)
 	{
 		AddLog("  stat fps              Toggle FPS stat on focused viewport\n");
 		AddLog("  stat memory           Toggle memory stat on focused viewport\n");
+		AddLog("  stat anim             Toggle animation performance overlay\n");
+		AddLog("  stat skeletalmesh     Toggle skeletal mesh performance overlay\n");
+		AddLog("  stat gpu              Toggle GPU pass timing overlay\n");
 		AddLog("  stat history          Print Undo/Redo history memory use\n");
 		AddLog("  stat none             Disable viewport stats\n");
 		bPrinted = true;
@@ -779,6 +782,24 @@ void FEditorConsoleWidget::CmdStat(const TArray<FString>& Args)
 		bFlag = !bFlag;
 		AddLog("Stat Memory %s (viewport %d)\n", bFlag ? "Enabled" : "Disabled", FocusedIdx);
 	}
+	else if (Target == "anim")
+	{
+		EActiveStatCategory& ActiveStat = Layout.GetViewportState(FocusedIdx).ActiveStat;
+		ActiveStat = (ActiveStat == EActiveStatCategory::Anim) ? EActiveStatCategory::None : EActiveStatCategory::Anim;
+		AddLog("Stat Anim %s (viewport %d)\n", (ActiveStat == EActiveStatCategory::Anim) ? "Enabled" : "Disabled", FocusedIdx);
+	}
+	else if (Target == "skeletalmesh" || Target == "skelmesh" || Target == "sm")
+	{
+		EActiveStatCategory& ActiveStat = Layout.GetViewportState(FocusedIdx).ActiveStat;
+		ActiveStat = (ActiveStat == EActiveStatCategory::SkeletalMesh) ? EActiveStatCategory::None : EActiveStatCategory::SkeletalMesh;
+		AddLog("Stat SkeletalMesh %s (viewport %d)\n", (ActiveStat == EActiveStatCategory::SkeletalMesh) ? "Enabled" : "Disabled", FocusedIdx);
+	}
+	else if (Target == "gpu")
+	{
+		EActiveStatCategory& ActiveStat = Layout.GetViewportState(FocusedIdx).ActiveStat;
+		ActiveStat = (ActiveStat == EActiveStatCategory::GPU) ? EActiveStatCategory::None : EActiveStatCategory::GPU;
+		AddLog("Stat GPU %s (viewport %d)\n", (ActiveStat == EActiveStatCategory::GPU) ? "Enabled" : "Disabled", FocusedIdx);
+	}
 	else if (Target == "history")
 	{
 		PrintHistoryStats();
@@ -818,6 +839,7 @@ void FEditorConsoleWidget::CmdStat(const TArray<FString>& Args)
 			Layout.GetViewportState(i).bShowStatMemory    = false;
 			Layout.GetViewportState(i).bShowStatNameTable = false;
 			Layout.GetViewportState(i).bShowCascadeVis    = false;
+			Layout.GetViewportState(i).ActiveStat         = EActiveStatCategory::None;
 		}
 		AddLog("All Stats Disabled\n");
 	}

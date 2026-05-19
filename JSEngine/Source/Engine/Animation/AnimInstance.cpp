@@ -6,6 +6,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
+#include "Core/Logging/Stats.h"
 #include "Object/ObjectFactory.h"
 
 namespace
@@ -304,6 +305,9 @@ bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
 
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
+    SCOPE_STAT_ANIM("Animation Update");
+    STAT_COUNTER_ANIM("Active Anim Instances", 1);
+
     if (!bPlaying || !HasValidSequence())
 	// 서브 클래스에서 변수 업데이트
 	NativeUpdateAnimation(DeltaTime);
@@ -389,6 +393,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
 
 void UAnimInstance::EvaluatePose(FSkeletonPose& OutPose)
 {
+    SCOPE_STAT_ANIM("Animation Evaluate");
+
     if (!CurrentSequence)
     {
         InitializeReferencePose(OutPose);
@@ -535,6 +541,7 @@ FQuat UAnimInstance::InterpolateKeys(const TArray<FQuat>& Keys, float Time, floa
 
 void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose)
 {
+    SCOPE_STAT_ANIM("Pose Blend");
     const int32 BoneCount = PoseA.LocalTransforms.size();
     OutPose.LocalTransforms.resize(BoneCount);
 

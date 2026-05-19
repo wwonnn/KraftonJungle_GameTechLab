@@ -9,6 +9,7 @@
 #include "Core/ResourceManager.h"
 #include "Component/PostProcess/Light/LightComponent.h"
 #include "Render/Mesh/VertexFactory/VertexFactory.h"
+#include "Core/Logging/GPUProfiler.h"
 
 bool FOpaqueRenderPass::Initialize()
 {
@@ -209,20 +210,29 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
 
        CheckOverrideViewMode(Context);  
 	   IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
-       VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
+       
+       {
+           std::unique_ptr<FGPUScopedTimer> SkeletalTimer;
+           if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh && Cmd.VertexFactoryData)
+           {
+               SkeletalTimer = std::make_unique<FGPUScopedTimer>("Skeletal Pass");
+           }
+           
+           VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
 
-       ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();  
-       if (indexBuffer != nullptr)  
-       {  
-           uint32 indexStart = Cmd.SectionIndexStart;  
-           uint32 indexCount = Cmd.SectionIndexCount;  
-           Context->DeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);  
-           Context->DeviceContext->DrawIndexed(indexCount, indexStart, 0);  
-       }  
-       else  
-       {  
-           Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);  
-       }  
+           ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();  
+           if (indexBuffer != nullptr)  
+           {  
+               uint32 indexStart = Cmd.SectionIndexStart;  
+               uint32 indexCount = Cmd.SectionIndexCount;  
+               Context->DeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);  
+               Context->DeviceContext->DrawIndexed(indexCount, indexStart, 0);  
+           }  
+           else  
+           {  
+               Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);  
+           }  
+       }
    }  
 
    return true;  

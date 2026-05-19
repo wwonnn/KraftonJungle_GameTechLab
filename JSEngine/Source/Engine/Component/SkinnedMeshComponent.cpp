@@ -4,6 +4,7 @@
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Render/Resource/Material.h"
+#include "Core/Logging/Stats.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -360,12 +361,22 @@ void USkinnedMeshComponent::EnsureSkinningUpdated()
         return;
     }
 
+    STAT_COUNTER_SKELMESH("Skeletal Mesh Count", 1);
+
 	// Matrix Update 는 CPU/GPU Skinning 공통
     UpdateCurrentGlobalPose();
     UpdateSkinningMatrices();
 
+    STAT_COUNTER_SKELMESH("Bone Matrix Upload Count", static_cast<int64>(SkinningMatrices.size()));
+
 	if (bEnableCPUSkinning)
 	    SkinVerticesCPU();
+    else
+    {
+        // GPU Skinning일 경우 사실상 여기서 하는건 없지만 
+        // 카운터만 올려줌
+        STAT_COUNTER_SKELMESH("GPU Skinning Instance", 1);
+    }
 
     bSkinningDirty = false;
     MarkBoundsDirty();
@@ -462,6 +473,7 @@ void USkinnedMeshComponent::InitializePoseFromBindPose()
 
 void USkinnedMeshComponent::UpdateCurrentGlobalPose()
 {
+    SCOPE_STAT_ANIM("Bone Transform Update");
     if (!HasValidMesh())
     {
         return;
@@ -475,6 +487,8 @@ void USkinnedMeshComponent::UpdateCurrentGlobalPose()
 
     const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
+
+    STAT_COUNTER_ANIM("Total Updated Bones", static_cast<int64>(BoneCount));
 
     if (CurrentLocalPose.size() != Bones.size())
     {
@@ -524,6 +538,7 @@ void USkinnedMeshComponent::UpdateSkinningMatrices()
 
 void USkinnedMeshComponent::SkinVerticesCPU()
 {
+    SCOPE_STAT_SKELMESH("CPU Skinning");
     if (!HasValidMesh())
     {
         SkinnedVertices.clear();
@@ -533,6 +548,7 @@ void USkinnedMeshComponent::SkinVerticesCPU()
 	// 아직 변형되지 않은 bind pose 기준 정점 목록
 	// index buffer는 당연히 재사용!
     const TArray<FSkeletalMeshVertex>& SourceVertices = SkeletalMesh->GetVertices();
+    STAT_COUNTER_SKELMESH("Skinned Vertices", static_cast<int64>(SourceVertices.size()));
     USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
     if (!Skeleton || !Skeleton->HasValidSkeletonData())
     {
