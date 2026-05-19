@@ -175,26 +175,63 @@ void USkinnedMeshComponent::UpdateWorldAABB() const
         }
 
         bBoundsDirty = false;
+    }
+	else
+	{
+        UpdateWorldAABBFromBones();
+	}
+}
+
+void USkinnedMeshComponent::UpdateWorldAABBFromBones() const
+{
+    WorldAABB.Reset();
+
+    if (!HasValidMesh())
+    {
+        bBoundsDirty = false;
         return;
     }
 
-    const FAABB& LocalBounds = SkeletalMesh->GetLocalBounds();
-    if (LocalBounds.IsValid())
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton)
     {
-        const FVector LocalCorners[8] = {
-            FVector(LocalBounds.Min.X, LocalBounds.Min.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Min.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Min.X, LocalBounds.Max.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Max.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Min.X, LocalBounds.Min.Y, LocalBounds.Max.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Min.Y, LocalBounds.Max.Z),
-            FVector(LocalBounds.Min.X, LocalBounds.Max.Y, LocalBounds.Max.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Max.Y, LocalBounds.Max.Z)
+        bBoundsDirty = false;
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
+    const FMatrix& WorldMatrix = GetWorldMatrix();
+
+    for (int32 i = 0; i < static_cast<int32>(Bones.size()); ++i)
+    {
+        const FBoneInfo& Bone = Bones[i];
+        if (!Bone.BoneBounds.IsValid())
+        {
+            continue;
+        }
+
+        // Bone bounds are in bone local space.
+        // Transform to component space using CurrentGlobalPose.
+        // Then transform to world space using WorldMatrix.
+        FMatrix BoneToWorld = CurrentGlobalPose[i] * WorldMatrix;
+
+        const FVector& Min = Bone.BoneBounds.Min;
+        const FVector& Max = Bone.BoneBounds.Max;
+
+        const FVector Corners[8] = {
+            FVector(Min.X, Min.Y, Min.Z),
+            FVector(Max.X, Min.Y, Min.Z),
+            FVector(Min.X, Max.Y, Min.Z),
+            FVector(Max.X, Max.Y, Min.Z),
+            FVector(Min.X, Min.Y, Max.Z),
+            FVector(Max.X, Min.Y, Max.Z),
+            FVector(Min.X, Max.Y, Max.Z),
+            FVector(Max.X, Max.Y, Max.Z)
         };
 
-        for (const FVector& Corner : LocalCorners)
+        for (const FVector& Corner : Corners)
         {
-            WorldAABB.Expand(WorldMatrix.TransformPosition(Corner));
+            WorldAABB.Expand(BoneToWorld.TransformPosition(Corner));
         }
     }
 

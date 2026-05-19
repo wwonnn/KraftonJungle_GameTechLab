@@ -32,6 +32,7 @@ public:
     void MarkSkinningDirty() { bSkinningDirty = true; }
 
     void UpdateWorldAABB() const override;
+    void UpdateWorldAABBFromBones() const;
     bool RaycastMesh(const FRay& Ray, FHitResult& OutHitResult) override;
 
 	virtual const FAABB& GetWorldAABB() const;
