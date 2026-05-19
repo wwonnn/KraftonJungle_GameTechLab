@@ -4,6 +4,7 @@
 #include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
 #include "Editor/Animation/AnimationSequenceCurveFilter.h"
 #include "Editor/Animation/AnimationSequenceNotifyLaneWidget.h"
+#include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
 #include "Editor/Animation/AnimationSequenceTrackOutlinerWidget.h"
 #include "Editor/Animation/AnimationSequenceTimelineWidget.h"
 #include "Editor/UI/EditorWidget.h"
@@ -18,6 +19,7 @@ class FAnimationSequenceEditorDocument;
 class FAnimNotifyPayloadParser;
 enum class EAnimNotifySemanticFieldId : uint8;
 struct FAnimNotifyEvent;
+struct FAnimationSequenceTimelineGeometry;
 struct ImVec2;
 
 class FAnimationSequenceEditorWidget : public FEditorWidget
@@ -45,17 +47,23 @@ private:
         float MaxOutlinerWidth,
         const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
         const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
+    FAnimationSequenceSequencerVisibleLayout BuildSequencerVisibleLayout(
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups) const;
     void RenderTrackOutlinerPane(
         float Width,
         float Height,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout);
     void RenderTimelineCanvasPane(
         float Width,
         float Height,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
-    void RenderBottomControlStrip(float Height);
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout);
+    void DrawTimelineVisibleRowSeparators(
+        const FAnimationSequenceTimelineGeometry& Geometry,
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const;
+    void RenderBottomControlStrip(float Height, float LeftPaneWidth, float RightPaneWidth);
+    void RenderTimelineRangeControls(float StripHeight);
+    void RenderPlaybackSpeedPopup();
     void RenderSelectionDetailsPane(float Height);
     void EnsurePlaybackControlIconsLoaded();
     bool DrawPlaybackControlButton(
@@ -100,6 +108,8 @@ private:
         bool bAttemptedLoad = false;
         UTexture* JumpToStart = nullptr;
         UTexture* StepPrevious = nullptr;
+        UTexture* PlayReverse = nullptr;
+        UTexture* Record = nullptr;
         UTexture* PlayForward = nullptr;
         UTexture* Pause = nullptr;
         UTexture* Stop = nullptr;
@@ -116,4 +126,5 @@ private:
     std::array<char, 256> NotifyAttackIdEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
     std::array<char, 128> TrackFilterEditBuffer = {};
+    float PlaybackSpeedCustomValue = 1.0f;
 };

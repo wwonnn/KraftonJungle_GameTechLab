@@ -19,6 +19,8 @@ void FAnimationSequenceEditorState::Reset()
     bSnapToFrames = true;
     VisibleTimeStart = 0.0f;
     VisibleTimeEnd = 1.0f;
+    TimelineRangeStart = 0.0f;
+    TimelineRangeEnd = 1.0f;
     PreviewPaneHeight = 0.0f;
     SequencerDetailsPaneHeight = 0.0f;
     TrackOutlinerWidth = FAnimationSequenceSequencerLayout::OutlinerDefaultWidth;
@@ -70,7 +72,8 @@ void FAnimationSequenceEditorState::InitializeFromSequence(
 
     const float MaxTime = GetMaxTime();
     const float InitialEnd = MaxTime > 0.0f ? MaxTime : std::max(1.0f, GetMinimumVisibleRange());
-    SetVisibleRange(0.0f, InitialEnd);
+    SetTimelineRange(0.0f, InitialEnd);
+    SetVisibleRange(TimelineRangeStart, TimelineRangeEnd);
 }
 
 double FAnimationSequenceEditorState::GetDisplayFPS() const
@@ -162,6 +165,32 @@ void FAnimationSequenceEditorState::SetCurrentTime(float InTime, bool bApplySnap
     CurrentTime = bApplySnap ? ClampOrSnapTime(InTime) : ClampTime(InTime);
 }
 
+void FAnimationSequenceEditorState::SetTimelineRange(float InStartTime, float InEndTime)
+{
+    const float MaxTime = GetMaxTime();
+    const float MinimumRange = GetMinimumVisibleRange();
+    if (MaxTime <= 0.0f)
+    {
+        TimelineRangeStart = 0.0f;
+        TimelineRangeEnd = std::max(1.0f, MinimumRange);
+        return;
+    }
+
+    float StartTime = std::min(InStartTime, InEndTime);
+    float EndTime = std::max(InStartTime, InEndTime);
+    StartTime = std::clamp(StartTime, 0.0f, MaxTime);
+    EndTime = std::clamp(EndTime, StartTime + MinimumRange, MaxTime);
+    if (EndTime - StartTime < MinimumRange)
+    {
+        EndTime = std::min(MaxTime, StartTime + MinimumRange);
+        StartTime = std::max(0.0f, EndTime - MinimumRange);
+    }
+
+    TimelineRangeStart = StartTime;
+    TimelineRangeEnd = std::max(EndTime, TimelineRangeStart + MinimumRange);
+    SetVisibleRange(VisibleTimeStart, VisibleTimeEnd);
+}
+
 void FAnimationSequenceEditorState::SetVisibleRange(float InStartTime, float InEndTime)
 {
     float StartTime = std::min(InStartTime, InEndTime);
@@ -169,7 +198,12 @@ void FAnimationSequenceEditorState::SetVisibleRange(float InStartTime, float InE
 
     const float MaxTime = GetMaxTime();
     const float MinimumRange = GetMinimumVisibleRange();
-    const float MaximumRange = MaxTime > 0.0f ? MaxTime : std::max(1.0f, MinimumRange);
+    const float RangeStart = std::clamp(TimelineRangeStart, 0.0f, MaxTime);
+    const float RangeEnd =
+        MaxTime > 0.0f
+            ? std::clamp(TimelineRangeEnd, RangeStart + MinimumRange, MaxTime)
+            : std::max(1.0f, MinimumRange);
+    const float MaximumRange = MaxTime > 0.0f ? std::max(RangeEnd - RangeStart, MinimumRange) : std::max(1.0f, MinimumRange);
 
     float Range = std::max(EndTime - StartTime, MinimumRange);
     Range = std::min(Range, MaximumRange);
@@ -181,12 +215,12 @@ void FAnimationSequenceEditorState::SetVisibleRange(float InStartTime, float InE
         return;
     }
 
-    StartTime = std::clamp(StartTime, 0.0f, MaxTime);
+    StartTime = std::clamp(StartTime, RangeStart, RangeEnd);
     EndTime = StartTime + Range;
-    if (EndTime > MaxTime)
+    if (EndTime > RangeEnd)
     {
-        EndTime = MaxTime;
-        StartTime = std::max(0.0f, EndTime - Range);
+        EndTime = RangeEnd;
+        StartTime = std::max(RangeStart, EndTime - Range);
     }
 
     VisibleTimeStart = StartTime;
@@ -202,7 +236,7 @@ void FAnimationSequenceEditorState::ZoomVisibleRange(float AnchorTime, float Zoo
 {
     const float CurrentRange = GetVisibleRange();
     const float MinimumRange = GetMinimumVisibleRange();
-    const float MaximumRange = std::max(GetMaxTime(), MinimumRange);
+    const float MaximumRange = std::max(GetTimelineRangeEnd() - GetTimelineRangeStart(), MinimumRange);
     const float NewRange = std::clamp(CurrentRange * ZoomFactor, MinimumRange, MaximumRange);
     const float AnchorAlpha = CurrentRange > 0.0f
         ? std::clamp((AnchorTime - VisibleTimeStart) / CurrentRange, 0.0f, 1.0f)

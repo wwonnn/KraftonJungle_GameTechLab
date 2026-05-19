@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Editor/Animation/AnimationSequenceCurveFilter.h"
+#include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
 
 class FAnimationSequenceEditorState;
 struct FAnimationSequenceTimelineGeometry;
@@ -11,8 +11,5 @@ public:
     void RenderRows(
         FAnimationSequenceEditorState& State,
         const FAnimationSequenceTimelineGeometry& Geometry,
-        float SectionTop,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-        const char* SectionLabel,
-        bool bSectionExpanded) const;
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const;
 };

@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceEditorWidget.h"
+﻿#include "Editor/Animation/AnimationSequenceEditorWidget.h"
 
 #include "Animation/AnimNotify.h"
 #include "Animation/AnimNotifyPayloadParser.h"
@@ -44,8 +44,31 @@ namespace
     constexpr float PreviewOverlayLineSpacing = 2.0f;
 
     constexpr float SequencerHeaderPadding = 8.0f;
-    constexpr float PlaybackIconButtonSize = 20.0f;
-    constexpr float PlaybackControlSpacing = 6.0f;
+    constexpr float PlaybackIconButtonSize = 14.0f;
+    constexpr float PlaybackControlSpacing = 2.0f;
+
+    struct FTransportStripVerticalCenter
+    {
+        float ContentTopY = 0.0f;
+        float ContentHeight = 0.0f;
+
+        float ComputeCursorY(float ItemHeight) const
+        {
+            return ContentTopY + std::max(0.0f, (ContentHeight - ItemHeight) * 0.5f);
+        }
+
+        void AlignCursorY(float ItemHeight) const
+        {
+            ImGui::SetCursorPosY(ComputeCursorY(ItemHeight));
+        }
+
+        ImVec2 ComputeCenteredTextPos(const ImVec2& Min, const ImVec2& Max, const ImVec2& TextSize) const
+        {
+            return ImVec2(
+                std::floor(Min.x + ((Max.x - Min.x) - TextSize.x) * 0.5f),
+                std::floor(Min.y + ((Max.y - Min.y) - TextSize.y) * 0.5f));
+        }
+    };
 
     float GetTrackOutlinerFilterHeight()
     {
@@ -61,6 +84,18 @@ namespace
     const FString& GetPlaybackIconPathStepPrevious()
     {
         static const FString Path = "Asset/UI/PlaybackControls/PlayControlsToPrevious.png";
+        return Path;
+    }
+
+    const FString& GetPlaybackIconPathPlayReverse()
+    {
+        static const FString Path = "Asset/UI/PlaybackControls/PlayControlsPlayReverse.png";
+        return Path;
+    }
+
+    const FString& GetPlaybackIconPathRecord()
+    {
+        static const FString Path = "Asset/UI/PlaybackControls/PlayControlsRecord.png";
         return Path;
     }
 
@@ -104,6 +139,51 @@ namespace
     {
         static const FString Path = "Asset/UI/PlaybackControls/PlayControlsNoLooping.png";
         return Path;
+    }
+
+    FString FormatPlaybackRateLabel(float PlaybackRate)
+    {
+        char Buffer[32];
+        snprintf(Buffer, sizeof(Buffer), "x%.2f", std::fabs(PlaybackRate));
+
+        FString Label = Buffer;
+        while (Label.size() > 3 && !Label.empty() && Label.back() == '0')
+        {
+            Label.pop_back();
+        }
+
+        if (!Label.empty() && Label.back() == '.')
+        {
+            Label.push_back('0');
+        }
+
+        return Label;
+    }
+
+    FString FormatCompactTimelineRangeLabel(const FAnimationSequenceEditorState& State, float Time)
+    {
+        if (State.TotalFrames > 0)
+        {
+            return std::to_string(State.TimeToFrameIndex(Time));
+        }
+
+        char Buffer[32];
+        snprintf(Buffer, sizeof(Buffer), "%.3f", Time);
+        FString Label = Buffer;
+        while (Label.size() > 2 && !Label.empty() && Label.back() == '0')
+        {
+            Label.pop_back();
+        }
+        if (!Label.empty() && Label.back() == '.')
+        {
+            Label.push_back('0');
+        }
+        return Label;
+    }
+
+    bool IsPlaybackRatePresetSelected(float CurrentRate, float PresetRate)
+    {
+        return std::fabs(std::fabs(CurrentRate) - PresetRate) <= 0.0001f;
     }
 
     bool UsesAbsoluteImGuiCoordinates()
@@ -361,20 +441,6 @@ namespace
         return Result;
     }
 
-    void DrawEmptyTimelineSection(
-        const FAnimationSequenceTimelineGeometry& Geometry,
-        float SectionTop,
-        const char* SectionLabel,
-        bool bExpanded,
-        const char* EmptyText)
-    {
-        (void)Geometry;
-        (void)SectionTop;
-        (void)SectionLabel;
-        (void)bExpanded;
-        (void)EmptyText;
-    }
-
     const FFloatCurve* GetSelectedCurve(const UAnimSequence* Sequence, const FAnimationSequenceEditorState* State)
     {
         if (!State)
@@ -411,6 +477,7 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     ResetNotifyPayloadFieldBuffers();
     NotifyPayloadEditBuffer.fill('\0');
     TrackFilterEditBuffer.fill('\0');
+    PlaybackSpeedCustomValue = InPreviewController ? std::fabs(InPreviewController->GetPlayRate()) : 1.0f;
 }
 
 void FAnimationSequenceEditorWidget::EnsurePlaybackControlIconsLoaded()
@@ -424,6 +491,8 @@ void FAnimationSequenceEditorWidget::EnsurePlaybackControlIconsLoaded()
     FResourceManager& ResourceManager = FResourceManager::Get();
     PlaybackControlIcons.JumpToStart = ResourceManager.LoadTexture(GetPlaybackIconPathJumpToStart());
     PlaybackControlIcons.StepPrevious = ResourceManager.LoadTexture(GetPlaybackIconPathStepPrevious());
+    PlaybackControlIcons.PlayReverse = ResourceManager.LoadTexture(GetPlaybackIconPathPlayReverse());
+    PlaybackControlIcons.Record = ResourceManager.LoadTexture(GetPlaybackIconPathRecord());
     PlaybackControlIcons.PlayForward = ResourceManager.LoadTexture(GetPlaybackIconPathPlayForward());
     PlaybackControlIcons.Pause = ResourceManager.LoadTexture(GetPlaybackIconPathPause());
     PlaybackControlIcons.Stop = ResourceManager.LoadTexture(GetPlaybackIconPathStop());
@@ -441,12 +510,7 @@ bool FAnimationSequenceEditorWidget::DrawPlaybackControlButton(
     const ImVec2& Size,
     bool bSelected) const
 {
-    if (bSelected)
-    {
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.33f, 0.46f, 0.63f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.37f, 0.52f, 0.70f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.27f, 0.39f, 0.54f, 1.0f));
-    }
+    (void)bSelected;
 
     bool bPressed = false;
     if (IconTexture && IconTexture->GetSRV())
@@ -456,11 +520,6 @@ bool FAnimationSequenceEditorWidget::DrawPlaybackControlButton(
     else
     {
         bPressed = ImGui::Button(FallbackLabel, Size);
-    }
-
-    if (bSelected)
-    {
-        ImGui::PopStyleColor(3);
     }
 
     if (ImGui::IsItemHovered() && Tooltip)
@@ -859,6 +918,177 @@ void FAnimationSequenceEditorWidget::RenderSequencerRegion(float SequencerHeight
     ImGui::EndChild();
 }
 
+FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSequencerVisibleLayout(
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups) const
+{
+    FAnimationSequenceSequencerVisibleLayout Layout;
+    if (!EditorState)
+    {
+        return Layout;
+    }
+
+    float CursorY = 0.0f;
+    auto AddRow = [&](EAnimationSequenceSequencerVisibleRowType Type, float Height) -> FAnimationSequenceSequencerVisibleRow&
+    {
+        FAnimationSequenceSequencerVisibleRow& Row = Layout.Rows.emplace_back();
+        Row.Type = Type;
+        Row.OffsetY = CursorY;
+        Row.Height = Height;
+        CursorY += Height;
+        return Row;
+    };
+
+    FAnimationSequenceSequencerVisibleRow& NotifyHeader =
+        AddRow(EAnimationSequenceSequencerVisibleRowType::NotifyHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    NotifyHeader.Label = "Notifies";
+    NotifyHeader.bExpanded = EditorState->bNotifiesExpanded;
+    if (EditorState->bNotifiesExpanded)
+    {
+        CursorY += 4.0f;
+        const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
+        for (int32 TrackIndex = 0; TrackIndex < NotifyTrackCount; ++TrackIndex)
+        {
+            FAnimationSequenceSequencerVisibleRow& Row =
+                AddRow(EAnimationSequenceSequencerVisibleRowType::NotifyTrack, FAnimationSequenceSequencerLayout::NotifyTrackRowHeight);
+            Row.SourceIndex = TrackIndex;
+            const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(TrackIndex) : nullptr;
+            Row.Label = Track && Track->TrackName.IsValid()
+                ? Track->TrackName.ToString()
+                : ("Track " + std::to_string(TrackIndex + 1));
+            Row.SecondaryLabel = Track ? std::to_string(static_cast<int32>(Track->Events.size())) : FString("0");
+            Row.bSelected = EditorState->SelectedNotifyTrackIndex == TrackIndex;
+            if (TrackIndex + 1 < NotifyTrackCount)
+            {
+                CursorY += FAnimationSequenceSequencerLayout::NotifyTrackRowSpacing;
+            }
+        }
+    }
+
+    CursorY += FAnimationSequenceSequencerLayout::SectionGap;
+    FAnimationSequenceSequencerVisibleRow& CurveHeader =
+        AddRow(EAnimationSequenceSequencerVisibleRowType::CurveHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    CurveHeader.Label = "Curves";
+    CurveHeader.bExpanded = EditorState->bCurvesExpanded;
+    if (EditorState->bCurvesExpanded)
+    {
+        CursorY += 4.0f;
+        for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
+        {
+            const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
+            FAnimationSequenceSequencerVisibleRow& GroupRow =
+                AddRow(EAnimationSequenceSequencerVisibleRowType::CurveGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
+            GroupRow.GroupIndex = GroupIndex;
+            GroupRow.Label = Group.Label;
+            GroupRow.SecondaryLabel = std::to_string(Group.TotalCount);
+            GroupRow.bToggleChecked = Group.bVisible;
+            GroupRow.CurveType = Group.CurveType;
+
+            if (Group.bVisible && !Group.VisibleEntries.empty())
+            {
+                CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
+                {
+                    const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                    FAnimationSequenceSequencerVisibleRow& Row =
+                        AddRow(EAnimationSequenceSequencerVisibleRowType::CurveEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
+                    Row.SourceIndex = Entry.SourceIndex;
+                    Row.Curve = Entry.Curve;
+                    Row.CurveType = Group.CurveType;
+                    Row.Label = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
+                    Row.SecondaryLabel = Entry.Curve
+                        ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys")
+                        : FString();
+                    Row.bSelected = EditorState->SelectedCurveIndex == Entry.SourceIndex;
+                    if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
+                    {
+                        CursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
+                    }
+                }
+            }
+
+            if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
+            {
+                CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+            }
+        }
+    }
+
+    CursorY += FAnimationSequenceSequencerLayout::SectionGap;
+    FAnimationSequenceSequencerVisibleRow& AdditiveHeader =
+        AddRow(EAnimationSequenceSequencerVisibleRowType::AdditiveHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    AdditiveHeader.Label = "Additive Layer Tracks";
+    AdditiveHeader.bExpanded = EditorState->bAdditiveLayerTracksExpanded;
+    if (EditorState->bAdditiveLayerTracksExpanded)
+    {
+        CursorY += 4.0f;
+        FAnimationSequenceSequencerVisibleRow& Row =
+            AddRow(EAnimationSequenceSequencerVisibleRowType::AdditiveEmpty, FAnimationSequenceSequencerLayout::EmptySectionRowHeight);
+        Row.Label = "No additive layer tracks.";
+    }
+
+    CursorY += FAnimationSequenceSequencerLayout::SectionGap;
+    FAnimationSequenceSequencerVisibleRow& AttributeHeader =
+        AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    AttributeHeader.Label = "Attributes";
+    AttributeHeader.bExpanded = EditorState->bAttributesExpanded;
+    if (EditorState->bAttributesExpanded)
+    {
+        CursorY += 4.0f;
+        if (AttributeCurveGroups.empty())
+        {
+            FAnimationSequenceSequencerVisibleRow& Row =
+                AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeEmpty, FAnimationSequenceSequencerLayout::EmptySectionRowHeight);
+            Row.Label = "No attribute tracks.";
+        }
+        else
+        {
+            for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(AttributeCurveGroups.size()); ++GroupIndex)
+            {
+                const FAnimationSequenceCurveViewGroup& Group = AttributeCurveGroups[GroupIndex];
+                FAnimationSequenceSequencerVisibleRow& GroupRow =
+                    AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
+                GroupRow.GroupIndex = GroupIndex;
+                GroupRow.Label = Group.Label;
+                GroupRow.SecondaryLabel = std::to_string(Group.TotalCount);
+                GroupRow.bToggleChecked = Group.bVisible;
+                GroupRow.CurveType = Group.CurveType;
+
+                if (Group.bVisible && !Group.VisibleEntries.empty())
+                {
+                    CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                    for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
+                    {
+                        const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                        FAnimationSequenceSequencerVisibleRow& Row =
+                            AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
+                        Row.SourceIndex = Entry.SourceIndex;
+                        Row.Curve = Entry.Curve;
+                        Row.CurveType = Group.CurveType;
+                        Row.Label = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
+                        Row.SecondaryLabel = Entry.Curve
+                            ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys")
+                            : FString();
+                        Row.bSelected = EditorState->SelectedCurveIndex == Entry.SourceIndex;
+                        if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
+                        {
+                            CursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
+                        }
+                    }
+                }
+
+                if (GroupIndex + 1 < static_cast<int32>(AttributeCurveGroups.size()))
+                {
+                    CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                }
+            }
+        }
+    }
+
+    Layout.ContentHeight = CursorY;
+    return Layout;
+}
+
 void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     float SplitPaneHeight,
     float MaxOutlinerWidth,
@@ -870,15 +1100,9 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
         FAnimationSequenceSequencerLayout::OutlinerMinWidth,
         MaxOutlinerWidth);
 
-    const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
-    const float TrackBodyHeight =
-        FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
-        FAnimationSequenceSequencerLayout::SectionGap +
-        AnimationSequenceCurveFilter::GetCurveSectionHeight(CurveGroups, EditorState->bCurvesExpanded) +
-        FAnimationSequenceSequencerLayout::SectionGap +
-        FAnimationSequenceSequencerLayout::GetPlaceholderSectionHeight(EditorState->bAdditiveLayerTracksExpanded) +
-        FAnimationSequenceSequencerLayout::SectionGap +
-        AnimationSequenceCurveFilter::GetCurveSectionHeight(AttributeCurveGroups, EditorState->bAttributesExpanded);
+    const FAnimationSequenceSequencerVisibleLayout VisibleLayout =
+        BuildSequencerVisibleLayout(CurveGroups, AttributeCurveGroups);
+    const float TrackBodyHeight = VisibleLayout.ContentHeight;
     const float MainPaneHeight = std::max(
         SplitPaneHeight -
             FAnimationSequenceSequencerLayout::BottomControlStripHeight -
@@ -900,8 +1124,14 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     EditorState->SequencerScrollY = std::clamp(EditorState->SequencerScrollY, 0.0f, MaxScrollY);
 
     ImGui::BeginChild("##AnimationSequenceSequencerSplit", ImVec2(0.0f, SplitPaneHeight), false, ImGuiWindowFlags_NoScrollbar);
+    const float SplitWidth = std::max(ImGui::GetContentRegionAvail().x, 1.0f);
+    const float TimelinePaneWidth = std::max(
+        SplitWidth -
+            EditorState->TrackOutlinerWidth -
+            FAnimationSequenceSequencerLayout::OutlinerSplitterWidth,
+        120.0f);
     ImGui::BeginChild("##AnimationSequenceSequencerMainRow", ImVec2(0.0f, MainPaneHeight), false, ImGuiWindowFlags_NoScrollbar);
-    RenderTrackOutlinerPane(EditorState->TrackOutlinerWidth, MainPaneHeight, CurveGroups, AttributeCurveGroups);
+    RenderTrackOutlinerPane(EditorState->TrackOutlinerWidth, MainPaneHeight, VisibleLayout);
 
     ImGui::SameLine(0.0f, 0.0f);
     ImGui::InvisibleButton(
@@ -930,21 +1160,22 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
 
     ImGui::SameLine(0.0f, 0.0f);
     RenderTimelineCanvasPane(
-        std::max(ImGui::GetContentRegionAvail().x, 1.0f),
+        TimelinePaneWidth,
         MainPaneHeight,
-        CurveGroups,
-        AttributeCurveGroups);
+        VisibleLayout);
 
     ImGui::EndChild();
-    RenderBottomControlStrip(FAnimationSequenceSequencerLayout::BottomControlStripHeight);
+    RenderBottomControlStrip(
+        FAnimationSequenceSequencerLayout::BottomControlStripHeight,
+        EditorState->TrackOutlinerWidth,
+        TimelinePaneWidth);
     ImGui::EndChild();
 }
 
 void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
     float Width,
     float Height,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups)
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout)
 {
     const float FilterHeight = GetTrackOutlinerFilterHeight();
     const float TrackListHeight = std::max(Height - FilterHeight - SequencerHeaderPadding, 80.0f);
@@ -966,7 +1197,7 @@ void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
         ImVec2(0.0f, TrackListHeight),
         false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    TrackOutlinerWidget.Render(*EditorState, Document, CurveGroups, AttributeCurveGroups);
+    TrackOutlinerWidget.Render(*EditorState, Document, VisibleLayout);
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
         std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
     {
@@ -980,8 +1211,7 @@ void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
 void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
     float Width,
     float Height,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups)
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout)
 {
     ImGui::BeginChild(
         "##AnimationSequenceTimelineCanvasPane",
@@ -994,22 +1224,11 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
         false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
-    const float CurveSectionHeight =
-        AnimationSequenceCurveFilter::GetCurveSectionHeight(CurveGroups, EditorState->bCurvesExpanded);
-    const float AdditiveSectionHeight =
-        FAnimationSequenceSequencerLayout::GetPlaceholderSectionHeight(EditorState->bAdditiveLayerTracksExpanded);
     const float RequiredCanvasHeight =
         FAnimationSequenceTimelineGeometry::VerticalPadding * 2.0f +
         TimelineWidget.GetRulerHeight() +
         FAnimationSequenceSequencerLayout::TrackAreaPadding * 2.0f +
-        FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
-        FAnimationSequenceSequencerLayout::SectionGap +
-        CurveSectionHeight +
-        FAnimationSequenceSequencerLayout::SectionGap +
-        AdditiveSectionHeight +
-        FAnimationSequenceSequencerLayout::SectionGap +
-        AnimationSequenceCurveFilter::GetCurveSectionHeight(AttributeCurveGroups, EditorState->bAttributesExpanded);
+        VisibleLayout.ContentHeight;
 
     const ImVec2 CanvasPos = ImGui::GetCursorScreenPos();
     const ImVec2 CanvasSize(
@@ -1028,48 +1247,10 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
         FAnimationSequenceTimelineGeometry::BuildSequencerCanvasGeometry(CanvasPos, CanvasSize, TimelineWidget.GetRulerHeight());
 
     TimelineWidget.RenderCanvas(*EditorState, PreviewController, Geometry, bCanvasHovered, bCanvasActive);
-
-    const float NotifySectionTop =
-        Geometry.TrackTop +
-        FAnimationSequenceSequencerLayout::TrackAreaPadding -
-        EditorState->SequencerScrollY;
-    NotifyLaneWidget.RenderRows(*EditorState, Document, Geometry, NotifySectionTop);
-
-    const float CurveSectionTop =
-        NotifySectionTop +
-        FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
-        FAnimationSequenceSequencerLayout::SectionGap;
+    DrawTimelineVisibleRowSeparators(Geometry, VisibleLayout);
+    NotifyLaneWidget.RenderRows(*EditorState, Document, Geometry, VisibleLayout);
     EditorState->HoveredCurveIndex = -1;
-    CurveTrackWidget.RenderRows(
-        *EditorState,
-        Geometry,
-        CurveSectionTop,
-        CurveGroups,
-        "Curves",
-        EditorState->bCurvesExpanded);
-
-    const float AdditiveSectionTop =
-        CurveSectionTop +
-        CurveSectionHeight +
-        FAnimationSequenceSequencerLayout::SectionGap;
-    DrawEmptyTimelineSection(
-        Geometry,
-        AdditiveSectionTop,
-        "Additive Layer Tracks",
-        EditorState->bAdditiveLayerTracksExpanded,
-        "No additive layer tracks.");
-
-    const float AttributeSectionTop =
-        AdditiveSectionTop +
-        AdditiveSectionHeight +
-        FAnimationSequenceSequencerLayout::SectionGap;
-    CurveTrackWidget.RenderRows(
-        *EditorState,
-        Geometry,
-        AttributeSectionTop,
-        AttributeCurveGroups,
-        "Attributes",
-        EditorState->bAttributesExpanded);
+    CurveTrackWidget.RenderRows(*EditorState, Geometry, VisibleLayout);
     if (Document &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
         EditorState->HoveredCurveIndex >= 0)
@@ -1081,57 +1262,450 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
     ImGui::EndChild();
 }
 
-void FAnimationSequenceEditorWidget::RenderBottomControlStrip(float Height)
+void FAnimationSequenceEditorWidget::DrawTimelineVisibleRowSeparators(
+    const FAnimationSequenceTimelineGeometry& Geometry,
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const
+{
+    const float TrackAreaTop =
+        Geometry.TrackTop +
+        FAnimationSequenceSequencerLayout::TrackAreaPadding -
+        EditorState->SequencerScrollY;
+    const float ClipBottom = Geometry.CanvasEnd.y - FAnimationSequenceTimelineGeometry::VerticalPadding;
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    const ImU32 SeparatorColor = IM_COL32(255, 255, 255, 18);
+    const ImU32 HeaderSeparatorColor = IM_COL32(255, 255, 255, 26);
+
+    DrawList->PushClipRect(
+        ImVec2(Geometry.TimelineMinX, Geometry.TrackTop),
+        ImVec2(Geometry.TimelineMaxX, ClipBottom),
+        true);
+
+    bool bDrewFirstBoundary = false;
+    for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
+    {
+        const float RowTop = TrackAreaTop + Row.OffsetY;
+        const float RowBottom = RowTop + Row.Height;
+        if (RowBottom < Geometry.TrackTop || RowTop > ClipBottom)
+        {
+            continue;
+        }
+
+        const ImU32 TopColor = IsAnimationSequenceSectionHeaderRow(Row.Type) ? HeaderSeparatorColor : SeparatorColor;
+        if (!bDrewFirstBoundary)
+        {
+            DrawList->AddLine(
+                ImVec2(Geometry.TimelineMinX, RowTop),
+                ImVec2(Geometry.TimelineMaxX, RowTop),
+                TopColor);
+            bDrewFirstBoundary = true;
+        }
+
+        DrawList->AddLine(
+            ImVec2(Geometry.TimelineMinX, RowBottom),
+            ImVec2(Geometry.TimelineMaxX, RowBottom),
+            TopColor);
+    }
+
+    DrawList->PopClipRect();
+}
+
+void FAnimationSequenceEditorWidget::RenderBottomControlStrip(float Height, float LeftPaneWidth, float RightPaneWidth)
 {
     const bool bCanTimelineControl =
         PreviewController != nullptr && EditorState != nullptr && EditorState->HasTimelineData();
-    const bool bCanPlaybackControl = PreviewController != nullptr && PreviewController->HasValidPreview();
-    const float FrameCenterY = std::max(0.0f, (Height - ImGui::GetFrameHeight()) * 0.5f);
-    const float TextCenterY = std::max(0.0f, (Height - ImGui::GetTextLineHeight()) * 0.5f);
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::BeginChild(
         "##AnimationSequenceBottomControlStrip",
         ImVec2(0.0f, Height),
-        true);
+        true,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    RenderTransportControls(bCanTimelineControl, bCanPlaybackControl, Height);
+    ImGui::BeginChild(
+        "##AnimationSequenceBottomTransportPane",
+        ImVec2(LeftPaneWidth, Height),
+        false,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    RenderTransportControls(
+        bCanTimelineControl,
+        PreviewController != nullptr && PreviewController->HasValidPreview(),
+        Height);
+    ImGui::EndChild();
 
+    ImGui::SameLine(0.0f, 0.0f);
+    ImGui::BeginChild(
+        "##AnimationSequenceBottomTransportSpacer",
+        ImVec2(FAnimationSequenceSequencerLayout::OutlinerSplitterWidth, Height),
+        false,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::EndChild();
+
+    ImGui::SameLine(0.0f, 0.0f);
+    ImGui::BeginChild(
+        "##AnimationSequenceBottomTimelinePane",
+        ImVec2(RightPaneWidth, Height),
+        false,
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    RenderTimelineRangeControls(Height);
+    ImGui::EndChild();
+
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+}
+
+void FAnimationSequenceEditorWidget::RenderTimelineRangeControls(float StripHeight)
+{
+    (void)StripHeight;
+    const FTransportStripVerticalCenter VerticalCenter
+    {
+        0.0f,
+        std::max(ImGui::GetWindowHeight(), ImGui::GetContentRegionAvail().y)
+    };
+    const float SliderHeight = 12.0f;
     if (!EditorState || !EditorState->HasTimelineData())
     {
-        ImGui::SameLine(0.0f, 16.0f);
-        ImGui::SetCursorPosY(TextCenterY);
+        VerticalCenter.AlignCursorY(ImGui::GetTextLineHeight());
         ImGui::TextDisabled("Timeline view controls are unavailable.");
-        ImGui::EndChild();
         return;
     }
 
     const float MaximumTime = std::max(EditorState->GetMaxTime(), EditorState->GetMinimumVisibleRange());
+    const float SequenceStart = EditorState->GetTimelineRangeStart();
+    const float SequenceEnd = EditorState->GetTimelineRangeEnd();
+    const float PlaybackStart = SequenceStart;
+    const float PlaybackEnd = SequenceEnd;
+
+    const FString ViewStartLabel = FormatCompactTimelineRangeLabel(*EditorState, EditorState->VisibleTimeStart);
+    const FString PlaybackStartLabel = FormatCompactTimelineRangeLabel(*EditorState, PlaybackStart);
+    const FString SequenceStartLabel = FormatCompactTimelineRangeLabel(*EditorState, SequenceStart);
+    const FString SequenceEndLabel = FormatCompactTimelineRangeLabel(*EditorState, SequenceEnd);
+    const FString PlaybackEndLabel = FormatCompactTimelineRangeLabel(*EditorState, PlaybackEnd);
+    const FString ViewEndLabel = FormatCompactTimelineRangeLabel(*EditorState, EditorState->VisibleTimeEnd);
+
+    struct FRangeLabelSpec
+    {
+        FString Text;
+        ImVec4 Color;
+        const char* Tooltip = nullptr;
+    };
+
+    const ImVec4 NeutralColor(0.62f, 0.66f, 0.74f, 1.0f);
+    const ImVec4 PlaybackStartColor(0.37f, 0.78f, 0.42f, 1.0f);
+    const ImVec4 PlaybackEndColor(0.90f, 0.30f, 0.28f, 1.0f);
+    const TArray<FRangeLabelSpec> LeftLabels =
+    {
+        { ViewStartLabel, NeutralColor, "View start" },
+        { PlaybackStartLabel, PlaybackStartColor, "Playback start" },
+        { SequenceStartLabel, NeutralColor, "Sequence start" }
+    };
+    const TArray<FRangeLabelSpec> RightLabels =
+    {
+        { SequenceEndLabel, NeutralColor, "Sequence end" },
+        { PlaybackEndLabel, PlaybackEndColor, "Playback end" },
+        { ViewEndLabel, NeutralColor, "View end" }
+    };
+
+    constexpr float EdgePadding = 32.0f;
+    constexpr float LabelSpacing = 12.0f;
+    constexpr float GroupSpacing = 20.0f;
+    auto MeasureLabelsWidth = [&](const TArray<FRangeLabelSpec>& Labels)
+    {
+        float Width = 0.0f;
+        for (int32 Index = 0; Index < static_cast<int32>(Labels.size()); ++Index)
+        {
+            Width += ImGui::CalcTextSize(Labels[Index].Text.c_str()).x;
+            if (Index + 1 < static_cast<int32>(Labels.size()))
+            {
+                Width += LabelSpacing;
+            }
+        }
+        return Width;
+    };
+
+    const float LeftLabelsWidth = MeasureLabelsWidth(LeftLabels);
+    const float RightLabelsWidth = MeasureLabelsWidth(RightLabels);
+    const float AvailableWidth = std::max(ImGui::GetContentRegionAvail().x, 1.0f);
+    const float ReservedWidth =
+        LeftLabelsWidth +
+        RightLabelsWidth +
+        EdgePadding * 2.0f +
+        GroupSpacing * 2.0f;
+    const float SliderWidth = std::max(36.0f, AvailableWidth - ReservedWidth);
+
+    auto DrawRangeLabel = [&](const char* PopupId, const FRangeLabelSpec& LabelSpec, bool bEditable, auto&& ApplyEditedTime, float CurrentValue)
+    {
+        VerticalCenter.AlignCursorY(ImGui::GetTextLineHeight());
+        ImGui::TextColored(LabelSpec.Color, "%s", LabelSpec.Text.c_str());
+        if (bEditable && ImGui::IsItemClicked(ImGuiMouseButton_Left))
+        {
+            ImGui::OpenPopup(PopupId);
+        }
+        if (ImGui::IsItemHovered() && LabelSpec.Tooltip)
+        {
+            ImGui::SetTooltip("%s%s", LabelSpec.Tooltip, bEditable ? " (Click to edit)" : "");
+        }
+
+        if (ImGui::BeginPopup(PopupId))
+        {
+            if (EditorState->TotalFrames > 0)
+            {
+                int32 FrameValue = EditorState->TimeToFrameIndex(CurrentValue);
+                if (ImGui::InputInt("Frame", &FrameValue, 0, 0))
+                {
+                    ApplyEditedTime(EditorState->FrameToTime(FrameValue));
+                }
+            }
+            else
+            {
+                float SecondsValue = CurrentValue;
+                if (ImGui::InputFloat("Seconds", &SecondsValue, 0.0f, 0.0f, "%.3f"))
+                {
+                    ApplyEditedTime(SecondsValue);
+                }
+            }
+            ImGui::EndPopup();
+        }
+    };
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + EdgePadding);
+    DrawRangeLabel(
+        "##AnimSequenceViewStartEdit",
+        LeftLabels[0],
+        true,
+        [&](float NewTime) { EditorState->SetVisibleRange(NewTime, EditorState->VisibleTimeEnd); },
+        EditorState->VisibleTimeStart);
+    ImGui::SameLine(0.0f, LabelSpacing);
+    DrawRangeLabel(
+        "##AnimSequencePlaybackStartDisplay",
+        LeftLabels[1],
+        false,
+        [](float) {},
+        PlaybackStart);
+    ImGui::SameLine(0.0f, LabelSpacing);
+    DrawRangeLabel(
+        "##AnimSequenceSequenceStartEdit",
+        LeftLabels[2],
+        true,
+        [&](float NewTime) { EditorState->SetTimelineRange(NewTime, EditorState->GetTimelineRangeEnd()); },
+        SequenceStart);
+
+    ImGui::SameLine(0.0f, GroupSpacing);
+    const float SliderStartX = ImGui::GetCursorPosX();
+    VerticalCenter.AlignCursorY(SliderHeight);
+    ImGui::InvisibleButton(
+        "##AnimationSequenceTimelineViewRangeBar",
+        ImVec2(SliderWidth, SliderHeight),
+        ImGuiButtonFlags_MouseButtonLeft);
+
+    enum class ERangeBarDragMode : uint8
+    {
+        None,
+        StartHandle,
+        EndHandle,
+        Thumb
+    };
+
+    static ERangeBarDragMode ActiveDragMode = ERangeBarDragMode::None;
+    static float DragMouseStartX = 0.0f;
+    static float DragVisibleStart = 0.0f;
+    static float DragVisibleEnd = 0.0f;
+
+    const ImVec2 SliderMin = ImGui::GetItemRectMin();
+    const ImVec2 SliderMax = ImGui::GetItemRectMax();
+    const float SliderPixelWidth = std::max(SliderMax.x - SliderMin.x, 1.0f);
+    const float HandleHalfWidth = 32.0f;
+
+    auto TimeToSliderX = [&](float TimeValue)
+    {
+        const float Alpha = MaximumTime > 0.0f ? std::clamp(TimeValue / MaximumTime, 0.0f, 1.0f) : 0.0f;
+        return SliderMin.x + SliderPixelWidth * Alpha;
+    };
+
     float VisibleStart = EditorState->VisibleTimeStart;
     float VisibleEnd = EditorState->VisibleTimeEnd;
+    const float ThumbMinX = TimeToSliderX(VisibleStart);
+    const float ThumbMaxX = TimeToSliderX(VisibleEnd);
 
-    ImGui::SameLine(0.0f, 18.0f);
-    ImGui::SetCursorPosY(TextCenterY);
-    ImGui::SameLine(0.0f, 8.0f);
-    ImGui::SetCursorPosY(FrameCenterY);
-    ImGui::SetNextItemWidth(std::max(ImGui::GetContentRegionAvail().x - 4.0f, 160.0f));
-    if (ImGui::DragFloatRange2(
-            "##AnimationSequenceTimelineViewRange",
-            &VisibleStart,
-            &VisibleEnd,
-            MaximumTime / 300.0f,
-            0.0f,
-            MaximumTime,
-            "Start %.3fs",
-            "End %.3fs"))
+    if (ImGui::IsItemActivated())
     {
-        EditorState->SetVisibleRange(VisibleStart, VisibleEnd);
+        DragMouseStartX = ImGui::GetIO().MousePos.x;
+        DragVisibleStart = VisibleStart;
+        DragVisibleEnd = VisibleEnd;
+
+        const float MouseX = ImGui::GetIO().MousePos.x;
+        const bool bNearStartHandle = std::fabs(MouseX - ThumbMinX) <= HandleHalfWidth + 2.0f;
+        const bool bNearEndHandle = std::fabs(MouseX - ThumbMaxX) <= HandleHalfWidth + 2.0f;
+        const bool bInsideThumb = MouseX >= ThumbMinX && MouseX <= ThumbMaxX;
+
+        if (bNearStartHandle)
+        {
+            ActiveDragMode = ERangeBarDragMode::StartHandle;
+        }
+        else if (bNearEndHandle)
+        {
+            ActiveDragMode = ERangeBarDragMode::EndHandle;
+        }
+        else if (bInsideThumb)
+        {
+            ActiveDragMode = ERangeBarDragMode::Thumb;
+        }
+        else
+        {
+            ActiveDragMode = MouseX < ThumbMinX ? ERangeBarDragMode::StartHandle : ERangeBarDragMode::EndHandle;
+        }
     }
+
+    if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        const float DeltaPixels = ImGui::GetIO().MousePos.x - DragMouseStartX;
+        const float DeltaTime = MaximumTime > 0.0f ? (DeltaPixels / SliderPixelWidth) * MaximumTime : 0.0f;
+
+        switch (ActiveDragMode)
+        {
+        case ERangeBarDragMode::StartHandle:
+            EditorState->SetVisibleRange(DragVisibleStart + DeltaTime, DragVisibleEnd);
+            break;
+        case ERangeBarDragMode::EndHandle:
+            EditorState->SetVisibleRange(DragVisibleStart, DragVisibleEnd + DeltaTime);
+            break;
+        case ERangeBarDragMode::Thumb:
+            EditorState->SetVisibleRange(DragVisibleStart + DeltaTime, DragVisibleEnd + DeltaTime);
+            break;
+        case ERangeBarDragMode::None:
+        default:
+            break;
+        }
+    }
+
+    if (ImGui::IsItemDeactivated())
+    {
+        ActiveDragMode = ERangeBarDragMode::None;
+    }
+
+    VisibleStart = EditorState->VisibleTimeStart;
+    VisibleEnd = EditorState->VisibleTimeEnd;
+    const float DrawThumbMinX = TimeToSliderX(VisibleStart);
+    const float DrawThumbMaxX = TimeToSliderX(VisibleEnd);
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    const float TrackMidY = (SliderMin.y + SliderMax.y) * 0.5f;
+    DrawList->AddRectFilled(
+        ImVec2(SliderMin.x, TrackMidY - 2.0f),
+        ImVec2(SliderMax.x, TrackMidY + 2.0f),
+        IM_COL32(72, 76, 84, 255),
+        2.0f);
+    DrawList->AddRectFilled(
+        ImVec2(DrawThumbMinX, SliderMin.y + 1.0f),
+        ImVec2(DrawThumbMaxX, SliderMax.y - 1.0f),
+        IM_COL32(154, 156, 160, 255),
+        3.0f);
+    DrawList->AddRect(
+        ImVec2(DrawThumbMinX, SliderMin.y + 1.0f),
+        ImVec2(DrawThumbMaxX, SliderMax.y - 1.0f),
+        IM_COL32(206, 208, 214, 255),
+        3.0f);
+    DrawList->AddRectFilled(
+        ImVec2(DrawThumbMinX - 8.5f, SliderMin.y),
+        ImVec2(DrawThumbMinX + 8.5f, SliderMax.y),
+        IM_COL32(226, 228, 232, 255),
+        1.0f);
+    DrawList->AddRectFilled(
+        ImVec2(DrawThumbMaxX - 8.5f, SliderMin.y),
+        ImVec2(DrawThumbMaxX + 8.5f, SliderMax.y),
+        IM_COL32(226, 228, 232, 255),
+        1.0f);
+
     if (ImGui::IsItemHovered())
     {
         ImGui::SetTooltip("%s", "Adjust the visible timeline range");
     }
 
-    ImGui::EndChild();
+    ImGui::SetCursorPosX(SliderStartX + SliderWidth + GroupSpacing);
+    DrawRangeLabel(
+        "##AnimSequenceSequenceEndEdit",
+        RightLabels[0],
+        true,
+        [&](float NewTime) { EditorState->SetTimelineRange(EditorState->GetTimelineRangeStart(), NewTime); },
+        SequenceEnd);
+    ImGui::SameLine(0.0f, LabelSpacing);
+    DrawRangeLabel(
+        "##AnimSequencePlaybackEndDisplay",
+        RightLabels[1],
+        false,
+        [](float) {},
+        PlaybackEnd);
+    ImGui::SameLine(0.0f, LabelSpacing);
+    DrawRangeLabel(
+        "##AnimSequenceViewEndEdit",
+        RightLabels[2],
+        true,
+        [&](float NewTime) { EditorState->SetVisibleRange(EditorState->VisibleTimeStart, NewTime); },
+        EditorState->VisibleTimeEnd);
+    ImGui::Dummy(ImVec2(EdgePadding, 0.0f));
+}
+
+void FAnimationSequenceEditorWidget::RenderPlaybackSpeedPopup()
+{
+    if (!EditorState)
+    {
+        return;
+    }
+
+    ImGui::SetNextWindowSize(ImVec2(252.0f, 0.0f), ImGuiCond_Appearing);
+    if (!ImGui::BeginPopup("##AnimSequencePlaybackSpeedPopup"))
+    {
+        return;
+    }
+
+    ImGui::Spacing();
+    ImGui::TextDisabled("PLAYBACK SPEED");
+
+    auto ApplyPlaybackRate = [&](float NewRate)
+    {
+        const float Direction = EditorState->PlayRate < 0.0f ? -1.0f : 1.0f;
+        const float AppliedRate = std::max(std::fabs(NewRate), 0.0001f) * Direction;
+        PlaybackSpeedCustomValue = std::fabs(NewRate);
+        if (PreviewController)
+        {
+            PreviewController->SetPlayRate(AppliedRate);
+            EditorState->PlayRate = PreviewController->GetPlayRate();
+        }
+        else
+        {
+            EditorState->PlayRate = AppliedRate;
+        }
+    };
+
+    constexpr float PresetRates[] = { 0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 2.0f, 5.0f, 10.0f };
+    for (float PresetRate : PresetRates)
+    {
+        const FString Label = FormatPlaybackRateLabel(PresetRate);
+        if (ImGui::Selectable(Label.c_str(), IsPlaybackRatePresetSelected(EditorState->PlayRate, PresetRate)))
+        {
+            ApplyPlaybackRate(PresetRate);
+        }
+    }
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Custom Speed:");
+    ImGui::SetNextItemWidth(-1.0f);
+    const bool bChangedByEnter = ImGui::InputFloat(
+        "##AnimSequenceCustomPlaybackSpeed",
+        &PlaybackSpeedCustomValue,
+        0.0f,
+        0.0f,
+        "%.2f",
+        ImGuiInputTextFlags_EnterReturnsTrue);
+    if ((bChangedByEnter || ImGui::IsItemDeactivatedAfterEdit()) && std::isfinite(PlaybackSpeedCustomValue))
+    {
+        PlaybackSpeedCustomValue = std::max(std::fabs(PlaybackSpeedCustomValue), 0.0001f);
+        ApplyPlaybackRate(PlaybackSpeedCustomValue);
+    }
+
+    ImGui::Separator();
+    ImGui::Checkbox("Snap to Frames", &EditorState->bSnapToFrames);
+
+    ImGui::EndPopup();
 }
 
 void FAnimationSequenceEditorWidget::RenderSelectionDetailsPane(float Height)
@@ -1156,15 +1730,25 @@ void FAnimationSequenceEditorWidget::RenderSelectionDetailsPane(float Height)
 
 void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight)
 {
+    (void)StripHeight;
     EnsurePlaybackControlIconsLoaded();
     const ImVec2 ButtonSize(PlaybackIconButtonSize, PlaybackIconButtonSize);
-    const float ButtonCenterY = std::max(0.0f, (StripHeight - ButtonSize.y) * 0.5f);
-    const float FrameCenterY = std::max(0.0f, (StripHeight - ImGui::GetFrameHeight()) * 0.5f);
+    const FTransportStripVerticalCenter VerticalCenter
+    {
+        0.0f,
+        std::max(ImGui::GetWindowHeight(), ImGui::GetContentRegionAvail().y)
+    };
+    const float IconButtonItemHeight = ButtonSize.y + ImGui::GetStyle().FramePadding.y * 2.0f;
 
     auto CenterButtonCursor = [&]()
     {
-        ImGui::SetCursorPosY(ButtonCenterY);
+        VerticalCenter.AlignCursorY(IconButtonItemHeight);
     };
+
+    const float PlaybackRateMagnitude = std::max(std::fabs(EditorState ? EditorState->PlayRate : 1.0f), 0.0001f);
+    const bool bIsPlaying = PreviewController && PreviewController->IsPlaying();
+    const bool bIsReversePlaying = bIsPlaying && EditorState && EditorState->PlayRate < 0.0f;
+    const bool bIsForwardPlaying = bIsPlaying && EditorState && EditorState->PlayRate >= 0.0f;
 
     if (!bCanTimelineControl)
     {
@@ -1172,6 +1756,10 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(PlaybackControlSpacing, PlaybackControlSpacing));
+    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.5f, 0.5f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.30f, 0.40f, 0.54f, 0.48f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.24f, 0.32f, 0.44f, 0.60f));
 
     CenterButtonCursor();
     if (DrawPlaybackControlButton(
@@ -1207,39 +1795,54 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
 
     CenterButtonCursor();
     if (DrawPlaybackControlButton(
+            "##AnimSequenceReverse",
+            bIsReversePlaying ? PlaybackControlIcons.Pause : PlaybackControlIcons.PlayReverse,
+            bIsReversePlaying ? "Pause" : "Rev",
+            bIsReversePlaying ? "Pause Reverse Playback" : "Play Reverse",
+            ButtonSize) &&
+        PreviewController)
+    {
+        if (bIsReversePlaying)
+        {
+            PreviewController->Pause();
+            EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
+        }
+        else
+        {
+            PreviewController->SetPlayRate(-PlaybackRateMagnitude);
+            EditorState->PlayRate = PreviewController->GetPlayRate();
+            PreviewController->Play();
+        }
+    }
+    ImGui::SameLine();
+    CenterButtonCursor();
+    DrawPlaybackControlButton(
+        "##AnimSequenceRecord",
+        PlaybackControlIcons.Record,
+        "Rec",
+        "Record Placeholder",
+        ButtonSize);
+    ImGui::SameLine();
+    CenterButtonCursor();
+    if (DrawPlaybackControlButton(
             "##AnimSequencePlay",
-            PlaybackControlIcons.PlayForward,
-            "Play",
-            "Play",
+            bIsForwardPlaying ? PlaybackControlIcons.Pause : PlaybackControlIcons.PlayForward,
+            bIsForwardPlaying ? "Pause" : "Play",
+            bIsForwardPlaying ? "Pause Playback" : "Play",
             ButtonSize) &&
         PreviewController)
     {
-        PreviewController->Play();
-    }
-    ImGui::SameLine();
-    CenterButtonCursor();
-    if (DrawPlaybackControlButton(
-            "##AnimSequencePause",
-            PlaybackControlIcons.Pause,
-            "Pause",
-            "Pause",
-            ButtonSize) &&
-        PreviewController)
-    {
-        PreviewController->Pause();
-    }
-    ImGui::SameLine();
-    CenterButtonCursor();
-    if (DrawPlaybackControlButton(
-            "##AnimSequenceStop",
-            PlaybackControlIcons.Stop,
-            "Stop",
-            "Stop",
-            ButtonSize) &&
-        PreviewController)
-    {
-        PreviewController->Stop();
-        EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
+        if (bIsForwardPlaying)
+        {
+            PreviewController->Pause();
+            EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
+        }
+        else
+        {
+            PreviewController->SetPlayRate(PlaybackRateMagnitude);
+            EditorState->PlayRate = PreviewController->GetPlayRate();
+            PreviewController->Play();
+        }
     }
 
     if (!bCanPlaybackControl)
@@ -1273,7 +1876,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         PreviewController->JumpToEnd();
         EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
     }
-    ImGui::SameLine(0.0f, 14.0f);
+    ImGui::SameLine(0.0f, PlaybackControlSpacing);
 
     bool bLooping = EditorState->bLoop;
     CenterButtonCursor();
@@ -1292,29 +1895,53 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         bLooping = bNewLooping;
     }
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosY(FrameCenterY);
-    float PlaybackRate = EditorState->PlayRate;
-    ImGui::SetNextItemWidth(72.0f);
-    if (ImGui::DragFloat("##AnimSequencePlayRate", &PlaybackRate, 0.05f, -4.0f, 4.0f, "%.2fx") && PreviewController)
+    ImGui::SameLine(0.0f, PlaybackControlSpacing);
+    CenterButtonCursor();
+    const FString PlaybackRateButtonLabel = FormatPlaybackRateLabel(EditorState->PlayRate);
+    const float PlaybackRateButtonWidth =
+        std::max(
+            50.0f,
+            ImGui::CalcTextSize(PlaybackRateButtonLabel.c_str()).x +
+                ImGui::GetStyle().FramePadding.x * 2.0f +
+                8.0f);
+    const ImVec2 PlaybackRateButtonSize(PlaybackRateButtonWidth, IconButtonItemHeight);
+    const bool bPlaybackRatePressed =
+        ImGui::InvisibleButton("##AnimSequencePlaybackRateButton", PlaybackRateButtonSize);
+    const ImVec2 PlaybackRateButtonMin = ImGui::GetItemRectMin();
+    const ImVec2 PlaybackRateButtonMax = ImGui::GetItemRectMax();
+    const bool bPlaybackRateHovered = ImGui::IsItemHovered();
+    const bool bPlaybackRateActive = ImGui::IsItemActive();
+    ImDrawList* PlaybackRateDrawList = ImGui::GetWindowDrawList();
+    if (bPlaybackRateHovered || bPlaybackRateActive)
     {
-        PreviewController->SetPlayRate(PlaybackRate);
-        EditorState->PlayRate = PreviewController->GetPlayRate();
-    }
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::SetTooltip("%s", "Playback Rate");
+        PlaybackRateDrawList->AddRectFilled(
+            PlaybackRateButtonMin,
+            PlaybackRateButtonMax,
+            ImGui::GetColorU32(bPlaybackRateActive ? ImGuiCol_ButtonActive : ImGuiCol_ButtonHovered),
+            ImGui::GetStyle().FrameRounding);
     }
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosY(FrameCenterY);
-    ImGui::Checkbox("Snap", &EditorState->bSnapToFrames);
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::SetTooltip("%s", "Snap timeline edits to frame boundaries");
-    }
+    const ImVec2 PlaybackRateTextSize = ImGui::CalcTextSize(PlaybackRateButtonLabel.c_str());
+    const ImVec2 PlaybackRateTextPos =
+        VerticalCenter.ComputeCenteredTextPos(PlaybackRateButtonMin, PlaybackRateButtonMax, PlaybackRateTextSize);
+    PlaybackRateDrawList->AddText(
+        PlaybackRateTextPos,
+        ImGui::GetColorU32(ImGuiCol_Text),
+        PlaybackRateButtonLabel.c_str());
 
-    ImGui::PopStyleVar();
+    if (bPlaybackRatePressed)
+    {
+        PlaybackSpeedCustomValue = std::fabs(EditorState->PlayRate);
+        ImGui::OpenPopup("##AnimSequencePlaybackSpeedPopup");
+    }
+    if (bPlaybackRateHovered)
+    {
+        ImGui::SetTooltip("%s", "Playback Speed Options");
+    }
+    RenderPlaybackSpeedPopup();
+
+    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar(2);
 
     if (!bCanTimelineControl)
     {

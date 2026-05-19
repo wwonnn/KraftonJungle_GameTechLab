@@ -136,13 +136,5 @@ void FAnimationSequenceTimelineWidget::RenderCanvas(
         State.SetCurrentTime(PreviewController->GetCurrentTime(), false);
     }
 
-    DrawList->AddText(
-        ImVec2(Geometry.CanvasPos.x + 10.0f, Geometry.CanvasEnd.y - 20.0f),
-        ImGui::GetColorU32(ImGuiCol_TextDisabled),
-        bCanvasHovered ? "Left-drag on ruler: Scrub" : "Timeline Canvas");
-
-    DrawList->AddText(
-        ImVec2(Geometry.CanvasEnd.x - 118.0f, Geometry.CanvasEnd.y - 20.0f),
-        AccentColor,
-        State.bSnapToFrames ? "Snap: Frames" : "Snap: Off");
+    (void)AccentColor;
 }

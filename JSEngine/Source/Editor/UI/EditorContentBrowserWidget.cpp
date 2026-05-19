@@ -970,9 +970,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         constexpr float GridPaddingTop = 8.0f;
         constexpr float GridPaddingRight = 8.0f;
         constexpr float GridPaddingBottom = 8.0f;
+		const ImVec2 BaseCursorPos = ImGui::GetCursorPos();
 
-		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + GridPaddingLeft);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + GridPaddingTop);
+		ImGui::SetCursorPos(ImVec2(BaseCursorPos.x + GridPaddingLeft, BaseCursorPos.y + GridPaddingTop));
 
 
 		const float ContentWidth = std::max(1.0f, ImGui::GetContentRegionAvail().x - GridPaddingRight);
@@ -984,9 +984,16 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 		bool bAnyTileHovered = false;
 		for (int32 Index = 0; Index < static_cast<int32>(VisibleItems.size()); ++Index)
 		{
-			if (Index > 0 && Index % Columns != 0)
+			if (Index > 0)
 			{
-				ImGui::SameLine(0.0f, TileGap);
+				if (Index % Columns != 0)
+				{
+					ImGui::SameLine(0.0f, TileGap);
+				}
+				else
+				{
+					ImGui::SetCursorPosX(BaseCursorPos.x + GridPaddingLeft);
+				}
 			}
 			DrawContentTile(VisibleItems[Index], Tile);
 			bAnyTileHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);

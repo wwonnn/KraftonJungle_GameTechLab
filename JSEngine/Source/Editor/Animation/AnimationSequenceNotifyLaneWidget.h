@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+struct FAnimationSequenceSequencerVisibleLayout;
 class FAnimationSequenceEditorState;
 class FAnimationSequenceEditorDocument;
 struct FAnimationSequenceTimelineGeometry;
@@ -11,5 +12,5 @@ public:
         FAnimationSequenceEditorState& State,
         FAnimationSequenceEditorDocument* Document,
         const FAnimationSequenceTimelineGeometry& Geometry,
-        float SectionTop);
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout);
 };

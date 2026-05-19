@@ -16,6 +16,8 @@ public:
     float GetMaxTime() const;
     float GetMinimumVisibleRange() const;
     float GetVisibleRange() const;
+    float GetTimelineRangeStart() const { return TimelineRangeStart; }
+    float GetTimelineRangeEnd() const { return TimelineRangeEnd; }
 
     float ClampTime(float InTime) const;
     float SnapTimeToFrame(float InTime) const;
@@ -25,6 +27,7 @@ public:
     float FrameToTime(int32 FrameIndex) const;
 
     void SetCurrentTime(float InTime, bool bApplySnap);
+    void SetTimelineRange(float InStartTime, float InEndTime);
     void SetVisibleRange(float InStartTime, float InEndTime);
     void PanVisibleRange(float DeltaTime);
     void ZoomVisibleRange(float AnchorTime, float ZoomFactor);
@@ -46,6 +49,8 @@ public:
     bool bSnapToFrames = true;
     float VisibleTimeStart = 0.0f;
     float VisibleTimeEnd = 1.0f;
+    float TimelineRangeStart = 0.0f;
+    float TimelineRangeEnd = 1.0f;
     float PreviewPaneHeight = 0.0f;
     float SequencerDetailsPaneHeight = 0.0f;
     float TrackOutlinerWidth = 0.0f;

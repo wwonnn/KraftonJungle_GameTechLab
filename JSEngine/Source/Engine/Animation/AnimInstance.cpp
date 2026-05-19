@@ -121,8 +121,15 @@ void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 
 void UAnimInstance::SetCurrentTime(float InCurrentTime)
 {
-    CurrentTime = NormalizeTimeForSequence(CurrentSequence, InCurrentTime);
-    NextTime = NormalizeTimeForSequence(NextSequence, InCurrentTime);
+    const auto ClampTimeForSequence = [this](const UAnimSequence* Sequence, float InTime)
+    {
+        const float Length = GetSequenceLength(Sequence);
+        return Length > 0.0f ? std::clamp(InTime, 0.0f, Length) : 0.0f;
+    };
+
+    // Explicit seeks should land on the requested endpoint even when looping is enabled.
+    CurrentTime = ClampTimeForSequence(CurrentSequence, InCurrentTime);
+    NextTime = ClampTimeForSequence(NextSequence, InCurrentTime);
     RecentNotifyEvents.clear();
     ClearActiveAnimNotifyStates(false);
 }
