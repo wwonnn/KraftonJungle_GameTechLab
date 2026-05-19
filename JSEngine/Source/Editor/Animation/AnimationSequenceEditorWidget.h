@@ -65,7 +65,7 @@ private:
         const char* Tooltip,
         const ImVec2& Size,
         bool bSelected = false) const;
-    void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl);
+    void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight);
     void RenderNotifyDetailsPanel();
     void RenderCurveInspectionPanel() const;
     void RenderRecentNotifySummary() const;

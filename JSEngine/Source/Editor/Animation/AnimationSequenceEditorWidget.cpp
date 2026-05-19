@@ -44,7 +44,7 @@ namespace
     constexpr float PreviewOverlayLineSpacing = 2.0f;
 
     constexpr float SequencerHeaderPadding = 8.0f;
-    constexpr float PlaybackIconButtonSize = 26.0f;
+    constexpr float PlaybackIconButtonSize = 20.0f;
     constexpr float PlaybackControlSpacing = 6.0f;
 
     float GetTrackOutlinerFilterHeight()
@@ -1112,17 +1112,20 @@ void FAnimationSequenceEditorWidget::RenderBottomControlStrip(float Height)
     const bool bCanTimelineControl =
         PreviewController != nullptr && EditorState != nullptr && EditorState->HasTimelineData();
     const bool bCanPlaybackControl = PreviewController != nullptr && PreviewController->HasValidPreview();
+    const float FrameCenterY = std::max(0.0f, (Height - ImGui::GetFrameHeight()) * 0.5f);
+    const float TextCenterY = std::max(0.0f, (Height - ImGui::GetTextLineHeight()) * 0.5f);
 
     ImGui::BeginChild(
         "##AnimationSequenceBottomControlStrip",
         ImVec2(0.0f, Height),
         true);
 
-    RenderTransportControls(bCanTimelineControl, bCanPlaybackControl);
+    RenderTransportControls(bCanTimelineControl, bCanPlaybackControl, Height);
 
     if (!EditorState || !EditorState->HasTimelineData())
     {
         ImGui::SameLine(0.0f, 16.0f);
+        ImGui::SetCursorPosY(TextCenterY);
         ImGui::TextDisabled("Timeline view controls are unavailable.");
         ImGui::EndChild();
         return;
@@ -1133,8 +1136,9 @@ void FAnimationSequenceEditorWidget::RenderBottomControlStrip(float Height)
     float VisibleEnd = EditorState->VisibleTimeEnd;
 
     ImGui::SameLine(0.0f, 18.0f);
-    ImGui::TextDisabled("View");
+    ImGui::SetCursorPosY(TextCenterY);
     ImGui::SameLine(0.0f, 8.0f);
+    ImGui::SetCursorPosY(FrameCenterY);
     ImGui::SetNextItemWidth(std::max(ImGui::GetContentRegionAvail().x - 4.0f, 160.0f));
     if (ImGui::DragFloatRange2(
             "##AnimationSequenceTimelineViewRange",
@@ -1176,10 +1180,17 @@ void FAnimationSequenceEditorWidget::RenderSelectionDetailsPane(float Height)
     ImGui::EndChild();
 }
 
-void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl)
+void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight)
 {
     EnsurePlaybackControlIconsLoaded();
     const ImVec2 ButtonSize(PlaybackIconButtonSize, PlaybackIconButtonSize);
+    const float ButtonCenterY = std::max(0.0f, (StripHeight - ButtonSize.y) * 0.5f);
+    const float FrameCenterY = std::max(0.0f, (StripHeight - ImGui::GetFrameHeight()) * 0.5f);
+
+    auto CenterButtonCursor = [&]()
+    {
+        ImGui::SetCursorPosY(ButtonCenterY);
+    };
 
     if (!bCanTimelineControl)
     {
@@ -1188,6 +1199,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(PlaybackControlSpacing, PlaybackControlSpacing));
 
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequenceJumpToStart",
             PlaybackControlIcons.JumpToStart,
@@ -1200,6 +1212,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
     }
     ImGui::SameLine();
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequenceStepPrevious",
             PlaybackControlIcons.StepPrevious,
@@ -1218,6 +1231,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         ImGui::BeginDisabled();
     }
 
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequencePlay",
             PlaybackControlIcons.PlayForward,
@@ -1229,6 +1243,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         PreviewController->Play();
     }
     ImGui::SameLine();
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequencePause",
             PlaybackControlIcons.Pause,
@@ -1240,6 +1255,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         PreviewController->Pause();
     }
     ImGui::SameLine();
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequenceStop",
             PlaybackControlIcons.Stop,
@@ -1258,6 +1274,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
     }
 
     ImGui::SameLine();
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequenceStepNext",
             PlaybackControlIcons.StepNext,
@@ -1270,6 +1287,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
     }
     ImGui::SameLine();
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequenceJumpToEnd",
             PlaybackControlIcons.JumpToEnd,
@@ -1284,6 +1302,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
     ImGui::SameLine(0.0f, 14.0f);
 
     bool bLooping = EditorState->bLoop;
+    CenterButtonCursor();
     if (DrawPlaybackControlButton(
             "##AnimSequenceLoopToggle",
             bLooping ? PlaybackControlIcons.LoopEnabled : PlaybackControlIcons.LoopDisabled,
@@ -1300,6 +1319,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
     }
 
     ImGui::SameLine();
+    ImGui::SetCursorPosY(FrameCenterY);
     float PlaybackRate = EditorState->PlayRate;
     ImGui::SetNextItemWidth(72.0f);
     if (ImGui::DragFloat("##AnimSequencePlayRate", &PlaybackRate, 0.05f, -4.0f, 4.0f, "%.2fx") && PreviewController)
@@ -1313,6 +1333,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
     }
 
     ImGui::SameLine();
+    ImGui::SetCursorPosY(FrameCenterY);
     ImGui::Checkbox("Snap", &EditorState->bSnapToFrames);
     if (ImGui::IsItemHovered())
     {
