@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Animation/AnimData/FrameRate.h"
+#include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
 #include "Core/CoreMinimal.h"
 
 class UAnimSequence;
@@ -34,6 +35,12 @@ public:
 
     int32 ChooseMajorFrameStep(float TimelinePixelWidth) const;
     int32 ChooseMinorFrameStep(float TimelinePixelWidth) const;
+    void SetHoveredSequencerRow(const FAnimationSequenceSequencerRowId& RowId);
+    void ClearHoveredSequencerRow();
+    void SetFocusedSequencerRow(const FAnimationSequenceSequencerRowId& RowId);
+    void ClearFocusedSequencerRow();
+    bool IsHoveredSequencerRow(const FAnimationSequenceSequencerRowId& RowId) const;
+    bool IsFocusedSequencerRow(const FAnimationSequenceSequencerRowId& RowId) const;
     bool HasSelectedNotify() const
     {
         return SelectedNotifyTrackIndex >= 0 && SelectedNotifyEventIndex >= 0;
@@ -72,6 +79,8 @@ public:
     int32 DraggedNotifyEventIndex = -1;
     int32 SelectedCurveIndex = -1;
     int32 HoveredCurveIndex = -1;
+    FAnimationSequenceSequencerRowId HoveredSequencerRowId;
+    FAnimationSequenceSequencerRowId FocusedSequencerRowId;
     bool bDraggingNotify = false;
     float DraggedNotifyGrabOffsetTime = 0.0f;
 };

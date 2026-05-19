@@ -72,7 +72,10 @@ namespace
 
     float GetTrackOutlinerFilterHeight()
     {
-        return ImGui::GetFrameHeightWithSpacing() + 8.0f;
+        return
+            FAnimationSequenceTimelineGeometry::VerticalPadding +
+            FAnimationSequenceSequencerLayout::RulerHeight +
+            FAnimationSequenceSequencerLayout::TrackAreaPadding;
     }
 
     const FString& GetPlaybackIconPathJumpToStart()
@@ -933,6 +936,7 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
     {
         FAnimationSequenceSequencerVisibleRow& Row = Layout.Rows.emplace_back();
         Row.Type = Type;
+        Row.Id = MakeAnimationSequenceSequencerRowId(Type);
         Row.OffsetY = CursorY;
         Row.Height = Height;
         CursorY += Height;
@@ -941,44 +945,43 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
 
     FAnimationSequenceSequencerVisibleRow& NotifyHeader =
         AddRow(EAnimationSequenceSequencerVisibleRowType::NotifyHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    NotifyHeader.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::NotifyHeader);
     NotifyHeader.Label = "Notifies";
+    const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
+    NotifyHeader.bCanExpand = NotifyTrackCount > 0;
     NotifyHeader.bExpanded = EditorState->bNotifiesExpanded;
-    if (EditorState->bNotifiesExpanded)
+    if (NotifyHeader.bCanExpand && EditorState->bNotifiesExpanded)
     {
-        CursorY += 4.0f;
-        const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
         for (int32 TrackIndex = 0; TrackIndex < NotifyTrackCount; ++TrackIndex)
         {
             FAnimationSequenceSequencerVisibleRow& Row =
                 AddRow(EAnimationSequenceSequencerVisibleRowType::NotifyTrack, FAnimationSequenceSequencerLayout::NotifyTrackRowHeight);
             Row.SourceIndex = TrackIndex;
+            Row.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::NotifyTrack, TrackIndex);
             const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(TrackIndex) : nullptr;
             Row.Label = Track && Track->TrackName.IsValid()
                 ? Track->TrackName.ToString()
                 : ("Track " + std::to_string(TrackIndex + 1));
             Row.SecondaryLabel = Track ? std::to_string(static_cast<int32>(Track->Events.size())) : FString("0");
             Row.bSelected = EditorState->SelectedNotifyTrackIndex == TrackIndex;
-            if (TrackIndex + 1 < NotifyTrackCount)
-            {
-                CursorY += FAnimationSequenceSequencerLayout::NotifyTrackRowSpacing;
-            }
         }
     }
 
-    CursorY += FAnimationSequenceSequencerLayout::SectionGap;
     FAnimationSequenceSequencerVisibleRow& CurveHeader =
         AddRow(EAnimationSequenceSequencerVisibleRowType::CurveHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    CurveHeader.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::CurveHeader);
     CurveHeader.Label = "Curves";
+    CurveHeader.bCanExpand = !CurveGroups.empty();
     CurveHeader.bExpanded = EditorState->bCurvesExpanded;
-    if (EditorState->bCurvesExpanded)
+    if (CurveHeader.bCanExpand && EditorState->bCurvesExpanded)
     {
-        CursorY += 4.0f;
         for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
         {
             const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
             FAnimationSequenceSequencerVisibleRow& GroupRow =
                 AddRow(EAnimationSequenceSequencerVisibleRowType::CurveGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
             GroupRow.GroupIndex = GroupIndex;
+            GroupRow.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::CurveGroup, -1, GroupIndex);
             GroupRow.Label = Group.Label;
             GroupRow.SecondaryLabel = std::to_string(Group.TotalCount);
             GroupRow.bToggleChecked = Group.bVisible;
@@ -986,13 +989,13 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
 
             if (Group.bVisible && !Group.VisibleEntries.empty())
             {
-                CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
                 for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
                 {
                     const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
                     FAnimationSequenceSequencerVisibleRow& Row =
                         AddRow(EAnimationSequenceSequencerVisibleRowType::CurveEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
                     Row.SourceIndex = Entry.SourceIndex;
+                    Row.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::CurveEntry, Entry.SourceIndex, GroupIndex);
                     Row.Curve = Entry.Curve;
                     Row.CurveType = Group.CurveType;
                     Row.Label = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
@@ -1000,86 +1003,61 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
                         ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys")
                         : FString();
                     Row.bSelected = EditorState->SelectedCurveIndex == Entry.SourceIndex;
-                    if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
-                    {
-                        CursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
-                    }
                 }
-            }
-
-            if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
-            {
-                CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
             }
         }
     }
 
-    CursorY += FAnimationSequenceSequencerLayout::SectionGap;
     FAnimationSequenceSequencerVisibleRow& AdditiveHeader =
         AddRow(EAnimationSequenceSequencerVisibleRowType::AdditiveHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    AdditiveHeader.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::AdditiveHeader);
     AdditiveHeader.Label = "Additive Layer Tracks";
+    AdditiveHeader.bCanExpand = false;
     AdditiveHeader.bExpanded = EditorState->bAdditiveLayerTracksExpanded;
-    if (EditorState->bAdditiveLayerTracksExpanded)
+    if (AdditiveHeader.bCanExpand && EditorState->bAdditiveLayerTracksExpanded)
     {
-        CursorY += 4.0f;
         FAnimationSequenceSequencerVisibleRow& Row =
             AddRow(EAnimationSequenceSequencerVisibleRowType::AdditiveEmpty, FAnimationSequenceSequencerLayout::EmptySectionRowHeight);
+        Row.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::AdditiveEmpty);
         Row.Label = "No additive layer tracks.";
     }
 
-    CursorY += FAnimationSequenceSequencerLayout::SectionGap;
     FAnimationSequenceSequencerVisibleRow& AttributeHeader =
         AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+    AttributeHeader.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::AttributeHeader);
     AttributeHeader.Label = "Attributes";
+    AttributeHeader.bCanExpand = !AttributeCurveGroups.empty();
     AttributeHeader.bExpanded = EditorState->bAttributesExpanded;
-    if (EditorState->bAttributesExpanded)
+    if (AttributeHeader.bCanExpand && EditorState->bAttributesExpanded)
     {
-        CursorY += 4.0f;
-        if (AttributeCurveGroups.empty())
+        for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(AttributeCurveGroups.size()); ++GroupIndex)
         {
-            FAnimationSequenceSequencerVisibleRow& Row =
-                AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeEmpty, FAnimationSequenceSequencerLayout::EmptySectionRowHeight);
-            Row.Label = "No attribute tracks.";
-        }
-        else
-        {
-            for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(AttributeCurveGroups.size()); ++GroupIndex)
+            const FAnimationSequenceCurveViewGroup& Group = AttributeCurveGroups[GroupIndex];
+            FAnimationSequenceSequencerVisibleRow& GroupRow =
+                AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
+            GroupRow.GroupIndex = GroupIndex;
+            GroupRow.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::AttributeGroup, -1, GroupIndex);
+            GroupRow.Label = Group.Label;
+            GroupRow.SecondaryLabel = std::to_string(Group.TotalCount);
+            GroupRow.bToggleChecked = Group.bVisible;
+            GroupRow.CurveType = Group.CurveType;
+
+            if (Group.bVisible && !Group.VisibleEntries.empty())
             {
-                const FAnimationSequenceCurveViewGroup& Group = AttributeCurveGroups[GroupIndex];
-                FAnimationSequenceSequencerVisibleRow& GroupRow =
-                    AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
-                GroupRow.GroupIndex = GroupIndex;
-                GroupRow.Label = Group.Label;
-                GroupRow.SecondaryLabel = std::to_string(Group.TotalCount);
-                GroupRow.bToggleChecked = Group.bVisible;
-                GroupRow.CurveType = Group.CurveType;
-
-                if (Group.bVisible && !Group.VisibleEntries.empty())
+                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
                 {
-                    CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
-                    for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
-                    {
-                        const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
-                        FAnimationSequenceSequencerVisibleRow& Row =
-                            AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
-                        Row.SourceIndex = Entry.SourceIndex;
-                        Row.Curve = Entry.Curve;
-                        Row.CurveType = Group.CurveType;
-                        Row.Label = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
-                        Row.SecondaryLabel = Entry.Curve
-                            ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys")
-                            : FString();
-                        Row.bSelected = EditorState->SelectedCurveIndex == Entry.SourceIndex;
-                        if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
-                        {
-                            CursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
-                        }
-                    }
-                }
-
-                if (GroupIndex + 1 < static_cast<int32>(AttributeCurveGroups.size()))
-                {
-                    CursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                    const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                    FAnimationSequenceSequencerVisibleRow& Row =
+                        AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
+                    Row.SourceIndex = Entry.SourceIndex;
+                    Row.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::AttributeEntry, Entry.SourceIndex, GroupIndex);
+                    Row.Curve = Entry.Curve;
+                    Row.CurveType = Group.CurveType;
+                    Row.Label = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
+                    Row.SecondaryLabel = Entry.Curve
+                        ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys")
+                        : FString();
+                    Row.bSelected = EditorState->SelectedCurveIndex == Entry.SourceIndex;
                 }
             }
         }
@@ -1102,6 +1080,31 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
 
     const FAnimationSequenceSequencerVisibleLayout VisibleLayout =
         BuildSequencerVisibleLayout(CurveGroups, AttributeCurveGroups);
+    bool bFocusedRowVisible = !EditorState->FocusedSequencerRowId.IsValid();
+    for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
+    {
+        if (EditorState->FocusedSequencerRowId.IsValid() && Row.Id == EditorState->FocusedSequencerRowId)
+        {
+            bFocusedRowVisible = true;
+            break;
+        }
+    }
+    if (!bFocusedRowVisible)
+    {
+        EditorState->ClearFocusedSequencerRow();
+    }
+    if (!EditorState->FocusedSequencerRowId.IsValid())
+    {
+        for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
+        {
+            if (Row.bSelected)
+            {
+                EditorState->SetFocusedSequencerRow(Row.Id);
+                break;
+            }
+        }
+    }
+    EditorState->ClearHoveredSequencerRow();
     const float TrackBodyHeight = VisibleLayout.ContentHeight;
     const float MainPaneHeight = std::max(
         SplitPaneHeight -
@@ -1185,19 +1188,26 @@ void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
         ImVec2(Width, Height),
         true);
 
+    const float FilterBandTopY = ImGui::GetCursorPosY();
+    const float FilterInputHeight = ImGui::GetFrameHeight();
+    ImGui::SetCursorPosY(
+        FilterBandTopY +
+        std::max(0.0f, (FilterHeight - FilterInputHeight) * 0.5f));
     ImGui::SetNextItemWidth(-1.0f);
     ImGui::InputTextWithHint(
         "##AnimationSequenceTrackFilter",
         "Filter tracks and curves",
         TrackFilterEditBuffer.data(),
         TrackFilterEditBuffer.size());
+    ImGui::SetCursorPosY(FilterBandTopY + FilterHeight);
 
     ImGui::BeginChild(
         "##AnimationSequenceTrackOutlinerList",
         ImVec2(0.0f, TrackListHeight),
         false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    TrackOutlinerWidget.Render(*EditorState, Document, VisibleLayout);
+    const float RowOriginY = ImGui::GetCursorScreenPos().y - EditorState->SequencerScrollY;
+    TrackOutlinerWidget.Render(*EditorState, Document, VisibleLayout, RowOriginY);
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
         std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
     {
@@ -1245,12 +1255,33 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
         (ImGui::IsMouseDown(ImGuiMouseButton_Left) || ImGui::IsMouseDown(ImGuiMouseButton_Middle));
     const FAnimationSequenceTimelineGeometry Geometry =
         FAnimationSequenceTimelineGeometry::BuildSequencerCanvasGeometry(CanvasPos, CanvasSize, TimelineWidget.GetRulerHeight());
+    const float TimelineRowOriginY =
+        Geometry.TrackTop +
+        FAnimationSequenceSequencerLayout::TrackAreaPadding -
+        EditorState->SequencerScrollY;
+    if (bCanvasHovered)
+    {
+        const ImVec2 MousePos = ImGui::GetIO().MousePos;
+        for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
+        {
+            const float RowTop = TimelineRowOriginY + Row.OffsetY;
+            const float RowBottom = RowTop + Row.Height;
+            if (MousePos.x >= Geometry.TimelineMinX &&
+                MousePos.x <= Geometry.TimelineMaxX &&
+                MousePos.y >= RowTop &&
+                MousePos.y <= RowBottom)
+            {
+                EditorState->SetHoveredSequencerRow(Row.Id);
+                break;
+            }
+        }
+    }
 
     TimelineWidget.RenderCanvas(*EditorState, PreviewController, Geometry, bCanvasHovered, bCanvasActive);
-    DrawTimelineVisibleRowSeparators(Geometry, VisibleLayout);
-    NotifyLaneWidget.RenderRows(*EditorState, Document, Geometry, VisibleLayout);
+    DrawTimelineRowBackgrounds(Geometry, VisibleLayout, TimelineRowOriginY);
+    NotifyLaneWidget.RenderRows(*EditorState, Document, Geometry, VisibleLayout, TimelineRowOriginY);
     EditorState->HoveredCurveIndex = -1;
-    CurveTrackWidget.RenderRows(*EditorState, Geometry, VisibleLayout);
+    CurveTrackWidget.RenderRows(*EditorState, Geometry, VisibleLayout, TimelineRowOriginY);
     if (Document &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
         EditorState->HoveredCurveIndex >= 0)
@@ -1262,18 +1293,18 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
     ImGui::EndChild();
 }
 
-void FAnimationSequenceEditorWidget::DrawTimelineVisibleRowSeparators(
+void FAnimationSequenceEditorWidget::DrawTimelineRowBackgrounds(
     const FAnimationSequenceTimelineGeometry& Geometry,
-    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+    float TimelineRowOriginY) const
 {
-    const float TrackAreaTop =
-        Geometry.TrackTop +
-        FAnimationSequenceSequencerLayout::TrackAreaPadding -
-        EditorState->SequencerScrollY;
     const float ClipBottom = Geometry.CanvasEnd.y - FAnimationSequenceTimelineGeometry::VerticalPadding;
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
     const ImU32 SeparatorColor = IM_COL32(255, 255, 255, 18);
     const ImU32 HeaderSeparatorColor = IM_COL32(255, 255, 255, 26);
+    const ImU32 HeaderFillColor = IM_COL32(255, 255, 255, 10);
+    const ImU32 HoverFillColor = IM_COL32(255, 255, 255, 14);
+    const ImU32 FocusFillColor = IM_COL32(78, 116, 168, 64);
 
     DrawList->PushClipRect(
         ImVec2(Geometry.TimelineMinX, Geometry.TrackTop),
@@ -1283,11 +1314,36 @@ void FAnimationSequenceEditorWidget::DrawTimelineVisibleRowSeparators(
     bool bDrewFirstBoundary = false;
     for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
     {
-        const float RowTop = TrackAreaTop + Row.OffsetY;
+        const float RowTop = TimelineRowOriginY + Row.OffsetY;
         const float RowBottom = RowTop + Row.Height;
         if (RowBottom < Geometry.TrackTop || RowTop > ClipBottom)
         {
             continue;
+        }
+
+        const bool bHovered = EditorState && EditorState->IsHoveredSequencerRow(Row.Id);
+        const bool bFocused = EditorState && EditorState->IsFocusedSequencerRow(Row.Id);
+        const bool bHeader = IsAnimationSequenceSectionHeaderRow(Row.Type);
+        ImU32 FillColor = 0;
+        if (bFocused)
+        {
+            FillColor = FocusFillColor;
+        }
+        else if (bHovered)
+        {
+            FillColor = HoverFillColor;
+        }
+        else if (bHeader)
+        {
+            FillColor = HeaderFillColor;
+        }
+
+        if (FillColor != 0)
+        {
+            DrawList->AddRectFilled(
+                ImVec2(Geometry.TimelineMinX, RowTop),
+                ImVec2(Geometry.TimelineMaxX, RowBottom),
+                FillColor);
         }
 
         const ImU32 TopColor = IsAnimationSequenceSectionHeaderRow(Row.Type) ? HeaderSeparatorColor : SeparatorColor;

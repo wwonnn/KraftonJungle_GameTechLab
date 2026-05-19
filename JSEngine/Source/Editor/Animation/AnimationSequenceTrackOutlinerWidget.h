@@ -11,5 +11,6 @@ public:
     void Render(
         FAnimationSequenceEditorState& State,
         FAnimationSequenceEditorDocument* Document,
-        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout);
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+        float RowOriginY);
 };

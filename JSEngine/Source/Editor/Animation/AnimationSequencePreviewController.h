@@ -68,11 +68,18 @@ public:
     const FSceneViewport* GetSceneViewport() const;
 
 private:
+    bool TryInitializePreviewScene();
+
+private:
+    static constexpr float PreviewInitializationRetryInterval = 0.25f;
+
+    UEditorEngine* EditorEngine = nullptr;
     FString SequencePath;
     UAnimSequence* Sequence = nullptr;
     std::unique_ptr<FAnimationSequencePlaybackController> PlaybackController;
     std::unique_ptr<FAnimationSequencePreviewMeshResolver> PreviewMeshResolver;
     std::unique_ptr<FAnimationSequencePreviewScene> PreviewScene;
+    float PreviewInitializationRetryTimeRemaining = 0.0f;
 
     FString PreviewStatusText = "Preview is not initialized.";
     FString TimelineStatusText = "Timeline controls are available after preview initialization.";

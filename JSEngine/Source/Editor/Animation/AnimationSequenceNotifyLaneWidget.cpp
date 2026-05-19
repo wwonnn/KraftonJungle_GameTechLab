@@ -24,7 +24,8 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
     FAnimationSequenceEditorState& State,
     FAnimationSequenceEditorDocument* Document,
     const FAnimationSequenceTimelineGeometry& Geometry,
-    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout)
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+    float TimelineRowOriginY)
 {
     State.HoveredNotifyTrackIndex = -1;
     State.HoveredNotifyEventIndex = -1;
@@ -36,10 +37,6 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
         State.DraggedNotifyGrabOffsetTime = 0.0f;
     }
 
-    const float TrackAreaTop =
-        Geometry.TrackTop +
-        FAnimationSequenceSequencerLayout::TrackAreaPadding -
-        State.SequencerScrollY;
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
     bool bMouseOverMarker = false;
 
@@ -50,7 +47,7 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
             continue;
         }
 
-        const float RowTop = TrackAreaTop + Row.OffsetY;
+        const float RowTop = TimelineRowOriginY + Row.OffsetY;
         const float RowBottom = RowTop + Row.Height;
         const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(Row.SourceIndex) : nullptr;
         if (!Track)
@@ -87,10 +84,12 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 bMouseOverMarker = true;
                 State.HoveredNotifyTrackIndex = Row.SourceIndex;
                 State.HoveredNotifyEventIndex = EventIndex;
+                State.SetHoveredSequencerRow(Row.Id);
             }
 
             if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && Document)
             {
+                State.SetFocusedSequencerRow(Row.Id);
                 State.SelectedCurveIndex = -1;
                 State.HoveredCurveIndex = -1;
                 State.DraggedNotifyGrabOffsetTime =
@@ -140,11 +139,12 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 continue;
             }
 
-            const float RowTop = TrackAreaTop + Row.OffsetY;
+            const float RowTop = TimelineRowOriginY + Row.OffsetY;
             const float RowBottom = RowTop + Row.Height;
             if (MousePos.y >= RowTop && MousePos.y <= RowBottom)
             {
                 const float NewTime = Geometry.XToTime(State, Geometry.ClampX(MousePos.x));
+                State.SetFocusedSequencerRow(Row.Id);
                 State.SelectedCurveIndex = -1;
                 Document->AddNotifyAtTime(Row.SourceIndex, NewTime);
                 break;

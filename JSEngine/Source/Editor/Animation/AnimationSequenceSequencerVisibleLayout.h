@@ -20,8 +20,36 @@ enum class EAnimationSequenceSequencerVisibleRowType : uint8
     AttributeEmpty,
 };
 
+struct FAnimationSequenceSequencerRowId
+{
+    bool bValid = false;
+    EAnimationSequenceSequencerVisibleRowType Type = EAnimationSequenceSequencerVisibleRowType::NotifyHeader;
+    int32 SourceIndex = -1;
+    int32 GroupIndex = -1;
+
+    bool IsValid() const
+    {
+        return bValid;
+    }
+
+    bool operator==(const FAnimationSequenceSequencerRowId& Other) const
+    {
+        return
+            bValid == Other.bValid &&
+            Type == Other.Type &&
+            SourceIndex == Other.SourceIndex &&
+            GroupIndex == Other.GroupIndex;
+    }
+
+    bool operator!=(const FAnimationSequenceSequencerRowId& Other) const
+    {
+        return !(*this == Other);
+    }
+};
+
 struct FAnimationSequenceSequencerVisibleRow
 {
+    FAnimationSequenceSequencerRowId Id;
     EAnimationSequenceSequencerVisibleRowType Type = EAnimationSequenceSequencerVisibleRowType::NotifyHeader;
     int32 SourceIndex = -1;
     int32 GroupIndex = -1;
@@ -29,6 +57,7 @@ struct FAnimationSequenceSequencerVisibleRow
     float Height = 0.0f;
     FString Label;
     FString SecondaryLabel;
+    bool bCanExpand = false;
     bool bExpanded = false;
     bool bSelected = false;
     bool bToggleChecked = false;
@@ -61,4 +90,17 @@ inline bool IsAnimationSequenceCurveEntryRow(EAnimationSequenceSequencerVisibleR
     return
         Type == EAnimationSequenceSequencerVisibleRowType::CurveEntry ||
         Type == EAnimationSequenceSequencerVisibleRowType::AttributeEntry;
+}
+
+inline FAnimationSequenceSequencerRowId MakeAnimationSequenceSequencerRowId(
+    EAnimationSequenceSequencerVisibleRowType Type,
+    int32 SourceIndex = -1,
+    int32 GroupIndex = -1)
+{
+    FAnimationSequenceSequencerRowId RowId;
+    RowId.bValid = true;
+    RowId.Type = Type;
+    RowId.SourceIndex = SourceIndex;
+    RowId.GroupIndex = GroupIndex;
+    return RowId;
 }

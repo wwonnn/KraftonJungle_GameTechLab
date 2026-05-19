@@ -8,6 +8,8 @@
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
 
+#include <algorithm>
+
 #ifdef GetCurrentTime
 #undef GetCurrentTime
 #endif
@@ -24,12 +26,14 @@ bool FAnimationSequencePreviewController::Initialize(
 {
     Shutdown();
 
+    EditorEngine = InEditorEngine;
     SequencePath = FPaths::Normalize(InSequencePath);
     Sequence = InSequence;
     PlaybackController = std::make_unique<FAnimationSequencePlaybackController>();
     PreviewMeshResolver = std::make_unique<FAnimationSequencePreviewMeshResolver>();
     PreviewScene = std::make_unique<FAnimationSequencePreviewScene>();
     PlaybackController->Initialize(Sequence);
+    PreviewInitializationRetryTimeRemaining = 0.0f;
 
     PreviewStatusText = "Preview is not initialized.";
     TimelineStatusText = "Timeline controls are available after preview initialization.";
@@ -42,39 +46,12 @@ bool FAnimationSequencePreviewController::Initialize(
         return false;
     }
 
-    FString ResolvedPreviewMeshPath;
-    if (!PreviewMeshResolver->Resolve(SequencePath, Sequence, ResolvedPreviewMeshPath))
-    {
-        if (!Sequence->GetSkeletonAssetPath().empty())
-        {
-            PreviewStatusText =
-                "Preview mesh could not be resolved from SkeletonAssetPath: " + Sequence->GetSkeletonAssetPath();
-        }
-        else
-        {
-            PreviewStatusText =
-                "Preview mesh could not be resolved because the sequence has no SkeletonAssetPath metadata yet.";
-        }
-        TimelineStatusText = "Playback controls are available after a preview mesh is resolved.";
-        return false;
-    }
-
-    if (!PreviewScene->Initialize(InEditorEngine, SequencePath, Sequence, ResolvedPreviewMeshPath))
-    {
-        PreviewStatusText = "Failed to load preview skeletal mesh: " + ResolvedPreviewMeshPath;
-        TimelineStatusText = "Playback controls are available after a valid preview mesh loads.";
-        return false;
-    }
-
     PlaybackController->SetLooping(true);
     PlaybackController->SetPlayRate(1.0f);
     PlaybackController->Pause();
     PlaybackController->SetCurrentTime(0.0f);
-    PlaybackController->ApplyPendingPose(PreviewScene.get());
 
-    PreviewStatusText = "Preview mesh: " + PreviewScene->GetPreviewMeshPath();
-    TimelineStatusText = "Use the timeline below to scrub the current pose or play the clip in place.";
-    return true;
+    return TryInitializePreviewScene();
 }
 
 void FAnimationSequencePreviewController::Shutdown()
@@ -92,12 +69,25 @@ void FAnimationSequencePreviewController::Shutdown()
     }
 
     PreviewMeshResolver.reset();
+    EditorEngine = nullptr;
     Sequence = nullptr;
     SequencePath.clear();
+    PreviewInitializationRetryTimeRemaining = 0.0f;
 }
 
 void FAnimationSequencePreviewController::Tick(float DeltaTime)
 {
+    if (!HasValidPreview() && PlaybackController && PreviewMeshResolver && PreviewScene &&
+        EditorEngine && AnimationSequenceViewer::IsLiveObject(Sequence))
+    {
+        PreviewInitializationRetryTimeRemaining =
+            std::max(0.0f, PreviewInitializationRetryTimeRemaining - std::max(DeltaTime, 0.0f));
+        if (PreviewInitializationRetryTimeRemaining <= 0.0f)
+        {
+            TryInitializePreviewScene();
+        }
+    }
+
     if (PreviewScene)
     {
         PreviewScene->TickViewportClient(DeltaTime);
@@ -334,4 +324,45 @@ FSceneViewport* FAnimationSequencePreviewController::GetSceneViewport()
 const FSceneViewport* FAnimationSequencePreviewController::GetSceneViewport() const
 {
     return PreviewScene ? PreviewScene->GetSceneViewport() : nullptr;
+}
+
+bool FAnimationSequencePreviewController::TryInitializePreviewScene()
+{
+    if (!(PlaybackController && PreviewMeshResolver && PreviewScene &&
+        EditorEngine && AnimationSequenceViewer::IsLiveObject(Sequence)))
+    {
+        return false;
+    }
+
+    FString ResolvedPreviewMeshPath;
+    if (!PreviewMeshResolver->Resolve(SequencePath, Sequence, ResolvedPreviewMeshPath))
+    {
+        if (!Sequence->GetSkeletonAssetPath().empty())
+        {
+            PreviewStatusText =
+                "Preview mesh could not be resolved from SkeletonAssetPath: " + Sequence->GetSkeletonAssetPath();
+        }
+        else
+        {
+            PreviewStatusText =
+                "Preview mesh could not be resolved because the sequence has no SkeletonAssetPath metadata yet.";
+        }
+        TimelineStatusText = "Playback controls are available after a preview mesh is resolved.";
+        PreviewInitializationRetryTimeRemaining = PreviewInitializationRetryInterval;
+        return false;
+    }
+
+    if (!PreviewScene->Initialize(EditorEngine, SequencePath, Sequence, ResolvedPreviewMeshPath))
+    {
+        PreviewStatusText = "Failed to load preview skeletal mesh: " + ResolvedPreviewMeshPath;
+        TimelineStatusText = "Playback controls are available after a valid preview mesh loads.";
+        PreviewInitializationRetryTimeRemaining = PreviewInitializationRetryInterval;
+        return false;
+    }
+
+    PlaybackController->ApplyPendingPose(PreviewScene.get());
+    PreviewStatusText = "Preview mesh: " + PreviewScene->GetPreviewMeshPath();
+    TimelineStatusText = "Use the timeline below to scrub the current pose or play the clip in place.";
+    PreviewInitializationRetryTimeRemaining = 0.0f;
+    return true;
 }

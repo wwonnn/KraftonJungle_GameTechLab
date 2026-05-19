@@ -11,5 +11,6 @@ public:
     void RenderRows(
         FAnimationSequenceEditorState& State,
         const FAnimationSequenceTimelineGeometry& Geometry,
-        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const;
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+        float TimelineRowOriginY) const;
 };

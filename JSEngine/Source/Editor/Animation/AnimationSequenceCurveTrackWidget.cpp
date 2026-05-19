@@ -94,13 +94,10 @@ namespace
 void FAnimationSequenceCurveTrackWidget::RenderRows(
     FAnimationSequenceEditorState& State,
     const FAnimationSequenceTimelineGeometry& Geometry,
-    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+    float TimelineRowOriginY) const
 {
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    const float TrackAreaTop =
-        Geometry.TrackTop +
-        FAnimationSequenceSequencerLayout::TrackAreaPadding -
-        State.SequencerScrollY;
 
     for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
     {
@@ -109,31 +106,24 @@ void FAnimationSequenceCurveTrackWidget::RenderRows(
             continue;
         }
 
-        const float RowTop = TrackAreaTop + Row.OffsetY;
+        const float RowTop = TimelineRowOriginY + Row.OffsetY;
         const float RowBottom = RowTop + Row.Height;
         const bool bSelected = State.SelectedCurveIndex == Row.SourceIndex;
-        const bool bHovered = ImGui::IsMouseHoveringRect(
-            ImVec2(Geometry.TimelineMinX, RowTop),
-            ImVec2(Geometry.TimelineMaxX, RowBottom));
 
         const ImVec2 RowMin(Geometry.TimelineMinX, RowTop);
         const ImVec2 RowMax(Geometry.TimelineMaxX, RowBottom);
-        DrawList->AddRectFilled(
-            RowMin,
-            RowMax,
-            bSelected ? IM_COL32(38, 48, 64, 255) : (bHovered ? IM_COL32(28, 33, 40, 255) : IM_COL32(22, 25, 31, 220)),
-            4.0f);
-        DrawList->AddRect(RowMin, RowMax, IM_COL32(255, 255, 255, 18), 4.0f);
 
         ImGui::SetCursorScreenPos(RowMin);
         ImGui::PushID(Row.SourceIndex + 7000);
         ImGui::InvisibleButton("##CurveRow", ImVec2(RowMax.x - RowMin.x, RowMax.y - RowMin.y));
-        if (bHovered)
+        if (ImGui::IsItemHovered())
         {
             State.HoveredCurveIndex = Row.SourceIndex;
+            State.SetHoveredSequencerRow(Row.Id);
         }
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {
+            State.SetFocusedSequencerRow(Row.Id);
             State.SelectedCurveIndex = Row.SourceIndex;
         }
         ImGui::PopID();

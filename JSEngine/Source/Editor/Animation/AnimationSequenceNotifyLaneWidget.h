@@ -12,5 +12,6 @@ public:
         FAnimationSequenceEditorState& State,
         FAnimationSequenceEditorDocument* Document,
         const FAnimationSequenceTimelineGeometry& Geometry,
-        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout);
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+        float TimelineRowOriginY);
 };

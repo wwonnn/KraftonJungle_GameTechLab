@@ -58,9 +58,10 @@ private:
         float Width,
         float Height,
         const FAnimationSequenceSequencerVisibleLayout& VisibleLayout);
-    void DrawTimelineVisibleRowSeparators(
+    void DrawTimelineRowBackgrounds(
         const FAnimationSequenceTimelineGeometry& Geometry,
-        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout) const;
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+        float TimelineRowOriginY) const;
     void RenderBottomControlStrip(float Height, float LeftPaneWidth, float RightPaneWidth);
     void RenderTimelineRangeControls(float StripHeight);
     void RenderPlaybackSpeedPopup();

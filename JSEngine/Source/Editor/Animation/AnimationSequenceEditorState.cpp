@@ -42,6 +42,8 @@ void FAnimationSequenceEditorState::Reset()
     DraggedNotifyEventIndex = -1;
     SelectedCurveIndex = -1;
     HoveredCurveIndex = -1;
+    HoveredSequencerRowId = FAnimationSequenceSequencerRowId();
+    FocusedSequencerRowId = FAnimationSequenceSequencerRowId();
     bDraggingNotify = false;
     DraggedNotifyGrabOffsetTime = 0.0f;
 }
@@ -291,4 +293,34 @@ int32 FAnimationSequenceEditorState::ChooseMinorFrameStep(float TimelinePixelWid
     }
 
     return 1;
+}
+
+void FAnimationSequenceEditorState::SetHoveredSequencerRow(const FAnimationSequenceSequencerRowId& RowId)
+{
+    HoveredSequencerRowId = RowId;
+}
+
+void FAnimationSequenceEditorState::ClearHoveredSequencerRow()
+{
+    HoveredSequencerRowId = FAnimationSequenceSequencerRowId();
+}
+
+void FAnimationSequenceEditorState::SetFocusedSequencerRow(const FAnimationSequenceSequencerRowId& RowId)
+{
+    FocusedSequencerRowId = RowId;
+}
+
+void FAnimationSequenceEditorState::ClearFocusedSequencerRow()
+{
+    FocusedSequencerRowId = FAnimationSequenceSequencerRowId();
+}
+
+bool FAnimationSequenceEditorState::IsHoveredSequencerRow(const FAnimationSequenceSequencerRowId& RowId) const
+{
+    return HoveredSequencerRowId.IsValid() && HoveredSequencerRowId == RowId;
+}
+
+bool FAnimationSequenceEditorState::IsFocusedSequencerRow(const FAnimationSequenceSequencerRowId& RowId) const
+{
+    return FocusedSequencerRowId.IsValid() && FocusedSequencerRowId == RowId;
 }
