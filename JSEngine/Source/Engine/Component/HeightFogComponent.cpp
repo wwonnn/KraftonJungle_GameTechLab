@@ -1,10 +1,7 @@
-﻿#include "HeightFogComponent.h"
+#include "HeightFogComponent.h"
 #include "Object/Object.h"
 #include "Render/Proxy/HeightFogRenderProxy.h"
 
-
-DEFINE_CLASS(UHeightFogComponent, UPrimitiveComponent)
-REGISTER_FACTORY(UHeightFogComponent)
 
 UHeightFogComponent::UHeightFogComponent() 
 {

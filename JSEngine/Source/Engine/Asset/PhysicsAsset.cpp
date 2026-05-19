@@ -1,7 +1,5 @@
 #include "PhysicsAsset.h"
 
-DEFINE_CLASS(UPhysicsAsset, UObject)
-
 void FPhysicsAssetData::Clear()
 {
     PathFileName.clear();

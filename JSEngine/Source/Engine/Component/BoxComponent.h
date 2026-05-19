@@ -1,11 +1,14 @@
 ﻿#pragma once
 #include "ShapeComponent.h"
 #include "Geometry/OBB.h"
+#include "Generated/BoxComponent.generated.h"
 
+UCLASS()
 class UBoxComponent : public UShapeComponent
 {
 public:
-    DECLARE_CLASS(UBoxComponent, UShapeComponent)
+    GENERATED_BODY()
+
     void UpdateWorldAABB() const override
     {
         const FTransform& T = GetWorldTransform();

@@ -6,11 +6,13 @@
 #include "Misc/ObjViewer/Settings/ObjViewerSettings.h"
 #include "Core/ResourceManager.h"
 #include "Component/StaticMeshComponent.h"
+#include "Generated/ObjViewerEngine.generated.h"
 
+UCLASS()
 class UObjViewerEngine : public UEngine
 {
 public:
-	DECLARE_CLASS(UObjViewerEngine, UEngine)
+	GENERATED_BODY()
 
 	void Init(FWindowsWindow* InWindow) override;
 	void BeginPlay() override;

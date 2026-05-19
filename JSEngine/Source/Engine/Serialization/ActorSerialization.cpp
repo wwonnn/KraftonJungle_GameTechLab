@@ -2,7 +2,7 @@
 
 #include "Component/ActorComponent.h"
 #include "Component/SceneComponent.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/Level.h"
 #include "GameFramework/World.h"
@@ -57,7 +57,7 @@ namespace
 		Component->Serialize(ComponentWriter);
 
 		ComponentJson[ActorJsonKeys::UUID] = static_cast<int32>(Component->GetUUID());
-		ComponentJson[ActorJsonKeys::ClassName] = Component->GetTypeInfo()->name;
+		ComponentJson[ActorJsonKeys::ClassName] = Component->GetClass()->GetName();
 		return ComponentJson;
 	}
 
@@ -172,7 +172,7 @@ namespace
 		FString BaseName = StripGeneratedNameSuffixes(RequestedName);
 		if (BaseName.empty())
 		{
-			BaseName = TargetActor && TargetActor->GetTypeInfo() ? TargetActor->GetTypeInfo()->name : "Actor";
+			BaseName = TargetActor && TargetActor->GetClass() ? TargetActor->GetClass()->GetName() : "Actor";
 		}
 
 		if (!RequestedCleanName.empty() && !IsActorNameTaken(World, TargetActor, RequestedCleanName))
@@ -223,7 +223,7 @@ namespace FActorSerialization
 		}
 
 		ActorJson[ActorJsonKeys::UUID] = static_cast<int32>(Actor->GetUUID());
-		ActorJson[ActorJsonKeys::ClassName] = Actor->GetTypeInfo()->name;
+		ActorJson[ActorJsonKeys::ClassName] = Actor->GetClass()->GetName();
 		ActorJson[ActorJsonKeys::Name] = Actor->GetName();
 		ActorJson[ActorJsonKeys::Visible] = Actor->IsVisible();
 		ActorJson[ActorJsonKeys::EditorOnly] = Actor->ShouldTickInEditor();
@@ -328,7 +328,7 @@ namespace FActorSerialization
 			for (auto It = UnusedDefaultComponents.begin(); It != UnusedDefaultComponents.end(); ++It)
 			{
 				UActorComponent* Candidate = *It;
-				if (Candidate && GetNormalizedType(Candidate->GetTypeInfo()->name) == TypeName)
+				if (Candidate && GetNormalizedType(Candidate->GetClass()->GetName()) == TypeName)
 				{
 					UnusedDefaultComponents.erase(It);
 					return Candidate;
@@ -358,7 +358,7 @@ namespace FActorSerialization
 
 			UActorComponent* Component = nullptr;
 			if (SavedCompUUID == RootUUID && NewActor->GetRootComponent()
-				&& GetNormalizedType(NewActor->GetRootComponent()->GetTypeInfo()->name) == Type)
+				&& GetNormalizedType(NewActor->GetRootComponent()->GetClass()->GetName()) == Type)
 			{
 				Component = NewActor->GetRootComponent();
 				MarkDefaultComponentUsed(Component);

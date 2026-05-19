@@ -1,7 +1,4 @@
-﻿#include "SinusoidalCameraShakePattern.h"
-
-DEFINE_CLASS(USinusoidalCameraShakePattern, UCameraShakePattern)
-REGISTER_FACTORY(USinusoidalCameraShakePattern)
+#include "SinusoidalCameraShakePattern.h"
 
 static inline float TwoPi()
 {

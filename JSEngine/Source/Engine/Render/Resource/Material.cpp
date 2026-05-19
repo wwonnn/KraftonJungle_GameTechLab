@@ -1,11 +1,7 @@
-﻿#include "Material.h"
+#include "Material.h"
 #include "Core/ResourceManager.h"
 
 #include <cstring>
-
-DEFINE_CLASS(UMaterialInterface, UObject)
-DEFINE_CLASS(UMaterial, UMaterialInterface)
-DEFINE_CLASS(UMaterialInstance, UMaterialInterface)
 
 namespace
 {

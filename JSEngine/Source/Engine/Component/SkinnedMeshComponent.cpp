@@ -1,4 +1,4 @@
-﻿#include "SkinnedMeshComponent.h"
+#include "SkinnedMeshComponent.h"
 
 #include "Asset/Skeleton.h"
 #include "Core/Paths.h"
@@ -9,8 +9,6 @@
 #include <algorithm>
 #include <cfloat>
 #include <cstring>
-
-DEFINE_CLASS(USkinnedMeshComponent, UMeshComponent)
 
 bool USkinnedMeshComponent::bGlobalEnableCPUSkinning = false;
 

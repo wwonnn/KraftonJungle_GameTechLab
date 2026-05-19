@@ -409,57 +409,105 @@ static FString BuildAnimCurveName(
     return Result;
 }
 
-enum class EFbxImportedAnimCurveKind : uint8
+static FString ToLowerString(FString Value)
 {
-    None = 0,
-    MorphTarget,
-    CustomAttribute,
-    Material
-};
-
-static bool IsFbxTransformProperty(const FString& PropertyName)
-{
-    return PropertyName == "Lcl Translation" ||
-           PropertyName == "Lcl Rotation" ||
-           PropertyName == "Lcl Scaling";
+    std::transform(
+        Value.begin(),
+        Value.end(),
+        Value.begin(),
+        [](unsigned char Character)
+        {
+            return static_cast<char>(std::tolower(Character));
+        });
+    return Value;
 }
 
-static EFbxImportedAnimCurveKind ClassifyFbxAnimCurve(const FbxProperty& TargetProperty)
+static FString GetAnimCurveTargetPropertyName(const FbxProperty& TargetProperty)
 {
     if (!TargetProperty.IsValid())
     {
-        return EFbxImportedAnimCurveKind::None;
+        return FString();
     }
 
-    const FString PropertyName(TargetProperty.GetName());
-    if (IsFbxTransformProperty(PropertyName))
+    const FbxString HierarchicalName = TargetProperty.GetHierarchicalName();
+    if (HierarchicalName.GetLen() > 0)
     {
-        return EFbxImportedAnimCurveKind::None;
+        return HierarchicalName.Buffer();
     }
 
-    FbxObject* OwnerObject = TargetProperty.GetFbxObject();
-    if (FbxCast<FbxBlendShapeChannel>(OwnerObject) && PropertyName == "DeformPercent")
+    const FbxString Name = TargetProperty.GetName();
+    return Name.GetLen() > 0 ? FString(Name.Buffer()) : FString();
+}
+
+static bool IsNodeTransformProperty(const FbxProperty& TargetProperty)
+{
+    if (!TargetProperty.IsValid())
     {
-        return EFbxImportedAnimCurveKind::MorphTarget;
+        return false;
     }
 
-    if (FbxCast<FbxSurfaceMaterial>(OwnerObject))
+    if (!FbxCast<FbxNode>(TargetProperty.GetFbxObject()))
     {
-        return EFbxImportedAnimCurveKind::Material;
+        return false;
     }
 
-    if (TargetProperty.GetFlag(FbxPropertyFlags::eUserDefined))
+    const FString PropertyName = ToLowerString(GetAnimCurveTargetPropertyName(TargetProperty));
+    return
+        PropertyName.find("lcl translation") != FString::npos ||
+        PropertyName.find("lcl rotation") != FString::npos ||
+        PropertyName.find("lcl scaling") != FString::npos;
+}
+
+static bool IsMorphTargetObject(FbxObject* Object)
+{
+    return
+        Object &&
+        (FbxCast<FbxShape>(Object) != nullptr ||
+         FbxCast<FbxBlendShapeChannel>(Object) != nullptr ||
+         FbxCast<FbxBlendShape>(Object) != nullptr);
+}
+
+static bool IsMaterialObject(FbxObject* Object)
+{
+    return Object && FbxCast<FbxSurfaceMaterial>(Object) != nullptr;
+}
+
+static bool CurveNodeHasRelatedObject(
+    FbxAnimCurveNode* CurveNode,
+    bool (*Predicate)(FbxObject*))
+{
+    if (!CurveNode || !Predicate)
     {
-        return EFbxImportedAnimCurveKind::CustomAttribute;
+        return false;
     }
 
-    return EFbxImportedAnimCurveKind::None;
+    const int32 SourceObjectCount = CurveNode->GetSrcObjectCount();
+    for (int32 SourceObjectIndex = 0; SourceObjectIndex < SourceObjectCount; ++SourceObjectIndex)
+    {
+        if (Predicate(CurveNode->GetSrcObject(SourceObjectIndex)))
+        {
+            return true;
+        }
+    }
+
+    const int32 DestinationPropertyCount = CurveNode->GetDstPropertyCount();
+    for (int32 PropertyIndex = 0; PropertyIndex < DestinationPropertyCount; ++PropertyIndex)
+    {
+        FbxProperty Property = CurveNode->GetDstProperty(PropertyIndex);
+        if (Property.IsValid() && Predicate(Property.GetFbxObject()))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static FString BuildImportedAnimCurveName(
     FbxAnimCurveNode* CurveNode,
     const FbxProperty& TargetProperty,
-    EFbxImportedAnimCurveKind CurveKind,
+    EAnimCurveType CurveType,
+    EAnimCurveSourceKind SourceKind,
     FbxAnimLayer* AnimLayer,
     int32 LayerCount,
     int32 ChannelCount,
@@ -467,21 +515,32 @@ static FString BuildImportedAnimCurveName(
     int32 CurveCount,
     int32 CurveIndex)
 {
-    if (CurveKind == EFbxImportedAnimCurveKind::MorphTarget)
+    if (CurveType == EAnimCurveType::MorphTarget ||
+        SourceKind == EAnimCurveSourceKind::ImportedMorphTarget)
     {
         if (FbxObject* OwnerObject = TargetProperty.GetFbxObject())
         {
-            return GetFbxObjectName(OwnerObject, CurveNode && CurveNode->GetName() ? CurveNode->GetName() : "MorphTarget");
+            return GetFbxObjectName(
+                OwnerObject,
+                CurveNode && CurveNode->GetName() ? CurveNode->GetName() : "MorphTarget");
         }
     }
 
-    if (CurveKind == EFbxImportedAnimCurveKind::CustomAttribute ||
-        CurveKind == EFbxImportedAnimCurveKind::Material)
+    if (CurveType == EAnimCurveType::Attribute ||
+        CurveType == EAnimCurveType::Material ||
+        SourceKind == EAnimCurveSourceKind::ImportedCustomAttribute ||
+        SourceKind == EAnimCurveSourceKind::ImportedMaterial)
     {
-        FbxString PropertyName = TargetProperty.GetName();
+        const FbxString PropertyName = TargetProperty.GetName();
         if (PropertyName.GetLen() > 0)
         {
             return PropertyName.Buffer();
+        }
+
+        const FString HierarchicalName = GetAnimCurveTargetPropertyName(TargetProperty);
+        if (!HierarchicalName.empty())
+        {
+            return HierarchicalName;
         }
     }
 
@@ -509,11 +568,46 @@ static bool HasNonZeroCurveValue(const FFloatCurve& Curve, float Tolerance = 1e-
     return false;
 }
 
+static EAnimCurveType ClassifyImportedAnimCurveType(
+    FbxAnimCurveNode* CurveNode,
+    const FbxProperty& TargetProperty,
+    EAnimCurveSourceKind& OutSourceKind)
+{
+    OutSourceKind = EAnimCurveSourceKind::Unknown;
+
+    if (IsNodeTransformProperty(TargetProperty))
+    {
+        return EAnimCurveType::Unknown;
+    }
+
+    FbxObject* OwnerObject = TargetProperty.IsValid() ? TargetProperty.GetFbxObject() : nullptr;
+    if (IsMorphTargetObject(OwnerObject) || CurveNodeHasRelatedObject(CurveNode, &IsMorphTargetObject))
+    {
+        OutSourceKind = EAnimCurveSourceKind::ImportedMorphTarget;
+        return EAnimCurveType::MorphTarget;
+    }
+
+    if (IsMaterialObject(OwnerObject) || CurveNodeHasRelatedObject(CurveNode, &IsMaterialObject))
+    {
+        OutSourceKind = EAnimCurveSourceKind::ImportedMaterial;
+        return EAnimCurveType::Material;
+    }
+
+    if (TargetProperty.IsValid() && TargetProperty.GetFlag(FbxPropertyFlags::eUserDefined))
+    {
+        OutSourceKind = EAnimCurveSourceKind::ImportedCustomAttribute;
+        return EAnimCurveType::Attribute;
+    }
+
+    return EAnimCurveType::Unknown;
+}
 static bool ConvertFbxAnimCurveToFloatCurve(
     FbxAnimCurve* FbxCurve,
     const FString& CurveName,
     double StartSeconds,
     double EndSeconds,
+    EAnimCurveType CurveType,
+    EAnimCurveSourceKind SourceKind,
     FFloatCurve& OutCurve)
 {
     if (!FbxCurve)
@@ -528,6 +622,8 @@ static bool ConvertFbxAnimCurveToFloatCurve(
     }
 
     OutCurve.CurveName = FName(CurveName);
+    OutCurve.CurveType = CurveType;
+    OutCurve.SourceKind = SourceKind;
     OutCurve.Keys.clear();
     OutCurve.Keys.reserve(KeyCount);
 
@@ -596,7 +692,6 @@ static int32 ReadCurveNodeRecursive(
 
     int32 ImportedCurveCount = 0;
     const FbxProperty TargetProperty = FindCurveNodeTargetProperty(CurveNode, AnimLayer, InheritedTargetProperty);
-    const EFbxImportedAnimCurveKind CurveKind = ClassifyFbxAnimCurve(TargetProperty);
 
     if (CurveNode->IsComposite())
     {
@@ -617,6 +712,12 @@ static int32 ReadCurveNodeRecursive(
         return ImportedCurveCount;
     }
 
+    EAnimCurveSourceKind CurveSourceKind = EAnimCurveSourceKind::Unknown;
+    const EAnimCurveType CurveType = ClassifyImportedAnimCurveType(
+        CurveNode,
+        TargetProperty,
+        CurveSourceKind);
+
     const int32 ChannelCount = static_cast<int32>(CurveNode->GetChannelsCount());
     for (int32 ChannelIndex = 0; ChannelIndex < ChannelCount; ++ChannelIndex)
     {
@@ -627,7 +728,7 @@ static int32 ReadCurveNodeRecursive(
                 static_cast<unsigned int>(ChannelIndex),
                 static_cast<unsigned int>(CurveIndex));
 
-            if (CurveKind == EFbxImportedAnimCurveKind::None)
+            if (CurveType == EAnimCurveType::Unknown)
             {
                 continue;
             }
@@ -635,7 +736,8 @@ static int32 ReadCurveNodeRecursive(
             const FString CurveName = BuildImportedAnimCurveName(
                 CurveNode,
                 TargetProperty,
-                CurveKind,
+                CurveType,
+                CurveSourceKind,
                 AnimLayer,
                 LayerCount,
                 ChannelCount,
@@ -644,12 +746,19 @@ static int32 ReadCurveNodeRecursive(
                 CurveIndex);
 
             FFloatCurve EngineCurve;
-            if (!ConvertFbxAnimCurveToFloatCurve(FbxCurve, CurveName, StartSeconds, EndSeconds, EngineCurve))
+            if (!ConvertFbxAnimCurveToFloatCurve(
+                    FbxCurve,
+                    CurveName,
+                    StartSeconds,
+                    EndSeconds,
+                    CurveType,
+                    CurveSourceKind,
+                    EngineCurve))
             {
                 continue;
             }
 
-            if (CurveKind == EFbxImportedAnimCurveKind::CustomAttribute &&
+            if (CurveSourceKind == EAnimCurveSourceKind::ImportedCustomAttribute &&
                 !HasNonZeroCurveValue(EngineCurve))
             {
                 continue;
@@ -679,6 +788,46 @@ static int32 ReadCurveNodeRecursive(
     }
 
     return ImportedCurveCount;
+}
+
+static void AccumulateSkeletonCurveMetaData(
+    FSkeletonData* SkeletonData,
+    const FFloatCurve& Curve)
+{
+    if (!SkeletonData || !Curve.CurveName.IsValid())
+    {
+        return;
+    }
+
+    FSkeletonCurveMetaData* ExistingMetaData = nullptr;
+    for (FSkeletonCurveMetaData& CurveMetaData : SkeletonData->CurveMetaData)
+    {
+        if (CurveMetaData.Name == Curve.CurveName)
+        {
+            ExistingMetaData = &CurveMetaData;
+            break;
+        }
+    }
+
+    if (!ExistingMetaData)
+    {
+        FSkeletonCurveMetaData NewMetaData;
+        NewMetaData.Name = Curve.CurveName;
+        SkeletonData->CurveMetaData.push_back(NewMetaData);
+        ExistingMetaData = &SkeletonData->CurveMetaData.back();
+    }
+
+    if (Curve.CurveType == EAnimCurveType::MorphTarget ||
+        Curve.SourceKind == EAnimCurveSourceKind::ImportedMorphTarget)
+    {
+        ExistingMetaData->bMorphTarget = true;
+    }
+
+    if (Curve.CurveType == EAnimCurveType::Material ||
+        Curve.SourceKind == EAnimCurveSourceKind::ImportedMaterial)
+    {
+        ExistingMetaData->bMaterial = true;
+    }
 }
 
 static bool HasValidSkinInfluence(FbxMesh* Mesh)
@@ -1135,6 +1284,11 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
                     FbxProperty(),
                     VisitedCurveNodes);
             }
+        }
+
+        for (const FFloatCurve& Curve : AnimDataModel->CurveData.FloatCurves)
+        {
+            AccumulateSkeletonCurveMetaData(ImportedSkeletonData, Curve);
         }
 
         if (AnimDataModel->BoneAnimationTracks.empty())

@@ -1,4 +1,4 @@
-﻿#include "GameFramework/AActor.h"
+#include "GameFramework/AActor.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/ActorComponent.h"
 #include "Component/Movement/MovementComponent.h"
@@ -8,9 +8,6 @@
 
 #include <algorithm>
 #include <cctype>
-
-DEFINE_CLASS(AActor, UObject)
-REGISTER_FACTORY(AActor)
 
 static FString TrimObjectNameText(const FString& Name)
 {
@@ -120,7 +117,7 @@ FString AActor::MakeUniqueComponentName(const UActorComponent* TargetComponent, 
     FString BaseName = StripGeneratedObjectNameSuffixes(RequestedName);
     if (BaseName.empty())
     {
-        BaseName = TargetComponent && TargetComponent->GetTypeInfo() ? TargetComponent->GetTypeInfo()->name : "UActorComponent";
+        BaseName = TargetComponent && TargetComponent->GetClass() ? TargetComponent->GetClass()->GetName() : "UActorComponent";
     }
 
     bool bRequestedNameTaken = false;
@@ -321,12 +318,12 @@ void AActor::Serialize(FArchive& Ar)
 	}
 }
 
-UActorComponent* AActor::AddComponentByClass(const FTypeInfo* Class)
+UActorComponent* AActor::AddComponentByClass(const UClass* Class)
 {
     if (!Class)
         return nullptr;
 
-    UObject* Obj = FObjectFactory::Get().Create(Class->name);
+    UObject* Obj = FObjectFactory::Get().Create(Class->GetName());
     if (!Obj)
         return nullptr;
 
@@ -338,7 +335,7 @@ UActorComponent* AActor::AddComponentByClass(const FTypeInfo* Class)
     }
 
     Comp->SetOwner(this);
-    Comp->SetFName(FName(MakeUniqueComponentName(Comp, Class->name, true)));
+    Comp->SetFName(FName(MakeUniqueComponentName(Comp, Class->GetName(), true)));
     OwnedComponents.push_back(Comp);
     bPrimitiveCacheDirty = true;
     NotifyComponentRegistered(Comp);

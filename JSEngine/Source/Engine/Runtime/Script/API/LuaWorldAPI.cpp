@@ -1,4 +1,4 @@
-﻿#include "Runtime/Script/API/LuaEngineAPIBindings.h"
+#include "Runtime/Script/API/LuaEngineAPIBindings.h"
 
 #include "Engine/Runtime/Engine.h"
 #include "Component/CameraComponent.h"
@@ -61,9 +61,9 @@ namespace
             return false;
         }
 
-        for (const FTypeInfo* Type = Actor->GetTypeInfo(); Type != nullptr; Type = Type->Parent)
+        for (const UClass* Type = Actor->GetClass(); Type != nullptr; Type = Type->GetSuperClass())
         {
-            if (Type->name && TypeName == Type->name)
+            if (Type->GetName() && TypeName == Type->GetName())
             {
                 return true;
             }

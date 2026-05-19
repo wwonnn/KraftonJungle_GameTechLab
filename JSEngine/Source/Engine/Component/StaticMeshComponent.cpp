@@ -1,4 +1,4 @@
-﻿#include "StaticMeshComponent.h"
+#include "StaticMeshComponent.h"
 
 #include <cfloat>
 #include <cstring>
@@ -7,9 +7,6 @@
 #include "Core/Paths.h"
 #include "Render/Proxy/StaticMeshRenderProxy.h"
 #include "Render/Mesh/VertexFactory/StaticVertexFactoryData.h"
-
-DEFINE_CLASS(UStaticMeshComponent, UMeshComponent)
-REGISTER_FACTORY(UStaticMeshComponent)
 
 UStaticMeshComponent::UStaticMeshComponent()
 {
@@ -33,7 +30,7 @@ void UStaticMeshComponent::PostDuplicate(UObject* Original)
 	{
 		if (UMaterialInstance* OrigMatInst = Cast<UMaterialInstance>(Orig->Materials[i]))
 		{
-			UMaterialInstance* MatInst = UMaterialInstance::Create(OrigMatInst->Parent);
+			UMaterialInstance* MatInst = UMaterialInstance::Create(OrigMatInst->GetParent());
 			MatInst->OverridedParams = OrigMatInst->OverridedParams;
 			Materials[i] = MatInst;
 		}

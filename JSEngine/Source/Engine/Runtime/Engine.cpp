@@ -1,4 +1,4 @@
-﻿#include "Engine/Runtime/Engine.h"
+#include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/Engine.h"
 
 #include "Core/Paths.h"
@@ -17,8 +17,6 @@
 #include "Editor/Selection/SelectionManager.h"
 
 #include <filesystem>
-
-DEFINE_CLASS(UEngine, UObject)
 
 UEngine* GEngine = nullptr;
 

@@ -1,11 +1,9 @@
-﻿#include "SkeletalMesh.h"
+#include "SkeletalMesh.h"
 
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/Skeleton.h"
 #include "Core/Logging/Log.h"
 #include "Engine/Geometry/Transform.h"
-
-DEFINE_CLASS(USkeletalMesh, UObject)
 
 namespace
 {

@@ -2,6 +2,7 @@
         "FloatCurves" : [],
         "FrameRateDenominator" : 1000,
         "FrameRateNumerator" : 30000,
+        "NotifyTracks" : [],
         "NumberOfFrames" : 69,
         "NumberOfKeys" : 69,
         "ObjectName" : "Take 001",

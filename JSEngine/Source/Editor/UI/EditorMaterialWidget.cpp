@@ -1,4 +1,4 @@
-﻿#include "Editor/UI/EditorMaterialWidget.h"
+#include "Editor/UI/EditorMaterialWidget.h"
 
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorRenderPipeline.h"
@@ -33,7 +33,7 @@ const UMaterial* ResolveBaseMaterial(UMaterialInterface* Material)
 	}
 	if (const UMaterialInstance* Instance = Cast<UMaterialInstance>(Material))
 	{
-		return Instance->Parent;
+		return Instance->GetParent();
 	}
 	return nullptr;
 }

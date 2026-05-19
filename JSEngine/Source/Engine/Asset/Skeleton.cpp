@@ -2,8 +2,6 @@
 
 #include "Engine/Geometry/Transform.h"
 
-DEFINE_CLASS(USkeleton, UObject)
-
 FMatrix FSkeletonSocket::GetRelativeTransform() const
 {
     return FTransform(RelativeRotation, RelativeLocation, RelativeScale).ToMatrixWithScale();

@@ -1,8 +1,11 @@
 ﻿#pragma once
 #include "LightComponent.h"
+#include "Generated/AmbientLightComponent.generated.h"
 
+UCLASS()
 class UAmbientLightComponent : public ULightComponent {
 public:
-	DECLARE_CLASS(UAmbientLightComponent, ULightComponent)
+	GENERATED_BODY()
+
 	UAmbientLightComponent() = default;
 };

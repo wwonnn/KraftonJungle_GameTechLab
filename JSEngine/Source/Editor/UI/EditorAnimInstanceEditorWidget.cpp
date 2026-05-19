@@ -1,12 +1,15 @@
-#include "Editor/UI/EditorAnimInstanceEditorWidget.h"
+﻿#include "Editor/UI/EditorAnimInstanceEditorWidget.h"
 
 #include "Animation/AnimInstanceAsset.h"
+#include "Asset/AnimSequenceAssetLoader.h"
+#include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Editor/EditorEngine.h"
 #include "ImGui/imgui.h"
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 namespace
 {
@@ -30,6 +33,34 @@ namespace
             }
         }
         return -1;
+    }
+
+    FString NormalizeSequenceAssetPath(const FString& Path)
+    {
+        return FPaths::Normalize(Path);
+    }
+
+    bool IsSequenceAssetPath(const FString& Path)
+    {
+        if (Path.empty())
+        {
+            return false;
+        }
+
+        return std::filesystem::path(FPaths::ToWide(Path)).extension() == L".sequence";
+    }
+
+    bool SequenceAssetExistsOnDisk(const FString& Path)
+    {
+        if (Path.empty())
+        {
+            return false;
+        }
+
+        std::error_code ErrorCode;
+        return std::filesystem::exists(
+            std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(Path))),
+            ErrorCode);
     }
 
     const char* ToConditionLabel(EAnimTransitionConditionType Type)
@@ -62,6 +93,43 @@ namespace
         {
             Value = Buffer;
             bChanged = true;
+        }
+    }
+
+    void InputAnimSequencePath(UEditorEngine* EditorEngine, const char* Label, FString& Value, bool& bChanged)
+    {
+        const TArray<FString>* SequencePaths =
+            EditorEngine ? &EditorEngine->GetAssetService().GetAnimSequenceAssetPaths() : nullptr;
+        if (!SequencePaths || SequencePaths->empty())
+        {
+            InputFString(Label, Value, bChanged);
+            return;
+        }
+
+        const FString Current = Value;
+        if (ImGui::BeginCombo(Label, Current.empty() ? "<None>" : Current.c_str()))
+        {
+            if (ImGui::Selectable("<None>", Current.empty()))
+            {
+                Value.clear();
+                bChanged = true;
+            }
+
+            for (const FString& Path : *SequencePaths)
+            {
+                const bool bSelected = Current == Path;
+                if (ImGui::Selectable(Path.c_str(), bSelected))
+                {
+                    Value = Path;
+                    bChanged = true;
+                }
+                if (bSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+
+            ImGui::EndCombo();
         }
     }
 
@@ -135,6 +203,28 @@ namespace
         }
         return Best;
     }
+
+    float ComputeFramesPerSecond(int32 Numerator, int32 Denominator)
+    {
+        if (Numerator <= 0 || Denominator <= 0)
+        {
+            return 0.0f;
+        }
+
+        return static_cast<float>(Numerator) / static_cast<float>(Denominator);
+    }
+
+    ImVec4 ToHintColor(EAnimInstanceStateContextSeverity Severity)
+    {
+        return Severity == EAnimInstanceStateContextSeverity::Warning
+            ? ImVec4(0.92f, 0.63f, 0.32f, 1.0f)
+            : ImVec4(0.65f, 0.74f, 0.88f, 1.0f);
+    }
+
+    const char* ToHintPrefix(EAnimInstanceStateContextSeverity Severity)
+    {
+        return Severity == EAnimInstanceStateContextSeverity::Warning ? "Warning" : "Info";
+    }
 }
 
 void FEditorAnimInstanceEditorWidget::OpenAnimInstanceAsset(const FString& AnimInstancePath)
@@ -143,6 +233,7 @@ void FEditorAnimInstanceEditorWidget::OpenAnimInstanceAsset(const FString& AnimI
     CurrentAsset = FResourceManager::Get().LoadAnimInstanceAsset(CurrentPath);
     SelectedStateIndex = CurrentAsset && !CurrentAsset->States.empty() ? 0 : -1;
     SelectedTransitionIndex = -1;
+    InvalidateSelectedStateSequenceContext();
     bDirty = false;
     bVisible = true;
 }
@@ -350,6 +441,7 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
         {
             SelectedStateIndex = Index;
             SelectedTransitionIndex = -1;
+            InvalidateSelectedStateSequenceContext();
         }
     }
 
@@ -363,6 +455,7 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
         {
             SelectedTransitionIndex = Index;
             SelectedStateIndex = -1;
+            InvalidateSelectedStateSequenceContext();
         }
     }
 
@@ -371,9 +464,64 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
     {
         FAnimInstanceStateAssetData& State = CurrentAsset->States[SelectedStateIndex];
         bool bChanged = false;
+        bool bContextChanged = false;
         InputFName("Name", State.Name, bChanged);
-        InputFString("Anim Sequence", State.AnimSequencePath, bChanged);
-        bChanged |= ImGui::Checkbox("Loop", &State.bLoop);
+        bContextChanged |= bChanged;
+        InputAnimSequencePath(EditorEngine, "Anim Sequence", State.AnimSequencePath, bChanged);
+        bContextChanged |= bChanged;
+        const FString NormalizedSequencePath = NormalizeSequenceAssetPath(State.AnimSequencePath);
+        const FString ProjectRelativeSequencePath = FPaths::ToProjectRelativePath(NormalizedSequencePath);
+        const bool bLooksLikeSequence = IsSequenceAssetPath(ProjectRelativeSequencePath);
+        const bool bSequenceExistsOnDisk = bLooksLikeSequence && SequenceAssetExistsOnDisk(ProjectRelativeSequencePath);
+        FAnimSequenceAssetMetadata SequenceMetadata;
+        const bool bHasSequenceMetadata =
+            bSequenceExistsOnDisk && FAnimSequenceAssetLoader().LoadMetadata(ProjectRelativeSequencePath, SequenceMetadata);
+
+        if (NormalizedSequencePath.empty())
+        {
+            ImGui::TextDisabled("Assign a .sequence asset path for this state.");
+        }
+        else if (!bLooksLikeSequence)
+        {
+            ImGui::TextColored(ImVec4(0.92f, 0.63f, 0.32f, 1.0f), "Expected a .sequence asset path.");
+        }
+        else if (!bSequenceExistsOnDisk)
+        {
+            ImGui::TextColored(ImVec4(0.89f, 0.38f, 0.34f, 1.0f), "Sequence asset file was not found on disk.");
+        }
+        else if (!bHasSequenceMetadata)
+        {
+            ImGui::TextColored(ImVec4(0.92f, 0.63f, 0.32f, 1.0f), "Sequence metadata could not be read.");
+        }
+        else
+        {
+            ImGui::TextDisabled(
+                "Sequence: %s | Frames: %d | Skeleton: %s",
+                SequenceMetadata.ObjectName.c_str(),
+                SequenceMetadata.NumberOfFrames,
+                SequenceMetadata.SkeletonAssetPath.empty()
+                    ? "<None>"
+                    : SequenceMetadata.SkeletonAssetPath.c_str());
+        }
+
+        if (!bSequenceExistsOnDisk || !EditorEngine)
+        {
+            ImGui::BeginDisabled();
+        }
+        if (ImGui::Button("Open Sequence") && EditorEngine)
+        {
+            EditorEngine->GetMainPanel().OpenAnimationSequenceAsset(ProjectRelativeSequencePath);
+        }
+        if (!bSequenceExistsOnDisk || !EditorEngine)
+        {
+            ImGui::EndDisabled();
+        }
+
+        if (ImGui::Checkbox("Loop", &State.bLoop))
+        {
+            bChanged = true;
+            bContextChanged = true;
+        }
         bChanged |= ImGui::DragFloat("Play Rate", &State.PlayRate, 0.01f, 0.0f, 10.0f);
 
         const bool bIsEntry = State.Name == CurrentAsset->EntryState;
@@ -382,6 +530,16 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
             CurrentAsset->EntryState = State.Name;
             bChanged = true;
         }
+
+        if (bContextChanged)
+        {
+            InvalidateSelectedStateSequenceContext();
+        }
+        RefreshSelectedStateSequenceContext();
+        DrawSelectedStateSequenceContext(CachedSelectedStateContext);
+        DrawSelectedStateNotifyContext(CachedSelectedStateContext);
+        DrawSelectedStateAuthoringHints(CachedSelectedStateContext);
+
         if (bChanged)
         {
             MarkDirty();
@@ -446,6 +604,7 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
         bChanged |= ImGui::DragInt("Priority", &Transition.Priority, 1);
         if (bChanged)
         {
+            InvalidateSelectedStateSequenceContext();
             MarkDirty();
         }
         return;
@@ -473,6 +632,7 @@ void FEditorAnimInstanceEditorWidget::AddState()
 
     SelectedStateIndex = static_cast<int32>(CurrentAsset->States.size()) - 1;
     SelectedTransitionIndex = -1;
+    InvalidateSelectedStateSequenceContext();
     MarkDirty();
 }
 
@@ -492,6 +652,7 @@ void FEditorAnimInstanceEditorWidget::AddTransition()
     CurrentAsset->Transitions.push_back(Transition);
     SelectedTransitionIndex = static_cast<int32>(CurrentAsset->Transitions.size()) - 1;
     SelectedStateIndex = -1;
+    InvalidateSelectedStateSequenceContext();
     MarkDirty();
 }
 
@@ -525,6 +686,223 @@ bool FEditorAnimInstanceEditorWidget::ReloadAsset()
     CurrentAsset = FResourceManager::Get().LoadAnimInstanceAsset(CurrentPath);
     SelectedStateIndex = CurrentAsset && !CurrentAsset->States.empty() ? 0 : -1;
     SelectedTransitionIndex = -1;
+    InvalidateSelectedStateSequenceContext();
     bDirty = false;
     return CurrentAsset != nullptr;
+}
+
+void FEditorAnimInstanceEditorWidget::InvalidateSelectedStateSequenceContext()
+{
+    bCachedSelectedStateContextValid = false;
+    CachedSelectedStateContextStateIndex = -1;
+    CachedSelectedStateContextStateName.clear();
+    CachedSelectedStateContextSequencePath.clear();
+    bCachedSelectedStateContextLoop = false;
+    CachedSelectedStateFinishedTransitionCount = -1;
+    CachedSelectedStateContext = {};
+}
+
+int32 FEditorAnimInstanceEditorWidget::GetSelectedStateFinishedTransitionCount() const
+{
+    if (!CurrentAsset ||
+        SelectedStateIndex < 0 ||
+        SelectedStateIndex >= static_cast<int32>(CurrentAsset->States.size()))
+    {
+        return 0;
+    }
+
+    const FAnimInstanceStateAssetData& State = CurrentAsset->States[SelectedStateIndex];
+    int32 Count = 0;
+    for (const FAnimInstanceTransitionAssetData& Transition : CurrentAsset->Transitions)
+    {
+        if (Transition.FromState == State.Name &&
+            Transition.ConditionType == EAnimTransitionConditionType::StateFinished)
+        {
+            ++Count;
+        }
+    }
+
+    return Count;
+}
+
+void FEditorAnimInstanceEditorWidget::RefreshSelectedStateSequenceContext()
+{
+    if (!CurrentAsset ||
+        SelectedStateIndex < 0 ||
+        SelectedStateIndex >= static_cast<int32>(CurrentAsset->States.size()))
+    {
+        InvalidateSelectedStateSequenceContext();
+        return;
+    }
+
+    const FAnimInstanceStateAssetData& State = CurrentAsset->States[SelectedStateIndex];
+    const FString StateName = State.Name.ToString();
+    const int32 StateFinishedTransitionCount = GetSelectedStateFinishedTransitionCount();
+    const bool bNeedsRefresh =
+        !bCachedSelectedStateContextValid ||
+        CachedSelectedStateContextStateIndex != SelectedStateIndex ||
+        CachedSelectedStateContextStateName != StateName ||
+        CachedSelectedStateContextSequencePath != State.AnimSequencePath ||
+        bCachedSelectedStateContextLoop != State.bLoop ||
+        CachedSelectedStateFinishedTransitionCount != StateFinishedTransitionCount;
+
+    if (!bNeedsRefresh)
+    {
+        return;
+    }
+
+    CachedSelectedStateContext = BuildAnimInstanceStateSequenceContext(CurrentAsset, SelectedStateIndex);
+    CachedSelectedStateContextStateIndex = SelectedStateIndex;
+    CachedSelectedStateContextStateName = StateName;
+    CachedSelectedStateContextSequencePath = State.AnimSequencePath;
+    bCachedSelectedStateContextLoop = State.bLoop;
+    CachedSelectedStateFinishedTransitionCount = StateFinishedTransitionCount;
+    bCachedSelectedStateContextValid = true;
+}
+
+void FEditorAnimInstanceEditorWidget::DrawSelectedStateSequenceContext(const FAnimInstanceStateSequenceContextReport& Context)
+{
+    if (!ImGui::CollapsingHeader("Sequence Context", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        return;
+    }
+
+    if (!Context.bHasSequencePath)
+    {
+        ImGui::TextDisabled("No linked sequence is assigned.");
+        return;
+    }
+
+    ImGui::TextWrapped(
+        "Path: %s",
+        Context.Overview.ProjectRelativePath.empty()
+            ? Context.Overview.NormalizedPath.c_str()
+            : Context.Overview.ProjectRelativePath.c_str());
+
+    if (!Context.bLooksLikeSequencePath)
+    {
+        ImGui::TextDisabled("Sequence context is unavailable until the path points to a .sequence asset.");
+        return;
+    }
+
+    ImGui::TextDisabled(
+        "Content: %s",
+        Context.bSequenceContentLoaded
+            ? "Loaded"
+            : (Context.Overview.bMetadataAvailable ? "Metadata Only" : "Unavailable"));
+    ImGui::TextWrapped(
+        "Sequence: %s",
+        Context.Overview.DisplayName.empty() ? "(unnamed)" : Context.Overview.DisplayName.c_str());
+
+    if (Context.Overview.NumberOfFrames > 0)
+    {
+        ImGui::Text("Frames: %d", Context.Overview.NumberOfFrames);
+    }
+
+    if (Context.Overview.FrameRateNumerator > 0 && Context.Overview.FrameRateDenominator > 0)
+    {
+        ImGui::Text(
+            "Frame Rate: %d / %d (%.2f fps)",
+            Context.Overview.FrameRateNumerator,
+            Context.Overview.FrameRateDenominator,
+            ComputeFramesPerSecond(
+                Context.Overview.FrameRateNumerator,
+                Context.Overview.FrameRateDenominator));
+    }
+
+    if (Context.Overview.DurationSeconds > 0.0f)
+    {
+        ImGui::Text("Length: %.3fs", Context.Overview.DurationSeconds);
+    }
+
+    ImGui::TextWrapped(
+        "Skeleton: %s",
+        Context.Overview.SkeletonAssetPath.empty()
+            ? "(none)"
+            : Context.Overview.SkeletonAssetPath.c_str());
+    if (Context.bSequenceContentLoaded)
+    {
+        ImGui::Text("Curves: %d", Context.Overview.CurveCount);
+    }
+}
+
+void FEditorAnimInstanceEditorWidget::DrawSelectedStateNotifyContext(const FAnimInstanceStateSequenceContextReport& Context)
+{
+    if (!ImGui::CollapsingHeader("Notify Context", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        return;
+    }
+
+    if (!Context.bSequenceContentLoaded)
+    {
+        ImGui::TextDisabled("Notify context becomes available when the linked sequence content can be loaded.");
+        return;
+    }
+
+    ImGui::Text("Tracks: %d", Context.NotifySummary.TrackCount);
+    ImGui::Text("Total Notifies: %d", Context.NotifySummary.TotalNotifyCount);
+    ImGui::Text("One-shot: %d", Context.NotifySummary.OneShotNotifyCount);
+    ImGui::Text("Notify States: %d", Context.NotifySummary.NotifyStateCount);
+
+    if (!Context.BuiltInUsage.empty())
+    {
+        ImGui::Spacing();
+        ImGui::TextDisabled("Built-in Usage");
+        for (const FAnimInstanceStateBuiltInNotifyUsage& Usage : Context.BuiltInUsage)
+        {
+            ImGui::BulletText("%s x%d", Usage.DisplayName.c_str(), Usage.Count);
+            if (!Usage.NotifyClassName.empty())
+            {
+                ImGui::Indent();
+                ImGui::TextDisabled("%s", Usage.NotifyClassName.c_str());
+                for (const FString& Sample : Usage.Samples)
+                {
+                    ImGui::TextDisabled("%s", Sample.c_str());
+                }
+                ImGui::Unindent();
+            }
+        }
+    }
+
+    if (!Context.NotifyHighlights.empty())
+    {
+        ImGui::Spacing();
+        ImGui::TextDisabled("Notify Highlights");
+        for (const FAnimInstanceStateNotifyHighlight& Highlight : Context.NotifyHighlights)
+        {
+            ImGui::BulletText("%.3fs  %s", Highlight.Time, Highlight.NotifyName.c_str());
+            ImGui::Indent();
+            ImGui::TextDisabled(
+                "%s | %s | %s",
+                Highlight.TrackName.c_str(),
+                Highlight.NotifyType.c_str(),
+                Highlight.NotifyClassName.c_str());
+            ImGui::Unindent();
+        }
+    }
+}
+
+void FEditorAnimInstanceEditorWidget::DrawSelectedStateAuthoringHints(const FAnimInstanceStateSequenceContextReport& Context)
+{
+    if (!ImGui::CollapsingHeader("Authoring Hints", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        return;
+    }
+
+    if (Context.Hints.empty())
+    {
+        ImGui::TextDisabled("No current authoring hints.");
+        return;
+    }
+
+    for (const FAnimInstanceStateAuthoringHint& Hint : Context.Hints)
+    {
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextColored(
+            ToHintColor(Hint.Severity),
+            "%s: %s",
+            ToHintPrefix(Hint.Severity),
+            Hint.Message.c_str());
+        ImGui::PopTextWrapPos();
+    }
 }

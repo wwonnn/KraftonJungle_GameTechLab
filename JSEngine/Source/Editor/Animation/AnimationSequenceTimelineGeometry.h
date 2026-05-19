@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 
@@ -26,6 +26,10 @@ struct FAnimationSequenceTimelineGeometry
         const ImVec2& CanvasPos,
         const ImVec2& CanvasSize,
         float RulerHeight);
+    static FAnimationSequenceTimelineGeometry BuildSequencerCanvasGeometry(
+        const ImVec2& CanvasPos,
+        const ImVec2& CanvasSize,
+        float RulerHeight);
     static FAnimationSequenceTimelineGeometry BuildLaneGeometry(
         const ImVec2& CanvasPos,
         const ImVec2& CanvasSize);
@@ -33,6 +37,7 @@ struct FAnimationSequenceTimelineGeometry
     float TimeToX(const FAnimationSequenceEditorState& State, float Time) const;
     float XToTime(const FAnimationSequenceEditorState& State, float X) const;
     float GetClampedPlayheadX(const FAnimationSequenceEditorState& State) const;
+    float ClampX(float X) const;
 
     int32 GetStartFrame(const FAnimationSequenceEditorState& State) const;
     int32 GetEndFrame(const FAnimationSequenceEditorState& State) const;

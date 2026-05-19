@@ -1,0 +1,58 @@
+#pragma once
+
+#include "Core/CoreMinimal.h"
+
+enum class EAnimNotifyPayloadFieldType : uint8
+{
+    String = 0,
+    Name,
+    Float,
+    Bool,
+};
+
+enum class EAnimNotifyPayloadFieldEditorHint : uint8
+{
+    Default = 0,
+    SocketPicker,
+    ComponentPicker,
+};
+
+enum class EAnimNotifySemanticFieldId : uint8
+{
+    None = 0,
+    SoundCue,
+    SocketName,
+    VolumeMultiplier,
+    Spatialized,
+    ComponentName,
+    AttackId,
+};
+
+struct FAnimNotifyPayloadFieldDefinition
+{
+    FString Key;
+    EAnimNotifySemanticFieldId SemanticId = EAnimNotifySemanticFieldId::None;
+    TArray<FString> LegacyKeys;
+    FString Label;
+    EAnimNotifyPayloadFieldType Type = EAnimNotifyPayloadFieldType::String;
+    EAnimNotifyPayloadFieldEditorHint EditorHint = EAnimNotifyPayloadFieldEditorHint::Default;
+    bool bRequired = false;
+    FString DefaultValue;
+    FString HelpText;
+};
+
+struct FAnimNotifyPayloadSchema
+{
+    FString NotifyClassName;
+    FString SectionLabel;
+    FString PayloadExample;
+    TArray<FAnimNotifyPayloadFieldDefinition> Fields;
+};
+
+const FAnimNotifyPayloadSchema* FindAnimNotifyPayloadSchema(const FString& NotifyClassName);
+bool HasAnimNotifyPayloadSchema(const FString& NotifyClassName);
+const char* GetAnimNotifyPayloadExample(const FString& NotifyClassName);
+TArray<FString> GetAnimNotifyPayloadFieldLookupKeys(const FAnimNotifyPayloadFieldDefinition& Field);
+const FAnimNotifyPayloadFieldDefinition* FindAnimNotifyPayloadFieldBySemanticId(
+    const FAnimNotifyPayloadSchema& Schema,
+    EAnimNotifySemanticFieldId SemanticId);

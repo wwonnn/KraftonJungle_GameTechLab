@@ -1,23 +1,25 @@
 ﻿#pragma once
 #include "MovementComponent.h"
+#include "Generated/InterpToMovementComponent.generated.h"
 
+UENUM()
 enum class EInterpBehaviour {
-	OneShot,
-	OneShotReverse,
-	Loop,
-	PingPong,
+	OneShot UMETA(DisplayName="One Shot"),
+	OneShotReverse UMETA(DisplayName="One Shot Reverse"),
+	Loop UMETA(DisplayName="Loop"),
+	PingPong UMETA(DisplayName="Ping-Pong"),
 };
 
+UCLASS()
 class UInterpToMovementComponent : public UMovementComponent {
 public:
-	DECLARE_CLASS(UInterpToMovementComponent, UMovementComponent)
+	GENERATED_BODY()
 
 	UInterpToMovementComponent() = default;
 
 	// Overrides
 	void				BeginPlay() override;
 	void				TickComponent(float DeltaTime) override;
-    void				GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
     void				PostDuplicate(UObject* Original) override;
 	float				GetMaxSpeed() const override { return 0; };
 
@@ -70,7 +72,9 @@ private:
 	void				FaceTargetDir(float DeltaTime);
 
 private:
+	UPROPERTY(EditAnywhere, DisplayName="Interp Mode")
 	EInterpBehaviour	InterpBehaviour		= EInterpBehaviour::OneShot;
+	UPROPERTY(EditAnywhere, DisplayName="Control Points")
 	TArray<FVector>		ControlPoints;
 	uint32				CurrentPointID		= 0;
 	uint32				NextPointID			= 0;

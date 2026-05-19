@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../CameraShakeBase.h"
 #include "Animation/TimelinePlayer.h"
+#include "Generated/SequenceCameraShakePattern.generated.h"
 
 class FTimelinePlayer;
 class UCameraAnimationSequence;
@@ -18,10 +19,11 @@ enum class ECameraShakeCurveChannel
     Count
 };
 
+UCLASS()
 class USequenceCameraShakePattern : public UCameraShakePattern
 {
 public:
-    DECLARE_CLASS(USequenceCameraShakePattern, UCameraShakePattern)
+    GENERATED_BODY()
 
 	UCameraAnimationSequence* Sequence = nullptr;
 	UCurveFloatAsset* Curve = nullptr;

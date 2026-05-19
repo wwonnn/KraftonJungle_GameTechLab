@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/CollisionTypes.h"
+#include "Generated/PrimitiveActors.generated.h"
 
 class UTextRenderComponent;
 class UDecalComponent;
@@ -16,46 +17,56 @@ class UProceduralMeshComponent;
 class UStaticMesh;
 class USkeletalMeshComponent;
 
+UCLASS()
 class ACubeActor : public AActor
 {
 public:
-	DECLARE_CLASS(ACubeActor, AActor)
+	GENERATED_BODY()
+
 	ACubeActor() = default;
 
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class ASphereActor : public AActor
 {
 public:
-	DECLARE_CLASS(ASphereActor, AActor)
+	GENERATED_BODY()
+
 	ASphereActor() = default;
 
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class APlaneActor : public AActor
 {
 public:
-	DECLARE_CLASS(APlaneActor, AActor)
+	GENERATED_BODY()
+
 	APlaneActor() = default;
 
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class AAttachTestActor : public AActor
 {
 public:
-	DECLARE_CLASS(AAttachTestActor, AActor)
+	GENERATED_BODY()
+
 	AAttachTestActor() = default;
 
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class ASceneActor : public AActor
 {
 public:
-	DECLARE_CLASS(ASceneActor, AActor)
+	GENERATED_BODY()
+
 	ASceneActor() = default;
 
 	void InitDefaultComponents();
@@ -65,19 +76,23 @@ public:
     void OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 };
 
+UCLASS()
 class APlayerStart : public AActor
 {
 public:
-	DECLARE_CLASS(APlayerStart, AActor)
+	GENERATED_BODY()
+
 	APlayerStart() = default;
 
 	void InitDefaultComponents() override;
 };
 
+UCLASS()
 class AFogActor : public AActor
 {
 public:
-	DECLARE_CLASS(AFogActor, AActor)
+	GENERATED_BODY()
+
 	AFogActor() = default;
 
 	void InitDefaultComponents();
@@ -89,19 +104,23 @@ private:
 	UBillboardComponent* BillboardComp = nullptr;
 };
 
+UCLASS()
 class AStaticMeshActor : public AActor
 {
 public:
-	DECLARE_CLASS(AStaticMeshActor, AActor)
+	GENERATED_BODY()
+
 	AStaticMeshActor() = default;
 
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class ASkeletalMeshActor : public AActor
 {
 public:
-	DECLARE_CLASS(ASkeletalMeshActor, AActor)
+	GENERATED_BODY()
+
 	ASkeletalMeshActor() = default;
 
 	void InitDefaultComponents();
@@ -112,53 +131,65 @@ private:
     USkeletalMeshComponent* SkeletalMeshComp = nullptr;
 };
 
+UCLASS()
 class ASubUVActor : public AActor
 {
 public:
-    DECLARE_CLASS(ASubUVActor, AActor)
+    GENERATED_BODY()
+
     ASubUVActor() = default;
 
     void InitDefaultComponents();
 };
 
+UCLASS()
 class ATextRenderActor : public AActor
 {
 public:
-    DECLARE_CLASS(ATextRenderActor, AActor)
+    GENERATED_BODY()
+
     ATextRenderActor() = default;
 
     void InitDefaultComponents();
 };
 
+UCLASS()
 class ABillboardActor : public AActor
 {
 public:
-    DECLARE_CLASS(ABillboardActor, AActor)
+    GENERATED_BODY()
+
 	ABillboardActor() = default;
 
     void InitDefaultComponents();
 };
 
+UCLASS()
 class ADecalActor : public AActor
 {
 public:
-	DECLARE_CLASS(ADecalActor, AActor)
+	GENERATED_BODY()
+
 	ADecalActor() = default;
 
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class AFireballActor : public AActor {
 public:
-    DECLARE_CLASS(AFireballActor, AActor)
+    GENERATED_BODY()
+
 	AFireballActor() = default;
 	
 	void InitDefaultComponents();
 };
 
+UCLASS()
 class ADecalSpotLightActor : public AActor {
 public:
-	DECLARE_CLASS(ADecalSpotLightActor, AActor)
+	GENERATED_BODY()
+
 	ADecalSpotLightActor() = default;
 
 	void InitDefaultComponents();
@@ -178,10 +209,12 @@ private:
 	float Angle = 30.0f;
 };
 
+UCLASS()
 class ALightActor : public AActor
 {
 public:
-    DECLARE_CLASS(ALightActor, AActor)
+    GENERATED_BODY()
+
     ALightActor() = default;
 
     ULightComponent* GetLight() const;
@@ -195,42 +228,52 @@ protected:
 	UBillboardComponent* BillboardComp = nullptr;
 };
 
+UCLASS()
 class AAmbientLightActor : public ALightActor
 {
 public:
-    DECLARE_CLASS(AAmbientLightActor, ALightActor)
+    GENERATED_BODY()
+
     void InitDefaultComponents() override;
     void Tick(float DeltaTime) override;
 };
 
+UCLASS()
 class ADirectionalLightActor : public ALightActor
 {
 public:
-    DECLARE_CLASS(ADirectionalLightActor, ALightActor)
+    GENERATED_BODY()
+
     void InitDefaultComponents() override;
     void Tick(float DeltaTime) override;
 };
 
+UCLASS()
 class APointLightActor : public ALightActor
 {
 public:
-    DECLARE_CLASS(APointLightActor, ALightActor)
+    GENERATED_BODY()
+
     virtual void InitDefaultComponents() override;
     virtual void Tick(float DeltaTime) override;
 };
 
+UCLASS()
 class ASpotlightActor : public APointLightActor 
 {
 public:
-	DECLARE_CLASS(ASpotlightActor, APointLightActor)
+	GENERATED_BODY()
+
 	void InitDefaultComponents() override;
 	void Tick(float DeltaTime) override;
 };
 
+UCLASS()
 class ABullet : public AActor
 {
 public:
-    DECLARE_CLASS(ABullet, AActor)
+    GENERATED_BODY()
+
     void InitDefaultComponents() override;
     void Tick(float DeltaTime) override;
 
@@ -240,18 +283,21 @@ private:
     UProjectileMovementComponent* ProjectileComp = nullptr;
 };
 
+UCLASS()
 class ABladeSlash : public AActor
 {
 public:
-    DECLARE_CLASS(ABladeSlash, AActor)
+    GENERATED_BODY()
+
     void InitDefaultComponents() override;
     void Tick(float DeltaTime) override;
 };
 
+UCLASS()
 class ADestructibleActor : public AActor
 {
 public:
-    DECLARE_CLASS(ADestructibleActor, AActor)
+    GENERATED_BODY()
 
 	// 데이터를 입력으로 받아 초기화
 	void InitDestructibleActor(UStaticMesh* StaticMesh);
@@ -279,10 +325,12 @@ private:
 	uint32 SliceCount = 0;
 };
 
+UCLASS()
 class ABoundsBoxActor : public AActor
 {
 public:
-    DECLARE_CLASS(ABoundsBoxActor, AActor)
+    GENERATED_BODY()
+
     void InitDefaultComponents() override;
 
 	void Tick(float DeltaTime) override;
@@ -298,10 +346,11 @@ private:
 
 class AMainSceneDestructibleActor;
 
+UCLASS()
 class UMainSceneDestructibleComponent : public UActorComponent
 {
 public:
-    DECLARE_CLASS(UMainSceneDestructibleComponent, UActorComponent)
+    GENERATED_BODY()
 
     void BeginPlay() override;
     void Serialize(FArchive& Ar) override;
@@ -337,10 +386,11 @@ private:
     TArray<FVector> FragmentTargetLocations;
 };
 
+UCLASS()
 class AMainSceneDestructibleActor : public AActor
 {
 public:
-    DECLARE_CLASS(AMainSceneDestructibleActor, AActor)
+    GENERATED_BODY()
 
     void InitDefaultComponents() override;
     void PostComponentRegistered(UActorComponent* Comp) override;

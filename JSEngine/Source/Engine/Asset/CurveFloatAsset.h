@@ -2,7 +2,9 @@
 
 #include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
+#include "Animation/AnimData/AnimCurveTypes.h"
 #include "Object/Object.h"
+#include "Generated/CurveFloatAsset.generated.h"
 
 enum class ECurveInterpMode : uint8
 {
@@ -34,6 +36,8 @@ class FFloatCurve
 {
 public:
     FName CurveName;
+    EAnimCurveType CurveType = EAnimCurveType::Unknown;
+    EAnimCurveSourceKind SourceKind = EAnimCurveSourceKind::Unknown;
     TArray<FCurveKey> Keys;
 
     float Evaluate(float Time) const;
@@ -46,10 +50,11 @@ private:
     float ResolveTangent(int32 KeyIndex, bool bLeaveTangent) const;
 };
 
+UCLASS()
 class UCurveFloatAsset : public UObject
 {
 public:
-    DECLARE_CLASS(UCurveFloatAsset, UObject)
+    GENERATED_BODY()
 
     float Evaluate(float Time) const;
 

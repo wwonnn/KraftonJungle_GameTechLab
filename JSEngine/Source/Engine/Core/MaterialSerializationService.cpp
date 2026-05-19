@@ -319,9 +319,9 @@ bool FMaterialSerializationService::SerializeMaterialInstance(const FString& Mat
 
 	// ?대쫫?먮뒗 ?댁젣 ?뚯씪 寃쎈줈瑜??ｋ뒗 寃껋쑝濡??듭씪. ?뚯씪 寃쎈줈媛 ?놁쑝硫?湲곗〈 諛⑹떇?濡??대쫫???ｌ쓬
 	Root["Name"] = MaterialInstance->GetFilePath().empty() ? NormalizedMatInstFilePath : FPaths::Normalize(MaterialInstance->GetFilePath());
-	Root["Parent"] = (MaterialInstance->Parent && !MaterialInstance->Parent->GetFilePath().empty())
-		? FPaths::Normalize(MaterialInstance->Parent->GetFilePath())
-		: (MaterialInstance->Parent ? MaterialInstance->Parent->Name : "");
+	Root["Parent"] = (MaterialInstance->GetParent() && !MaterialInstance->GetParent()->GetFilePath().empty())
+		? FPaths::Normalize(MaterialInstance->GetParent()->GetFilePath())
+		: (MaterialInstance->GetParent() ? MaterialInstance->GetParent()->Name : "");
 
 	JSON Params = JSON::Make(JSON::Class::Array);
 	for (const auto& [ParamName, ParamValue] : MaterialInstance->OverridedParams)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Animation/AnimData/FrameRate.h"
 #include "Core/CoreMinimal.h"
 #include "Editor/Animation/AnimationSequencePlaybackController.h"
@@ -51,6 +52,11 @@ public:
     bool IsPlaying() const;
     bool HasSequence() const;
     bool HasValidPreview() const;
+    const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
+    bool HasPreviewSocket(const FName& SocketName) const;
+    TArray<FString> GetPreviewSocketNames() const;
+    bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
+    TArray<FString> GetPreviewPrimitiveComponentNames() const;
 
     const FString& GetPreviewStatusText() const { return PreviewStatusText; }
     const FString& GetTimelineStatusText() const { return TimelineStatusText; }

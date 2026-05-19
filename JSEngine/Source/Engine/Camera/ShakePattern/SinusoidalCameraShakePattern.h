@@ -1,12 +1,14 @@
 ﻿#pragma once
 #include "Camera/CameraShakeBase.h"
+#include "Generated/SinusoidalCameraShakePattern.generated.h"
 
+UCLASS()
 class USinusoidalCameraShakePattern : public UCameraShakePattern
 {
 public:
-    DECLARE_CLASS(USinusoidalCameraShakePattern, UCameraShakePattern)
+    GENERATED_BODY()
 
-        // Location parameters
+    // Location parameters
     UPROPERTY(EditAnywhere, DisplayName="LocationAmplitude")
     FVector LocationAmplitude{ 0, 0, 0 }; // units
     UPROPERTY(EditAnywhere, DisplayName="LocationFrequency")

@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
+﻿#include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
 
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 
@@ -22,6 +22,14 @@ FAnimationSequenceTimelineGeometry FAnimationSequenceTimelineGeometry::BuildTime
     Geometry.LaneTop = Geometry.RulerTop;
     Geometry.LaneBottom = Geometry.CanvasEnd.y - VerticalPadding;
     return Geometry;
+}
+
+FAnimationSequenceTimelineGeometry FAnimationSequenceTimelineGeometry::BuildSequencerCanvasGeometry(
+    const ImVec2& InCanvasPos,
+    const ImVec2& InCanvasSize,
+    float RulerHeight)
+{
+    return BuildTimelineGeometry(InCanvasPos, InCanvasSize, RulerHeight);
 }
 
 FAnimationSequenceTimelineGeometry FAnimationSequenceTimelineGeometry::BuildLaneGeometry(
@@ -56,6 +64,11 @@ float FAnimationSequenceTimelineGeometry::XToTime(const FAnimationSequenceEditor
 float FAnimationSequenceTimelineGeometry::GetClampedPlayheadX(const FAnimationSequenceEditorState& State) const
 {
     return std::clamp(TimeToX(State, State.CurrentTime), TimelineMinX, TimelineMaxX);
+}
+
+float FAnimationSequenceTimelineGeometry::ClampX(float X) const
+{
+    return std::clamp(X, TimelineMinX, TimelineMaxX);
 }
 
 int32 FAnimationSequenceTimelineGeometry::GetStartFrame(const FAnimationSequenceEditorState& State) const

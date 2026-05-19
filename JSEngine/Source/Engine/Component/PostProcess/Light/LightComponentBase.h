@@ -1,9 +1,12 @@
 ﻿#pragma once
 #include "Component/SceneComponent.h"
+#include "Generated/LightComponentBase.generated.h"
 
+UCLASS()
 class ULightComponentBase : public USceneComponent {
 public:
-	DECLARE_CLASS(ULightComponentBase, USceneComponent)
+	GENERATED_BODY()
+
 	ULightComponentBase() = default;
     virtual void PostDuplicate(UObject* Original) override;
 	virtual void Serialize(FArchive& Ar) override;

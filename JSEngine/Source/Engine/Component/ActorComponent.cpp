@@ -1,12 +1,9 @@
-﻿#include "ActorComponent.h"
+#include "ActorComponent.h"
 #include "Object/ObjectFactory.h"
 
 #include <algorithm>
 #include <cctype>
 #include <cstring>
-
-DEFINE_CLASS(UActorComponent, UObject)
-REGISTER_FACTORY(UActorComponent)
 
 namespace
 {

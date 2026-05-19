@@ -1,9 +1,6 @@
-﻿#include "PointLightComponent.h"
+#include "PointLightComponent.h"
 #include "Object/ObjectFactory.h"
 #include <Render/Resource/ShadowAtlasManager.h>
-
-DEFINE_CLASS(UPointLightComponent, ULightComponent)
-REGISTER_FACTORY(UPointLightComponent)
 
 void UPointLightComponent::PostDuplicate(UObject* Original)
 {

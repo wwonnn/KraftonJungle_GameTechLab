@@ -171,6 +171,8 @@ namespace
     {
         OutObject = json::JSON::Make(json::JSON::Class::Object);
         OutObject["CurveName"] = Curve.CurveName.ToString();
+        OutObject["CurveType"] = AnimationCurveTypeToString(Curve.CurveType);
+        OutObject["SourceKind"] = AnimationCurveSourceKindToString(Curve.SourceKind);
 
         TArray<float> Times;
         TArray<float> Values;
@@ -222,6 +224,14 @@ namespace
             CurveName = SourceObject.at("Name").ToString();
         }
         Curve.CurveName = FName(CurveName);
+        if (SourceObject.hasKey("CurveType"))
+        {
+            Curve.CurveType = AnimationCurveTypeFromString(SourceObject.at("CurveType").ToString());
+        }
+        if (SourceObject.hasKey("SourceKind"))
+        {
+            Curve.SourceKind = AnimationCurveSourceKindFromString(SourceObject.at("SourceKind").ToString());
+        }
 
         TArray<float> Times;
         TArray<float> Values;
@@ -274,6 +284,132 @@ namespace
         Curve.SortKeys();
 
         return Curve;
+    }
+
+    json::JSON MakeColorKey(const FColor& Value)
+    {
+        return json::Array(Value.R, Value.G, Value.B, Value.A);
+    }
+
+    FColor ReadColorKey(const json::JSON& Value)
+    {
+        if (Value.JSONType() != json::JSON::Class::Array || Value.length() < 4)
+        {
+            return FColor(0.9490196f, 0.61960787f, 0.23921569f, 1.0f);
+        }
+
+        const float Red = static_cast<float>(Value.at(0).ToFloat());
+        const float Green = static_cast<float>(Value.at(1).ToFloat());
+        const float Blue = static_cast<float>(Value.at(2).ToFloat());
+        const float Alpha = static_cast<float>(Value.at(3).ToFloat());
+
+        if (Red > 1.0f || Green > 1.0f || Blue > 1.0f || Alpha > 1.0f)
+        {
+            return FColor(
+                static_cast<uint32>(std::clamp(Red, 0.0f, 255.0f)),
+                static_cast<uint32>(std::clamp(Green, 0.0f, 255.0f)),
+                static_cast<uint32>(std::clamp(Blue, 0.0f, 255.0f)),
+                static_cast<uint32>(std::clamp(Alpha, 0.0f, 255.0f)));
+        }
+
+        return FColor(Red, Green, Blue, Alpha);
+    }
+
+    void WriteNotifyTrack(json::JSON& OutObject, const FAnimNotifyTrack& Track)
+    {
+        OutObject = json::JSON::Make(json::JSON::Class::Object);
+        OutObject["TrackName"] = Track.TrackName.ToString();
+        OutObject["Events"] = json::Array();
+
+        for (const FAnimNotifyEvent& Event : Track.Events)
+        {
+            json::JSON EventObject = json::JSON::Make(json::JSON::Class::Object);
+            EventObject["StableId"] = Event.StableId.ToString();
+            EventObject["Name"] = Event.Name.ToString();
+            EventObject["Time"] = Event.Time;
+            EventObject["Duration"] = Event.Duration;
+            EventObject["Color"] = MakeColorKey(Event.Color);
+            EventObject["EventType"] = AnimNotifyEventTypeToString(Event.EventType);
+            EventObject["NotifyClassName"] = Event.GetResolvedNotifyClassName();
+            EventObject["Payload"] = Event.Payload;
+            OutObject["Events"].append(EventObject);
+        }
+    }
+
+    FAnimNotifyTrack ReadNotifyTrack(const json::JSON& SourceObject)
+    {
+        FAnimNotifyTrack Track;
+        if (SourceObject.JSONType() != json::JSON::Class::Object)
+        {
+            return Track;
+        }
+
+        if (SourceObject.hasKey("TrackName"))
+        {
+            Track.TrackName = FName(SourceObject.at("TrackName").ToString());
+        }
+        else if (SourceObject.hasKey("Name"))
+        {
+            Track.TrackName = FName(SourceObject.at("Name").ToString());
+        }
+
+        if (!SourceObject.hasKey("Events") || SourceObject.at("Events").JSONType() != json::JSON::Class::Array)
+        {
+            return Track;
+        }
+
+        const json::JSON& Events = SourceObject.at("Events");
+        Track.Events.reserve(Events.length());
+        for (int32 EventIndex = 0; EventIndex < Events.length(); ++EventIndex)
+        {
+            const json::JSON& EventObject = Events.at(static_cast<unsigned>(EventIndex));
+            if (EventObject.JSONType() != json::JSON::Class::Object)
+            {
+                continue;
+            }
+
+            FAnimNotifyEvent Event;
+            if (EventObject.hasKey("StableId"))
+            {
+                Event.StableId = FGuid::FromString(EventObject.at("StableId").ToString());
+            }
+            if (EventObject.hasKey("Name"))
+            {
+                Event.Name = FName(EventObject.at("Name").ToString());
+            }
+            if (EventObject.hasKey("Time"))
+            {
+                Event.Time = static_cast<float>(EventObject.at("Time").ToFloat());
+            }
+            if (EventObject.hasKey("Duration"))
+            {
+                Event.Duration = static_cast<float>(EventObject.at("Duration").ToFloat());
+            }
+            if (EventObject.hasKey("Color"))
+            {
+                Event.Color = ReadColorKey(EventObject.at("Color"));
+            }
+            if (EventObject.hasKey("EventType"))
+            {
+                Event.EventType = AnimNotifyEventTypeFromString(EventObject.at("EventType").ToString());
+            }
+            if (EventObject.hasKey("NotifyClassName"))
+            {
+                Event.NotifyClassName = EventObject.at("NotifyClassName").ToString();
+            }
+            if (EventObject.hasKey("Payload"))
+            {
+                Event.Payload = EventObject.at("Payload").ToString();
+            }
+            if (Event.NotifyClassName.empty())
+            {
+                Event.NotifyClassName = GetDefaultAnimNotifyClassName(Event.EventType);
+            }
+            Event.EnsureStableId();
+            Track.Events.push_back(Event);
+        }
+
+        return Track;
     }
 
     FString TrimJsonToken(FString Value)
@@ -449,6 +585,20 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
         }
     }
 
+    if (Root.hasKey("NotifyTracks") && Root["NotifyTracks"].JSONType() == json::JSON::Class::Array)
+    {
+        json::JSON& NotifyTracks = Root["NotifyTracks"];
+        DataModel->NotifyTracks.reserve(NotifyTracks.length());
+        for (int32 TrackIndex = 0; TrackIndex < NotifyTracks.length(); ++TrackIndex)
+        {
+            json::JSON& TrackObject = NotifyTracks.at(static_cast<unsigned>(TrackIndex));
+            if (TrackObject.JSONType() == json::JSON::Class::Object)
+            {
+                DataModel->NotifyTracks.push_back(ReadNotifyTrack(TrackObject));
+            }
+        }
+    }
+
     Sequence->DataModel = DataModel;
     return Sequence;
 }
@@ -563,6 +713,14 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
         json::JSON CurveObject = json::JSON::Make(json::JSON::Class::Object);
         WriteFloatCurve(CurveObject, Curve);
         Root["FloatCurves"].append(CurveObject);
+    }
+
+    Root["NotifyTracks"] = json::Array();
+    for (const FAnimNotifyTrack& Track : DataModel->NotifyTracks)
+    {
+        json::JSON TrackObject = json::JSON::Make(json::JSON::Class::Object);
+        WriteNotifyTrack(TrackObject, Track);
+        Root["NotifyTracks"].append(TrackObject);
     }
 
     std::error_code ErrorCode;

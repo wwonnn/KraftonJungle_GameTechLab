@@ -2,6 +2,7 @@
 
 #include "Animation/AnimData/FrameRate.h"
 #include "Animation/AnimData/AnimDataModel.h"
+#include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Object/Object.h"
 
@@ -64,6 +65,41 @@ namespace AnimationSequenceViewer
         }
 
         return static_cast<float>(DataModel->NumberOfKeys - 1) / FrameRate;
+    }
+
+    inline const TArray<FAnimNotifyTrack>* GetSequenceNotifyTracks(const UAnimSequence* Sequence)
+    {
+        const UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
+        return DataModel ? &DataModel->NotifyTracks : nullptr;
+    }
+
+    inline TArray<FAnimNotifyTrack>* GetSequenceNotifyTracks(UAnimSequence* Sequence)
+    {
+        UAnimDataModel* DataModel = GetValidAnimDataModel(Sequence);
+        return DataModel ? &DataModel->NotifyTracks : nullptr;
+    }
+
+    inline int32 GetNotifyTrackCount(const UAnimSequence* Sequence)
+    {
+        const TArray<FAnimNotifyTrack>* Tracks = GetSequenceNotifyTracks(Sequence);
+        return Tracks ? static_cast<int32>(Tracks->size()) : 0;
+    }
+
+    inline int32 GetNotifyEventCount(const UAnimSequence* Sequence)
+    {
+        const TArray<FAnimNotifyTrack>* Tracks = GetSequenceNotifyTracks(Sequence);
+        if (!Tracks)
+        {
+            return 0;
+        }
+
+        int32 Count = 0;
+        for (const FAnimNotifyTrack& Track : *Tracks)
+        {
+            Count += static_cast<int32>(Track.Events.size());
+        }
+
+        return Count;
     }
 
     inline float FrameIndexToTime(int32 FrameIndex, const FFrameRate& FrameRate)

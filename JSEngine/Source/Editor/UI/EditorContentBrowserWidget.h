@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Asset/AnimSequenceAssetLoader.h"
 #include "Editor/UI/EditorWidget.h"
@@ -121,6 +121,7 @@ private:
 	FString SearchFilter;
 	char RenameBuffer[260] = {};
 	float TileSize = 72.0f;
+	float TileGap = 20.0f;
 	float AnimAlpha = 0.0f;
 	int32 MaterialPreviewBuildsThisFrame = 0;
 	bool bVisible = false;

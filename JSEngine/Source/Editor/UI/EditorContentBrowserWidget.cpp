@@ -1,4 +1,4 @@
-#include "Editor/UI/EditorContentBrowserWidget.h"
+﻿#include "Editor/UI/EditorContentBrowserWidget.h"
 
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorRenderPipeline.h"
@@ -966,9 +966,17 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 	const float GridHeight = std::max(1.0f, Available.y - BottomBarHeight);
 	if (ImGui::BeginChild("##ContentBrowserAssetGridScroll", ImVec2(0.0f, GridHeight), false, ImGuiWindowFlags_HorizontalScrollbar))
 	{
-		const float ContentWidth = ImGui::GetContentRegionAvail().x;
+        constexpr float GridPaddingLeft = 8.0f;
+        constexpr float GridPaddingTop = 8.0f;
+        constexpr float GridPaddingRight = 8.0f;
+        constexpr float GridPaddingBottom = 8.0f;
+
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + GridPaddingLeft);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + GridPaddingTop);
+
+
+		const float ContentWidth = std::max(1.0f, ImGui::GetContentRegionAvail().x - GridPaddingRight);
 		const ImVec2 Tile(TileSize, TileSize + 44.0f);
-		constexpr float TileGap = 14.0f;
 		const int32 Columns = std::max(1, static_cast<int32>((ContentWidth + TileGap) / (Tile.x + TileGap)));
 
 		MaterialPreviewBuildsThisFrame = 0;
@@ -984,6 +992,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 			bAnyTileHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
 		}
 		ImGui::PopStyleVar();
+        ImGui::Dummy(ImVec2(GridPaddingRight, GridPaddingBottom));
 
 		if (!bAnyTileHovered
 			&& ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup)
@@ -1033,14 +1042,17 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 
 	const ImVec2 Min = ImGui::GetItemRectMin();
 	const ImVec2 Max = ImGui::GetItemRectMax();
+	const float CardInset = std::clamp(TileGap * 0.2f, 2.0f, 6.0f);
+	const ImVec2 CardMin(Min.x + CardInset, Min.y + CardInset);
+	const ImVec2 CardMax(Max.x - CardInset, Max.y - CardInset);
 	ImDrawList* DrawList = ImGui::GetWindowDrawList();
 	const ImU32 Bg = ImGui::GetColorU32(bSelected ? ImVec4(0.19f, 0.28f, 0.43f, 1.0f) : ImVec4(0.13f, 0.15f, 0.18f, 1.0f));
 	const ImU32 Border = ImGui::GetColorU32(bSelected ? ImVec4(0.36f, 0.58f, 0.88f, 1.0f) : ImVec4(0.25f, 0.28f, 0.33f, 1.0f));
-	DrawList->AddRectFilled(Min, Max, Bg, 6.0f);
-	DrawList->AddRect(Min, Max, Border, 6.0f);
+	DrawList->AddRectFilled(CardMin, CardMax, Bg, 6.0f);
+	DrawList->AddRect(CardMin, CardMax, Border, 6.0f);
 
-	const ImVec2 IconMin(Min.x + 10.0f, Min.y + 8.0f);
-	const ImVec2 IconMax(Max.x - 10.0f, Min.y + TileSize.y - 46.0f);
+	const ImVec2 IconMin(CardMin.x + 10.0f, CardMin.y + 8.0f);
+	const ImVec2 IconMax(CardMax.x - 10.0f, CardMin.y + TileSize.y - 32.0f);
 	ID3D11ShaderResourceView* PreviewSRV = nullptr;
 	if (!Item.bIsDirectory)
 	{
@@ -1126,7 +1138,7 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 		return Text + "...";
 	};
 
-	const float LabelWidth = TileSize.x - 12.0f;
+	const float LabelWidth = (CardMax.x - CardMin.x) - 12.0f;
 	Label = Ellipsize(Label, LabelWidth);
 	FString ExtLine = "file";
 	if (Item.bIsDirectory)
@@ -1145,8 +1157,8 @@ void FEditorContentBrowserWidget::DrawContentTile(const FContentItem& Item, cons
 	{
 		ExtLine = ".AnimInstance";
 	}
-	DrawList->AddText(ImVec2(Min.x + 6.0f, Max.y - 35.0f), ImGui::GetColorU32(ImGuiCol_Text), Label.c_str());
-	DrawList->AddText(ImVec2(Min.x + 6.0f, Max.y - 18.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), ExtLine.c_str());
+	DrawList->AddText(ImVec2(CardMin.x + 6.0f, CardMax.y - 35.0f), ImGui::GetColorU32(ImGuiCol_Text), Label.c_str());
+	DrawList->AddText(ImVec2(CardMin.x + 6.0f, CardMax.y - 18.0f), ImGui::GetColorU32(ImGuiCol_TextDisabled), ExtLine.c_str());
 
 	if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 	{

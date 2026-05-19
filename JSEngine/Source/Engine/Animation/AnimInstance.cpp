@@ -1,13 +1,18 @@
 ﻿#include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
+#include "Animation/AnimNotify.h"
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimationStateMachine.h"
+#include "Component/SkeletalMeshComponent.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Core/Logging/Stats.h"
 #include "Object/ObjectFactory.h"
+
+#include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -26,12 +31,44 @@ namespace
         const UAnimDataModel* DataModel = Sequence->DataModel;
         return IsLiveObject(DataModel) ? DataModel : nullptr;
     }
+
+    bool IsNotifyTriggeredForward(float NotifyTime, float StartTime, float EndTime, bool bIncludeStartBoundary = false)
+    {
+        return (bIncludeStartBoundary ? NotifyTime >= StartTime : NotifyTime > StartTime) && NotifyTime <= EndTime;
+    }
+
+    bool IsNotifyTriggeredBackward(float NotifyTime, float StartTime, float EndTime, bool bIncludeStartBoundary = false)
+    {
+        return (bIncludeStartBoundary ? NotifyTime <= StartTime : NotifyTime < StartTime) && NotifyTime >= EndTime;
+    }
+
+    float GetNotifyStateTriggerTime(
+        const FAnimNotifyEvent& NotifyEvent,
+        float SequenceLength,
+        bool bForwardPlayback,
+        EAnimNotifyTriggerPhase TriggerPhase)
+    {
+        const float StartTime = std::clamp(NotifyEvent.Time, 0.0f, SequenceLength);
+        const float EndTime = std::clamp(NotifyEvent.Time + NotifyEvent.Duration, 0.0f, SequenceLength);
+        if (TriggerPhase == EAnimNotifyTriggerPhase::Begin)
+        {
+            return bForwardPlayback ? StartTime : EndTime;
+        }
+        if (TriggerPhase == EAnimNotifyTriggerPhase::End)
+        {
+            return bForwardPlayback ? EndTime : StartTime;
+        }
+
+        return StartTime;
+    }
 }
 
-DEFINE_CLASS(UAnimInstance, UObject)
-REGISTER_FACTORY(UAnimInstance)
+UAnimInstance::~UAnimInstance()
+{
+    ClearActiveAnimNotifyStates(false);
+}
 
-void UAnimInstance::Intialize()
+void UAnimInstance::Initialize()
 {
 	NativeInitializeAnimation();
 
@@ -63,6 +100,8 @@ void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 	NextSequence = nullptr;
 	NextTime = 0.0f;
 	BlendFactor = 0.0f;
+    RecentNotifyEvents.clear();
+    ClearActiveAnimNotifyStates(false);
 }
 void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 {
@@ -81,6 +120,8 @@ void UAnimInstance::SetCurrentTime(float InCurrentTime)
 {
     CurrentTime = NormalizeTimeForSequence(CurrentSequence, InCurrentTime);
     NextTime = NormalizeTimeForSequence(NextSequence, InCurrentTime);
+    RecentNotifyEvents.clear();
+    ClearActiveAnimNotifyStates(false);
 }
 
 void UAnimInstance::Play()
@@ -103,6 +144,8 @@ void UAnimInstance::Stop()
     NextSequence = nullptr;
     BlendFactor = 0.0f;
     bPlaying = false;
+    RecentNotifyEvents.clear();
+    ClearActiveAnimNotifyStates(false);
 }
 
 float UAnimInstance::GetSequenceLength() const
@@ -305,12 +348,15 @@ bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
 
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
+    RecentNotifyEvents.clear();
     SCOPE_STAT_ANIM("Animation Update");
     STAT_COUNTER_ANIM("Active Anim Instances", 1);
 
     if (!bPlaying || !HasValidSequence())
-	// 서브 클래스에서 변수 업데이트
-	NativeUpdateAnimation(DeltaTime);
+    {
+	    // 서브 클래스에서 변수 업데이트
+	    NativeUpdateAnimation(DeltaTime);
+    }
 
 	// State Machine Tick 및 Transition 처리
     if (StateMachine)
@@ -340,6 +386,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     }
 
 	// Current Sequence Time
+    const UAnimSequence* NotifySequence = CurrentSequence;
+    const float PreviousTime = CurrentTime;
     const float Length = GetSequenceLength(CurrentSequence);
 
 	CurrentTime += DeltaTime * PlayRate;
@@ -359,6 +407,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
 		if ((PlayRate >= 0.0f && CurrentTime >= Length) || (PlayRate < 0.0f && CurrentTime <= 0.0f))
             bPlaying = false;
     }
+
+    UpdateRecentNotifyEvents(NotifySequence, PreviousTime, CurrentTime, DeltaTime);
 
 	// Next Sequence Time (Blending)
     if (GetValidAnimDataModel(NextSequence))
@@ -387,6 +437,7 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
             NextSequence = nullptr;
             NextTime = 0.0f;
             BlendFactor = 0.0f;
+            ClearActiveAnimNotifyStates(false);
         }
     }
 }
@@ -465,7 +516,7 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
         }
     }
 
-    const float FrameRate = Model->FrameRate.AsDecimal();
+    const float FrameRate = static_cast<float>(Model->FrameRate.AsDecimal());
     if (FrameRate <= 0.0f)
     {
         return;
@@ -567,7 +618,7 @@ float UAnimInstance::GetSequenceLength(const UAnimSequence* Sequence) const
         return 0.0f;
     }
 
-    const float FrameRate = Model->FrameRate.AsDecimal();
+    const float FrameRate = static_cast<float>(Model->FrameRate.AsDecimal());
     if (FrameRate <= 0.0f || Model->NumberOfKeys <= 1)
     {
         return 0.0f;
@@ -596,4 +647,320 @@ float UAnimInstance::NormalizeTimeForSequence(const UAnimSequence* Sequence, flo
     }
 
     return std::clamp(InTime, 0.0f, Length);
+}
+
+void UAnimInstance::UpdateRecentNotifyEvents(const UAnimSequence* Sequence, float PreviousTime, float NewTime, float DeltaTime)
+{
+    TArray<FAnimNotifyEvent> CrossedEvents;
+    CollectNotifyEventsCrossed(Sequence, PreviousTime, NewTime, CrossedEvents);
+
+    for (FAnimNotifyEvent NotifyEvent : CrossedEvents)
+    {
+        if (NotifyEvent.IsState() && NotifyEvent.Duration > 0.0f)
+        {
+            BeginAnimNotifyState(Sequence, NotifyEvent);
+        }
+        else
+        {
+            NotifyEvent.TriggerPhase = EAnimNotifyTriggerPhase::Notify;
+            RecentNotifyEvents.push_back(NotifyEvent);
+            DispatchAnimNotify(Sequence, NotifyEvent);
+        }
+    }
+
+    TickActiveAnimNotifyStates(Sequence, PreviousTime, NewTime, DeltaTime);
+}
+
+void UAnimInstance::DispatchAnimNotify(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent)
+{
+    USkeletalMeshComponent* MeshComponent = Cast<USkeletalMeshComponent>(Owner);
+    UAnimSequence* MutableSequence = const_cast<UAnimSequence*>(Sequence);
+
+    if (UAnimNotify* NotifyObject = CreateNotifyObject(NotifyEvent))
+    {
+        NotifyObject->Notify(MeshComponent, MutableSequence, NotifyEvent);
+        UObjectManager::Get().DestroyObject(NotifyObject);
+    }
+
+    NativeAnimNotify(Sequence, NotifyEvent);
+}
+
+void UAnimInstance::BeginAnimNotifyState(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!Sequence)
+    {
+        return;
+    }
+
+    FAnimNotifyEvent BeginEvent = NotifyEvent;
+    BeginEvent.EventType = EAnimNotifyEventType::NotifyState;
+    BeginEvent.TriggerPhase = EAnimNotifyTriggerPhase::Begin;
+    BeginEvent.Time = GetNotifyStateTriggerTime(
+        NotifyEvent,
+        GetSequenceLength(Sequence),
+        PlayRate >= 0.0f,
+        EAnimNotifyTriggerPhase::Begin);
+
+    FActiveAnimNotifyState ActiveState;
+    ActiveState.Sequence = Sequence;
+    ActiveState.Event = NotifyEvent;
+    ActiveState.Event.EventType = EAnimNotifyEventType::NotifyState;
+    ActiveState.NotifyObject = CreateNotifyStateObject(BeginEvent);
+
+    USkeletalMeshComponent* MeshComponent = Cast<USkeletalMeshComponent>(Owner);
+    UAnimSequence* MutableSequence = const_cast<UAnimSequence*>(Sequence);
+    if (ActiveState.NotifyObject)
+    {
+        ActiveState.NotifyObject->NotifyBegin(MeshComponent, MutableSequence, BeginEvent);
+    }
+    NativeAnimNotifyBegin(Sequence, BeginEvent);
+
+    RecentNotifyEvents.push_back(BeginEvent);
+    ActiveNotifyStates.push_back(ActiveState);
+}
+
+void UAnimInstance::TickActiveAnimNotifyStates(const UAnimSequence* Sequence, float PreviousTime, float NewTime, float DeltaTime)
+{
+    const float Length = GetSequenceLength(Sequence);
+    USkeletalMeshComponent* MeshComponent = Cast<USkeletalMeshComponent>(Owner);
+    UAnimSequence* MutableSequence = const_cast<UAnimSequence*>(Sequence);
+
+    for (int32 Index = static_cast<int32>(ActiveNotifyStates.size()) - 1; Index >= 0; --Index)
+    {
+        FActiveAnimNotifyState& ActiveState = ActiveNotifyStates[Index];
+        if (ActiveState.Sequence != Sequence)
+        {
+            EndActiveAnimNotifyState(Index, ActiveState.Sequence, EAnimNotifyTriggerPhase::End);
+            continue;
+        }
+
+        if (IsNotifyStateEndCrossed(ActiveState.Event, PreviousTime, NewTime, Length))
+        {
+            EndActiveAnimNotifyState(Index, Sequence, EAnimNotifyTriggerPhase::End);
+            continue;
+        }
+
+        FAnimNotifyEvent TickEvent = ActiveState.Event;
+        TickEvent.TriggerPhase = EAnimNotifyTriggerPhase::Tick;
+        if (ActiveState.NotifyObject)
+        {
+            ActiveState.NotifyObject->NotifyTick(MeshComponent, MutableSequence, TickEvent, DeltaTime);
+        }
+        NativeAnimNotifyTick(Sequence, TickEvent, DeltaTime);
+    }
+}
+
+void UAnimInstance::EndActiveAnimNotifyState(int32 ActiveStateIndex, const UAnimSequence* Sequence, EAnimNotifyTriggerPhase TriggerPhase)
+{
+    if (ActiveStateIndex < 0 || ActiveStateIndex >= static_cast<int32>(ActiveNotifyStates.size()))
+    {
+        return;
+    }
+
+    FActiveAnimNotifyState ActiveState = ActiveNotifyStates[ActiveStateIndex];
+    FAnimNotifyEvent EndEvent = ActiveState.Event;
+    EndEvent.TriggerPhase = TriggerPhase;
+    EndEvent.Time = GetNotifyStateTriggerTime(
+        ActiveState.Event,
+        GetSequenceLength(Sequence),
+        PlayRate >= 0.0f,
+        TriggerPhase);
+
+    USkeletalMeshComponent* MeshComponent = Cast<USkeletalMeshComponent>(Owner);
+    UAnimSequence* MutableSequence = const_cast<UAnimSequence*>(Sequence);
+    if (ActiveState.NotifyObject)
+    {
+        ActiveState.NotifyObject->NotifyEnd(MeshComponent, MutableSequence, EndEvent);
+        UObjectManager::Get().DestroyObject(ActiveState.NotifyObject);
+    }
+    NativeAnimNotifyEnd(Sequence, EndEvent);
+    RecentNotifyEvents.push_back(EndEvent);
+
+    ActiveNotifyStates.erase(ActiveNotifyStates.begin() + ActiveStateIndex);
+}
+
+void UAnimInstance::ClearActiveAnimNotifyStates(bool bDispatchEnd)
+{
+    for (int32 Index = static_cast<int32>(ActiveNotifyStates.size()) - 1; Index >= 0; --Index)
+    {
+        if (bDispatchEnd)
+        {
+            EndActiveAnimNotifyState(Index, ActiveNotifyStates[Index].Sequence, EAnimNotifyTriggerPhase::End);
+        }
+        else if (ActiveNotifyStates[Index].NotifyObject)
+        {
+            UObjectManager::Get().DestroyObject(ActiveNotifyStates[Index].NotifyObject);
+        }
+    }
+
+    ActiveNotifyStates.clear();
+}
+
+UAnimNotify* UAnimInstance::CreateNotifyObject(const FAnimNotifyEvent& NotifyEvent) const
+{
+    UObject* Object = FObjectFactory::Get().Create(NotifyEvent.GetResolvedNotifyClassName());
+    UAnimNotify* NotifyObject = Cast<UAnimNotify>(Object);
+    if (!NotifyObject && Object)
+    {
+        UObjectManager::Get().DestroyObject(Object);
+    }
+    return NotifyObject;
+}
+
+UAnimNotifyState* UAnimInstance::CreateNotifyStateObject(const FAnimNotifyEvent& NotifyEvent) const
+{
+    FAnimNotifyEvent StateEvent = NotifyEvent;
+    StateEvent.EventType = EAnimNotifyEventType::NotifyState;
+    if (StateEvent.NotifyClassName.empty() || StateEvent.NotifyClassName == "UAnimNotify")
+    {
+        StateEvent.NotifyClassName = GetDefaultAnimNotifyClassName(EAnimNotifyEventType::NotifyState);
+    }
+
+    UObject* Object = FObjectFactory::Get().Create(StateEvent.GetResolvedNotifyClassName());
+    UAnimNotifyState* NotifyStateObject = Cast<UAnimNotifyState>(Object);
+    if (!NotifyStateObject && Object)
+    {
+        UObjectManager::Get().DestroyObject(Object);
+    }
+    return NotifyStateObject;
+}
+
+bool UAnimInstance::IsNotifyStateEndCrossed(const FAnimNotifyEvent& NotifyEvent, float PreviousTime, float NewTime, float SequenceLength) const
+{
+    if (!NotifyEvent.IsState() || NotifyEvent.Duration <= 0.0f || SequenceLength <= 0.0f || PreviousTime == NewTime)
+    {
+        return false;
+    }
+
+    const bool bForwardPlayback = PlayRate >= 0.0f;
+    const float EndTime = bForwardPlayback
+        ? std::clamp(NotifyEvent.Time + NotifyEvent.Duration, 0.0f, SequenceLength)
+        : std::clamp(NotifyEvent.Time, 0.0f, SequenceLength);
+    const bool bWrapped = bLoop && ((bForwardPlayback && NewTime < PreviousTime) || (!bForwardPlayback && NewTime > PreviousTime));
+
+    if (!bLoop || !bWrapped)
+    {
+        const bool bIncludeStartBoundary = bForwardPlayback ? PreviousTime <= 0.0f : PreviousTime >= SequenceLength;
+        return bForwardPlayback
+            ? IsNotifyTriggeredForward(EndTime, PreviousTime, NewTime, bIncludeStartBoundary)
+            : IsNotifyTriggeredBackward(EndTime, PreviousTime, NewTime, bIncludeStartBoundary);
+    }
+
+    if (bForwardPlayback)
+    {
+        return IsNotifyTriggeredForward(EndTime, PreviousTime, SequenceLength) ||
+            IsNotifyTriggeredForward(EndTime, 0.0f, NewTime, true);
+    }
+
+    return IsNotifyTriggeredBackward(EndTime, PreviousTime, 0.0f) ||
+        IsNotifyTriggeredBackward(EndTime, SequenceLength, NewTime, true);
+}
+
+void UAnimInstance::CollectNotifyEventsCrossed(
+    const UAnimSequence* Sequence,
+    float PreviousTime,
+    float NewTime,
+    TArray<FAnimNotifyEvent>& OutEvents) const
+{
+    const UAnimDataModel* Model = GetValidAnimDataModel(Sequence);
+    if (!Model || Model->NotifyTracks.empty())
+    {
+        return;
+    }
+
+    const float Length = GetSequenceLength(Sequence);
+    if (Length <= 0.0f || PreviousTime == NewTime)
+    {
+        return;
+    }
+
+    const bool bForwardPlayback = PlayRate >= 0.0f;
+    const bool bWrapped = bLoop && ((bForwardPlayback && NewTime < PreviousTime) || (!bForwardPlayback && NewTime > PreviousTime));
+    const FString SourceSequenceName = Sequence ? Sequence->GetName() : FString();
+
+    auto AppendTrackEvents =
+        [&OutEvents, &SourceSequenceName, bForwardPlayback, Length](const FAnimNotifyTrack& Track, int32 TrackIndex, auto&& Predicate)
+        {
+            for (const FAnimNotifyEvent& NotifyEvent : Track.Events)
+            {
+                const float TriggerTime =
+                    NotifyEvent.IsState() && NotifyEvent.Duration > 0.0f && !bForwardPlayback
+                        ? std::clamp(NotifyEvent.Time + NotifyEvent.Duration, 0.0f, Length)
+                        : NotifyEvent.Time;
+                if (Predicate(TriggerTime))
+                {
+                    FAnimNotifyEvent RuntimeEvent = NotifyEvent;
+                    RuntimeEvent.SourceTrackName = Track.TrackName;
+                    RuntimeEvent.SourceTrackIndex = TrackIndex;
+                    RuntimeEvent.SourceSequenceName = SourceSequenceName;
+                    OutEvents.push_back(RuntimeEvent);
+                }
+            }
+        };
+
+    auto AppendForwardRange =
+        [&Model, &AppendTrackEvents](float StartTime, float EndTime, bool bIncludeStartBoundary = false)
+        {
+            if (EndTime <= StartTime)
+            {
+                return;
+            }
+
+            for (int32 TrackIndex = 0; TrackIndex < static_cast<int32>(Model->NotifyTracks.size()); ++TrackIndex)
+            {
+                const FAnimNotifyTrack& Track = Model->NotifyTracks[TrackIndex];
+                AppendTrackEvents(
+                    Track,
+                    TrackIndex,
+                    [StartTime, EndTime, bIncludeStartBoundary](float NotifyTime)
+                    {
+                        return IsNotifyTriggeredForward(NotifyTime, StartTime, EndTime, bIncludeStartBoundary);
+                    });
+            }
+        };
+
+    auto AppendBackwardRange =
+        [&Model, &AppendTrackEvents](float StartTime, float EndTime, bool bIncludeStartBoundary = false)
+        {
+            if (EndTime >= StartTime)
+            {
+                return;
+            }
+
+            for (int32 TrackIndex = 0; TrackIndex < static_cast<int32>(Model->NotifyTracks.size()); ++TrackIndex)
+            {
+                const FAnimNotifyTrack& Track = Model->NotifyTracks[TrackIndex];
+                AppendTrackEvents(
+                    Track,
+                    TrackIndex,
+                    [StartTime, EndTime, bIncludeStartBoundary](float NotifyTime)
+                    {
+                        return IsNotifyTriggeredBackward(NotifyTime, StartTime, EndTime, bIncludeStartBoundary);
+                    });
+            }
+        };
+
+    if (!bLoop || !bWrapped)
+    {
+        if (bForwardPlayback)
+        {
+            AppendForwardRange(PreviousTime, NewTime, PreviousTime <= 0.0f);
+        }
+        else
+        {
+            AppendBackwardRange(PreviousTime, NewTime, PreviousTime >= Length);
+        }
+        return;
+    }
+
+    if (bForwardPlayback)
+    {
+        AppendForwardRange(PreviousTime, Length);
+        AppendForwardRange(0.0f, NewTime, true);
+    }
+    else
+    {
+        AppendBackwardRange(PreviousTime, 0.0f);
+        AppendBackwardRange(Length, NewTime, true);
+    }
 }
