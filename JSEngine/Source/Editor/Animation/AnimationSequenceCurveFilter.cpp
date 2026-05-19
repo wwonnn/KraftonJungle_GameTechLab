@@ -173,16 +173,15 @@ int32 AnimationSequenceCurveFilter::GetVisibleCurveCount(
 }
 
 float AnimationSequenceCurveFilter::GetCurveSectionHeight(
-    const UAnimSequence* Sequence,
-    const FAnimationSequenceEditorState& State)
+    const TArray<FAnimationSequenceCurveViewGroup>& Groups,
+    bool bExpanded)
 {
     float Height = FAnimationSequenceSequencerLayout::SectionHeaderHeight;
-    if (!State.bCurvesExpanded)
+    if (!bExpanded)
     {
         return Height;
     }
 
-    const TArray<FAnimationSequenceCurveViewGroup> Groups = BuildCurveViewGroups(Sequence, State);
     Height += FAnimationSequenceSequencerLayout::TrackAreaPadding;
 
     for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(Groups.size()); ++GroupIndex)
@@ -206,4 +205,12 @@ float AnimationSequenceCurveFilter::GetCurveSectionHeight(
 
     Height += FAnimationSequenceSequencerLayout::TrackAreaPadding;
     return Height;
+}
+
+float AnimationSequenceCurveFilter::GetCurveSectionHeight(
+    const UAnimSequence* Sequence,
+    const FAnimationSequenceEditorState& State)
+{
+    const TArray<FAnimationSequenceCurveViewGroup> Groups = BuildCurveViewGroups(Sequence, State);
+    return GetCurveSectionHeight(Groups, State.bCurvesExpanded);
 }

@@ -146,12 +146,24 @@ namespace
         ImGui::PopID();
         return bClicked;
     }
+
+    void DrawInfoRow(
+        const FString& Label,
+        const ImVec2& Min,
+        const ImVec2& Max)
+    {
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+        DrawList->AddRectFilled(Min, Max, IM_COL32(24, 27, 33, 205), 4.0f);
+        DrawList->AddRect(Min, Max, IM_COL32(255, 255, 255, 14), 4.0f);
+        DrawList->AddText(ImVec2(Min.x + 16.0f, Min.y + 4.0f), IM_COL32(132, 139, 150, 255), Label.c_str());
+    }
 }
 
 void FAnimationSequenceTrackOutlinerWidget::Render(
     FAnimationSequenceEditorState& State,
     FAnimationSequenceEditorDocument* Document,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups)
 {
     const ImVec2 CanvasPos = ImGui::GetCursorScreenPos();
     const ImVec2 CanvasSize(
@@ -166,12 +178,12 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
 
     const float HeaderTop = CanvasPos.y + FAnimationSequenceTimelineGeometry::VerticalPadding;
     const float HeaderBottom = HeaderTop + FAnimationSequenceSequencerLayout::RulerHeight;
-    DrawList->AddRectFilled(
-        ImVec2(CanvasPos.x + 1.0f, HeaderTop),
-        ImVec2(CanvasEnd.x - 1.0f, HeaderBottom),
-        IM_COL32(30, 34, 40, 255),
-        4.0f);
-    DrawList->AddText(ImVec2(CanvasPos.x + 10.0f, HeaderTop + 4.0f), IM_COL32(220, 224, 232, 255), "Tracks");
+    // DrawList->AddRectFilled(
+    //     ImVec2(CanvasPos.x + 1.0f, HeaderTop),
+    //     ImVec2(CanvasEnd.x - 1.0f, HeaderBottom),
+    //     IM_COL32(30, 34, 40, 255),
+    //     4.0f);
+    // DrawList->AddText(ImVec2(CanvasPos.x + 10.0f, HeaderTop + 4.0f), IM_COL32(220, 224, 232, 255), "Tracks");
 
     const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
     const float TrackAreaTop =
@@ -181,6 +193,12 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
     const float NotifySectionHeight =
         FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, State.bNotifiesExpanded);
     const float CurveSectionTop = TrackAreaTop + NotifySectionHeight + FAnimationSequenceSequencerLayout::SectionGap;
+    const float CurveSectionHeight =
+        AnimationSequenceCurveFilter::GetCurveSectionHeight(CurveGroups, State.bCurvesExpanded);
+    const float AdditiveSectionTop = CurveSectionTop + CurveSectionHeight + FAnimationSequenceSequencerLayout::SectionGap;
+    const float AdditiveSectionHeight =
+        FAnimationSequenceSequencerLayout::GetPlaceholderSectionHeight(State.bAdditiveLayerTracksExpanded);
+    const float AttributeSectionTop = AdditiveSectionTop + AdditiveSectionHeight + FAnimationSequenceSequencerLayout::SectionGap;
 
     DrawSectionRow(
         "NotifySection",
@@ -289,6 +307,101 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
             if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
             {
                 RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+            }
+        }
+    }
+
+    DrawSectionRow(
+        "AdditiveLayerSection",
+        "Additive Layer Tracks",
+        State.bAdditiveLayerTracksExpanded,
+        ImVec2(CanvasPos.x + 4.0f, AdditiveSectionTop),
+        ImVec2(CanvasEnd.x - 4.0f, AdditiveSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight));
+
+    if (State.bAdditiveLayerTracksExpanded)
+    {
+        const float RowTop = AdditiveSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
+        const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::EmptySectionRowHeight;
+        DrawInfoRow(
+            "No additive layer tracks.",
+            ImVec2(CanvasPos.x + 8.0f, RowTop),
+            ImVec2(CanvasEnd.x - 8.0f, RowBottom));
+    }
+
+    DrawSectionRow(
+        "AttributeSection",
+        "Attributes",
+        State.bAttributesExpanded,
+        ImVec2(CanvasPos.x + 4.0f, AttributeSectionTop),
+        ImVec2(CanvasEnd.x - 4.0f, AttributeSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight));
+
+    if (State.bAttributesExpanded)
+    {
+        float RowCursorY = AttributeSectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
+        if (AttributeCurveGroups.empty())
+        {
+            const float RowBottom = RowCursorY + FAnimationSequenceSequencerLayout::EmptySectionRowHeight;
+            DrawInfoRow(
+                "No attribute tracks.",
+                ImVec2(CanvasPos.x + 8.0f, RowCursorY),
+                ImVec2(CanvasEnd.x - 8.0f, RowBottom));
+        }
+        else
+        {
+            for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(AttributeCurveGroups.size()); ++GroupIndex)
+            {
+                const FAnimationSequenceCurveViewGroup& Group = AttributeCurveGroups[GroupIndex];
+                const float GroupTop = RowCursorY;
+                const float GroupBottom = GroupTop + FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight;
+
+                if (DrawCurveGroupRow(
+                        5000 + GroupIndex,
+                        Group,
+                        ImVec2(CanvasPos.x + 8.0f, GroupTop),
+                        ImVec2(CanvasEnd.x - 8.0f, GroupBottom)))
+                {
+                    AnimationSequenceCurveFilter::SetCurveTypeEnabled(State, Group.CurveType, !Group.bVisible);
+                }
+
+                RowCursorY = GroupBottom;
+                if (Group.bVisible && !Group.VisibleEntries.empty())
+                {
+                    RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                    for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
+                    {
+                        const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                        const float RowTop = RowCursorY;
+                        const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::CurveTrackRowHeight;
+                        const bool bSelected = State.SelectedCurveIndex == Entry.SourceIndex;
+
+                        if (DrawSelectableRow(
+                                6000 + Entry.SourceIndex,
+                                Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve"),
+                                Entry.Curve ? (std::to_string(static_cast<int32>(Entry.Curve->Keys.size())) + " keys") : FString(),
+                                bSelected,
+                                ImVec2(CanvasPos.x + 18.0f, RowTop),
+                                ImVec2(CanvasEnd.x - 8.0f, RowBottom)))
+                        {
+                            State.SelectedCurveIndex = Entry.SourceIndex;
+                            State.HoveredCurveIndex = Entry.SourceIndex;
+                            if (Document)
+                            {
+                                Document->ClearNotifySelection();
+                            }
+                        }
+
+                        RowCursorY = RowBottom;
+                        if (EntryIndex + 1 < static_cast<int32>(Group.VisibleEntries.size()))
+                        {
+                            RowCursorY += FAnimationSequenceSequencerLayout::CurveTrackRowSpacing;
+                        }
+                    }
+                }
+
+                if (GroupIndex + 1 < static_cast<int32>(AttributeCurveGroups.size()))
+                {
+                    RowCursorY += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                }
             }
         }
     }

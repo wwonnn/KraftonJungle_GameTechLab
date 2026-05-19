@@ -20,10 +20,13 @@ void FAnimationSequenceEditorState::Reset()
     VisibleTimeStart = 0.0f;
     VisibleTimeEnd = 1.0f;
     PreviewPaneHeight = 0.0f;
+    SequencerDetailsPaneHeight = 0.0f;
     TrackOutlinerWidth = FAnimationSequenceSequencerLayout::OutlinerDefaultWidth;
     SequencerScrollY = 0.0f;
     bNotifiesExpanded = true;
     bCurvesExpanded = true;
+    bAdditiveLayerTracksExpanded = false;
+    bAttributesExpanded = true;
     bShowMorphTargetCurves = true;
     bShowMaterialCurves = true;
     bShowAttributeCurves = true;

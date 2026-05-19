@@ -93,18 +93,22 @@ void FAnimationSequenceCurveTrackWidget::RenderRows(
     FAnimationSequenceEditorState& State,
     const FAnimationSequenceTimelineGeometry& Geometry,
     float SectionTop,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups) const
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+    const char* SectionLabel,
+    bool bSectionExpanded) const
 {
-    State.HoveredCurveIndex = -1;
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
     const ImVec2 HeaderMin(Geometry.CanvasPos.x + 4.0f, SectionTop);
     const ImVec2 HeaderMax(Geometry.CanvasEnd.x - 4.0f, SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight);
     DrawList->AddRectFilled(HeaderMin, HeaderMax, IM_COL32(29, 34, 41, 255), 4.0f);
     DrawList->AddRect(HeaderMin, HeaderMax, IM_COL32(255, 255, 255, 18), 4.0f);
-    DrawList->AddText(ImVec2(HeaderMin.x + 8.0f, HeaderMin.y + 4.0f), IM_COL32(208, 214, 226, 255), "Curves");
+    DrawList->AddText(
+        ImVec2(HeaderMin.x + 8.0f, HeaderMin.y + 4.0f),
+        IM_COL32(208, 214, 226, 255),
+        SectionLabel ? SectionLabel : "Curves");
 
-    if (!State.bCurvesExpanded)
+    if (!bSectionExpanded)
     {
         return;
     }

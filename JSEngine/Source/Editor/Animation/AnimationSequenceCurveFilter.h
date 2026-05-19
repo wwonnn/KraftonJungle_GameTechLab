@@ -38,5 +38,6 @@ namespace AnimationSequenceCurveFilter
         const FAnimationSequenceEditorState& State);
 
     int32 GetVisibleCurveCount(const UAnimSequence* Sequence, const FAnimationSequenceEditorState& State);
+    float GetCurveSectionHeight(const TArray<FAnimationSequenceCurveViewGroup>& Groups, bool bExpanded);
     float GetCurveSectionHeight(const UAnimSequence* Sequence, const FAnimationSequenceEditorState& State);
 }

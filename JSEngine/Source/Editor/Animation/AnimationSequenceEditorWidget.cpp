@@ -47,6 +47,11 @@ namespace
     constexpr float PlaybackIconButtonSize = 26.0f;
     constexpr float PlaybackControlSpacing = 6.0f;
 
+    float GetTrackOutlinerFilterHeight()
+    {
+        return ImGui::GetFrameHeightWithSpacing() + 8.0f;
+    }
+
     const FString& GetPlaybackIconPathJumpToStart()
     {
         static const FString Path = "Asset/UI/PlaybackControls/PlayControlsToFront.png";
@@ -335,38 +340,65 @@ namespace
         return VisibleCount;
     }
 
-    float GetCurveSectionHeight(
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-        const FAnimationSequenceEditorState& State)
+    bool IsAttributeCurveGroup(const FAnimationSequenceCurveViewGroup& Group)
     {
-        float Height = FAnimationSequenceSequencerLayout::SectionHeaderHeight;
-        if (!State.bCurvesExpanded)
+        return Group.CurveType == EAnimCurveType::Attribute;
+    }
+
+    TArray<FAnimationSequenceCurveViewGroup> PartitionCurveGroups(
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        bool bAttributesOnly)
+    {
+        TArray<FAnimationSequenceCurveViewGroup> Result;
+        for (const FAnimationSequenceCurveViewGroup& Group : CurveGroups)
         {
-            return Height;
-        }
-
-        Height += FAnimationSequenceSequencerLayout::TrackAreaPadding;
-        for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
-        {
-            const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
-            Height += FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight;
-
-            if (Group.bVisible && !Group.VisibleEntries.empty())
+            if (IsAttributeCurveGroup(Group) == bAttributesOnly)
             {
-                Height += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
-                Height +=
-                    FAnimationSequenceSequencerLayout::CurveTrackRowHeight * static_cast<float>(Group.VisibleEntries.size()) +
-                    FAnimationSequenceSequencerLayout::CurveTrackRowSpacing * static_cast<float>(std::max(0, static_cast<int32>(Group.VisibleEntries.size()) - 1));
-            }
-
-            if (GroupIndex + 1 < static_cast<int32>(CurveGroups.size()))
-            {
-                Height += FAnimationSequenceSequencerLayout::CurveGroupHeaderSpacing;
+                Result.push_back(Group);
             }
         }
 
-        Height += FAnimationSequenceSequencerLayout::TrackAreaPadding;
-        return Height;
+        return Result;
+    }
+
+    void DrawEmptyTimelineSection(
+        const FAnimationSequenceTimelineGeometry& Geometry,
+        float SectionTop,
+        const char* SectionLabel,
+        bool bExpanded,
+        const char* EmptyText)
+    {
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+        const ImVec2 HeaderMin(Geometry.CanvasPos.x + 4.0f, SectionTop);
+        const ImVec2 HeaderMax(Geometry.CanvasEnd.x - 4.0f, SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight);
+        DrawList->AddRectFilled(HeaderMin, HeaderMax, IM_COL32(29, 34, 41, 255), 4.0f);
+        DrawList->AddRect(HeaderMin, HeaderMax, IM_COL32(255, 255, 255, 18), 4.0f);
+        DrawList->AddText(
+            ImVec2(HeaderMin.x + 8.0f, HeaderMin.y + 4.0f),
+            IM_COL32(208, 214, 226, 255),
+            SectionLabel ? SectionLabel : "Section");
+
+        if (!bExpanded)
+        {
+            return;
+        }
+
+        const float RowTop = SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
+        const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::EmptySectionRowHeight;
+        DrawList->AddRectFilled(
+            ImVec2(Geometry.TimelineMinX, RowTop),
+            ImVec2(Geometry.TimelineMaxX, RowBottom),
+            IM_COL32(22, 25, 31, 220),
+            4.0f);
+        DrawList->AddRect(
+            ImVec2(Geometry.TimelineMinX, RowTop),
+            ImVec2(Geometry.TimelineMaxX, RowBottom),
+            IM_COL32(255, 255, 255, 14),
+            4.0f);
+        DrawList->AddText(
+            ImVec2(Geometry.TimelineMinX + 10.0f, RowTop + 4.0f),
+            IM_COL32(132, 139, 150, 255),
+            EmptyText ? EmptyText : "No entries.");
     }
 
     const FFloatCurve* GetSelectedCurve(const UAnimSequence* Sequence, const FAnimationSequenceEditorState* State)
@@ -404,6 +436,7 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     NotifyNameEditBuffer.fill('\0');
     ResetNotifyPayloadFieldBuffers();
     NotifyPayloadEditBuffer.fill('\0');
+    TrackFilterEditBuffer.fill('\0');
 }
 
 void FAnimationSequenceEditorWidget::EnsurePlaybackControlIconsLoaded()
@@ -544,8 +577,7 @@ void FAnimationSequenceEditorWidget::Render(float DeltaTime)
     (void)DeltaTime;
 
     const TArray<FString> PreviewOverlayLines = BuildPreviewOverlayLines();
-    const float FooterHeight = ImGui::GetTextLineHeightWithSpacing() * 2.0f + 16.0f;
-    const float AvailableHeight = std::max(ImGui::GetContentRegionAvail().y - FooterHeight, 300.0f);
+    const float AvailableHeight = std::max(ImGui::GetContentRegionAvail().y, 300.0f);
     const float MinLayoutHeight =
         FAnimationSequenceSequencerLayout::PreviewMinHeight +
         FAnimationSequenceSequencerLayout::SequencerMinHeight +
@@ -581,9 +613,6 @@ void FAnimationSequenceEditorWidget::Render(float DeltaTime)
     {
         RenderSequencerRegion(SequencerHeight, MaxPreviewHeight);
     }
-
-    ImGui::Spacing();
-    RenderFooterStatus();
 }
 
 TArray<FString> FAnimationSequenceEditorWidget::BuildPreviewOverlayLines() const
@@ -763,8 +792,10 @@ void FAnimationSequenceEditorWidget::SyncEmbeddedViewportRectAndFocus(
 
 void FAnimationSequenceEditorWidget::RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight)
 {
-    const TArray<FAnimationSequenceCurveViewGroup> CurveGroups =
+    const TArray<FAnimationSequenceCurveViewGroup> AllCurveGroups =
         EditorState ? AnimationSequenceCurveFilter::BuildCurveViewGroups(Sequence, *EditorState) : TArray<FAnimationSequenceCurveViewGroup>();
+    const TArray<FAnimationSequenceCurveViewGroup> CurveGroups = PartitionCurveGroups(AllCurveGroups, false);
+    const TArray<FAnimationSequenceCurveViewGroup> AttributeCurveGroups = PartitionCurveGroups(AllCurveGroups, true);
 
     ImDrawList* SplitterDrawList = ImGui::GetWindowDrawList();
     const float SplitterWidth = std::max(ImGui::GetContentRegionAvail().x, 1.0f);
@@ -791,26 +822,74 @@ void FAnimationSequenceEditorWidget::RenderSequencerRegion(float SequencerHeight
     }
 
     ImGui::BeginChild("##AnimationSequenceSequencerRegion", ImVec2(0.0f, SequencerHeight), true);
-    const float DetailsPaneHeight =
+    const float DefaultDetailsPaneHeight =
         std::min(FAnimationSequenceSequencerLayout::DetailsPanelHeight, SequencerHeight * 0.34f);
+    const float MaxDetailsPaneHeight = std::max(
+        FAnimationSequenceSequencerLayout::DetailsPanelMinHeight,
+        SequencerHeight -
+            FAnimationSequenceSequencerLayout::BottomControlStripHeight -
+            FAnimationSequenceSequencerLayout::SectionSplitterHeight -
+            140.0f);
+    if (EditorState && EditorState->SequencerDetailsPaneHeight <= 0.0f)
+    {
+        EditorState->SequencerDetailsPaneHeight = DefaultDetailsPaneHeight;
+    }
+    const float DetailsPaneHeight = EditorState
+        ? std::clamp(
+            EditorState->SequencerDetailsPaneHeight,
+            FAnimationSequenceSequencerLayout::DetailsPanelMinHeight,
+            MaxDetailsPaneHeight)
+        : DefaultDetailsPaneHeight;
     const float SplitPaneHeight = std::max(
         SequencerHeight -
         DetailsPaneHeight -
-        SequencerHeaderPadding,
+        FAnimationSequenceSequencerLayout::SectionSplitterHeight,
         140.0f);
+    if (EditorState)
+    {
+        EditorState->SequencerDetailsPaneHeight = DetailsPaneHeight;
+    }
 
     const float MaxOutlinerWidth = std::max(
         FAnimationSequenceSequencerLayout::OutlinerMinWidth,
         ImGui::GetContentRegionAvail().x - 280.0f);
-    RenderSequencerSplitPane(SplitPaneHeight, DetailsPaneHeight, MaxOutlinerWidth, CurveGroups);
+    RenderSequencerSplitPane(
+        SplitPaneHeight,
+        MaxOutlinerWidth,
+        CurveGroups,
+        AttributeCurveGroups);
+
+    ImGui::InvisibleButton(
+        "##AnimSequenceTracksDetailsSplitter",
+        ImVec2(std::max(ImGui::GetContentRegionAvail().x, 1.0f), FAnimationSequenceSequencerLayout::SectionSplitterHeight));
+    const bool bDetailsSplitterHovered = ImGui::IsItemHovered();
+    const bool bDetailsSplitterActive = ImGui::IsItemActive();
+    const ImVec2 DetailsSplitterMin = ImGui::GetItemRectMin();
+    const ImVec2 DetailsSplitterMax = ImGui::GetItemRectMax();
+    const ImU32 DetailsSplitterColor = ImGui::GetColorU32(
+        bDetailsSplitterActive ? ImGuiCol_SeparatorActive : (bDetailsSplitterHovered ? ImGuiCol_SeparatorHovered : ImGuiCol_Separator));
+    SplitterDrawList->AddRectFilled(DetailsSplitterMin, DetailsSplitterMax, DetailsSplitterColor, 2.0f);
+    if (bDetailsSplitterHovered || bDetailsSplitterActive)
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+    }
+    if (bDetailsSplitterActive && EditorState)
+    {
+        EditorState->SequencerDetailsPaneHeight = std::clamp(
+            EditorState->SequencerDetailsPaneHeight - ImGui::GetIO().MouseDelta.y,
+            FAnimationSequenceSequencerLayout::DetailsPanelMinHeight,
+            MaxDetailsPaneHeight);
+    }
+
+    RenderSelectionDetailsPane(DetailsPaneHeight);
     ImGui::EndChild();
 }
 
 void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     float SplitPaneHeight,
-    float DetailsPaneHeight,
     float MaxOutlinerWidth,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups)
 {
     EditorState->TrackOutlinerWidth = std::clamp(
         EditorState->TrackOutlinerWidth,
@@ -821,9 +900,24 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     const float TrackBodyHeight =
         FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
         FAnimationSequenceSequencerLayout::SectionGap +
-        GetCurveSectionHeight(CurveGroups, *EditorState);
-    const float TrackViewportHeight =
+        AnimationSequenceCurveFilter::GetCurveSectionHeight(CurveGroups, EditorState->bCurvesExpanded) +
+        FAnimationSequenceSequencerLayout::SectionGap +
+        FAnimationSequenceSequencerLayout::GetPlaceholderSectionHeight(EditorState->bAdditiveLayerTracksExpanded) +
+        FAnimationSequenceSequencerLayout::SectionGap +
+        AnimationSequenceCurveFilter::GetCurveSectionHeight(AttributeCurveGroups, EditorState->bAttributesExpanded);
+    const float MainPaneHeight = std::max(
         SplitPaneHeight -
+            FAnimationSequenceSequencerLayout::BottomControlStripHeight -
+            SequencerHeaderPadding,
+        120.0f);
+    const float TrackListHeight = std::max(
+        MainPaneHeight -
+            GetTrackOutlinerFilterHeight() -
+            SequencerHeaderPadding,
+        80.0f);
+    const float TimelineCanvasHeight = std::max(MainPaneHeight, 80.0f);
+    const float TrackViewportHeight =
+        std::min(TrackListHeight, TimelineCanvasHeight) -
         FAnimationSequenceSequencerLayout::RulerHeight -
         FAnimationSequenceTimelineGeometry::VerticalPadding * 2.0f;
     const float MaxScrollY = std::max(
@@ -832,12 +926,13 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     EditorState->SequencerScrollY = std::clamp(EditorState->SequencerScrollY, 0.0f, MaxScrollY);
 
     ImGui::BeginChild("##AnimationSequenceSequencerSplit", ImVec2(0.0f, SplitPaneHeight), false, ImGuiWindowFlags_NoScrollbar);
-    RenderTrackOutlinerPane(EditorState->TrackOutlinerWidth, SplitPaneHeight, CurveGroups);
+    ImGui::BeginChild("##AnimationSequenceSequencerMainRow", ImVec2(0.0f, MainPaneHeight), false, ImGuiWindowFlags_NoScrollbar);
+    RenderTrackOutlinerPane(EditorState->TrackOutlinerWidth, MainPaneHeight, CurveGroups, AttributeCurveGroups);
 
     ImGui::SameLine(0.0f, 0.0f);
     ImGui::InvisibleButton(
         "##AnimationSequenceOutlinerSplitter",
-        ImVec2(FAnimationSequenceSequencerLayout::OutlinerSplitterWidth, SplitPaneHeight));
+        ImVec2(FAnimationSequenceSequencerLayout::OutlinerSplitterWidth, MainPaneHeight));
     const bool bHovered = ImGui::IsItemHovered();
     const bool bActive = ImGui::IsItemActive();
     const ImVec2 SplitterMin = ImGui::GetItemRectMin();
@@ -862,47 +957,47 @@ void FAnimationSequenceEditorWidget::RenderSequencerSplitPane(
     ImGui::SameLine(0.0f, 0.0f);
     RenderTimelineCanvasPane(
         std::max(ImGui::GetContentRegionAvail().x, 1.0f),
-        SplitPaneHeight,
-        CurveGroups);
+        MainPaneHeight,
+        CurveGroups,
+        AttributeCurveGroups);
 
     ImGui::EndChild();
-    RenderSelectionDetailsPane(DetailsPaneHeight);
+    RenderBottomControlStrip(FAnimationSequenceSequencerLayout::BottomControlStripHeight);
+    ImGui::EndChild();
 }
 
 void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
     float Width,
     float Height,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups)
 {
-    const float ControlsHeight = FAnimationSequenceSequencerLayout::BottomTransportControlsHeight;
-    const float TrackListHeight = std::max(Height - ControlsHeight - SequencerHeaderPadding, 80.0f);
-    const bool bCanTimelineControl =
-        PreviewController != nullptr && EditorState != nullptr && EditorState->HasTimelineData();
-    const bool bCanPlaybackControl = PreviewController != nullptr && PreviewController->HasValidPreview();
+    const float FilterHeight = GetTrackOutlinerFilterHeight();
+    const float TrackListHeight = std::max(Height - FilterHeight - SequencerHeaderPadding, 80.0f);
 
     ImGui::BeginChild(
         "##AnimationSequenceTrackOutlinerPane",
         ImVec2(Width, Height),
         true);
 
+    ImGui::SetNextItemWidth(-1.0f);
+    ImGui::InputTextWithHint(
+        "##AnimationSequenceTrackFilter",
+        "Filter tracks and curves",
+        TrackFilterEditBuffer.data(),
+        TrackFilterEditBuffer.size());
+
     ImGui::BeginChild(
         "##AnimationSequenceTrackOutlinerList",
         ImVec2(0.0f, TrackListHeight),
         false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    TrackOutlinerWidget.Render(*EditorState, Document, CurveGroups);
+    TrackOutlinerWidget.Render(*EditorState, Document, CurveGroups, AttributeCurveGroups);
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
         std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
     {
         EditorState->SequencerScrollY = std::max(EditorState->SequencerScrollY - ImGui::GetIO().MouseWheel * 24.0f, 0.0f);
     }
-    ImGui::EndChild();
-
-    ImGui::BeginChild(
-        "##AnimationSequenceTrackOutlinerTransport",
-        ImVec2(0.0f, ControlsHeight),
-        true);
-    RenderTransportControls(bCanTimelineControl, bCanPlaybackControl);
     ImGui::EndChild();
 
     ImGui::EndChild();
@@ -911,11 +1006,9 @@ void FAnimationSequenceEditorWidget::RenderTrackOutlinerPane(
 void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
     float Width,
     float Height,
-    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
+    const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+    const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups)
 {
-    const float FooterHeight = FAnimationSequenceSequencerLayout::TimelineFooterHeight;
-    const float CanvasPaneHeight = std::max(Height - FooterHeight - SequencerHeaderPadding, 80.0f);
-
     ImGui::BeginChild(
         "##AnimationSequenceTimelineCanvasPane",
         ImVec2(Width, Height),
@@ -923,23 +1016,31 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
 
     ImGui::BeginChild(
         "##AnimationSequenceTimelineCanvasViewport",
-        ImVec2(0.0f, CanvasPaneHeight),
+        ImVec2(0.0f, 0.0f),
         false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
     const int32 NotifyTrackCount = Document ? Document->GetNotifyTrackCount() : 0;
+    const float CurveSectionHeight =
+        AnimationSequenceCurveFilter::GetCurveSectionHeight(CurveGroups, EditorState->bCurvesExpanded);
+    const float AdditiveSectionHeight =
+        FAnimationSequenceSequencerLayout::GetPlaceholderSectionHeight(EditorState->bAdditiveLayerTracksExpanded);
     const float RequiredCanvasHeight =
         FAnimationSequenceTimelineGeometry::VerticalPadding * 2.0f +
         TimelineWidget.GetRulerHeight() +
         FAnimationSequenceSequencerLayout::TrackAreaPadding * 2.0f +
         FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
         FAnimationSequenceSequencerLayout::SectionGap +
-        GetCurveSectionHeight(CurveGroups, *EditorState);
+        CurveSectionHeight +
+        FAnimationSequenceSequencerLayout::SectionGap +
+        AdditiveSectionHeight +
+        FAnimationSequenceSequencerLayout::SectionGap +
+        AnimationSequenceCurveFilter::GetCurveSectionHeight(AttributeCurveGroups, EditorState->bAttributesExpanded);
 
     const ImVec2 CanvasPos = ImGui::GetCursorScreenPos();
     const ImVec2 CanvasSize(
         std::max(1.0f, ImGui::GetContentRegionAvail().x),
-        std::max(std::max(CanvasPaneHeight - 2.0f, 1.0f), RequiredCanvasHeight));
+        std::max(std::max(Height - 2.0f, 1.0f), RequiredCanvasHeight));
     ImGui::Dummy(CanvasSize);
 
     const ImVec2 CanvasEnd(CanvasPos.x + CanvasSize.x, CanvasPos.y + CanvasSize.y);
@@ -964,7 +1065,37 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
         NotifySectionTop +
         FAnimationSequenceSequencerLayout::GetNotifySectionHeight(NotifyTrackCount, EditorState->bNotifiesExpanded) +
         FAnimationSequenceSequencerLayout::SectionGap;
-    CurveTrackWidget.RenderRows(*EditorState, Geometry, CurveSectionTop, CurveGroups);
+    EditorState->HoveredCurveIndex = -1;
+    CurveTrackWidget.RenderRows(
+        *EditorState,
+        Geometry,
+        CurveSectionTop,
+        CurveGroups,
+        "Curves",
+        EditorState->bCurvesExpanded);
+
+    const float AdditiveSectionTop =
+        CurveSectionTop +
+        CurveSectionHeight +
+        FAnimationSequenceSequencerLayout::SectionGap;
+    DrawEmptyTimelineSection(
+        Geometry,
+        AdditiveSectionTop,
+        "Additive Layer Tracks",
+        EditorState->bAdditiveLayerTracksExpanded,
+        "No additive layer tracks.");
+
+    const float AttributeSectionTop =
+        AdditiveSectionTop +
+        AdditiveSectionHeight +
+        FAnimationSequenceSequencerLayout::SectionGap;
+    CurveTrackWidget.RenderRows(
+        *EditorState,
+        Geometry,
+        AttributeSectionTop,
+        AttributeCurveGroups,
+        "Attributes",
+        EditorState->bAttributesExpanded);
     if (Document &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
         EditorState->HoveredCurveIndex >= 0)
@@ -973,19 +1104,25 @@ void FAnimationSequenceEditorWidget::RenderTimelineCanvasPane(
     }
 
     ImGui::EndChild();
-    RenderTimelineFooter(0.0f);
     ImGui::EndChild();
 }
 
-void FAnimationSequenceEditorWidget::RenderTimelineFooter(float Width)
+void FAnimationSequenceEditorWidget::RenderBottomControlStrip(float Height)
 {
+    const bool bCanTimelineControl =
+        PreviewController != nullptr && EditorState != nullptr && EditorState->HasTimelineData();
+    const bool bCanPlaybackControl = PreviewController != nullptr && PreviewController->HasValidPreview();
+
     ImGui::BeginChild(
-        "##AnimationSequenceTimelineFooter",
-        ImVec2(Width, FAnimationSequenceSequencerLayout::TimelineFooterHeight),
+        "##AnimationSequenceBottomControlStrip",
+        ImVec2(0.0f, Height),
         true);
+
+    RenderTransportControls(bCanTimelineControl, bCanPlaybackControl);
 
     if (!EditorState || !EditorState->HasTimelineData())
     {
+        ImGui::SameLine(0.0f, 16.0f);
         ImGui::TextDisabled("Timeline view controls are unavailable.");
         ImGui::EndChild();
         return;
@@ -995,9 +1132,10 @@ void FAnimationSequenceEditorWidget::RenderTimelineFooter(float Width)
     float VisibleStart = EditorState->VisibleTimeStart;
     float VisibleEnd = EditorState->VisibleTimeEnd;
 
-    ImGui::TextDisabled("View Range");
-    ImGui::SameLine(0.0f, 12.0f);
-    ImGui::SetNextItemWidth(std::max(ImGui::GetContentRegionAvail().x - 4.0f, 120.0f));
+    ImGui::SameLine(0.0f, 18.0f);
+    ImGui::TextDisabled("View");
+    ImGui::SameLine(0.0f, 8.0f);
+    ImGui::SetNextItemWidth(std::max(ImGui::GetContentRegionAvail().x - 4.0f, 160.0f));
     if (ImGui::DragFloatRange2(
             "##AnimationSequenceTimelineViewRange",
             &VisibleStart,
@@ -1010,15 +1148,17 @@ void FAnimationSequenceEditorWidget::RenderTimelineFooter(float Width)
     {
         EditorState->SetVisibleRange(VisibleStart, VisibleEnd);
     }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("%s", "Adjust the visible timeline range");
+    }
 
-    ImGui::TextDisabled("Wheel: Zoom  |  Middle-drag: Pan  |  This slider controls the visible timeline range.");
     ImGui::EndChild();
 }
 
 void FAnimationSequenceEditorWidget::RenderSelectionDetailsPane(float Height)
 {
     ImGui::BeginChild("##AnimationSequenceSelectionDetails", ImVec2(0.0f, Height), true);
-    ImGui::TextDisabled("Selection & Activity");
     if (ImGui::BeginTable("##AnimationSequenceSelectionDetailsTable", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
     {
         ImGui::TableSetupColumn("Selection", ImGuiTableColumnFlags_WidthStretch, 0.55f);
@@ -1141,9 +1281,7 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         PreviewController->JumpToEnd();
         EditorState->SetCurrentTime(PreviewController->GetCurrentTime(), false);
     }
-    ImGui::PopStyleVar();
-
-    ImGui::Separator();
+    ImGui::SameLine(0.0f, 14.0f);
 
     bool bLooping = EditorState->bLoop;
     if (DrawPlaybackControlButton(
@@ -1162,10 +1300,8 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
     }
 
     ImGui::SameLine();
-    ImGui::TextDisabled("Rate");
-    ImGui::SameLine();
     float PlaybackRate = EditorState->PlayRate;
-    ImGui::SetNextItemWidth(std::max(ImGui::GetContentRegionAvail().x - 92.0f, 84.0f));
+    ImGui::SetNextItemWidth(72.0f);
     if (ImGui::DragFloat("##AnimSequencePlayRate", &PlaybackRate, 0.05f, -4.0f, 4.0f, "%.2fx") && PreviewController)
     {
         PreviewController->SetPlayRate(PlaybackRate);
@@ -1183,41 +1319,11 @@ void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineCo
         ImGui::SetTooltip("%s", "Snap timeline edits to frame boundaries");
     }
 
+    ImGui::PopStyleVar();
+
     if (!bCanTimelineControl)
     {
         ImGui::EndDisabled();
-    }
-}
-
-void FAnimationSequenceEditorWidget::RenderFooterStatus() const
-{
-    ImGui::TextDisabled(
-        "%s",
-        PreviewController ? PreviewController->GetTimelineStatusText().c_str() : "Timeline is unavailable.");
-
-    if (!(PreviewController && PreviewController->HasSequence()))
-    {
-        ImGui::TextDisabled("Animation sequence is unavailable.");
-    }
-
-    if (Document)
-    {
-        const FAnimNotifyValidationReport DocumentReport = Document->BuildDocumentNotifyValidationReport();
-        const ImVec4 SummaryColor = GetValidationSeverityColor(
-            DocumentReport.ErrorCount > 0
-                ? EAnimNotifyValidationSeverity::Error
-                : (DocumentReport.WarningCount > 0
-                    ? EAnimNotifyValidationSeverity::Warning
-                    : EAnimNotifyValidationSeverity::Info));
-        ImGui::TextColored(
-            SummaryColor,
-            "Notify Validation: %s",
-            FormatAnimNotifyValidationSummary(DocumentReport).c_str());
-
-        if (!Document->GetLastNotifyValidationStatusText().empty())
-        {
-            ImGui::TextDisabled("Last Save: %s", Document->GetLastNotifyValidationStatusText().c_str());
-        }
     }
 }
 

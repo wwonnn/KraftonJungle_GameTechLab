@@ -47,10 +47,13 @@ public:
     float VisibleTimeStart = 0.0f;
     float VisibleTimeEnd = 1.0f;
     float PreviewPaneHeight = 0.0f;
+    float SequencerDetailsPaneHeight = 0.0f;
     float TrackOutlinerWidth = 0.0f;
     float SequencerScrollY = 0.0f;
     bool bNotifiesExpanded = true;
     bool bCurvesExpanded = true;
+    bool bAdditiveLayerTracksExpanded = false;
+    bool bAttributesExpanded = true;
     bool bShowMorphTargetCurves = true;
     bool bShowMaterialCurves = true;
     bool bShowAttributeCurves = true;

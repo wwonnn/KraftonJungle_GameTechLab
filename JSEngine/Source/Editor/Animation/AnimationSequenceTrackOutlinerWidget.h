@@ -11,5 +11,6 @@ public:
     void Render(
         FAnimationSequenceEditorState& State,
         FAnimationSequenceEditorDocument* Document,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
 };

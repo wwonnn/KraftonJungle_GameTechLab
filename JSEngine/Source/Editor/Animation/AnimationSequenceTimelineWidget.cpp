@@ -120,14 +120,6 @@ void FAnimationSequenceTimelineWidget::RenderCanvas(
         MousePos.y >= Geometry.RulerTop &&
         MousePos.y <= Geometry.TrackTop;
 
-    if (bCanvasHovered && std::fabs(ImGui::GetIO().MouseWheel) > 0.0f)
-    {
-        const float AnchorTime = State.ClampTime(
-            Geometry.XToTime(State, Geometry.ClampX(MousePos.x)));
-        const float ZoomFactor = ImGui::GetIO().MouseWheel > 0.0f ? 0.85f : (1.0f / 0.85f);
-        State.ZoomVisibleRange(AnchorTime, ZoomFactor);
-    }
-
     if (bCanvasHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
     {
         const float DeltaTime = -(ImGui::GetIO().MouseDelta.x / Geometry.TimelineWidth) * State.GetVisibleRange();

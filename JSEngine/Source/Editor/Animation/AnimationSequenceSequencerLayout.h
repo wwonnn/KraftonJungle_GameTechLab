@@ -10,13 +10,14 @@ struct FAnimationSequenceSequencerLayout
     static constexpr float SequencerMinHeight = 260.0f;
     static constexpr float SectionSplitterHeight = 6.0f;
 
-    static constexpr float BottomTransportControlsHeight = 88.0f;
-    static constexpr float TimelineFooterHeight = 44.0f;
+    static constexpr float BottomControlStripHeight = 48.0f;
     static constexpr float DetailsPanelHeight = 156.0f;
+    static constexpr float DetailsPanelMinHeight = 120.0f;
     static constexpr float RulerHeight = 24.0f;
     static constexpr float TrackAreaPadding = 8.0f;
     static constexpr float SectionHeaderHeight = 24.0f;
     static constexpr float SectionGap = 10.0f;
+    static constexpr float EmptySectionRowHeight = 22.0f;
 
     static constexpr float NotifyTrackRowHeight = 24.0f;
     static constexpr float NotifyTrackRowSpacing = 4.0f;
@@ -65,6 +66,20 @@ struct FAnimationSequenceSequencerLayout
             Height += CurveTrackRowHeight * SafeCurveCount;
             Height += CurveTrackRowSpacing * std::max(0, SafeCurveCount - 1);
         }
+        Height += TrackAreaPadding;
+        return Height;
+    }
+
+    static float GetPlaceholderSectionHeight(bool bExpanded)
+    {
+        float Height = SectionHeaderHeight;
+        if (!bExpanded)
+        {
+            return Height;
+        }
+
+        Height += TrackAreaPadding;
+        Height += EmptySectionRowHeight;
         Height += TrackAreaPadding;
         return Height;
     }

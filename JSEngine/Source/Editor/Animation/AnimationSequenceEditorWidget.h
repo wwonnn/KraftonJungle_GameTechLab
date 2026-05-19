@@ -42,18 +42,20 @@ private:
     void RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight);
     void RenderSequencerSplitPane(
         float SplitPaneHeight,
-        float DetailsPaneHeight,
         float MaxOutlinerWidth,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
     void RenderTrackOutlinerPane(
         float Width,
         float Height,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
     void RenderTimelineCanvasPane(
         float Width,
         float Height,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
-    void RenderTimelineFooter(float Width);
+        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
+        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
+    void RenderBottomControlStrip(float Height);
     void RenderSelectionDetailsPane(float Height);
     void EnsurePlaybackControlIconsLoaded();
     bool DrawPlaybackControlButton(
@@ -67,7 +69,6 @@ private:
     void RenderNotifyDetailsPanel();
     void RenderCurveInspectionPanel() const;
     void RenderRecentNotifySummary() const;
-    void RenderFooterStatus() const;
     void RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const;
     void RenderNotifyValidationIssues(
         const FAnimNotifyValidationReport& Report,
@@ -114,4 +115,5 @@ private:
     std::array<char, 256> NotifyComponentNameEditBuffer = {};
     std::array<char, 256> NotifyAttackIdEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
+    std::array<char, 128> TrackFilterEditBuffer = {};
 };
