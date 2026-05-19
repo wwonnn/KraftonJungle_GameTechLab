@@ -8,6 +8,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
+#include "Core/Logging/Stats.h"
 #include "Object/ObjectFactory.h"
 
 #include <algorithm>
@@ -351,6 +352,8 @@ bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
 void UAnimInstance::UpdateAnimation(float DeltaTime)
 {
     RecentNotifyEvents.clear();
+    SCOPE_STAT_ANIM("Animation Update");
+    STAT_COUNTER_ANIM("Active Anim Instances", 1);
 
     if (!bPlaying || !HasValidSequence())
     {
@@ -444,6 +447,8 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
 
 void UAnimInstance::EvaluatePose(FSkeletonPose& OutPose)
 {
+    SCOPE_STAT_ANIM("Animation Evaluate");
+
     if (!CurrentSequence)
     {
         InitializeReferencePose(OutPose);
@@ -590,7 +595,8 @@ FQuat UAnimInstance::InterpolateKeys(const TArray<FQuat>& Keys, float Time, floa
 
 void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose)
 {
-    const int32 BoneCount = static_cast<int32>(PoseA.LocalTransforms.size());
+    SCOPE_STAT_ANIM("Pose Blend");
+    const int32 BoneCount = PoseA.LocalTransforms.size();
     OutPose.LocalTransforms.resize(BoneCount);
 
     for (int32 i = 0; i < BoneCount; ++i)

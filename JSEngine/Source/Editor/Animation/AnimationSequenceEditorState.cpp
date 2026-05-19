@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceEditorState.h"
+﻿#include "Editor/Animation/AnimationSequenceEditorState.h"
 
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceSequencerLayout.h"

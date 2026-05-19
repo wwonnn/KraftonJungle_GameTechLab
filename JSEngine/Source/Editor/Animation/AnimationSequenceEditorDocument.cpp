@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceEditorDocument.h"
+﻿#include "Editor/Animation/AnimationSequenceEditorDocument.h"
 
 #include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Animation/AnimData/AnimDataModel.h"

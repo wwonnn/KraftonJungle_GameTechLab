@@ -4,12 +4,15 @@
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Render/Resource/Material.h"
+#include "Core/Logging/Stats.h"
 
 #include <algorithm>
 #include <cfloat>
 #include <cstring>
 
 DEFINE_CLASS(USkinnedMeshComponent, UMeshComponent)
+
+bool USkinnedMeshComponent::bGlobalEnableCPUSkinning = false;
 
 namespace
 {
@@ -49,6 +52,11 @@ static void ComputeGlobalPoseRecursive(
     Visited[BoneIndex] = true;
 }
 } // namespace
+
+USkinnedMeshComponent::USkinnedMeshComponent()
+{
+    bEnableCPUSkinning = bGlobalEnableCPUSkinning;
+}
 
 void USkinnedMeshComponent::Serialize(FArchive& Ar)
 {
@@ -175,26 +183,63 @@ void USkinnedMeshComponent::UpdateWorldAABB() const
         }
 
         bBoundsDirty = false;
+    }
+	else
+	{
+        UpdateWorldAABBFromBones();
+	}
+}
+
+void USkinnedMeshComponent::UpdateWorldAABBFromBones() const
+{
+    WorldAABB.Reset();
+
+    if (!HasValidMesh())
+    {
+        bBoundsDirty = false;
         return;
     }
 
-    const FAABB& LocalBounds = SkeletalMesh->GetLocalBounds();
-    if (LocalBounds.IsValid())
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (!Skeleton)
     {
-        const FVector LocalCorners[8] = {
-            FVector(LocalBounds.Min.X, LocalBounds.Min.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Min.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Min.X, LocalBounds.Max.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Max.Y, LocalBounds.Min.Z),
-            FVector(LocalBounds.Min.X, LocalBounds.Min.Y, LocalBounds.Max.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Min.Y, LocalBounds.Max.Z),
-            FVector(LocalBounds.Min.X, LocalBounds.Max.Y, LocalBounds.Max.Z),
-            FVector(LocalBounds.Max.X, LocalBounds.Max.Y, LocalBounds.Max.Z)
+        bBoundsDirty = false;
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
+    const FMatrix& WorldMatrix = GetWorldMatrix();
+
+    for (int32 i = 0; i < static_cast<int32>(Bones.size()); ++i)
+    {
+        const FBoneInfo& Bone = Bones[i];
+        if (!Bone.BoneBounds.IsValid())
+        {
+            continue;
+        }
+
+        // Bone bounds are in bone local space.
+        // Transform to component space using CurrentGlobalPose.
+        // Then transform to world space using WorldMatrix.
+        FMatrix BoneToWorld = CurrentGlobalPose[i] * WorldMatrix;
+
+        const FVector& Min = Bone.BoneBounds.Min;
+        const FVector& Max = Bone.BoneBounds.Max;
+
+        const FVector Corners[8] = {
+            FVector(Min.X, Min.Y, Min.Z),
+            FVector(Max.X, Min.Y, Min.Z),
+            FVector(Min.X, Max.Y, Min.Z),
+            FVector(Max.X, Max.Y, Min.Z),
+            FVector(Min.X, Min.Y, Max.Z),
+            FVector(Max.X, Min.Y, Max.Z),
+            FVector(Min.X, Max.Y, Max.Z),
+            FVector(Max.X, Max.Y, Max.Z)
         };
 
-        for (const FVector& Corner : LocalCorners)
+        for (const FVector& Corner : Corners)
         {
-            WorldAABB.Expand(WorldMatrix.TransformPosition(Corner));
+            WorldAABB.Expand(BoneToWorld.TransformPosition(Corner));
         }
     }
 
@@ -316,12 +361,22 @@ void USkinnedMeshComponent::EnsureSkinningUpdated()
         return;
     }
 
+    STAT_COUNTER_SKELMESH("Skeletal Mesh Count", 1);
+
 	// Matrix Update 는 CPU/GPU Skinning 공통
     UpdateCurrentGlobalPose();
     UpdateSkinningMatrices();
 
+    STAT_COUNTER_SKELMESH("Bone Matrix Upload Count", static_cast<int64>(SkinningMatrices.size()));
+
 	if (bEnableCPUSkinning)
 	    SkinVerticesCPU();
+    else
+    {
+        // GPU Skinning일 경우 사실상 여기서 하는건 없지만 
+        // 카운터만 올려줌
+        STAT_COUNTER_SKELMESH("GPU Skinning Instance", 1);
+    }
 
     bSkinningDirty = false;
     MarkBoundsDirty();
@@ -418,6 +473,7 @@ void USkinnedMeshComponent::InitializePoseFromBindPose()
 
 void USkinnedMeshComponent::UpdateCurrentGlobalPose()
 {
+    SCOPE_STAT_ANIM("Bone Transform Update");
     if (!HasValidMesh())
     {
         return;
@@ -431,6 +487,8 @@ void USkinnedMeshComponent::UpdateCurrentGlobalPose()
 
     const TArray<FBoneInfo>& Bones = Skeleton->GetBones();
     const int32 BoneCount = static_cast<int32>(Bones.size());
+
+    STAT_COUNTER_ANIM("Total Updated Bones", static_cast<int64>(BoneCount));
 
     if (CurrentLocalPose.size() != Bones.size())
     {
@@ -480,6 +538,7 @@ void USkinnedMeshComponent::UpdateSkinningMatrices()
 
 void USkinnedMeshComponent::SkinVerticesCPU()
 {
+    SCOPE_STAT_SKELMESH("CPU Skinning");
     if (!HasValidMesh())
     {
         SkinnedVertices.clear();
@@ -489,6 +548,7 @@ void USkinnedMeshComponent::SkinVerticesCPU()
 	// 아직 변형되지 않은 bind pose 기준 정점 목록
 	// index buffer는 당연히 재사용!
     const TArray<FSkeletalMeshVertex>& SourceVertices = SkeletalMesh->GetVertices();
+    STAT_COUNTER_SKELMESH("Skinned Vertices", static_cast<int64>(SourceVertices.size()));
     USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
     if (!Skeleton || !Skeleton->HasValidSkeletonData())
     {

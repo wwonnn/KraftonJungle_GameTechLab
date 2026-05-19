@@ -49,3 +49,11 @@
 #include "Engine/Geometry/Triangle.h"
 #include "Engine/Geometry/Frustum.h"
 #include "Engine/Geometry/Edge.h"
+
+#ifndef STATS
+	#if defined(_DEBUG) || defined(DEBUG)
+		#define STATS 1
+	#else
+		// Release 모드
+	#endif
+#endif

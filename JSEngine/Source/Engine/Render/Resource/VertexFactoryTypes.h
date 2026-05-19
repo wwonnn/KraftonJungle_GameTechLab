@@ -6,7 +6,9 @@
 #include "Render/Resource/ShaderTypes.h"
 #include "Render/Resource/VertexTypes.h"
 #include "Render/Resource/RenderResources.h"
-
+#include "Render/Mesh/VertexFactory/VertexFactory.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactory.h"
+#include "Render/Mesh/VertexFactory/StaticVertexFactory.h"
 #include <cstddef>
 
 struct FRenderCommand;
@@ -27,6 +29,7 @@ enum class EVertexFactoryType : uint8
     Gizmo,
     Decal,
 };
+
 
 // VertexFactory별 Shader Entry 정책입니다.
 // 같은 Material PS라도 StaticMeshVS / SkeletalMeshVS처럼 VS만 갈아끼울 수 있게 분리합니다.
@@ -64,6 +67,27 @@ public:
         };
         return SkeletalPositionOnlyLayout;
     }
+
+	static IVertexFactory* GetVertexFactory(EVertexFactoryType Type)
+	{
+        static FStaticVertexFactory StaticVF;
+        static FSkeletalVertexFactory SkeletalVF;
+
+		switch (Type)
+		{
+        case EVertexFactoryType::StaticMesh:
+            return &StaticVF;
+        case EVertexFactoryType::SkeletalMesh:
+            return &SkeletalVF;
+        default:
+			// 기본적으로 StaticMesh 이외에도 대부분 Static Vertex 구조라 StaticVF 를 반환하도록 처리
+			// 향후 다른 타입들이 생긴다면 수정 필요
+            return &StaticVF;
+		}
+
+		return nullptr;
+	}
+
     // 초기 단계에서는 과한 상속 구조 대신 Enum -> Desc 매핑으로 관리합니다.
     // GPU Skinning처럼 리소스 바인딩 규칙이 복잡해지면 객체 모델로 확장하면 됩니다.
     static const FVertexFactoryDesc& Get(EVertexFactoryType Type)
@@ -248,8 +272,3 @@ public:
     }
 };
 
-void BindVertexFactoryResources(
-    ID3D11DeviceContext* Context,
-    EVertexFactoryType Type,
-    const FRenderCommand& Cmd,
-    FRenderResources* RenderResources);

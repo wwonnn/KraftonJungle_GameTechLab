@@ -14,6 +14,14 @@ enum class EViewportPlayState : uint8
     Paused,   // PIE 일시정지
 };
 
+enum class EActiveStatCategory : uint8
+{
+	None,
+	Anim,
+	SkeletalMesh,
+	GPU
+};
+
 struct FEditorViewportState
 {
 	EViewMode ViewMode = EViewMode::Lit_BlinnPhong;
@@ -27,6 +35,8 @@ struct FEditorViewportState
 	bool bShowCascadeVis    = false;
 	bool bShowLight   = false;
 	bool bShowShadow  = false;
+
+	EActiveStatCategory ActiveStat = EActiveStatCategory::None;
 
 	// NameTable 오버레이 스크롤 오프셋 (휠로 조작)
 	int32 NameTableScrollLine = 0;

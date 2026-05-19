@@ -92,20 +92,6 @@ namespace
                 continue;
             }
 
-            uint32 offset = 0;
-            ID3D11Buffer* vertexBuffer = Cmd.MeshBuffer->GetVertexBuffer().GetBuffer();
-            if (vertexBuffer == nullptr)
-            {
-                continue;
-            }
-
-            uint32 vertexCount = Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount();
-            uint32 stride = Cmd.MeshBuffer->GetVertexBuffer().GetStride();
-            if (vertexCount == 0 || stride == 0)
-            {
-                continue;
-            }
-
             if (Cmd.Material != nullptr)
             {
                 const uint32 PermutationKey = BuildTranslucentPermutationKey(Context, Cmd.Material);
@@ -118,10 +104,10 @@ namespace
                 Program->Bind(Context->DeviceContext);
                 Cmd.Material->BindRenderStates(Context->DeviceContext);
                 Cmd.Material->BindParameters(Context->DeviceContext, Program->PS);
-                BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
             }
 
-            Context->DeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
+            IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+            VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
 
             ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
             if (indexBuffer != nullptr)
@@ -131,7 +117,7 @@ namespace
             }
             else
             {
-                Context->DeviceContext->Draw(vertexCount, 0);
+                Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
             }
         }
 

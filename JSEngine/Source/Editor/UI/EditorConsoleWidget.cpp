@@ -4,7 +4,9 @@
 
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/ViewportLayout.h"
+#include "Engine/Component/SkinnedMeshComponent.h"
 #include "Engine/Object/FName.h"
+#include "Engine/Object/Object.h"
 
 #include <cctype>
 #include <cstring>
@@ -159,6 +161,7 @@ FEditorConsoleWidget::FEditorConsoleWidget()
 	RegisterCommand("stat", "Viewport and editor stats. Usage: stat <fps|memory|history|nametable|cascadevis|none>", [this](const TArray<FString>& Args) { CmdStat(Args); });
 
 	RegisterCommand("shadow", "Set shadow options. Usage: shadow filter <pcf|vsm>", [this](const TArray<FString>& Args){ CmdShadow(Args); });
+	RegisterCommand("skinning.cpu", "Set skinning mode. Usage: skinning.cpu <0|1>", [this](const TArray<FString>& Args){ CmdSkinning(Args); });
 }
 
 FEditorConsoleWidget::~FEditorConsoleWidget() 
@@ -555,6 +558,9 @@ void FEditorConsoleWidget::CmdSuggest(const TArray<FString>& Args)
 	{
 		AddLog("  stat fps              Toggle FPS stat on focused viewport\n");
 		AddLog("  stat memory           Toggle memory stat on focused viewport\n");
+		AddLog("  stat anim             Toggle animation performance overlay\n");
+		AddLog("  stat skeletalmesh     Toggle skeletal mesh performance overlay\n");
+		AddLog("  stat gpu              Toggle GPU pass timing overlay\n");
 		AddLog("  stat history          Print Undo/Redo history memory use\n");
 		AddLog("  stat none             Disable viewport stats\n");
 		bPrinted = true;
@@ -563,6 +569,12 @@ void FEditorConsoleWidget::CmdSuggest(const TArray<FString>& Args)
 	{
 		AddLog("  shadow filter pcf     Use PCF shadow filtering\n");
 		AddLog("  shadow filter vsm     Use VSM shadow filtering\n");
+		bPrinted = true;
+	}
+	if (Prefix.empty() || FString("skinning").find(Prefix) == 0)
+	{
+		AddLog("  skinning.cpu 0        Use GPU skinning\n");
+		AddLog("  skinning.cpu 1        Use CPU skinning\n");
 		bPrinted = true;
 	}
 	if (Prefix.empty() || FString("help").find(Prefix) == 0 || FString("commands").find(Prefix) == 0)
@@ -639,8 +651,12 @@ TArray<FString> FEditorConsoleWidget::BuildCommandSuggestions(const FString& Que
 		"stat cascadevis",
 		"stat nametable list",
 		"stat none",
+        "stat gpu",
+        "stat anim",
+        "stat skeletalmesh",
 		"shadow filter pcf",
 		"shadow filter vsm",
+        "skinning.cpu"
 	};
 
 	if (Normalized == "help" || Normalized == "?")
@@ -770,6 +786,24 @@ void FEditorConsoleWidget::CmdStat(const TArray<FString>& Args)
 		bFlag = !bFlag;
 		AddLog("Stat Memory %s (viewport %d)\n", bFlag ? "Enabled" : "Disabled", FocusedIdx);
 	}
+	else if (Target == "anim")
+	{
+		EActiveStatCategory& ActiveStat = Layout.GetViewportState(FocusedIdx).ActiveStat;
+		ActiveStat = (ActiveStat == EActiveStatCategory::Anim) ? EActiveStatCategory::None : EActiveStatCategory::Anim;
+		AddLog("Stat Anim %s (viewport %d)\n", (ActiveStat == EActiveStatCategory::Anim) ? "Enabled" : "Disabled", FocusedIdx);
+	}
+	else if (Target == "skeletalmesh" || Target == "skelmesh" || Target == "sm")
+	{
+		EActiveStatCategory& ActiveStat = Layout.GetViewportState(FocusedIdx).ActiveStat;
+		ActiveStat = (ActiveStat == EActiveStatCategory::SkeletalMesh) ? EActiveStatCategory::None : EActiveStatCategory::SkeletalMesh;
+		AddLog("Stat SkeletalMesh %s (viewport %d)\n", (ActiveStat == EActiveStatCategory::SkeletalMesh) ? "Enabled" : "Disabled", FocusedIdx);
+	}
+	else if (Target == "gpu")
+	{
+		EActiveStatCategory& ActiveStat = Layout.GetViewportState(FocusedIdx).ActiveStat;
+		ActiveStat = (ActiveStat == EActiveStatCategory::GPU) ? EActiveStatCategory::None : EActiveStatCategory::GPU;
+		AddLog("Stat GPU %s (viewport %d)\n", (ActiveStat == EActiveStatCategory::GPU) ? "Enabled" : "Disabled", FocusedIdx);
+	}
 	else if (Target == "history")
 	{
 		PrintHistoryStats();
@@ -809,6 +843,7 @@ void FEditorConsoleWidget::CmdStat(const TArray<FString>& Args)
 			Layout.GetViewportState(i).bShowStatMemory    = false;
 			Layout.GetViewportState(i).bShowStatNameTable = false;
 			Layout.GetViewportState(i).bShowCascadeVis    = false;
+			Layout.GetViewportState(i).ActiveStat         = EActiveStatCategory::None;
 		}
 		AddLog("All Stats Disabled\n");
 	}
@@ -872,6 +907,31 @@ void FEditorConsoleWidget::CmdShadow(const TArray<FString>& Args)
     {
         AddLog("[ERROR] Unknown shadow command target: %s\n", CommandTarget.c_str());
     }
+}
+
+void FEditorConsoleWidget::CmdSkinning(const TArray<FString>& Args)
+{
+	if (Args.size() < 2)
+	{
+		AddLog("[WARN] Usage: skinning.cpu <0|1>\n");
+		return;
+	}
+
+	const int32 Value = std::stoi(Args[1]);
+	const bool bEnableCPU = (Value != 0);
+
+	USkinnedMeshComponent::bGlobalEnableCPUSkinning = bEnableCPU;
+
+	// 기존 인스턴스들도 일괄 변경
+	for (UObject* Obj : GUObjectArray)
+	{
+		if (USkinnedMeshComponent* SkinnedMesh = Cast<USkinnedMeshComponent>(Obj))
+		{
+			SkinnedMesh->SetEnableCPUSkinning(bEnableCPU);
+		}
+	}
+
+	AddLog("Skinning mode changed to: %s\n", bEnableCPU ? "CPU" : "GPU");
 }
 
 ImVector<char*> FEditorConsoleWidget::Messages;

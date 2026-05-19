@@ -7,6 +7,8 @@
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/SkeletalMeshRenderProxy.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
+#include "Core/Paths.h"
 
 #include <cstring>
 
@@ -259,7 +261,9 @@ void USkeletalMeshComponent::SetBoneGlobalTransform(int32 BoneIndex, const FMatr
 FPrimitiveRenderProxy* USkeletalMeshComponent::CreateRenderProxy()
 {
     FSkeletalMeshRenderProxy* Proxy = new FSkeletalMeshRenderProxy;
-    Proxy->SkeletalMeshComp = this;
+	Proxy->SkeletalMeshComp = this;
+    Proxy->SkelVFData = new FSkeletalVertexFactoryData;
+
     return Proxy;
 }
 

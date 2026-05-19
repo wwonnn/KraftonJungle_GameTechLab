@@ -503,6 +503,71 @@ static bool CurveNodeHasRelatedObject(
     return false;
 }
 
+static FString BuildImportedAnimCurveName(
+    FbxAnimCurveNode* CurveNode,
+    const FbxProperty& TargetProperty,
+    EAnimCurveType CurveType,
+    EAnimCurveSourceKind SourceKind,
+    FbxAnimLayer* AnimLayer,
+    int32 LayerCount,
+    int32 ChannelCount,
+    int32 ChannelIndex,
+    int32 CurveCount,
+    int32 CurveIndex)
+{
+    if (CurveType == EAnimCurveType::MorphTarget ||
+        SourceKind == EAnimCurveSourceKind::ImportedMorphTarget)
+    {
+        if (FbxObject* OwnerObject = TargetProperty.GetFbxObject())
+        {
+            return GetFbxObjectName(
+                OwnerObject,
+                CurveNode && CurveNode->GetName() ? CurveNode->GetName() : "MorphTarget");
+        }
+    }
+
+    if (CurveType == EAnimCurveType::Attribute ||
+        CurveType == EAnimCurveType::Material ||
+        SourceKind == EAnimCurveSourceKind::ImportedCustomAttribute ||
+        SourceKind == EAnimCurveSourceKind::ImportedMaterial)
+    {
+        const FbxString PropertyName = TargetProperty.GetName();
+        if (PropertyName.GetLen() > 0)
+        {
+            return PropertyName.Buffer();
+        }
+
+        const FString HierarchicalName = GetAnimCurveTargetPropertyName(TargetProperty);
+        if (!HierarchicalName.empty())
+        {
+            return HierarchicalName;
+        }
+    }
+
+    return BuildAnimCurveName(
+        CurveNode,
+        TargetProperty,
+        AnimLayer,
+        LayerCount,
+        ChannelCount,
+        ChannelIndex,
+        CurveCount,
+        CurveIndex);
+}
+
+static bool HasNonZeroCurveValue(const FFloatCurve& Curve, float Tolerance = 1e-4f)
+{
+    for (const FCurveKey& Key : Curve.Keys)
+    {
+        if (std::fabs(Key.Value) > Tolerance)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static EAnimCurveType ClassifyImportedAnimCurveType(
     FbxAnimCurveNode* CurveNode,
     const FbxProperty& TargetProperty,
@@ -528,7 +593,7 @@ static EAnimCurveType ClassifyImportedAnimCurveType(
         return EAnimCurveType::Material;
     }
 
-    if (TargetProperty.IsValid())
+    if (TargetProperty.IsValid() && TargetProperty.GetFlag(FbxPropertyFlags::eUserDefined))
     {
         OutSourceKind = EAnimCurveSourceKind::ImportedCustomAttribute;
         return EAnimCurveType::Attribute;
@@ -536,7 +601,6 @@ static EAnimCurveType ClassifyImportedAnimCurveType(
 
     return EAnimCurveType::Unknown;
 }
-
 static bool ConvertFbxAnimCurveToFloatCurve(
     FbxAnimCurve* FbxCurve,
     const FString& CurveName,
@@ -648,6 +712,12 @@ static int32 ReadCurveNodeRecursive(
         return ImportedCurveCount;
     }
 
+    EAnimCurveSourceKind CurveSourceKind = EAnimCurveSourceKind::Unknown;
+    const EAnimCurveType CurveType = ClassifyImportedAnimCurveType(
+        CurveNode,
+        TargetProperty,
+        CurveSourceKind);
+
     const int32 ChannelCount = static_cast<int32>(CurveNode->GetChannelsCount());
     for (int32 ChannelIndex = 0; ChannelIndex < ChannelCount; ++ChannelIndex)
     {
@@ -658,26 +728,22 @@ static int32 ReadCurveNodeRecursive(
                 static_cast<unsigned int>(ChannelIndex),
                 static_cast<unsigned int>(CurveIndex));
 
-            if (IsNodeTransformProperty(TargetProperty))
+            if (CurveType == EAnimCurveType::Unknown)
             {
                 continue;
             }
 
-            const FString CurveName = BuildAnimCurveName(
+            const FString CurveName = BuildImportedAnimCurveName(
                 CurveNode,
                 TargetProperty,
+                CurveType,
+                CurveSourceKind,
                 AnimLayer,
                 LayerCount,
                 ChannelCount,
                 ChannelIndex,
                 CurveCount,
                 CurveIndex);
-
-            EAnimCurveSourceKind CurveSourceKind = EAnimCurveSourceKind::Unknown;
-            const EAnimCurveType CurveType = ClassifyImportedAnimCurveType(
-                CurveNode,
-                TargetProperty,
-                CurveSourceKind);
 
             FFloatCurve EngineCurve;
             if (!ConvertFbxAnimCurveToFloatCurve(
@@ -688,6 +754,12 @@ static int32 ReadCurveNodeRecursive(
                     CurveType,
                     CurveSourceKind,
                     EngineCurve))
+            {
+                continue;
+            }
+
+            if (CurveSourceKind == EAnimCurveSourceKind::ImportedCustomAttribute &&
+                !HasNonZeroCurveValue(EngineCurve))
             {
                 continue;
             }
@@ -716,6 +788,46 @@ static int32 ReadCurveNodeRecursive(
     }
 
     return ImportedCurveCount;
+}
+
+static void AccumulateSkeletonCurveMetaData(
+    FSkeletonData* SkeletonData,
+    const FFloatCurve& Curve)
+{
+    if (!SkeletonData || !Curve.CurveName.IsValid())
+    {
+        return;
+    }
+
+    FSkeletonCurveMetaData* ExistingMetaData = nullptr;
+    for (FSkeletonCurveMetaData& CurveMetaData : SkeletonData->CurveMetaData)
+    {
+        if (CurveMetaData.Name == Curve.CurveName)
+        {
+            ExistingMetaData = &CurveMetaData;
+            break;
+        }
+    }
+
+    if (!ExistingMetaData)
+    {
+        FSkeletonCurveMetaData NewMetaData;
+        NewMetaData.Name = Curve.CurveName;
+        SkeletonData->CurveMetaData.push_back(NewMetaData);
+        ExistingMetaData = &SkeletonData->CurveMetaData.back();
+    }
+
+    if (Curve.CurveType == EAnimCurveType::MorphTarget ||
+        Curve.SourceKind == EAnimCurveSourceKind::ImportedMorphTarget)
+    {
+        ExistingMetaData->bMorphTarget = true;
+    }
+
+    if (Curve.CurveType == EAnimCurveType::Material ||
+        Curve.SourceKind == EAnimCurveSourceKind::ImportedMaterial)
+    {
+        ExistingMetaData->bMaterial = true;
+    }
 }
 
 static bool HasValidSkinInfluence(FbxMesh* Mesh)
@@ -1174,6 +1286,11 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
             }
         }
 
+        for (const FFloatCurve& Curve : AnimDataModel->CurveData.FloatCurves)
+        {
+            AccumulateSkeletonCurveMetaData(ImportedSkeletonData, Curve);
+        }
+
         if (AnimDataModel->BoneAnimationTracks.empty())
         {
             delete AnimSequence;
@@ -1201,6 +1318,7 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
 
     SkeletalMesh->LocalBounds = BuildLocalBounds(SkeletalMesh);
     ComputeTangents(SkeletalMesh);
+    CalculateBoneBounds(SkeletalMesh);
 
     const double EndTime = FPlatformTime::Seconds();
     UE_LOG("[FbxImporter] Skeletal FBX Loaded: %s (Vertices=%zu, Indices=%zu, Bones=%zu, Sections=%zu, Slots=%zu, %.3f sec)",
@@ -1224,6 +1342,49 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
     }
     ImportedAsset.AnimationSequences.clear();
     return ImportedAsset.SkeletalMesh;
+}
+
+void FFbxImporter::CalculateBoneBounds(FSkeletalMesh* InSkeletalMesh)
+{
+    if (!InSkeletalMesh || !InSkeletalMesh->Skeleton)
+    {
+        return;
+    }
+
+    TArray<FBoneInfo>* Bones = InSkeletalMesh->GetMutableBones();
+    if (!Bones)
+    {
+        return;
+    }
+
+    // Reset bounds
+    for (FBoneInfo& Bone : *Bones)
+    {
+        Bone.BoneBounds.Reset();
+    }
+
+    const TArray<FSkeletalMeshVertex>& Vertices = InSkeletalMesh->Vertices;
+    const int32 NumBones = static_cast<int32>(Bones->size());
+
+    for (const FSkeletalMeshVertex& Vertex : Vertices)
+    {
+        for (int32 i = 0; i < 4; ++i)
+        {
+            if (Vertex.BoneWeights[i] > 0.0f)
+            {
+                int32 BoneIndex = Vertex.BoneIndices[i];
+                if (BoneIndex >= 0 && BoneIndex < NumBones)
+                {
+                    FBoneInfo& Bone = (*Bones)[BoneIndex];
+                    // Vertex.Position is in mesh local space.
+                    // Bone bounds should be in bone local space.
+                    // BoneLocalPos = MeshLocalPos * InverseBindPose
+                    FVector BoneLocalPos = Bone.InverseBindPose.TransformPosition(Vertex.Position);
+                    Bone.BoneBounds.Expand(BoneLocalPos);
+                }
+            }
+        }
+    }
 }
 
 FFbxMeshContentInfo FFbxImporter::InspectMeshContent(const FString& Path)

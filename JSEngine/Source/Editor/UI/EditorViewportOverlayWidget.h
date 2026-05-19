@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Editor/UI/EditorWidget.h"
+#include "Editor/EditorUtils.h"
 
 struct ImDrawList;
 
@@ -13,6 +14,7 @@ private:
 	bool bShowGroupedStatOverlay = false;
 	void RenderViewportSettings(float DeltaTime);
 	void RenderDebugStats(float DeltaTime);
+	void RenderCategorizedStatOverlay(EActiveStatCategory Category);
 	void RenderGroupedStatOverlay(float DeltaTime);
     void RenderViewportFocusOverlay();
     void RenderBoxSelectionOverlay();

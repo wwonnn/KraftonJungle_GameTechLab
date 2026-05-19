@@ -8,6 +8,8 @@
 #include "Render/Resource/VertexFactoryTypes.h"
 #include "Core/ResourceManager.h"
 #include "Component/PostProcess/Light/LightComponent.h"
+#include "Render/Mesh/VertexFactory/VertexFactory.h"
+#include "Core/Logging/GPUProfiler.h"
 
 bool FOpaqueRenderPass::Initialize()
 {
@@ -88,20 +90,6 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            return false;  
        }  
 
-       uint32 offset = 0;  
-       ID3D11Buffer* vertexBuffer = Cmd.MeshBuffer->GetVertexBuffer().GetBuffer();  
-       if (vertexBuffer == nullptr)  
-       {  
-           return false;  
-       }  
-
-       uint32 vertexCount = Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount();  
-       uint32 stride = Cmd.MeshBuffer->GetVertexBuffer().GetStride();  
-       if (vertexCount == 0 || stride == 0)
-       {  
-           return false;  
-       }  
-
 	   uint32 PermutationKey = (uint32)ELightingModel::Unlit;
 	   switch (Context->RenderBus->GetViewMode())
 	   {
@@ -125,10 +113,13 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            PermutationKey |= (uint32)EShaderFeature::TileCull;
        bool bShadowApplied = false; // 추가
 
-       if (!Cmd.SkinningMatrices)
+	   if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
        {
-           // GPU 에 넘길 SkinningMatrices 가 없다 = CPU Skinning 쓰겠다
-           PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		   if (!Cmd.VertexFactoryData)
+		   {
+               // GPU 에 넘길 SkinningMatrices 가 없다 = CPU Skinning 쓰겠다
+               PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		   }
 	   }
 
 	   // ShadowMap Permutation Key 조합
@@ -166,6 +157,7 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
        {
            PermutationKey |= (uint32)EShaderFeature::ShadowVSM;
        }
+
        if (Cmd.Material)
        {
 		   if (Cmd.Material->HasDiffuseMap()) PermutationKey |= (uint32)EShaderFeature::HasDiffuseMap;
@@ -177,6 +169,7 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            // VertexFactory는 Mesh 타입에 맞는 VS를 고르고, Material은 표면용 PS만 제공합니다.
            // 여기서 두 정보를 합쳐 실제 Draw에 사용할 FShaderProgram을 만듭니다.
            const FVertexFactoryDesc& VertexFactoryDesc = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
+
            const FString& PixelShaderPath = Cmd.Material->GetPixelShaderPath();
            const FString& PixelEntryPoint = Cmd.Material->GetPixelShaderEntryPoint();
 
@@ -210,30 +203,36 @@ bool FOpaqueRenderPass::DrawCommand(const FRenderPassContext* Context)
            Program->Bind(Context->DeviceContext);
            Cmd.Material->BindRenderStates(Context->DeviceContext);
            Cmd.Material->BindParameters(Context->DeviceContext, Program->PS);
-
-           // 현재는 CPU Skinning이라 추가 바인딩이 없지만, GPU Skinning에서는 여기서 Bone Buffer가 붙습니다.
-           BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
        }
 
        auto DSState = FResourceManager::Get().GetOrCreateDepthStencilState(EDepthStencilType::Default);
        Context->DeviceContext->OMSetDepthStencilState(DSState, 0);
 
        CheckOverrideViewMode(Context);  
+	   IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+       
+       {
+           std::unique_ptr<FGPUScopedTimer> SkeletalTimer;
+           if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh && Cmd.VertexFactoryData)
+           {
+               SkeletalTimer = std::make_unique<FGPUScopedTimer>("Skeletal Pass");
+           }
+           
+           VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
 
-       Context->DeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);  
-
-       ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();  
-       if (indexBuffer != nullptr)  
-       {  
-           uint32 indexStart = Cmd.SectionIndexStart;  
-           uint32 indexCount = Cmd.SectionIndexCount;  
-           Context->DeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);  
-           Context->DeviceContext->DrawIndexed(indexCount, indexStart, 0);  
-       }  
-       else  
-       {  
-           Context->DeviceContext->Draw(vertexCount, 0);  
-       }  
+           ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();  
+           if (indexBuffer != nullptr)  
+           {  
+               uint32 indexStart = Cmd.SectionIndexStart;  
+               uint32 indexCount = Cmd.SectionIndexCount;  
+               Context->DeviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);  
+               Context->DeviceContext->DrawIndexed(indexCount, indexStart, 0);  
+           }  
+           else  
+           {  
+               Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);  
+           }  
+       }
    }  
 
    return true;  

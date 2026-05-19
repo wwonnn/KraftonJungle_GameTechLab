@@ -1,6 +1,8 @@
 ﻿#include "Editor/UI/EditorViewportOverlayWidget.h"
 
 #include "Core/ResourceManager.h"
+#include "Core/Logging/Stats.h"
+#include "Core/Logging/GPUProfiler.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/EditorRenderPipeline.h"
 #include "Editor/Settings/EditorSettings.h"
@@ -529,6 +531,102 @@ void FEditorViewportOverlayWidget::RenderShadowCubeArrayPreview()
     }
 }
 
+void FEditorViewportOverlayWidget::RenderCategorizedStatOverlay(EActiveStatCategory Category)
+{
+	if (Category == EActiveStatCategory::None) return;
+
+	EStatCategory TargetCategory = EStatCategory::None;
+	const char* Title = "";
+	ImVec4 Color(1, 1, 1, 1);
+
+	switch (Category)
+	{
+	case EActiveStatCategory::Anim:
+		TargetCategory = EStatCategory::Anim;
+		Title = "STAT ANIM";
+		Color = ImVec4(0.2f, 1.0f, 0.2f, 1.0f);
+		break;
+	case EActiveStatCategory::SkeletalMesh:
+		TargetCategory = EStatCategory::SkeletalMesh;
+		Title = "STAT SKELETALMESH";
+		Color = ImVec4(1.0f, 0.5f, 0.2f, 1.0f);
+		break;
+	case EActiveStatCategory::GPU:
+		TargetCategory = EStatCategory::GPU;
+		Title = "STAT GPU";
+		Color = ImVec4(0.2f, 0.6f, 1.0f, 1.0f);
+		break;
+	}
+
+	ImGui::TextColored(Color, "[ %s ]", Title);
+
+	if (Category == EActiveStatCategory::GPU)
+	{
+		// Render GPU Profiler snapshot
+		const auto& GpuSnapshot = FGPUProfiler::Get().GetGPUSnapshot();
+		if (GpuSnapshot.empty())
+		{
+			ImGui::TextDisabled("No GPU data collected yet...");
+		}
+		else
+		{
+			for (const auto& Entry : GpuSnapshot)
+			{
+				ImGui::Text("%-24s: %7.2f ms", Entry.Name, Entry.TotalTime * 1000.0);
+			}
+		}
+	}
+	else
+	{
+		// Render FStatManager snapshot
+		const auto& Snapshot = FStatManager::Get().GetSnapshot();
+		const auto& Counters = FStatManager::Get().GetCounterSnapshot();
+
+		bool bHasData = false;
+		for (const auto& Entry : Snapshot)
+		{
+			if (Entry.Category == TargetCategory)
+			{
+				ImGui::Text("%-24s: %7.2f ms", Entry.Name, Entry.TotalTime * 1000.0);
+				bHasData = true;
+			}
+		}
+
+		if (Category == EActiveStatCategory::SkeletalMesh)
+		{
+			const auto& GpuSnapshot = FGPUProfiler::Get().GetGPUSnapshot();
+			double TotalGpuSkinningMs = 0.0;
+			for (const auto& Entry : GpuSnapshot)
+			{
+				if (Entry.Name && strcmp(Entry.Name, "Skeletal Pass") == 0)
+				{
+					TotalGpuSkinningMs += Entry.TotalTime * 1000.0;
+				}
+			}
+
+			ImGui::Text("%-24s: %7.2f ms (GPU)", "GPU Skinning", TotalGpuSkinningMs);
+			bHasData = true;
+		}
+
+		bool bHasCounters = false;
+		for (const auto& Entry : Counters)
+		{
+			if (Entry.Category == TargetCategory)
+			{
+				if (!bHasCounters && bHasData) ImGui::Separator();
+				ImGui::Text("%-24s: %7lld", Entry.Name, Entry.Value);
+				bHasCounters = true;
+			}
+		}
+
+		if (!bHasData && !bHasCounters)
+		{
+			ImGui::TextDisabled("No stats for this category...");
+		}
+	}
+	ImGui::Separator();
+}
+
 void FEditorViewportOverlayWidget::RenderDebugStats(float DeltaTime)
 {
 	if (!EditorEngine) return;
@@ -550,7 +648,7 @@ void FEditorViewportOverlayWidget::RenderDebugStats(float DeltaTime)
 		const FEditorViewportState& VS = Layout.GetViewportState(i);
         FViewportRect ViewportRect = Layout.GetSceneViewport(i).GetRect();
 
-		if (!VS.bShowStatFPS && !VS.bShowStatMemory && !VS.bShowStatNameTable && !VS.bShowLight&& !VS.bShowShadow) continue;
+		if (!VS.bShowStatFPS && !VS.bShowStatMemory && !VS.bShowStatNameTable && !VS.bShowLight&& !VS.bShowShadow && VS.ActiveStat == EActiveStatCategory::None) continue;
         if (ViewportRect.Width <= 0 || ViewportRect.Height <= 0)
             continue; // 비활성 뷰포트 스킵
 
@@ -568,6 +666,8 @@ void FEditorViewportOverlayWidget::RenderDebugStats(float DeltaTime)
 
 		if (ImGui::Begin(WinId, nullptr, kFlags))
 		{
+			RenderCategorizedStatOverlay(VS.ActiveStat);
+
 			const FRenderCollector::FCullingStats* CullingStats =
 				(RenderPipeline != nullptr) ? &RenderPipeline->GetViewportCullingStats(i) : nullptr;
 

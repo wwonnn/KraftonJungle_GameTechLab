@@ -21,6 +21,7 @@ UPrimitiveComponent::~UPrimitiveComponent()
 	
 	if (CachedRenderProxy)
     {
+        CachedRenderProxy->Release();
         delete CachedRenderProxy;
         CachedRenderProxy = nullptr;
 	}

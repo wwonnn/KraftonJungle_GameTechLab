@@ -12,6 +12,8 @@ struct FSkeletonBone
     FMatrix LocalBindTransform = FMatrix::Identity;
     FMatrix GlobalBindTransform = FMatrix::Identity;
     FMatrix InverseBindPose = FMatrix::Identity;
+
+    FAABB BoneBounds;
 };
 
 struct FSkeletonSocket

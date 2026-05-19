@@ -16,4 +16,5 @@ class IRenderProxy
 {
 public:
     virtual void CollectRenderCommands(const FRenderProxyContext& Context, FRenderBus& RenderBus) = 0;
+    virtual void Release() {}
 };

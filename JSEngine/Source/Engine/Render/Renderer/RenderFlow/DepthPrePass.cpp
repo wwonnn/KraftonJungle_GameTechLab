@@ -6,6 +6,7 @@
 #include "Render/Resource/VertexFactoryTypes.h"
 #include "Render/Resource/ShaderHelper.h"
 #include "Core/ResourceManager.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 namespace
 {
@@ -85,27 +86,23 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 			continue;
 		}
 
-		ID3D11Buffer* VertexBuffer = Cmd.MeshBuffer->GetVertexBuffer().GetBuffer();
-		uint32 VertexCount = Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount();
-		uint32 Stride = Cmd.MeshBuffer->GetVertexBuffer().GetStride();
-		if (VertexBuffer == nullptr || VertexCount == 0 || Stride == 0)
-		{
-			continue;
-		}
-
 		Context->RenderResources->PerObjectConstantBuffer.Update(Context->DeviceContext, &Cmd.PerObjectConstants, sizeof(FPerObjectConstants));
 		ID3D11Buffer* CB1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();
 		Context->DeviceContext->VSSetConstantBuffers(1, 1, &CB1);
 
-		uint32 Offset = 0;
-		Context->DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
-
 		// Select input layout & whether to compile GPU-skinning variant per-command.
 		const FVertexFactoryDesc& VFDesc = FVertexFactoryRegistry::Get(Cmd.VertexFactoryType);
 		const FVertexLayoutDesc* PositionLayout = nullptr;
-		bool bUseGPUSkinning = (Cmd.SkinningMatrices != nullptr);
+
+		bool bUseGPUSkinning = false;
 		if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh)
 		{
+			if (Cmd.VertexFactoryData)
+            {
+                FSkeletalVertexFactoryData* VFData = static_cast<FSkeletalVertexFactoryData*>(Cmd.VertexFactoryData);
+                bUseGPUSkinning = (VFData->SkinningMatrices != nullptr);
+			}
+
 			if (bUseGPUSkinning)
 			{
 				PositionLayout = &FVertexFactoryRegistry::GetSkeletalPositionOnlyLayout();
@@ -121,13 +118,14 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		}
 
 		FShaderProgram* Program = GetDepthPrepassProgram(Cmd.VertexFactoryType, bUseGPUSkinning, PositionLayout);
-			if (!Program)
-			{
-				continue;
-			}
+		if (!Program)
+		{
+			continue;
+		}
 
 		Program->Bind(Context->DeviceContext);
-		BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
+        IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+        VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
         CheckOverrideViewMode(Context);  
 
 		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
@@ -138,7 +136,7 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		}
 		else
 		{
-			Context->DeviceContext->Draw(VertexCount, 0);
+            Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
 		}
 	}
 

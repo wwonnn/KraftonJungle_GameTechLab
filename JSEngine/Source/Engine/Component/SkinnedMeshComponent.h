@@ -9,7 +9,7 @@ class USkinnedMeshComponent : public UMeshComponent
 public:
     DECLARE_CLASS(USkinnedMeshComponent, UMeshComponent)
 
-    USkinnedMeshComponent() = default;
+    USkinnedMeshComponent();
     ~USkinnedMeshComponent() override = default;
 
     void Serialize(FArchive& Ar) override;
@@ -32,6 +32,7 @@ public:
     void MarkSkinningDirty() { bSkinningDirty = true; }
 
     void UpdateWorldAABB() const override;
+    void UpdateWorldAABBFromBones() const;
     bool RaycastMesh(const FRay& Ray, FHitResult& OutHitResult) override;
 
 	virtual const FAABB& GetWorldAABB() const;
@@ -44,7 +45,12 @@ public:
     bool       HasSocket(const FName& SocketName) const override;
     FTransform GetSocketTransform(const FName& SocketName) const override;
 
+	void SetEnableCPUSkinning(bool bEnable) { bEnableCPUSkinning = bEnable; MarkSkinningDirty(); }
 	bool IsGPUSkinningEnabled() const { return !bEnableCPUSkinning; }
+
+	// skinning.cpu 설정값을 캐싱해두기 위한 목적
+	// 새로 생성되는 애들은 생성자에서 해당 값을 고려
+    static bool bGlobalEnableCPUSkinning;
 
 protected:
     void InitializePoseFromBindPose();

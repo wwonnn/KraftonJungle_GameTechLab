@@ -90,4 +90,5 @@ private:
     int32 GetOrAddMaterialSlot(FSkeletalMesh* InSkeletalMesh, const FString& MaterialName);
     FAABB BuildLocalBounds(FSkeletalMesh* InSkeletalMesh) const;
     void ComputeTangents(FSkeletalMesh* InSkeletalMesh);
+    void CalculateBoneBounds(FSkeletalMesh* InSkeletalMesh);
 };

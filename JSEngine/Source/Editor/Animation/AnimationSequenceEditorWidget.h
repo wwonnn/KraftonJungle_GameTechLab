@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"

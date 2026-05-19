@@ -21,6 +21,7 @@
 
 struct ID3D11ShaderResourceView;
 class UPrimitiveComponent;
+class FVertexFactoryData;
 
 enum class ERenderCommandType
 {
@@ -436,6 +437,8 @@ struct FRenderCommand
 	FMeshBuffer* MeshBuffer = nullptr;
 	UMaterialInterface* Material = nullptr;
 
+	FVertexFactoryData* VertexFactoryData = nullptr;
+
 	// MeshBuffer의 Vertex Data를 어떤 VS/입력 규칙으로 해석할지 결정합니다.
 	// Material과 분리되어 있어 같은 Material을 StaticMesh / SkeletalMesh가 같이 사용할 수 있습니다.
 	EVertexFactoryType VertexFactoryType = EVertexFactoryType::StaticMesh;
@@ -443,8 +446,6 @@ struct FRenderCommand
 	uint32 SectionIndexCount = 0;
 
 	FBoundingBox WorldAABB;
-
-	const TArray<FMatrix>* SkinningMatrices = nullptr;
 
 	union
 	{

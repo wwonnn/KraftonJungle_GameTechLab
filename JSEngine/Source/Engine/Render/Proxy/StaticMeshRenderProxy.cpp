@@ -71,6 +71,7 @@ void FStaticMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& Co
         Cmd.Type = ERenderCommandType::StaticMesh;
         Cmd.VertexFactoryType = EVertexFactoryType::StaticMesh;
         Cmd.MeshBuffer = MeshBuffer;
+        Cmd.VertexFactoryData = StaticVFData;
 
         Cmd.SectionIndexStart = Section.StartIndex;
         Cmd.SectionIndexCount = Section.IndexCount;
@@ -80,4 +81,12 @@ void FStaticMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& Co
 
         RenderBus.AddCommand(ERenderPass::Opaque, Cmd);
     }
+}
+
+void FStaticMeshRenderProxy::Release()
+{
+	if (StaticVFData)
+	{
+        delete StaticVFData;
+	}
 }
