@@ -1,4 +1,4 @@
-#include "Editor/EditorEngine.h"
+﻿#include "Editor/EditorEngine.h"
 
 #include "Engine/Runtime/WindowsWindow.h"
 #include "Engine/Serialization/SceneSaveManager.h"
@@ -203,22 +203,8 @@ bool UEditorEngine::CanCloseApplication()
 
 void UEditorEngine::Tick(float DeltaTime)
 {
-#if STATS
-    const auto FrameStart = std::chrono::steady_clock::now();
-    const EViewportPlayState StateAtFrameStart = GetEditorState();
-
-    const auto UpdateStart = std::chrono::steady_clock::now();
-    const auto UpdateEnd = std::chrono::steady_clock::now();
-
-    const auto PlayRequestStart = std::chrono::steady_clock::now();
-#endif
     ProcessQueuedPlaySessionRequests();
-#if STATS
-    const auto PlayRequestEnd = std::chrono::steady_clock::now();
-    const EViewportPlayState StateAfterPlayRequests = GetEditorState();
 
-    const auto InputSetupStart = std::chrono::steady_clock::now();
-#endif
     const FGuiInputState& GuiState = InputSystem::Get().GetGuiInputState();
     const bool bGuiKeyboardCaptureForViewport =
         (GuiState.bUsingKeyboard || GuiState.bUsingTextInput) && !GuiState.bAllowViewportMouseFocus;
@@ -243,17 +229,10 @@ void UEditorEngine::Tick(float DeltaTime)
         InputSystem::Get().SetGuiViewportMouseFocusAllowed(true);
         PIESession.ConsumeViewportInputFocusFrame();
     }
-#if STATS
-    const auto InputSetupEnd = std::chrono::steady_clock::now();
 
-    const auto InputRouteStart = std::chrono::steady_clock::now();
-#endif
     FViewportInputContext RoutedInputContext;
     FInteractionBinding RoutedInputBinding;
     EditorInputRouter.Tick(DeltaTime, RoutedInputContext, RoutedInputBinding);
-#if STATS
-    const auto InputRouteEnd = std::chrono::steady_clock::now();
-#endif
 
     // Viewer는 FEditorViewportLayout 밖에 있으므로 routed input 결과를 기준으로
     // active/hover 상태를 직접 동기화한다. Focus 여부만 보면 클릭/드래그 중
@@ -295,123 +274,16 @@ void UEditorEngine::Tick(float DeltaTime)
         }
     }
 
-#if STATS
-    const auto PanelStart = std::chrono::steady_clock::now();
-#endif
     ViewportLayout.Tick(DeltaTime);
     for (auto& ViewerPtr : Viewers)
     {
         ViewerPtr->Tick(DeltaTime);
     }
     MainPanel.Update();
-#if STATS
-    const auto PanelEnd = std::chrono::steady_clock::now();
 
-    const auto WorldStart = std::chrono::steady_clock::now();
-#endif
     WorldTick(DeltaTime);
-#if STATS
-    const auto WorldEnd = std::chrono::steady_clock::now();
 
-    const auto RenderStart = std::chrono::steady_clock::now();
-#endif
     Render(DeltaTime);
-#if STATS
-    const auto RenderEnd = std::chrono::steady_clock::now();
-
-    static int32 PostPIETraceFrames = 0;
-    static int32 PostPIETraceFrameIndex = 0;
-    static std::chrono::steady_clock::time_point LastSlowFrameLogTime = {};
-
-    if (StateAtFrameStart != EViewportPlayState::Editing &&
-        StateAfterPlayRequests == EViewportPlayState::Editing)
-    {
-        PostPIETraceFrames = 180;
-        PostPIETraceFrameIndex = 0;
-        UE_LOG("[EditorFramePerf] PIE stop detected. Tracing next %d editor frames.", PostPIETraceFrames);
-    }
-
-    const auto FrameEnd = std::chrono::steady_clock::now();
-    auto ToMs = [](std::chrono::steady_clock::duration Duration)
-    {
-        return std::chrono::duration<double, std::milli>(Duration).count();
-    };
-
-    const double FrameMs = ToMs(FrameEnd - FrameStart);
-    const bool bPostPIETracing = PostPIETraceFrames > 0;
-    const bool bInitialPostPIEFrame = bPostPIETracing && PostPIETraceFrameIndex < 12;
-    const bool bPeriodicPostPIEFrame = bPostPIETracing && (PostPIETraceFrameIndex % 30 == 0);
-    const auto Now = FrameEnd;
-    const bool bCanThrottleLog =
-        LastSlowFrameLogTime.time_since_epoch().count() == 0 ||
-        std::chrono::duration<double>(Now - LastSlowFrameLogTime).count() >= 0.25;
-    const bool bSlowFrame = FrameMs >= 30.0;
-
-    if (bInitialPostPIEFrame || bPeriodicPostPIEFrame || (bSlowFrame && bCanThrottleLog))
-    {
-        LastSlowFrameLogTime = Now;
-
-        int32 PIEWorldCount = 0;
-        int32 PausedWorldCount = 0;
-        FString WorldSummary;
-        for (const FWorldContext& Ctx : WorldList)
-        {
-            if (Ctx.WorldType == EWorldType::PIE)
-            {
-                ++PIEWorldCount;
-            }
-            if (Ctx.bPaused)
-            {
-                ++PausedWorldCount;
-            }
-
-            if (!WorldSummary.empty())
-            {
-                WorldSummary += ", ";
-            }
-            WorldSummary += Ctx.ContextHandle.ToString();
-            WorldSummary += ":";
-            WorldSummary += WorldTypeName(Ctx.WorldType);
-            if (Ctx.ContextHandle == ActiveWorldHandle)
-            {
-                WorldSummary += "*";
-            }
-            if (Ctx.bPaused)
-            {
-                WorldSummary += "(Paused)";
-            }
-        }
-        const int32 VisibleRmlDocuments = GetRmlUiSystem().GetVisibleDocumentCount();
-
-        UE_LOG("[EditorFramePerf] Frame=%.2fms State=%s->%s PostPIEFrame=%d Update=%.2fms PlayReq=%.2fms InputSetup=%.2fms InputRoute=%.2fms Panel=%.2fms World=%.2fms Render=%.2fms Worlds=%zu PIEWorlds=%d PausedWorlds=%d Active=%s PendingScene=%d RmlDocs=%zu VisibleRml=%d Scene=%s | %s",
-               FrameMs,
-               EditorPlayStateName(StateAtFrameStart),
-               EditorPlayStateName(StateAfterPlayRequests),
-               bPostPIETracing ? PostPIETraceFrameIndex : -1,
-               ToMs(UpdateEnd - UpdateStart),
-               ToMs(PlayRequestEnd - PlayRequestStart),
-               ToMs(InputSetupEnd - InputSetupStart),
-               ToMs(InputRouteEnd - InputRouteStart),
-               ToMs(PanelEnd - PanelStart),
-               ToMs(WorldEnd - WorldStart),
-               ToMs(RenderEnd - RenderStart),
-               WorldList.size(),
-               PIEWorldCount,
-               PausedWorldCount,
-               ActiveWorldHandle.ToString().c_str(),
-               bPendingSceneOpen ? 1 : 0,
-               GetRmlUiSystem().GetDocumentCount(),
-               VisibleRmlDocuments,
-               CurrentScenePath.c_str(),
-               WorldSummary.c_str());
-    }
-
-    if (PostPIETraceFrames > 0)
-    {
-        --PostPIETraceFrames;
-        ++PostPIETraceFrameIndex;
-    }
-#endif
 }
 
 void UEditorEngine::RequestPIEViewportInputFocus(int32 FrameCount)
@@ -1126,15 +998,9 @@ void UEditorEngine::StopPlaySession()
 
 void UEditorEngine::StopPlaySessionNow()
 {
-#if STATS
-    const auto StopStart = std::chrono::steady_clock::now();
-#endif
     if (GetEditorState() == EViewportPlayState::Editing && !PIESession.HasAnyViewportWorld())
         return;
 
-#if STATS
-    const auto PrepStart = std::chrono::steady_clock::now();
-#endif
     bPendingSceneOpen = false;
     PendingSceneOpenPath.clear();
     CurrentScenePath.clear();
@@ -1147,12 +1013,7 @@ void UEditorEngine::StopPlaySessionNow()
     int32 FocusedIdx = PIESession.ResolveActiveViewportIndex(ViewportLayout.GetLastFocusedViewportIndex());
     FocusedIdx = PIESession.ResolveRegisteredViewportIndex(FocusedIdx);
     FEditorViewportClient* FocusedClient = ViewportLayout.GetViewportClient(FocusedIdx);
-#if STATS
-    const auto PrepEnd = std::chrono::steady_clock::now();
 
-    // 기존 PIE 월드를 해제합니다.
-    const auto WorldCleanupStart = std::chrono::steady_clock::now();
-#endif
     FName PIEHandle;
     if (PIESession.RemoveViewportWorld(FocusedIdx, PIEHandle))
     {
@@ -1165,12 +1026,7 @@ void UEditorEngine::StopPlaySessionNow()
             GetAudioSystem().StopAll();
         }
     }
-#if STATS
-    const auto WorldCleanupEnd = std::chrono::steady_clock::now();
 
-    // 원본 에디터 월드를 검색합니다.
-    const auto RestoreWorldStart = std::chrono::steady_clock::now();
-#endif
     FName EditorHandle = GetEditorWorldHandle();
     UWorld* EditorWorld = nullptr;
     
@@ -1182,12 +1038,7 @@ void UEditorEngine::StopPlaySessionNow()
             EditorWorld = Ctx->World;
         }
     }
-#if STATS
-    const auto RestoreWorldEnd = std::chrono::steady_clock::now();
 
-    // 원본 에디터 월드로 뷰포트 및 상태를 복구합니다.
-    const auto ViewportRestoreStart = std::chrono::steady_clock::now();
-#endif
     ViewportLayout.SetLastFocusedViewportIndex(FocusedIdx);
     FocusedClient->EndPIE(EditorWorld);
     SetEditorState(EViewportPlayState::Editing);
@@ -1205,38 +1056,9 @@ void UEditorEngine::StopPlaySessionNow()
         Ctx.SelectionManager->ClearSelection();
 	}
 
-#if STATS
-    const auto ViewportRestoreEnd = std::chrono::steady_clock::now();
-
-    const auto RmlUnloadStart = std::chrono::steady_clock::now();
-#endif
     GetRmlUiSystem().UnloadGameplayDocuments();
-#if STATS
-    const auto RmlUnloadEnd = std::chrono::steady_clock::now();
 
-    const auto LuaResetStart = std::chrono::steady_clock::now();
-#endif
     FScriptManager::Get().ResetLuaState();
-#if STATS
-    const auto LuaResetEnd = std::chrono::steady_clock::now();
-
-    const auto StopEnd = std::chrono::steady_clock::now();
-    auto ToMs = [](std::chrono::steady_clock::duration Duration)
-    {
-        return std::chrono::duration<double, std::milli>(Duration).count();
-    };
-    UE_LOG("[PIEPerf] Stop Total=%.2fms Prep=%.2fms WorldCleanup=%.2fms RestoreWorld=%.2fms ViewportRestore=%.2fms RmlUnload=%.2fms LuaReset=%.2fms RemainingWorlds=%zu Active=%s RmlDocs=%zu",
-           ToMs(StopEnd - StopStart),
-           ToMs(PrepEnd - PrepStart),
-           ToMs(WorldCleanupEnd - WorldCleanupStart),
-           ToMs(RestoreWorldEnd - RestoreWorldStart),
-           ToMs(ViewportRestoreEnd - ViewportRestoreStart),
-           ToMs(RmlUnloadEnd - RmlUnloadStart),
-           ToMs(LuaResetEnd - LuaResetStart),
-           WorldList.size(),
-           ActiveWorldHandle.ToString().c_str(),
-           GetRmlUiSystem().GetDocumentCount());
-#endif
 }
 
 void UEditorEngine::ResetViewport()

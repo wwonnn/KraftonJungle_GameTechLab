@@ -1,9 +1,10 @@
-﻿#include "Editor/Animation/AnimationSequenceNotifyLaneWidget.h"
+#include "Editor/Animation/AnimationSequenceNotifyLaneWidget.h"
 
 #include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceSequencerLayout.h"
+#include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
 #include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
 
 #include "ImGui/imgui.h"
@@ -23,7 +24,8 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
     FAnimationSequenceEditorState& State,
     FAnimationSequenceEditorDocument* Document,
     const FAnimationSequenceTimelineGeometry& Geometry,
-    float SectionTop)
+    const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+    float TimelineRowOriginY)
 {
     State.HoveredNotifyTrackIndex = -1;
     State.HoveredNotifyEventIndex = -1;
@@ -35,43 +37,19 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
         State.DraggedNotifyGrabOffsetTime = 0.0f;
     }
 
-    const int32 TrackCount = Document ? Document->GetNotifyTrackCount() : 0;
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-    const ImVec2 HeaderMin(Geometry.CanvasPos.x + 4.0f, SectionTop);
-    const ImVec2 HeaderMax(Geometry.CanvasEnd.x - 4.0f, SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight);
-    DrawList->AddRectFilled(HeaderMin, HeaderMax, IM_COL32(29, 34, 41, 255), 4.0f);
-    DrawList->AddRect(HeaderMin, HeaderMax, IM_COL32(255, 255, 255, 18), 4.0f);
-    DrawList->AddText(ImVec2(HeaderMin.x + 8.0f, HeaderMin.y + 4.0f), IM_COL32(208, 214, 226, 255), "Notifies");
-
-    if (!State.bNotifiesExpanded)
-    {
-        return;
-    }
-
-    const float RowsTop = SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
     bool bMouseOverMarker = false;
-    for (int32 TrackIndex = 0; TrackIndex < std::max(TrackCount, 1); ++TrackIndex)
+
+    for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
     {
-        const float RowTop =
-            RowsTop +
-            TrackIndex *
-            (FAnimationSequenceSequencerLayout::NotifyTrackRowHeight + FAnimationSequenceSequencerLayout::NotifyTrackRowSpacing);
-        const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::NotifyTrackRowHeight;
-        const bool bTrackSelected = State.SelectedNotifyTrackIndex == TrackIndex;
+        if (Row.Type != EAnimationSequenceSequencerVisibleRowType::NotifyTrack)
+        {
+            continue;
+        }
 
-        DrawList->AddRectFilled(
-            ImVec2(Geometry.TimelineMinX, RowTop),
-            ImVec2(Geometry.TimelineMaxX, RowBottom),
-            bTrackSelected ? IM_COL32(34, 45, 59, 230) : IM_COL32(20, 24, 30, 200),
-            4.0f);
-        DrawList->AddRect(
-            ImVec2(Geometry.TimelineMinX, RowTop),
-            ImVec2(Geometry.TimelineMaxX, RowBottom),
-            IM_COL32(255, 255, 255, 18),
-            4.0f);
-
-        const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(TrackIndex) : nullptr;
+        const float RowTop = TimelineRowOriginY + Row.OffsetY;
+        const float RowBottom = RowTop + Row.Height;
+        const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(Row.SourceIndex) : nullptr;
         if (!Track)
         {
             continue;
@@ -92,40 +70,42 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 RowBottom - 3.0f);
 
             ImGui::SetCursorScreenPos(MarkerMin);
-            ImGui::PushID(TrackIndex * 1024 + EventIndex);
+            ImGui::PushID(Row.SourceIndex * 1024 + EventIndex);
             ImGui::InvisibleButton(
                 "##AnimNotifyEvent",
                 ImVec2(std::max(MarkerMax.x - MarkerMin.x, 1.0f), std::max(MarkerMax.y - MarkerMin.y, 1.0f)));
 
             const bool bSelected =
-                State.SelectedNotifyTrackIndex == TrackIndex &&
+                State.SelectedNotifyTrackIndex == Row.SourceIndex &&
                 State.SelectedNotifyEventIndex == EventIndex;
             const bool bHovered = ImGui::IsItemHovered();
             if (bHovered)
             {
                 bMouseOverMarker = true;
-                State.HoveredNotifyTrackIndex = TrackIndex;
+                State.HoveredNotifyTrackIndex = Row.SourceIndex;
                 State.HoveredNotifyEventIndex = EventIndex;
+                State.SetHoveredSequencerRow(Row.Id);
             }
 
             if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && Document)
             {
+                State.SetFocusedSequencerRow(Row.Id);
                 State.SelectedCurveIndex = -1;
                 State.HoveredCurveIndex = -1;
                 State.DraggedNotifyGrabOffsetTime =
                     Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - NotifyEvent.Time;
-                Document->SelectNotify(TrackIndex, EventIndex);
+                Document->SelectNotify(Row.SourceIndex, EventIndex);
             }
 
             if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
             {
                 State.bDraggingNotify = true;
-                State.DraggedNotifyTrackIndex = TrackIndex;
+                State.DraggedNotifyTrackIndex = Row.SourceIndex;
                 State.DraggedNotifyEventIndex = EventIndex;
                 State.SelectedCurveIndex = -1;
                 if (Document)
                 {
-                    Document->SelectNotify(TrackIndex, EventIndex);
+                    Document->SelectNotify(Row.SourceIndex, EventIndex);
                 }
             }
 
@@ -152,28 +132,23 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
     if (Document && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && !bMouseOverMarker)
     {
         const ImVec2 MousePos = ImGui::GetIO().MousePos;
-        int32 TargetTrackIndex = 0;
-        bool bMouseInsideTrackRows = false;
-        for (int32 TrackIndex = 0; TrackIndex < std::max(TrackCount, 1); ++TrackIndex)
+        for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
         {
-            const float RowTop =
-                RowsTop +
-                TrackIndex *
-                (FAnimationSequenceSequencerLayout::NotifyTrackRowHeight + FAnimationSequenceSequencerLayout::NotifyTrackRowSpacing);
-            const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::NotifyTrackRowHeight;
+            if (Row.Type != EAnimationSequenceSequencerVisibleRowType::NotifyTrack)
+            {
+                continue;
+            }
+
+            const float RowTop = TimelineRowOriginY + Row.OffsetY;
+            const float RowBottom = RowTop + Row.Height;
             if (MousePos.y >= RowTop && MousePos.y <= RowBottom)
             {
-                TargetTrackIndex = TrackIndex;
-                bMouseInsideTrackRows = true;
+                const float NewTime = Geometry.XToTime(State, Geometry.ClampX(MousePos.x));
+                State.SetFocusedSequencerRow(Row.Id);
+                State.SelectedCurveIndex = -1;
+                Document->AddNotifyAtTime(Row.SourceIndex, NewTime);
                 break;
             }
-        }
-
-        if (bMouseInsideTrackRows)
-        {
-            const float NewTime = Geometry.XToTime(State, Geometry.ClampX(MousePos.x));
-            State.SelectedCurveIndex = -1;
-            Document->AddNotifyAtTime(TargetTrackIndex, NewTime);
         }
     }
 }

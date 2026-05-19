@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "Editor/Animation/AnimationSequenceCurveFilter.h"
+#include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
 
 class FAnimationSequenceEditorState;
 class FAnimationSequenceEditorDocument;
@@ -11,6 +11,6 @@ public:
     void Render(
         FAnimationSequenceEditorState& State,
         FAnimationSequenceEditorDocument* Document,
-        const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups,
-        const TArray<FAnimationSequenceCurveViewGroup>& AttributeCurveGroups);
+        const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
+        float RowOriginY);
 };

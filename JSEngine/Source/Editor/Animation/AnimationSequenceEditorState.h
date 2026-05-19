@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Animation/AnimData/FrameRate.h"
+#include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
 #include "Core/CoreMinimal.h"
 
 class UAnimSequence;
@@ -16,6 +17,8 @@ public:
     float GetMaxTime() const;
     float GetMinimumVisibleRange() const;
     float GetVisibleRange() const;
+    float GetTimelineRangeStart() const { return TimelineRangeStart; }
+    float GetTimelineRangeEnd() const { return TimelineRangeEnd; }
 
     float ClampTime(float InTime) const;
     float SnapTimeToFrame(float InTime) const;
@@ -25,12 +28,19 @@ public:
     float FrameToTime(int32 FrameIndex) const;
 
     void SetCurrentTime(float InTime, bool bApplySnap);
+    void SetTimelineRange(float InStartTime, float InEndTime);
     void SetVisibleRange(float InStartTime, float InEndTime);
     void PanVisibleRange(float DeltaTime);
     void ZoomVisibleRange(float AnchorTime, float ZoomFactor);
 
     int32 ChooseMajorFrameStep(float TimelinePixelWidth) const;
     int32 ChooseMinorFrameStep(float TimelinePixelWidth) const;
+    void SetHoveredSequencerRow(const FAnimationSequenceSequencerRowId& RowId);
+    void ClearHoveredSequencerRow();
+    void SetFocusedSequencerRow(const FAnimationSequenceSequencerRowId& RowId);
+    void ClearFocusedSequencerRow();
+    bool IsHoveredSequencerRow(const FAnimationSequenceSequencerRowId& RowId) const;
+    bool IsFocusedSequencerRow(const FAnimationSequenceSequencerRowId& RowId) const;
     bool HasSelectedNotify() const
     {
         return SelectedNotifyTrackIndex >= 0 && SelectedNotifyEventIndex >= 0;
@@ -46,6 +56,8 @@ public:
     bool bSnapToFrames = true;
     float VisibleTimeStart = 0.0f;
     float VisibleTimeEnd = 1.0f;
+    float TimelineRangeStart = 0.0f;
+    float TimelineRangeEnd = 1.0f;
     float PreviewPaneHeight = 0.0f;
     float SequencerDetailsPaneHeight = 0.0f;
     float TrackOutlinerWidth = 0.0f;
@@ -67,6 +79,8 @@ public:
     int32 DraggedNotifyEventIndex = -1;
     int32 SelectedCurveIndex = -1;
     int32 HoveredCurveIndex = -1;
+    FAnimationSequenceSequencerRowId HoveredSequencerRowId;
+    FAnimationSequenceSequencerRowId FocusedSequencerRowId;
     bool bDraggingNotify = false;
     float DraggedNotifyGrabOffsetTime = 0.0f;
 };
