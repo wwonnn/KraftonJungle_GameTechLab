@@ -104,21 +104,10 @@ void FShadowPass::RenderShadowDepth(
 			continue;
 		}
 
-		ID3D11Buffer* VertexBuffer = Cmd.MeshBuffer->GetVertexBuffer().GetBuffer();
-		uint32 VertexCount = Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount();
-		uint32 Stride = Cmd.MeshBuffer->GetVertexBuffer().GetStride();
-		if (!VertexBuffer || VertexCount == 0 || Stride == 0)
-		{
-			continue;
-		}
-
 		Context->RenderResources->PerObjectConstantBuffer.Update(
 			DeviceContext, &Cmd.PerObjectConstants, sizeof(FPerObjectConstants));
 		ID3D11Buffer* cb1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();
 		DeviceContext->VSSetConstantBuffers(1, 1, &cb1);
-
-		uint32 Offset = 0;
-		DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
 
 		// Per-command choose whether GPU skinning will be used and select input layout
 		bool bUseGPUSkinning = false;
@@ -145,25 +134,26 @@ void FShadowPass::RenderShadowDepth(
 		}
 
 		FShaderProgram* Program = GetShadowProgram(Cmd.VertexFactoryType, ShadowKey, bUseGPUSkinning, PositionLayout);
-			if (!Program)
-			{
-				continue;
-			}
+		if (!Program)
+		{
+			continue;
+		}
 
-			Program->Bind(DeviceContext);
-			BindVertexFactoryResources(DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
-			CheckOverrideViewMode(Context);
+		Program->Bind(DeviceContext);
+        IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+        VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
+		CheckOverrideViewMode(Context);
 
-			ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
-			if (IndexBuffer != nullptr)
-			{
-				DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-				DeviceContext->DrawIndexed(Cmd.SectionIndexCount, Cmd.SectionIndexStart, 0);
-			}
-			else
-			{
-				DeviceContext->Draw(VertexCount, 0);
-			}
+		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
+		if (IndexBuffer != nullptr)
+		{
+			DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+			DeviceContext->DrawIndexed(Cmd.SectionIndexCount, Cmd.SectionIndexStart, 0);
+		}
+		else
+		{
+            DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
+		}
 	}
 }
 
