@@ -10,7 +10,8 @@ struct FAnimationSequenceSequencerLayout
     static constexpr float SequencerMinHeight = 260.0f;
     static constexpr float SectionSplitterHeight = 6.0f;
 
-    static constexpr float TransportBarHeight = 72.0f;
+    static constexpr float BottomTransportControlsHeight = 88.0f;
+    static constexpr float TimelineFooterHeight = 44.0f;
     static constexpr float DetailsPanelHeight = 156.0f;
     static constexpr float RulerHeight = 24.0f;
     static constexpr float TrackAreaPadding = 8.0f;

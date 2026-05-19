@@ -11,6 +11,7 @@
 #include <array>
 
 class UAnimSequence;
+class UTexture;
 class FAnimationSequenceEditorState;
 class FAnimationSequencePreviewController;
 class FAnimationSequenceEditorDocument;
@@ -39,7 +40,6 @@ private:
     void SyncEmbeddedViewportRectAndFocus(const ImVec2& Min, const ImVec2& Max, bool bViewportClicked);
     void RenderPreviewToolbarOverlay(const ImVec2& Min, const ImVec2& Max) const;
     void RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight);
-    void RenderTransportBar();
     void RenderSequencerSplitPane(
         float SplitPaneHeight,
         float DetailsPaneHeight,
@@ -53,9 +53,17 @@ private:
         float Width,
         float Height,
         const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups);
+    void RenderTimelineFooter(float Width);
     void RenderSelectionDetailsPane(float Height);
+    void EnsurePlaybackControlIconsLoaded();
+    bool DrawPlaybackControlButton(
+        const char* ButtonId,
+        UTexture* IconTexture,
+        const char* FallbackLabel,
+        const char* Tooltip,
+        const ImVec2& Size,
+        bool bSelected = false) const;
     void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl);
-    void RenderPlaybackSummary() const;
     void RenderNotifyDetailsPanel();
     void RenderCurveInspectionPanel() const;
     void RenderRecentNotifySummary() const;
@@ -86,6 +94,19 @@ private:
     FAnimationSequenceNotifyLaneWidget NotifyLaneWidget;
     FAnimationSequenceTrackOutlinerWidget TrackOutlinerWidget;
     FAnimationSequenceCurveTrackWidget CurveTrackWidget;
+    struct FPlaybackControlIconCache
+    {
+        bool bAttemptedLoad = false;
+        UTexture* JumpToStart = nullptr;
+        UTexture* StepPrevious = nullptr;
+        UTexture* PlayForward = nullptr;
+        UTexture* Pause = nullptr;
+        UTexture* Stop = nullptr;
+        UTexture* StepNext = nullptr;
+        UTexture* JumpToEnd = nullptr;
+        UTexture* LoopEnabled = nullptr;
+        UTexture* LoopDisabled = nullptr;
+    } PlaybackControlIcons;
     FString NotifyDetailsBoundStableId;
     std::array<char, 256> NotifyNameEditBuffer = {};
     std::array<char, 256> NotifySoundCueEditBuffer = {};

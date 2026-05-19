@@ -147,7 +147,7 @@ void FAnimationSequenceTimelineWidget::RenderCanvas(
     DrawList->AddText(
         ImVec2(Geometry.CanvasPos.x + 10.0f, Geometry.CanvasEnd.y - 20.0f),
         ImGui::GetColorU32(ImGuiCol_TextDisabled),
-        bCanvasHovered ? "Wheel: Zoom  Middle-drag: Pan  Left-drag on ruler: Scrub" : "Timeline Canvas");
+        bCanvasHovered ? "Left-drag on ruler: Scrub" : "Timeline Canvas");
 
     DrawList->AddText(
         ImVec2(Geometry.CanvasEnd.x - 118.0f, Geometry.CanvasEnd.y - 20.0f),
