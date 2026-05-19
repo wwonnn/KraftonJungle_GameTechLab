@@ -3,6 +3,17 @@
 
 class UMaterialInterface;
 
+USTRUCT()
+struct FScrollUV
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, DisplayName="Scroll U", Min=-1.0, Max=1.0, Speed=0.01)
+	float U = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Scroll V", Min=-1.0, Max=1.0, Speed=0.01)
+	float V = 0.0f;
+};
+
 class UMeshComponent : public UPrimitiveComponent
 {
 public:
@@ -14,7 +25,7 @@ public:
 	virtual UMaterialInterface* GetMaterial(int32 SlotIndex) const override;
 
 	const TArray<UMaterialInterface*>& GetOverrideMaterial() const;
-	const std::pair<float, float> GetScroll() const { return ScrollUV; };
+	const std::pair<float, float> GetScroll() const { return { ScrollUV.U, ScrollUV.V }; };
 
 	virtual int32 GetNumMaterials() const override;
 	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
@@ -24,5 +35,6 @@ public:
 
 protected:
 	TArray<UMaterialInterface*> Materials;
-	std::pair<float, float> ScrollUV = { };
+	UPROPERTY(EditAnywhere)
+	FScrollUV ScrollUV;
 };

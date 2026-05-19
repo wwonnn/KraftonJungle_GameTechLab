@@ -26,8 +26,10 @@ OUTPUT_CPP = OUTPUT_DIR / "Reflection.generated.cpp"
 
 
 DECLARE_CLASS_RE = re.compile(r"DECLARE_CLASS\s*\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\)")
+USTRUCT_RE = re.compile(r"USTRUCT\s*\([^)]*\)\s*(?:\r?\n\s*)*struct\s+([A-Za-z_]\w*)")
+UENUM_RE = re.compile(r"UENUM\s*\([^)]*\)\s*(?:\r?\n\s*)*enum\s+class\s+([A-Za-z_]\w*)(?:\s*:\s*[A-Za-z_]\w*)?")
 DECL_RE = re.compile(
-    r"^(?P<type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?(?:\s*[*&])?)\s+"
+    r"^(?P<type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?(?:\s*<[^;{}]+>)?(?:\s*[*&])?)\s+"
     r"(?P<name>[A-Za-z_]\w*)\s*(?:[={].*)?;\s*$"
 )
 
@@ -55,6 +57,9 @@ PROPERTY_CLASS_MAP = {
     "EPropertyType::Color": "FColorProperty",
     "EPropertyType::ObjectRef": "FObjectProperty",
     "EPropertyType::SceneComponentRef": "FSceneComponentProperty",
+    "EPropertyType::Struct": "FStructProperty",
+    "EPropertyType::Enum": "FEnumProperty",
+    "EPropertyType::Vec3Array": "FArrayProperty",
 }
 
 
@@ -66,14 +71,29 @@ def normalize_type(type_text: str) -> str:
     return re.sub(r"\s+", "", type_text.strip())
 
 
-def get_property_type(type_text: str) -> tuple[str, str]:
+def get_property_type(
+    type_text: str,
+    reflected_structs: set[str] | None = None,
+    reflected_enums: set[str] | None = None,
+) -> tuple[str, str]:
+    reflected_structs = reflected_structs or set()
+    reflected_enums = reflected_enums or set()
     normalized = normalize_type(type_text)
+    if normalized == "TArray<FVector>":
+        return "EPropertyType::Vec3Array", "nullptr"
+
     if normalized.endswith("*"):
         object_type = normalized[:-1]
         return "EPropertyType::ObjectRef", f"&{object_type}::s_TypeInfo"
 
     if normalized in TYPE_MAP:
         return TYPE_MAP[normalized], "nullptr"
+
+    if normalized in reflected_structs:
+        return "EPropertyType::Struct", f"Z_Construct_UStruct_{normalized}()"
+
+    if normalized in reflected_enums:
+        return "EPropertyType::Enum", f"Z_Construct_UEnum_{normalized}()"
 
     raise ValueError(f"Unsupported UPROPERTY type: {type_text}")
 
@@ -258,7 +278,83 @@ def find_class_ranges(text: str) -> list[tuple[str, int, int]]:
     return ranges
 
 
-def parse_header(path: Path) -> dict[str, list[dict[str, str]]]:
+def find_reflected_struct_ranges(text: str) -> list[tuple[str, int, int]]:
+    ranges: list[tuple[str, int, int]] = []
+    for match in USTRUCT_RE.finditer(text):
+        struct_name = match.group(1)
+        brace_start = text.find("{", match.end())
+        if brace_start < 0:
+            continue
+
+        depth = 0
+        end = -1
+        for index in range(brace_start, len(text)):
+            char = text[index]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    end = index
+                    break
+
+        if end >= 0:
+            ranges.append((struct_name, brace_start, end))
+
+    return ranges
+
+
+def find_reflected_enum_ranges(text: str) -> list[tuple[str, int, int]]:
+    ranges: list[tuple[str, int, int]] = []
+    for match in UENUM_RE.finditer(text):
+        enum_name = match.group(1)
+        brace_start = text.find("{", match.end())
+        if brace_start < 0:
+            continue
+
+        depth = 0
+        end = -1
+        for index in range(brace_start, len(text)):
+            char = text[index]
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    end = index
+                    break
+
+        if end >= 0:
+            ranges.append((enum_name, brace_start, end))
+
+    return ranges
+
+
+def parse_enum_values(text: str, start: int, end: int) -> list[dict[str, str]]:
+    body = text[start + 1:end]
+    values: list[dict[str, str]] = []
+    for raw_entry in body.split(","):
+        entry = raw_entry.split("//", 1)[0].strip()
+        if not entry:
+            continue
+        display_match = re.search(r'UMETA\s*\(\s*DisplayName\s*=\s*"([^"]+)"\s*\)', entry)
+        display_name = display_match.group(1) if display_match else None
+        entry = re.sub(r"UMETA\s*\([^)]*\)", "", entry).strip()
+        name = entry.split("=", 1)[0].strip()
+        if not re.fullmatch(r"[A-Za-z_]\w*", name):
+            continue
+        if name in {"MAX", "Max", "Count", "COUNT", "Num", "NUM"}:
+            continue
+        values.append({"name": name, "display_name": display_name or name})
+    return values
+
+
+def parse_properties_for_ranges(
+    path: Path,
+    ranges: list[tuple[str, int, int]],
+    reflected_structs: set[str],
+    reflected_enums: set[str],
+) -> dict[str, list[dict[str, str]]]:
     text = path.read_text(encoding="utf-8-sig", errors="ignore")
     lines = text.splitlines()
     line_offsets: list[int] = []
@@ -267,24 +363,23 @@ def parse_header(path: Path) -> dict[str, list[dict[str, str]]]:
         line_offsets.append(cursor)
         cursor += len(line) + 1
 
-    class_ranges = find_class_ranges(text)
-    if not class_ranges:
+    if not ranges:
         return {}
 
-    properties_by_class: dict[str, list[dict[str, str]]] = {}
+    properties_by_owner: dict[str, list[dict[str, str]]] = {}
     pending_metadata: dict[str, str] | None = None
     pending_line = 0
 
     for line_index, line in enumerate(lines):
         offset = line_offsets[line_index]
-        active_class = None
-        for class_name, start, end in class_ranges:
+        active_owner = None
+        for owner_name, start, end in ranges:
             if start <= offset <= end:
-                active_class = class_name
+                active_owner = owner_name
                 break
 
         clean = strip_line_comment(line)
-        if not active_class:
+        if not active_owner:
             pending_metadata = None
             continue
 
@@ -308,12 +403,12 @@ def parse_header(path: Path) -> dict[str, list[dict[str, str]]]:
 
         type_text = declaration.group("type")
         member_name = declaration.group("name")
-        property_type, object_type = get_property_type(type_text)
+        property_type, object_type = get_property_type(type_text, reflected_structs, reflected_enums)
         if pending_metadata["type_override"]:
             property_type = pending_metadata["type_override"]
             object_type = "nullptr"
 
-        properties_by_class.setdefault(active_class, []).append(
+        properties_by_owner.setdefault(active_owner, []).append(
             {
                 "access": pending_metadata["access"],
                 "name": member_name,
@@ -330,18 +425,58 @@ def parse_header(path: Path) -> dict[str, list[dict[str, str]]]:
         )
         pending_metadata = None
 
-    return properties_by_class
+    return properties_by_owner
 
 
 def main() -> None:
     reflected: dict[str, dict[str, object]] = {}
+    reflected_structs: dict[str, dict[str, object]] = {}
+    reflected_enums: dict[str, dict[str, object]] = {}
 
-    for header in sorted(SOURCE_DIR.rglob("*.h")):
-        parsed = parse_header(header)
+    headers = sorted(SOURCE_DIR.rglob("*.h"))
+
+    for header in headers:
+        text = header.read_text(encoding="utf-8-sig", errors="ignore")
+        rel_header = header.relative_to(SOURCE_DIR).as_posix()
+
+        for struct_name, _, _ in find_reflected_struct_ranges(text):
+            reflected_structs[struct_name] = {
+                "header": rel_header,
+                "properties": [],
+            }
+
+        for enum_name, start, end in find_reflected_enum_ranges(text):
+            reflected_enums[enum_name] = {
+                "header": rel_header,
+                "values": parse_enum_values(text, start, end),
+            }
+
+    reflected_struct_names = set(reflected_structs.keys())
+    reflected_enum_names = set(reflected_enums.keys())
+
+    for header in headers:
+        text = header.read_text(encoding="utf-8-sig", errors="ignore")
+        rel_header = header.relative_to(SOURCE_DIR).as_posix()
+
+        parsed_structs = parse_properties_for_ranges(
+            header,
+            find_reflected_struct_ranges(text),
+            reflected_struct_names,
+            reflected_enum_names,
+        )
+        for struct_name, properties in parsed_structs.items():
+            if struct_name in reflected_structs:
+                reflected_structs[struct_name]["properties"] = properties
+
+        parsed = parse_properties_for_ranges(
+            header,
+            find_class_ranges(text),
+            reflected_struct_names,
+            reflected_enum_names,
+        )
         for class_name, properties in parsed.items():
             if not properties:
                 continue
-            rel_header = header.relative_to(SOURCE_DIR).as_posix()
             reflected[class_name] = {
                 "header": rel_header,
                 "properties": properties,
@@ -356,6 +491,128 @@ def main() -> None:
         "#include \"Object/Reflection.h\"",
         "",
     ]
+
+    include_headers = []
+    for collection in (reflected_structs, reflected_enums, reflected):
+        for data in collection.values():
+            header = data["header"]
+            if header not in include_headers:
+                include_headers.append(header)
+
+    for header in include_headers:
+        lines.append(f"#include \"{header}\"")
+
+    lines.append("")
+    for struct_name in reflected_structs:
+        lines.append(f"const UStruct* Z_Construct_UStruct_{struct_name}();")
+    for enum_name in reflected_enums:
+        lines.append(f"const UEnum* Z_Construct_UEnum_{enum_name}();")
+    for class_name in reflected:
+        lines.append(f"void RegisterGeneratedReflection_{class_name}();")
+
+    lines.extend(["", "namespace", "{"])
+    for class_name in reflected:
+        lines.append(f"    struct FAutoRegister_{class_name}")
+        lines.append("    {")
+        lines.append(f"        FAutoRegister_{class_name}()")
+        lines.append("        {")
+        lines.append(f"            RegisterGeneratedReflection_{class_name}();")
+        lines.append("        }")
+        lines.append("    };")
+        lines.append("")
+        lines.append(f"    FAutoRegister_{class_name} GAutoRegister_{class_name};")
+        lines.append("")
+    lines.append("}")
+    lines.append("")
+
+    def emit_property_declarations(owner_name: str, properties: list[dict[str, str]]) -> None:
+        for index, prop in enumerate(properties):
+            property_var = f"Property_{prop['name']}_{index}"
+            common_args = (
+                f"\"{prop['name']}\", {prop['display_name']}, {prop['serialize_name']}, "
+                f"offsetof({owner_name}, {prop['name']}), "
+                f"EPropertyAccess::{prop['access']}"
+            )
+            trailing_args = (
+                f"{make_float_literal(prop['min'])}, "
+                f"{make_float_literal(prop['max'])}, "
+                f"{make_float_literal(prop['speed'])}, "
+                f"{prop['usage_flags']}"
+            )
+            if prop["property_class"] in {"FObjectProperty", "FStructProperty", "FEnumProperty"}:
+                lines.append(
+                    f"    static const {prop['property_class']} {property_var}("
+                    f"{common_args}, {prop['object_type']}, {trailing_args});"
+                )
+            else:
+                lines.append(
+                    f"    static const {prop['property_class']} {property_var}("
+                    f"{common_args}, {trailing_args});"
+                )
+
+    def emit_property_array(properties: list[dict[str, str]]) -> None:
+        lines.append("    static const FProperty* Properties[] =")
+        lines.append("    {")
+        for index, prop in enumerate(properties):
+            lines.append(f"        &Property_{prop['name']}_{index},")
+        lines.append("    };")
+
+    for enum_name, data in reflected_enums.items():
+        values = data["values"]  # type: ignore[assignment]
+        lines.append(f"const UEnum* Z_Construct_UEnum_{enum_name}()")
+        lines.append("{")
+        lines.append("    static const char* Names[] =")
+        lines.append("    {")
+        for value in values:
+            lines.append(f"        \"{value['display_name']}\",")
+        lines.append("    };")
+        lines.append("")
+        lines.append("    static const FEnumValue Values[] =")
+        lines.append("    {")
+        for value in values:
+            lines.append(f"        {{ \"{value['name']}\", static_cast<int64>({enum_name}::{value['name']}) }},")
+        lines.append("    };")
+        lines.append("")
+        lines.append(f"    static const UEnum EnumInfo(\"{enum_name}\", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));")
+        lines.append("    return &EnumInfo;")
+        lines.append("}")
+        lines.append("")
+
+    for struct_name, data in reflected_structs.items():
+        properties = data["properties"]  # type: ignore[assignment]
+        lines.append(f"const UStruct* Z_Construct_UStruct_{struct_name}()")
+        lines.append("{")
+        emit_property_declarations(struct_name, properties)
+        emit_property_array(properties)
+        lines.append("")
+        lines.append(f"    static const UStruct StructInfo(\"{struct_name}\", sizeof({struct_name}), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));")
+        lines.append("    return &StructInfo;")
+        lines.append("}")
+        lines.append("")
+
+    for class_name, data in reflected.items():
+        properties = data["properties"]
+        lines.append(f"void RegisterGeneratedReflection_{class_name}()")
+        lines.append("{")
+        emit_property_declarations(class_name, properties)  # type: ignore[arg-type]
+        emit_property_array(properties)  # type: ignore[arg-type]
+        lines.append("")
+        lines.append(
+            f"    FReflectionRegistry::Get().RegisterProperties("
+            f"&{class_name}::s_TypeInfo, Properties, "
+            f"static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));"
+        )
+        lines.append("}")
+        lines.append("")
+
+    OUTPUT_CPP.write_text("\n".join(lines), encoding="utf-8", newline="\r\n")
+    print(
+        f"Generated {OUTPUT_CPP.relative_to(ROOT)} with "
+        f"{len(reflected)} reflected classes, "
+        f"{len(reflected_structs)} reflected structs, and "
+        f"{len(reflected_enums)} reflected enums."
+    )
+    return
 
     for data in reflected.values():
         lines.append(f"#include \"{data['header']}\"")

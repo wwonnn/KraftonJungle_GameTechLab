@@ -75,8 +75,6 @@ void UMeshComponent::Serialize(FArchive& Ar)
 		Ar << "Materials" << MaterialPaths;
 	}
 
-	Ar << "Scroll U" << ScrollUV.first;
-	Ar << "Scroll V" << ScrollUV.second;
 }
 
 void UMeshComponent::SetMaterial(int32 SlotIndex, UMaterialInterface* InMaterial)
@@ -117,9 +115,6 @@ int32 UMeshComponent::GetNumMaterials() const
 void UMeshComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
-
-	OutProps.push_back({ "Scroll U", EPropertyType::Float, &ScrollUV.first,  -1.0f, 1.0f, 0.01f });
-	OutProps.push_back({ "Scroll V", EPropertyType::Float, &ScrollUV.second, -1.0f, 1.0f, 0.01f });
 }
 
 void UMeshComponent::PostEditProperty(const char* PropertyName)
@@ -129,8 +124,8 @@ void UMeshComponent::PostEditProperty(const char* PropertyName)
 
 void UMeshComponent::TickComponent(float DeltaTime)
 {
-	//ScrollUV.second += DeltaTime;
+	//ScrollUV.V += DeltaTime;
 
-	//if (ScrollUV.first >= 1.f) ScrollUV.first = 0.f;
+	//if (ScrollUV.U >= 1.f) ScrollUV.U = 0.f;
 }
 

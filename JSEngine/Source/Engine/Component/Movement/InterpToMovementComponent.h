@@ -1,11 +1,12 @@
 ﻿#pragma once
 #include "MovementComponent.h"
 
+UENUM()
 enum class EInterpBehaviour {
-	OneShot,
-	OneShotReverse,
-	Loop,
-	PingPong,
+	OneShot UMETA(DisplayName="One Shot"),
+	OneShotReverse UMETA(DisplayName="One Shot Reverse"),
+	Loop UMETA(DisplayName="Loop"),
+	PingPong UMETA(DisplayName="Ping-Pong"),
 };
 
 class UInterpToMovementComponent : public UMovementComponent {
@@ -17,7 +18,6 @@ public:
 	// Overrides
 	void				BeginPlay() override;
 	void				TickComponent(float DeltaTime) override;
-    void				GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
     void				PostDuplicate(UObject* Original) override;
 	float				GetMaxSpeed() const override { return 0; };
 
@@ -70,7 +70,9 @@ private:
 	void				FaceTargetDir(float DeltaTime);
 
 private:
+	UPROPERTY(EditAnywhere, DisplayName="Interp Mode")
 	EInterpBehaviour	InterpBehaviour		= EInterpBehaviour::OneShot;
+	UPROPERTY(EditAnywhere, DisplayName="Control Points")
 	TArray<FVector>		ControlPoints;
 	uint32				CurrentPointID		= 0;
 	uint32				NextPointID			= 0;

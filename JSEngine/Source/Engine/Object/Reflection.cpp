@@ -12,6 +12,71 @@ FReflectionRegistry& FReflectionRegistry::Get()
     return Registry;
 }
 
+void UStruct::AppendProperties(void* StructValue, TArray<FPropertyDescriptor>& OutProps) const
+{
+    if (!StructValue || !Properties)
+    {
+        return;
+    }
+
+    for (uint32 Index = 0; Index < PropertyCount; ++Index)
+    {
+        const FProperty* Property = Properties[Index];
+        if (Property)
+        {
+            Property->AppendEditorDescriptor(StructValue, OutProps);
+        }
+    }
+}
+
+void UStruct::SerializeProperties(FArchive& Ar, UObject* OwnerObject, void* StructValue) const
+{
+    if (!StructValue || !Properties)
+    {
+        return;
+    }
+
+    for (uint32 Index = 0; Index < PropertyCount; ++Index)
+    {
+        const FProperty* Property = Properties[Index];
+        if (!Property || !Property->ShouldSerialize())
+        {
+            continue;
+        }
+
+        const char* Key = Property->GetSerializeKey();
+        if (!Key || (Property->ShouldCheckSerializeKey() && Ar.IsLoading() && !Ar.HasKey(Key)))
+        {
+            continue;
+        }
+
+        Property->SerializeItem(Ar, OwnerObject, StructValue);
+    }
+}
+
+void FProperty::AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const
+{
+    if (!Container || !GetName())
+    {
+        return;
+    }
+
+    OutProps.push_back({
+        GetName(),
+        GetType(),
+        ContainerPtrToValuePtr(Container),
+        GetMin(),
+        GetMax(),
+        GetSpeed(),
+        nullptr,
+        0,
+        nullptr,
+        GetDescriptorUsageFlags(),
+        GetObjectType(),
+        GetDisplayName()
+    });
+}
+
 void FBoolProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
 {
     (void)OwnerObject;
@@ -107,6 +172,59 @@ void FSceneComponentProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, 
     }
 }
 
+void FStructProperty::AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const
+{
+    if (!Struct)
+    {
+        return;
+    }
+
+    Struct->AppendProperties(ContainerPtrToValuePtr(Container), OutProps);
+}
+
+void FStructProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    if (Struct)
+    {
+        Struct->SerializeProperties(Ar, OwnerObject, ContainerPtrToValuePtr(Container));
+    }
+}
+
+void FEnumProperty::AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const
+{
+    if (!Container || !GetName())
+    {
+        return;
+    }
+
+    OutProps.push_back({
+        GetName(),
+        GetType(),
+        ContainerPtrToValuePtr(Container),
+        GetMin(),
+        GetMax(),
+        GetSpeed(),
+        Enum ? Enum->GetNames() : nullptr,
+        Enum ? Enum->GetValueCount() : 0,
+        nullptr,
+        GetDescriptorUsageFlags(),
+        nullptr,
+        GetDisplayName()
+    });
+}
+
+void FEnumProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<int32*>(ContainerPtrToValuePtr(Container));
+}
+
+void FArrayProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<TArray<FVector>*>(ContainerPtrToValuePtr(Container));
+}
+
 void FReflectionRegistry::RegisterProperties(
     const FTypeInfo* Type,
     const FProperty* const* Properties,
@@ -168,20 +286,7 @@ void FReflectionRegistry::AppendProperties(
             continue;
         }
 
-        OutProps.push_back({
-            Property->GetName(),
-            Property->GetType(),
-            Property->ContainerPtrToValuePtr(Object),
-            Property->GetMin(),
-            Property->GetMax(),
-            Property->GetSpeed(),
-            nullptr,
-            0,
-            nullptr,
-            Property->GetDescriptorUsageFlags(),
-            Property->GetObjectType(),
-            Property->GetDisplayName()
-        });
+        Property->AppendEditorDescriptor(Object, OutProps);
     }
 }
 

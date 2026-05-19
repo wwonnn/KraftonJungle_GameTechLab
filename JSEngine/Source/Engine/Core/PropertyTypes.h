@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "CoreTypes.h"      // int32, uint8, …
+#include "Core/Containers/Array.h"
 #include "Math/Vector.h"    // FVector  (for sizeof in GetPropertySize)
 #include "Math/Vector4.h"   // FVector4 (for sizeof in GetPropertySize)
 #include "Math/Color.h"     // FColor
@@ -12,9 +13,11 @@
 struct FTypeInfo;
 class UObject;
 struct FArchive;
+class UStruct;
+class UEnum;
 
 // 에디터에서 자동 위젯 매핑에 사용되는 프로퍼티 타입
-// UPROPERTY() 매크로로 지정할 수 없는 타입: Vec3Array, Enum, Material, SRV, CubeSRV, Struct 멤버, Lua
+// UPROPERTY() 매크로로 지정할 수 없는 타입: Material, SRV, CubeSRV, Lua
 enum class EPropertyType : uint8_t
 {
     Bool,
@@ -29,6 +32,7 @@ enum class EPropertyType : uint8_t
     Vec3Array,         // TArray<FVector>* - variable-length array of FVector
                        // 필요 시 Enum, Color 등 추가
 	Enum,
+    Struct,
 	Color,
 
 	Material, // TODO: 수정필요
@@ -94,7 +98,7 @@ struct FPropertyDescriptor
     float Speed = 0.1f;
 
 	// Enum Metadata
-	const char** EnumNames  = nullptr;
+	const char* const* EnumNames = nullptr;
 	uint32		 EnumCount  = 0;
 
     // 타입별 추가 메타데이터 일단 SRV 정보를 저장하기 위해서 사용
@@ -111,6 +115,23 @@ enum class EPropertyAccess : uint8_t
     VisibleAnywhere,
 };
 
+/*
+Reflection 시스템 계층구조
+
+UField
+  ├─ UStruct
+  │    ├─ UClass
+  │    └─ UScriptStruct
+  ├─ UEnum
+  └─ FProperty
+       ├─ FBoolProperty
+       ├─ FIntProperty
+       ├─ FFloatProperty
+       ├─ FObjectProperty
+       ├─ FStructProperty
+       ├─ FEnumProperty
+       └─ FArrayProperty
+*/
 class FProperty
 {
 public:
@@ -171,6 +192,8 @@ public:
 
     virtual EPropertyType GetType() const = 0;
     virtual const FTypeInfo* GetObjectType() const { return nullptr; }
+    virtual bool ShouldCheckSerializeKey() const { return true; }
+    virtual void AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const;
     virtual void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const = 0;
 
 private:
@@ -284,6 +307,69 @@ public:
     void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const override;
 };
 
+class FStructProperty : public FProperty
+{
+public:
+    FStructProperty(
+        const char* InName,
+        const char* InDisplayName,
+        const char* InSerializeName,
+        size_t InOffset,
+        EPropertyAccess InAccess,
+        const UStruct* InStruct,
+        float InMin = 0.0f,
+        float InMax = 0.0f,
+        float InSpeed = 0.1f,
+        EPropertyUsageFlags InUsageFlags = EPropertyUsageFlags::None)
+        : FProperty(InName, InDisplayName, InSerializeName, InOffset, InAccess, InMin, InMax, InSpeed, InUsageFlags)
+        , Struct(InStruct)
+    {
+    }
+
+    EPropertyType GetType() const override { return EPropertyType::Struct; }
+    bool ShouldCheckSerializeKey() const override { return false; }
+    void AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const override;
+    void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const override;
+
+private:
+    const UStruct* Struct = nullptr;
+};
+
+class FEnumProperty : public FProperty
+{
+public:
+    FEnumProperty(
+        const char* InName,
+        const char* InDisplayName,
+        const char* InSerializeName,
+        size_t InOffset,
+        EPropertyAccess InAccess,
+        const UEnum* InEnum,
+        float InMin = 0.0f,
+        float InMax = 0.0f,
+        float InSpeed = 0.1f,
+        EPropertyUsageFlags InUsageFlags = EPropertyUsageFlags::None)
+        : FProperty(InName, InDisplayName, InSerializeName, InOffset, InAccess, InMin, InMax, InSpeed, InUsageFlags)
+        , Enum(InEnum)
+    {
+    }
+
+    EPropertyType GetType() const override { return EPropertyType::Enum; }
+    void AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const override;
+    void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const override;
+
+private:
+    const UEnum* Enum = nullptr;
+};
+
+class FArrayProperty : public FProperty
+{
+public:
+    using FProperty::FProperty;
+    EPropertyType GetType() const override { return EPropertyType::Vec3Array; }
+    void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const override;
+};
+
 /** 각 프로퍼티의 Size 값을 반환합니다. 0을 반환하는 경우 특수 케이스입니다.
  * 이런 경우에는 CopyPropertiesFrom 함수 내에서 알아서 잘 처리해줄 수 있어야 합니다. 
  **/
@@ -301,6 +387,7 @@ inline size_t GetPropertySize(EPropertyType Type)
     case EPropertyType::String: return 0;
     case EPropertyType::Name:   return 0;
     case EPropertyType::ObjectRef: return sizeof(void*);
+    case EPropertyType::Enum:   return sizeof(int32);
     // 포인터 — Duplicate 호출 측에서 직접 처리
     case EPropertyType::SceneComponentRef: return 0;
     default: return 0;

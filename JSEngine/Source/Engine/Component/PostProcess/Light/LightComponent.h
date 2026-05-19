@@ -54,5 +54,6 @@ public:
     float DebugShadowCubeIndex;
     bool bHasDebugShadowCubeTile = false;
 protected:
+	UPROPERTY(EditAnywhere, DisplayName="ShadowMapType", SerializeName="ShadowMapType")
 	EShadowMap eShadowMapType = EShadowMap::CSM;
 };

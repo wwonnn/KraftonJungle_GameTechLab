@@ -152,9 +152,6 @@ void ULightComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProp
 {
 	ULightComponentBase::GetEditableProperties(OutProps);
 
-	static const char* ShadowMapTypeNames[] = { "CSM" ,"PSM" };
-	OutProps.push_back({ "ShadowMapType", EPropertyType::Enum, &eShadowMapType, 0.f, 0.f, 0.f, ShadowMapTypeNames, 2 });
-
     PrintShadowMapDebugInfo(OutProps);
 
 	// ConstantBias = DepthBias * (1 / 2 ^ 24 or 16) + SlopeScaledBias * (MaxDepthSlope)
@@ -164,14 +161,6 @@ void ULightComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProp
 void ULightComponent::Serialize(FArchive& Ar)
 {
 	ULightComponentBase::Serialize(Ar);
-	
-	uint32 ShadowMapTypeValue = static_cast<uint32>(eShadowMapType);
-	Ar << "ShadowMapType" << ShadowMapTypeValue;
-
-	if (Ar.IsLoading())
-	{
-		eShadowMapType = static_cast<EShadowMap>(ShadowMapTypeValue);
-	}
 }
 
 FMatrix ULightComponent::ComputeCascadeShadowMatrix(const FMatrix& CamView, const FMatrix& CamProj,

@@ -62,14 +62,6 @@ void UInterpToMovementComponent::PostDuplicate(UObject* Original) {
     NextDistRatio		= 0.f;
 }
 
-void UInterpToMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) {
-    UMovementComponent::GetEditableProperties(OutProps);
-
-	static const char* InterpBehaviourNames[] = { "One Shot", "One Shot Reverse", "Loop", "Ping-Pong" };
-	OutProps.push_back({ "Interp Mode",			  EPropertyType::Enum,		 &InterpBehaviour, 0,0,0, InterpBehaviourNames, 4});
-    OutProps.push_back({ "Control Points",		  EPropertyType::Vec3Array,  &ControlPoints });
-}
-
 // --- Control Point Management--------------------------------------------
 void UInterpToMovementComponent::AddControlPoint(FVector InControlPoint) {
 	ControlPoints.push_back(InControlPoint);

@@ -3,6 +3,10 @@
 #include <cstddef>
 #include "Object/Reflection.h"
 
+#include "Engine/Component/CameraComponent.h"
+#include "Engine/Component/MeshComponent.h"
+#include "Engine/Component/Movement/InterpToMovementComponent.h"
+#include "Engine/Render/Common/ShadowTypes.h"
 #include "Engine/Animation/AnimInstance.h"
 #include "Engine/Camera/CameraShakeBase.h"
 #include "Engine/Camera/ShakePattern/SequenceCameraShakePattern.h"
@@ -13,7 +17,6 @@
 #include "Engine/Component/DecalComponent.h"
 #include "Engine/Component/FireballComponent.h"
 #include "Engine/Component/HeightFogComponent.h"
-#include "Engine/Component/Movement/InterpToMovementComponent.h"
 #include "Engine/Component/Movement/MovementComponent.h"
 #include "Engine/Component/Movement/ProjectileMovementComponent.h"
 #include "Engine/Component/Movement/PursuitMovementComponent.h"
@@ -36,16 +39,23 @@
 #include "Engine/GameFramework/PrimitiveActors.h"
 #include "Engine/Runtime/Script/ScriptComponent.h"
 
+const UStruct* Z_Construct_UStruct_FCameraState();
+const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings();
+const UStruct* Z_Construct_UStruct_FScrollUV();
+const UEnum* Z_Construct_UEnum_EInterpBehaviour();
+const UEnum* Z_Construct_UEnum_EShadowMap();
 void RegisterGeneratedReflection_UAnimInstance();
 void RegisterGeneratedReflection_UCameraShakePattern();
 void RegisterGeneratedReflection_USequenceCameraShakePattern();
 void RegisterGeneratedReflection_USinusoidalCameraShakePattern();
 void RegisterGeneratedReflection_UActorComponent();
 void RegisterGeneratedReflection_UBillboardComponent();
+void RegisterGeneratedReflection_UCameraComponent();
 void RegisterGeneratedReflection_UCapsuleComponent();
 void RegisterGeneratedReflection_UDecalComponent();
 void RegisterGeneratedReflection_UFireballComponent();
 void RegisterGeneratedReflection_UHeightFogComponent();
+void RegisterGeneratedReflection_UMeshComponent();
 void RegisterGeneratedReflection_UInterpToMovementComponent();
 void RegisterGeneratedReflection_UMovementComponent();
 void RegisterGeneratedReflection_UProjectileMovementComponent();
@@ -131,6 +141,16 @@ namespace
 
     FAutoRegister_UBillboardComponent GAutoRegister_UBillboardComponent;
 
+    struct FAutoRegister_UCameraComponent
+    {
+        FAutoRegister_UCameraComponent()
+        {
+            RegisterGeneratedReflection_UCameraComponent();
+        }
+    };
+
+    FAutoRegister_UCameraComponent GAutoRegister_UCameraComponent;
+
     struct FAutoRegister_UCapsuleComponent
     {
         FAutoRegister_UCapsuleComponent()
@@ -170,6 +190,16 @@ namespace
     };
 
     FAutoRegister_UHeightFogComponent GAutoRegister_UHeightFogComponent;
+
+    struct FAutoRegister_UMeshComponent
+    {
+        FAutoRegister_UMeshComponent()
+        {
+            RegisterGeneratedReflection_UMeshComponent();
+        }
+    };
+
+    FAutoRegister_UMeshComponent GAutoRegister_UMeshComponent;
 
     struct FAutoRegister_UInterpToMovementComponent
     {
@@ -393,6 +423,100 @@ namespace
 
 }
 
+const UEnum* Z_Construct_UEnum_EInterpBehaviour()
+{
+    static const char* Names[] =
+    {
+        "One Shot",
+        "One Shot Reverse",
+        "Loop",
+        "Ping-Pong",
+    };
+
+    static const FEnumValue Values[] =
+    {
+        { "OneShot", static_cast<int64>(EInterpBehaviour::OneShot) },
+        { "OneShotReverse", static_cast<int64>(EInterpBehaviour::OneShotReverse) },
+        { "Loop", static_cast<int64>(EInterpBehaviour::Loop) },
+        { "PingPong", static_cast<int64>(EInterpBehaviour::PingPong) },
+    };
+
+    static const UEnum EnumInfo("EInterpBehaviour", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));
+    return &EnumInfo;
+}
+
+const UEnum* Z_Construct_UEnum_EShadowMap()
+{
+    static const char* Names[] =
+    {
+        "CSM",
+        "PSM",
+    };
+
+    static const FEnumValue Values[] =
+    {
+        { "CSM", static_cast<int64>(EShadowMap::CSM) },
+        { "PSM", static_cast<int64>(EShadowMap::PSM) },
+    };
+
+    static const UEnum EnumInfo("EShadowMap", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));
+    return &EnumInfo;
+}
+
+const UStruct* Z_Construct_UStruct_FCameraState()
+{
+    static const FFloatProperty Property_FOV_0("FOV", "FOV", nullptr, offsetof(FCameraState, FOV), EPropertyAccess::EditAnywhere, 0.1f, 3.14f, 0.01f, EPropertyUsageFlags::Animatable);
+    static const FFloatProperty Property_NearZ_1("NearZ", "Near Z", "NearClip", offsetof(FCameraState, NearZ), EPropertyAccess::EditAnywhere, 0.01f, 100.0f, 0.01f, EPropertyUsageFlags::None);
+    static const FFloatProperty Property_FarZ_2("FarZ", "Far Z", "FarClip", offsetof(FCameraState, FarZ), EPropertyAccess::EditAnywhere, 1.0f, 100000.0f, 10.0f, EPropertyUsageFlags::None);
+    static const FFloatProperty Property_OrthoWidth_3("OrthoWidth", "Ortho Width", nullptr, offsetof(FCameraState, OrthoWidth), EPropertyAccess::EditAnywhere, 0.1f, 1000.0f, 0.5f, EPropertyUsageFlags::Animatable);
+    static const FBoolProperty Property_bIsOrthogonal_4("bIsOrthogonal", "Orthographic", nullptr, offsetof(FCameraState, bIsOrthogonal), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FProperty* Properties[] =
+    {
+        &Property_FOV_0,
+        &Property_NearZ_1,
+        &Property_FarZ_2,
+        &Property_OrthoWidth_3,
+        &Property_bIsOrthogonal_4,
+    };
+
+    static const UStruct StructInfo("FCameraState", sizeof(FCameraState), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    return &StructInfo;
+}
+
+const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings()
+{
+    static const FBoolProperty Property_bVignetteEnabled_0("bVignetteEnabled", "Vignette Enabled", "VignetteEnabled", offsetof(FCameraPostProcessSettings, bVignetteEnabled), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FFloatProperty Property_VignetteIntensity_1("VignetteIntensity", "Vignette Intensity", "VignetteIntensity", offsetof(FCameraPostProcessSettings, VignetteIntensity), EPropertyAccess::EditAnywhere, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::Animatable);
+    static const FFloatProperty Property_VignetteRadius_2("VignetteRadius", "Vignette Radius", "VignetteRadius", offsetof(FCameraPostProcessSettings, VignetteRadius), EPropertyAccess::EditAnywhere, 0.0f, 2.0f, 0.01f, EPropertyUsageFlags::Animatable);
+    static const FFloatProperty Property_VignetteSmoothness_3("VignetteSmoothness", "Vignette Smoothness", "VignetteSmoothness", offsetof(FCameraPostProcessSettings, VignetteSmoothness), EPropertyAccess::EditAnywhere, 0.001f, 2.0f, 0.01f, EPropertyUsageFlags::Animatable);
+    static const FColorProperty Property_VignetteColor_4("VignetteColor", "Vignette Color", "VignetteColor", offsetof(FCameraPostProcessSettings, VignetteColor), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.01f, EPropertyUsageFlags::Animatable);
+    static const FProperty* Properties[] =
+    {
+        &Property_bVignetteEnabled_0,
+        &Property_VignetteIntensity_1,
+        &Property_VignetteRadius_2,
+        &Property_VignetteSmoothness_3,
+        &Property_VignetteColor_4,
+    };
+
+    static const UStruct StructInfo("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    return &StructInfo;
+}
+
+const UStruct* Z_Construct_UStruct_FScrollUV()
+{
+    static const FFloatProperty Property_U_0("U", "Scroll U", nullptr, offsetof(FScrollUV, U), EPropertyAccess::EditAnywhere, -1.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
+    static const FFloatProperty Property_V_1("V", "Scroll V", nullptr, offsetof(FScrollUV, V), EPropertyAccess::EditAnywhere, -1.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
+    static const FProperty* Properties[] =
+    {
+        &Property_U_0,
+        &Property_V_1,
+    };
+
+    static const UStruct StructInfo("FScrollUV", sizeof(FScrollUV), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    return &StructInfo;
+}
+
 void RegisterGeneratedReflection_UAnimInstance()
 {
     static const FFloatProperty Property_CurrentTime_0("CurrentTime", nullptr, nullptr, offsetof(UAnimInstance, CurrentTime), EPropertyAccess::VisibleAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized);
@@ -521,6 +645,19 @@ void RegisterGeneratedReflection_UBillboardComponent()
     FReflectionRegistry::Get().RegisterProperties(&UBillboardComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
 }
 
+void RegisterGeneratedReflection_UCameraComponent()
+{
+    static const FStructProperty Property_CameraState_0("CameraState", nullptr, nullptr, offsetof(UCameraComponent, CameraState), EPropertyAccess::EditAnywhere, Z_Construct_UStruct_FCameraState(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FStructProperty Property_PostProcessSettings_1("PostProcessSettings", nullptr, nullptr, offsetof(UCameraComponent, PostProcessSettings), EPropertyAccess::EditAnywhere, Z_Construct_UStruct_FCameraPostProcessSettings(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FProperty* Properties[] =
+    {
+        &Property_CameraState_0,
+        &Property_PostProcessSettings_1,
+    };
+
+    FReflectionRegistry::Get().RegisterProperties(&UCameraComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+}
+
 void RegisterGeneratedReflection_UCapsuleComponent()
 {
     static const FFloatProperty Property_CapsuleHalfHeight_0("CapsuleHalfHeight", "CapsuleHalfHeight", nullptr, offsetof(UCapsuleComponent, CapsuleHalfHeight), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -597,16 +734,31 @@ void RegisterGeneratedReflection_UHeightFogComponent()
     FReflectionRegistry::Get().RegisterProperties(&UHeightFogComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
 }
 
-void RegisterGeneratedReflection_UInterpToMovementComponent()
+void RegisterGeneratedReflection_UMeshComponent()
 {
-    static const FFloatProperty Property_Duration_0("Duration", "Interp Duration", nullptr, offsetof(UInterpToMovementComponent, Duration), EPropertyAccess::EditAnywhere, 0.1f, 2048.0f, 0.1f, EPropertyUsageFlags::None);
-    static const FBoolProperty Property_bAutoActivate_1("bAutoActivate", "Auto Activate", nullptr, offsetof(UInterpToMovementComponent, bAutoActivate), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
-    static const FBoolProperty Property_bFaceTargetDir_2("bFaceTargetDir", "Orient To Movement", nullptr, offsetof(UInterpToMovementComponent, bFaceTargetDir), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FStructProperty Property_ScrollUV_0("ScrollUV", nullptr, nullptr, offsetof(UMeshComponent, ScrollUV), EPropertyAccess::EditAnywhere, Z_Construct_UStruct_FScrollUV(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
-        &Property_Duration_0,
-        &Property_bAutoActivate_1,
-        &Property_bFaceTargetDir_2,
+        &Property_ScrollUV_0,
+    };
+
+    FReflectionRegistry::Get().RegisterProperties(&UMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+}
+
+void RegisterGeneratedReflection_UInterpToMovementComponent()
+{
+    static const FEnumProperty Property_InterpBehaviour_0("InterpBehaviour", "Interp Mode", nullptr, offsetof(UInterpToMovementComponent, InterpBehaviour), EPropertyAccess::EditAnywhere, Z_Construct_UEnum_EInterpBehaviour(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FArrayProperty Property_ControlPoints_1("ControlPoints", "Control Points", nullptr, offsetof(UInterpToMovementComponent, ControlPoints), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FFloatProperty Property_Duration_2("Duration", "Interp Duration", nullptr, offsetof(UInterpToMovementComponent, Duration), EPropertyAccess::EditAnywhere, 0.1f, 2048.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FBoolProperty Property_bAutoActivate_3("bAutoActivate", "Auto Activate", nullptr, offsetof(UInterpToMovementComponent, bAutoActivate), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FBoolProperty Property_bFaceTargetDir_4("bFaceTargetDir", "Orient To Movement", nullptr, offsetof(UInterpToMovementComponent, bFaceTargetDir), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FProperty* Properties[] =
+    {
+        &Property_InterpBehaviour_0,
+        &Property_ControlPoints_1,
+        &Property_Duration_2,
+        &Property_bAutoActivate_3,
+        &Property_bFaceTargetDir_4,
     };
 
     FReflectionRegistry::Get().RegisterProperties(&UInterpToMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
@@ -699,12 +851,14 @@ void RegisterGeneratedReflection_ULightComponent()
     static const FFloatProperty Property_ConstantBias_1("ConstantBias", "Constant Bias ( DepthBias ^ (1 / TextureBit))", "ConstantBias", offsetof(ULightComponent, ConstantBias), EPropertyAccess::EditAnywhere, 0.0f, 0.01f, 0.001f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_SlopeScaledBias_2("SlopeScaledBias", "Slope-Scaled Bias", "SlopeScaledBias", offsetof(ULightComponent, SlopeScaledBias), EPropertyAccess::EditAnywhere, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_ShadowSharpen_3("ShadowSharpen", "Shadow Sharpen", "ShadowSharpen", offsetof(ULightComponent, ShadowSharpen), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FEnumProperty Property_eShadowMapType_4("eShadowMapType", "ShadowMapType", "ShadowMapType", offsetof(ULightComponent, eShadowMapType), EPropertyAccess::EditAnywhere, Z_Construct_UEnum_EShadowMap(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_ShadowResolutionScale_0,
         &Property_ConstantBias_1,
         &Property_SlopeScaledBias_2,
         &Property_ShadowSharpen_3,
+        &Property_eShadowMapType_4,
     };
 
     FReflectionRegistry::Get().RegisterProperties(&ULightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
