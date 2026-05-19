@@ -1,6 +1,8 @@
-﻿#pragma once
+#pragma once
 
 #include "Editor/Animation/AnimationSequenceSequencerVisibleLayout.h"
+
+#include <array>
 
 class FAnimationSequenceEditorState;
 class FAnimationSequenceEditorDocument;
@@ -13,4 +15,12 @@ public:
         FAnimationSequenceEditorDocument* Document,
         const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
         float RowOriginY);
+
+private:
+    void OpenRenameNotifyTrackPopup(int32 TrackIndex, const FString& CurrentLabel);
+    void RenderRenameNotifyTrackPopup(FAnimationSequenceEditorDocument* Document);
+
+private:
+    int32 RenameNotifyTrackIndex = -1;
+    std::array<char, 128> RenameNotifyTrackBuffer = {};
 };

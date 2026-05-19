@@ -57,6 +57,61 @@ namespace
                 return Left.Time < Right.Time;
             });
     }
+
+    void RemapTrackIndexAfterMove(int32& TrackIndex, int32 FromIndex, int32 ToIndex)
+    {
+        if (TrackIndex < 0 || FromIndex == ToIndex)
+        {
+            return;
+        }
+
+        if (TrackIndex == FromIndex)
+        {
+            TrackIndex = ToIndex;
+            return;
+        }
+
+        if (FromIndex < ToIndex)
+        {
+            if (TrackIndex > FromIndex && TrackIndex <= ToIndex)
+            {
+                --TrackIndex;
+            }
+            return;
+        }
+
+        if (TrackIndex >= ToIndex && TrackIndex < FromIndex)
+        {
+            ++TrackIndex;
+        }
+    }
+
+    void RemapSequencerRowIdAfterMove(FAnimationSequenceSequencerRowId& RowId, int32 FromIndex, int32 ToIndex)
+    {
+        if (!RowId.IsValid() || RowId.Type != EAnimationSequenceSequencerVisibleRowType::NotifyTrack)
+        {
+            return;
+        }
+
+        RemapTrackIndexAfterMove(RowId.SourceIndex, FromIndex, ToIndex);
+    }
+
+    void RemapSequencerRowIdAfterDelete(FAnimationSequenceSequencerRowId& RowId, int32 DeletedIndex)
+    {
+        if (!RowId.IsValid() || RowId.Type != EAnimationSequenceSequencerVisibleRowType::NotifyTrack)
+        {
+            return;
+        }
+
+        if (RowId.SourceIndex == DeletedIndex)
+        {
+            RowId = FAnimationSequenceSequencerRowId();
+        }
+        else if (RowId.SourceIndex > DeletedIndex)
+        {
+            --RowId.SourceIndex;
+        }
+    }
 }
 
 FAnimationSequenceEditorDocument::~FAnimationSequenceEditorDocument()
@@ -265,6 +320,132 @@ FAnimNotifyTrack* FAnimationSequenceEditorDocument::GetNotifyTrack(int32 TrackIn
     }
 
     return &(*Tracks)[TrackIndex];
+}
+
+int32 FAnimationSequenceEditorDocument::AddNotifyTrack()
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks)
+    {
+        return -1;
+    }
+
+    const int32 NewTrackIndex = static_cast<int32>(Tracks->size());
+    Tracks->push_back(MakeDefaultNotifyTrack(NewTrackIndex));
+    MarkDirty();
+    return NewTrackIndex;
+}
+
+bool FAnimationSequenceEditorDocument::RenameNotifyTrack(int32 TrackIndex, const FName& NewName)
+{
+    FAnimNotifyTrack* Track = GetNotifyTrack(TrackIndex);
+    if (!Track)
+    {
+        return false;
+    }
+
+    const FString NormalizedName = NewName.ToString();
+    if (NormalizedName.empty())
+    {
+        return false;
+    }
+
+    if (Track->TrackName == NewName)
+    {
+        return true;
+    }
+
+    Track->TrackName = NewName;
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::DeleteNotifyTrack(int32 TrackIndex)
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || TrackIndex < 0 || TrackIndex >= static_cast<int32>(Tracks->size()))
+    {
+        return false;
+    }
+
+    FAnimNotifyTrack& Track = (*Tracks)[TrackIndex];
+    if (!Track.Events.empty())
+    {
+        return false;
+    }
+
+    Tracks->erase(Tracks->begin() + TrackIndex);
+
+    auto RemapOrClearTrackIndex = [TrackIndex](int32& Index)
+    {
+        if (Index == TrackIndex)
+        {
+            Index = -1;
+        }
+        else if (Index > TrackIndex)
+        {
+            --Index;
+        }
+    };
+
+    RemapOrClearTrackIndex(EditorState.SelectedNotifyTrackIndex);
+    RemapOrClearTrackIndex(EditorState.HoveredNotifyTrackIndex);
+    RemapOrClearTrackIndex(EditorState.DraggedNotifyTrackIndex);
+
+    if (EditorState.SelectedNotifyTrackIndex < 0)
+    {
+        EditorState.SelectedNotifyEventIndex = -1;
+    }
+    if (EditorState.HoveredNotifyTrackIndex < 0)
+    {
+        EditorState.HoveredNotifyEventIndex = -1;
+    }
+    if (EditorState.DraggedNotifyTrackIndex < 0)
+    {
+        EditorState.DraggedNotifyEventIndex = -1;
+        EditorState.bDraggingNotify = false;
+    }
+
+    RemapSequencerRowIdAfterDelete(EditorState.HoveredSequencerRowId, TrackIndex);
+    RemapSequencerRowIdAfterDelete(EditorState.FocusedSequencerRowId, TrackIndex);
+
+    ValidateNotifySelection();
+    MarkDirty();
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::MoveNotifyTrack(int32 FromIndex, int32 ToIndex)
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks)
+    {
+        return false;
+    }
+
+    const int32 TrackCount = static_cast<int32>(Tracks->size());
+    if (FromIndex < 0 || ToIndex < 0 || FromIndex >= TrackCount || ToIndex >= TrackCount || FromIndex == ToIndex)
+    {
+        return false;
+    }
+
+    if (FromIndex < ToIndex)
+    {
+        std::rotate(Tracks->begin() + FromIndex, Tracks->begin() + FromIndex + 1, Tracks->begin() + ToIndex + 1);
+    }
+    else
+    {
+        std::rotate(Tracks->begin() + ToIndex, Tracks->begin() + FromIndex, Tracks->begin() + FromIndex + 1);
+    }
+
+    RemapTrackIndexAfterMove(EditorState.SelectedNotifyTrackIndex, FromIndex, ToIndex);
+    RemapTrackIndexAfterMove(EditorState.HoveredNotifyTrackIndex, FromIndex, ToIndex);
+    RemapTrackIndexAfterMove(EditorState.DraggedNotifyTrackIndex, FromIndex, ToIndex);
+    RemapSequencerRowIdAfterMove(EditorState.HoveredSequencerRowId, FromIndex, ToIndex);
+    RemapSequencerRowIdAfterMove(EditorState.FocusedSequencerRowId, FromIndex, ToIndex);
+
+    ValidateNotifySelection();
+    MarkDirty();
+    return true;
 }
 
 const FAnimNotifyEvent* FAnimationSequenceEditorDocument::GetSelectedNotify() const

@@ -44,6 +44,10 @@ public:
     int32 GetNotifyTrackCount() const;
     const FAnimNotifyTrack* GetNotifyTrack(int32 TrackIndex) const;
     FAnimNotifyTrack* GetNotifyTrack(int32 TrackIndex);
+    int32 AddNotifyTrack();
+    bool RenameNotifyTrack(int32 TrackIndex, const FName& NewName);
+    bool DeleteNotifyTrack(int32 TrackIndex);
+    bool MoveNotifyTrack(int32 FromIndex, int32 ToIndex);
     const FAnimNotifyEvent* GetSelectedNotify() const;
     FAnimNotifyEvent* GetSelectedNotify();
     bool AddNotifyAtTime(int32 TrackIndex, float TimeSeconds);

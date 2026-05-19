@@ -9,6 +9,7 @@
 #include "ImGui/imgui.h"
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 
 namespace
@@ -235,11 +236,28 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
             {
                 State.SetFocusedSequencerRow(Row.Id);
             }
+            if (Document && ImGui::BeginPopupContextItem("##NotifySectionContext"))
+            {
+                if (ImGui::MenuItem("Add Track"))
+                {
+                    const int32 NewTrackIndex = Document->AddNotifyTrack();
+                    if (NewTrackIndex >= 0)
+                    {
+                        State.bNotifiesExpanded = true;
+                        State.SetFocusedSequencerRow(
+                            MakeAnimationSequenceSequencerRowId(
+                                EAnimationSequenceSequencerVisibleRowType::NotifyTrack,
+                                NewTrackIndex));
+                    }
+                }
+                ImGui::EndPopup();
+            }
             break;
         }
 
         case EAnimationSequenceSequencerVisibleRowType::NotifyTrack:
         {
+            const FString NotifyTrackContextPopupId = "##NotifyTrackContext" + std::to_string(Row.SourceIndex);
             const FRowInteraction Interaction = DrawSelectableRow(
                     1000 + Row.SourceIndex,
                     Row.Label,
@@ -263,6 +281,34 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
                     const int32 EventIndex = std::clamp(State.SelectedNotifyEventIndex, 0, static_cast<int32>(Track->Events.size()) - 1);
                     Document->SelectNotify(Row.SourceIndex, EventIndex);
                 }
+            }
+            if (Document && ImGui::BeginPopupContextItem(NotifyTrackContextPopupId.c_str()))
+            {
+                if (ImGui::MenuItem("Rename Track"))
+                {
+                    OpenRenameNotifyTrackPopup(Row.SourceIndex, Row.Label);
+                }
+
+                const bool bCanMoveUp = Row.SourceIndex > 0;
+                if (ImGui::MenuItem("Move Up", nullptr, false, bCanMoveUp))
+                {
+                    Document->MoveNotifyTrack(Row.SourceIndex, Row.SourceIndex - 1);
+                }
+
+                const bool bCanMoveDown = Row.SourceIndex + 1 < Document->GetNotifyTrackCount();
+                if (ImGui::MenuItem("Move Down", nullptr, false, bCanMoveDown))
+                {
+                    Document->MoveNotifyTrack(Row.SourceIndex, Row.SourceIndex + 1);
+                }
+
+                const FAnimNotifyTrack* Track = Document->GetNotifyTrack(Row.SourceIndex);
+                const bool bCanDelete = Track && Track->Events.empty();
+                if (ImGui::MenuItem("Delete Empty Track", nullptr, false, bCanDelete))
+                {
+                    Document->DeleteNotifyTrack(Row.SourceIndex);
+                }
+
+                ImGui::EndPopup();
             }
             break;
         }
@@ -388,5 +434,68 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
             break;
         }
         }
+    }
+
+    RenderRenameNotifyTrackPopup(Document);
+}
+
+void FAnimationSequenceTrackOutlinerWidget::OpenRenameNotifyTrackPopup(int32 TrackIndex, const FString& CurrentLabel)
+{
+    RenameNotifyTrackIndex = TrackIndex;
+    RenameNotifyTrackBuffer.fill('\0');
+    strncpy_s(RenameNotifyTrackBuffer.data(), RenameNotifyTrackBuffer.size(), CurrentLabel.c_str(), _TRUNCATE);
+    ImGui::OpenPopup("##RenameNotifyTrackPopup");
+}
+
+void FAnimationSequenceTrackOutlinerWidget::RenderRenameNotifyTrackPopup(FAnimationSequenceEditorDocument* Document)
+{
+    if (!Document)
+    {
+        RenameNotifyTrackIndex = -1;
+        return;
+    }
+
+    if (ImGui::BeginPopup("##RenameNotifyTrackPopup"))
+    {
+        ImGui::TextDisabled("Rename Notify Track");
+        ImGui::SetNextItemWidth(220.0f);
+        const bool bConfirmedByEnter =
+            ImGui::InputText(
+                "##RenameNotifyTrackInput",
+                RenameNotifyTrackBuffer.data(),
+                RenameNotifyTrackBuffer.size(),
+                ImGuiInputTextFlags_EnterReturnsTrue);
+        if (ImGui::IsWindowAppearing())
+        {
+            ImGui::SetKeyboardFocusHere(-1);
+        }
+
+        bool bClosePopup = false;
+        if (ImGui::Button("Apply"))
+        {
+            bClosePopup = Document->RenameNotifyTrack(RenameNotifyTrackIndex, FName(RenameNotifyTrackBuffer.data()));
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel"))
+        {
+            bClosePopup = true;
+        }
+
+        if (bConfirmedByEnter)
+        {
+            bClosePopup = Document->RenameNotifyTrack(RenameNotifyTrackIndex, FName(RenameNotifyTrackBuffer.data()));
+        }
+
+        if (bClosePopup)
+        {
+            RenameNotifyTrackIndex = -1;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+    else
+    {
+        RenameNotifyTrackIndex = -1;
     }
 }

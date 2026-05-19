@@ -27,6 +27,7 @@
 #include "ImGui/imgui.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -182,6 +183,25 @@ namespace
             Label.push_back('0');
         }
         return Label;
+    }
+
+    FString NormalizeFilterText(const FString& Text)
+    {
+        FString Normalized = Text;
+        std::transform(
+            Normalized.begin(),
+            Normalized.end(),
+            Normalized.begin(),
+            [](unsigned char Character)
+            {
+                return static_cast<char>(std::tolower(Character));
+            });
+        return Normalized;
+    }
+
+    bool MatchesNormalizedFilter(const FString& NormalizedFilter, const FString& Candidate)
+    {
+        return NormalizedFilter.empty() || NormalizeFilterText(Candidate).find(NormalizedFilter) != FString::npos;
     }
 
     bool IsPlaybackRatePresetSelected(float CurrentRate, float PresetRate)
@@ -943,6 +963,8 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
         return Row;
     };
 
+    const FString NormalizedFilter = NormalizeFilterText(TrackFilterEditBuffer.data());
+
     FAnimationSequenceSequencerVisibleRow& NotifyHeader =
         AddRow(EAnimationSequenceSequencerVisibleRowType::NotifyHeader, FAnimationSequenceSequencerLayout::SectionHeaderHeight);
     NotifyHeader.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::NotifyHeader);
@@ -954,14 +976,20 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
     {
         for (int32 TrackIndex = 0; TrackIndex < NotifyTrackCount; ++TrackIndex)
         {
+            const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(TrackIndex) : nullptr;
+            const FString TrackLabel = Track && Track->TrackName.IsValid()
+                ? Track->TrackName.ToString()
+                : ("Track " + std::to_string(TrackIndex + 1));
+            if (!MatchesNormalizedFilter(NormalizedFilter, TrackLabel))
+            {
+                continue;
+            }
+
             FAnimationSequenceSequencerVisibleRow& Row =
                 AddRow(EAnimationSequenceSequencerVisibleRowType::NotifyTrack, FAnimationSequenceSequencerLayout::NotifyTrackRowHeight);
             Row.SourceIndex = TrackIndex;
             Row.Id = MakeAnimationSequenceSequencerRowId(EAnimationSequenceSequencerVisibleRowType::NotifyTrack, TrackIndex);
-            const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(TrackIndex) : nullptr;
-            Row.Label = Track && Track->TrackName.IsValid()
-                ? Track->TrackName.ToString()
-                : ("Track " + std::to_string(TrackIndex + 1));
+            Row.Label = TrackLabel;
             Row.SecondaryLabel = Track ? std::to_string(static_cast<int32>(Track->Events.size())) : FString("0");
             Row.bSelected = EditorState->SelectedNotifyTrackIndex == TrackIndex;
         }
@@ -978,6 +1006,23 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
         for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(CurveGroups.size()); ++GroupIndex)
         {
             const FAnimationSequenceCurveViewGroup& Group = CurveGroups[GroupIndex];
+            const bool bGroupMatchesFilter = MatchesNormalizedFilter(NormalizedFilter, Group.Label);
+            TArray<FAnimationSequenceCurveViewEntry> MatchingEntries;
+            MatchingEntries.reserve(Group.VisibleEntries.size());
+            for (const FAnimationSequenceCurveViewEntry& Entry : Group.VisibleEntries)
+            {
+                const FString CurveLabel = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
+                if (MatchesNormalizedFilter(NormalizedFilter, CurveLabel))
+                {
+                    MatchingEntries.push_back(Entry);
+                }
+            }
+
+            if (!NormalizedFilter.empty() && !bGroupMatchesFilter && MatchingEntries.empty())
+            {
+                continue;
+            }
+
             FAnimationSequenceSequencerVisibleRow& GroupRow =
                 AddRow(EAnimationSequenceSequencerVisibleRowType::CurveGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
             GroupRow.GroupIndex = GroupIndex;
@@ -987,11 +1032,11 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
             GroupRow.bToggleChecked = Group.bVisible;
             GroupRow.CurveType = Group.CurveType;
 
-            if (Group.bVisible && !Group.VisibleEntries.empty())
+            if (Group.bVisible && !MatchingEntries.empty())
             {
-                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
+                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(MatchingEntries.size()); ++EntryIndex)
                 {
-                    const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                    const FAnimationSequenceCurveViewEntry& Entry = MatchingEntries[EntryIndex];
                     FAnimationSequenceSequencerVisibleRow& Row =
                         AddRow(EAnimationSequenceSequencerVisibleRowType::CurveEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
                     Row.SourceIndex = Entry.SourceIndex;
@@ -1033,6 +1078,23 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
         for (int32 GroupIndex = 0; GroupIndex < static_cast<int32>(AttributeCurveGroups.size()); ++GroupIndex)
         {
             const FAnimationSequenceCurveViewGroup& Group = AttributeCurveGroups[GroupIndex];
+            const bool bGroupMatchesFilter = MatchesNormalizedFilter(NormalizedFilter, Group.Label);
+            TArray<FAnimationSequenceCurveViewEntry> MatchingEntries;
+            MatchingEntries.reserve(Group.VisibleEntries.size());
+            for (const FAnimationSequenceCurveViewEntry& Entry : Group.VisibleEntries)
+            {
+                const FString CurveLabel = Entry.Curve ? Entry.Curve->CurveName.ToString() : FString("Curve");
+                if (MatchesNormalizedFilter(NormalizedFilter, CurveLabel))
+                {
+                    MatchingEntries.push_back(Entry);
+                }
+            }
+
+            if (!NormalizedFilter.empty() && !bGroupMatchesFilter && MatchingEntries.empty())
+            {
+                continue;
+            }
+
             FAnimationSequenceSequencerVisibleRow& GroupRow =
                 AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeGroup, FAnimationSequenceSequencerLayout::CurveGroupHeaderHeight);
             GroupRow.GroupIndex = GroupIndex;
@@ -1042,11 +1104,11 @@ FAnimationSequenceSequencerVisibleLayout FAnimationSequenceEditorWidget::BuildSe
             GroupRow.bToggleChecked = Group.bVisible;
             GroupRow.CurveType = Group.CurveType;
 
-            if (Group.bVisible && !Group.VisibleEntries.empty())
+            if (Group.bVisible && !MatchingEntries.empty())
             {
-                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(Group.VisibleEntries.size()); ++EntryIndex)
+                for (int32 EntryIndex = 0; EntryIndex < static_cast<int32>(MatchingEntries.size()); ++EntryIndex)
                 {
-                    const FAnimationSequenceCurveViewEntry& Entry = Group.VisibleEntries[EntryIndex];
+                    const FAnimationSequenceCurveViewEntry& Entry = MatchingEntries[EntryIndex];
                     FAnimationSequenceSequencerVisibleRow& Row =
                         AddRow(EAnimationSequenceSequencerVisibleRowType::AttributeEntry, FAnimationSequenceSequencerLayout::CurveTrackRowHeight);
                     Row.SourceIndex = Entry.SourceIndex;
