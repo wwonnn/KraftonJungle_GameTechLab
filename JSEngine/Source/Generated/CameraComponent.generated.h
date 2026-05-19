@@ -14,8 +14,8 @@ public: \
 
 #define Engine_Component_CameraComponent_h_15_GENERATED_BODY \
 public: \
-    static const UStruct* StaticStruct();
+    static const UScriptStruct* StaticStruct();
 
 #define Engine_Component_CameraComponent_h_33_GENERATED_BODY \
 public: \
-    static const UStruct* StaticStruct();
+    static const UScriptStruct* StaticStruct();

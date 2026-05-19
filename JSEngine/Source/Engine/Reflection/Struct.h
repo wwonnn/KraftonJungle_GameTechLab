@@ -35,3 +35,17 @@ private:
     const FProperty* const* Properties = nullptr;
     uint32 PropertyCount = 0;
 };
+
+class UScriptStruct : public UStruct
+{
+public:
+    UScriptStruct() = default;
+    UScriptStruct(
+        const char* InName,
+        size_t InSize,
+        const FProperty* const* InProperties,
+        uint32 InPropertyCount)
+        : UStruct(InName, InSize, InProperties, InPropertyCount)
+    {
+    }
+};

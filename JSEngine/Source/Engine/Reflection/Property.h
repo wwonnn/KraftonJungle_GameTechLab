@@ -14,6 +14,7 @@
 class UObject;
 struct FArchive;
 class UStruct;
+class UScriptStruct;
 class UEnum;
 class UClass;
 
@@ -315,7 +316,7 @@ public:
         const char* InSerializeName,
         size_t InOffset,
         EPropertyAccess InAccess,
-        const UStruct* InStruct,
+        const UScriptStruct* InStruct,
         float InMin = 0.0f,
         float InMax = 0.0f,
         float InSpeed = 0.1f,
@@ -331,7 +332,7 @@ public:
     void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const override;
 
 private:
-    const UStruct* Struct = nullptr;
+    const UScriptStruct* Struct = nullptr;
 };
 
 class FEnumProperty : public FProperty

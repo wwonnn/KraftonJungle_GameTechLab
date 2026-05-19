@@ -14,4 +14,4 @@ public: \
 
 #define Engine_Component_MeshComponent_h_10_GENERATED_BODY \
 public: \
-    static const UStruct* StaticStruct();
+    static const UScriptStruct* StaticStruct();

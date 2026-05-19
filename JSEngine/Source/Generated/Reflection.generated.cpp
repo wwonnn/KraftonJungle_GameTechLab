@@ -164,9 +164,9 @@ const UClass* Z_Construct_UClass_UEngine();
 const UClass* Z_Construct_UClass_UGameEngine();
 const UClass* Z_Construct_UClass_UScriptComponent();
 const UClass* Z_Construct_UClass_UObjViewerEngine();
-const UStruct* Z_Construct_UStruct_FCameraState();
-const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings();
-const UStruct* Z_Construct_UStruct_FScrollUV();
+const UScriptStruct* Z_Construct_UScriptStruct_FCameraState();
+const UScriptStruct* Z_Construct_UScriptStruct_FCameraPostProcessSettings();
+const UScriptStruct* Z_Construct_UScriptStruct_FScrollUV();
 const UEnum* Z_Construct_UEnum_EInterpBehaviour();
 const UEnum* Z_Construct_UEnum_EShadowMap();
 
@@ -1110,19 +1110,19 @@ const UClass* UObjViewerEngine::GetClass() const
     return UObjViewerEngine::StaticClass();
 }
 
-const UStruct* FCameraState::StaticStruct()
+const UScriptStruct* FCameraState::StaticStruct()
 {
-    return Z_Construct_UStruct_FCameraState();
+    return Z_Construct_UScriptStruct_FCameraState();
 }
 
-const UStruct* FCameraPostProcessSettings::StaticStruct()
+const UScriptStruct* FCameraPostProcessSettings::StaticStruct()
 {
-    return Z_Construct_UStruct_FCameraPostProcessSettings();
+    return Z_Construct_UScriptStruct_FCameraPostProcessSettings();
 }
 
-const UStruct* FScrollUV::StaticStruct()
+const UScriptStruct* FScrollUV::StaticStruct()
 {
-    return Z_Construct_UStruct_FScrollUV();
+    return Z_Construct_UScriptStruct_FScrollUV();
 }
 
 namespace
@@ -2313,7 +2313,7 @@ const UEnum* Z_Construct_UEnum_EShadowMap()
     return &EnumInfo;
 }
 
-const UStruct* Z_Construct_UStruct_FCameraState()
+const UScriptStruct* Z_Construct_UScriptStruct_FCameraState()
 {
     static const FFloatProperty Property_FOV_0("FOV", "FOV", nullptr, offsetof(FCameraState, FOV), EPropertyAccess::EditAnywhere, 0.1f, 3.14f, 0.01f, EPropertyUsageFlags::Animatable);
     static const FFloatProperty Property_NearZ_1("NearZ", "Near Z", "NearClip", offsetof(FCameraState, NearZ), EPropertyAccess::EditAnywhere, 0.01f, 100.0f, 0.01f, EPropertyUsageFlags::None);
@@ -2330,11 +2330,11 @@ const UStruct* Z_Construct_UStruct_FCameraState()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UStruct StructInfo("FCameraState", sizeof(FCameraState), Properties, PropertyCount);
+    static const UScriptStruct StructInfo("FCameraState", sizeof(FCameraState), Properties, PropertyCount);
     return &StructInfo;
 }
 
-const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings()
+const UScriptStruct* Z_Construct_UScriptStruct_FCameraPostProcessSettings()
 {
     static const FBoolProperty Property_bVignetteEnabled_0("bVignetteEnabled", "Vignette Enabled", "VignetteEnabled", offsetof(FCameraPostProcessSettings, bVignetteEnabled), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_VignetteIntensity_1("VignetteIntensity", "Vignette Intensity", "VignetteIntensity", offsetof(FCameraPostProcessSettings, VignetteIntensity), EPropertyAccess::EditAnywhere, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::Animatable);
@@ -2351,11 +2351,11 @@ const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UStruct StructInfo("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, PropertyCount);
+    static const UScriptStruct StructInfo("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, PropertyCount);
     return &StructInfo;
 }
 
-const UStruct* Z_Construct_UStruct_FScrollUV()
+const UScriptStruct* Z_Construct_UScriptStruct_FScrollUV()
 {
     static const FFloatProperty Property_U_0("U", "Scroll U", nullptr, offsetof(FScrollUV, U), EPropertyAccess::EditAnywhere, -1.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_V_1("V", "Scroll V", nullptr, offsetof(FScrollUV, V), EPropertyAccess::EditAnywhere, -1.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
@@ -2366,7 +2366,7 @@ const UStruct* Z_Construct_UStruct_FScrollUV()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UStruct StructInfo("FScrollUV", sizeof(FScrollUV), Properties, PropertyCount);
+    static const UScriptStruct StructInfo("FScrollUV", sizeof(FScrollUV), Properties, PropertyCount);
     return &StructInfo;
 }
 

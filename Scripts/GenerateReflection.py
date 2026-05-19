@@ -577,7 +577,7 @@ def main() -> None:
                     header_lines.append("    virtual const UClass* GetClass() const;")
             else:
                 header_lines.append("public: \\")
-                header_lines.append("    static const UStruct* StaticStruct();")
+                header_lines.append("    static const UScriptStruct* StaticStruct();")
             header_lines.append("")
 
         (OUTPUT_DIR / generated_header).write_text(
@@ -609,7 +609,7 @@ def main() -> None:
     for class_name in reflected:
         lines.append(f"const UClass* Z_Construct_UClass_{class_name}();")
     for struct_name in reflected_structs:
-        lines.append(f"const UStruct* Z_Construct_UStruct_{struct_name}();")
+        lines.append(f"const UScriptStruct* Z_Construct_UScriptStruct_{struct_name}();")
     for enum_name in reflected_enums:
         lines.append(f"const UEnum* Z_Construct_UEnum_{enum_name}();")
 
@@ -627,9 +627,9 @@ def main() -> None:
         lines.append("")
 
     for struct_name in reflected_structs:
-        lines.append(f"const UStruct* {struct_name}::StaticStruct()")
+        lines.append(f"const UScriptStruct* {struct_name}::StaticStruct()")
         lines.append("{")
-        lines.append(f"    return Z_Construct_UStruct_{struct_name}();")
+        lines.append(f"    return Z_Construct_UScriptStruct_{struct_name}();")
         lines.append("}")
         lines.append("")
 
@@ -716,12 +716,12 @@ def main() -> None:
 
     for struct_name, data in reflected_structs.items():
         properties = data["properties"]  # type: ignore[assignment]
-        lines.append(f"const UStruct* Z_Construct_UStruct_{struct_name}()")
+        lines.append(f"const UScriptStruct* Z_Construct_UScriptStruct_{struct_name}()")
         lines.append("{")
         emit_property_declarations(struct_name, properties)
         emit_property_array(properties)
         lines.append("")
-        lines.append(f"    static const UStruct StructInfo(\"{struct_name}\", sizeof({struct_name}), Properties, PropertyCount);")
+        lines.append(f"    static const UScriptStruct StructInfo(\"{struct_name}\", sizeof({struct_name}), Properties, PropertyCount);")
         lines.append("    return &StructInfo;")
         lines.append("}")
         lines.append("")
