@@ -69,9 +69,9 @@ private:
 	void CmdCommands(const TArray<FString>& Args);
 	void CmdSuggest(const TArray<FString>& Args);
 	void CmdStat(const TArray<FString>& Args);
-    void CmdShadow(const TArray<FString>& Args);
-	void PrintHistoryStats();
-	void PrintCommandList(const FString& Prefix = "");
+	void CmdShadow(const TArray<FString>& Args);
+	void CmdSkinning(const TArray<FString>& Args);
+	void PrintHistoryStats();	void PrintCommandList(const FString& Prefix = "");
 	FString FindClosestCommand(const FString& Query) const;
 	TArray<FString> BuildCommandSuggestions(const FString& Query) const;
 	void RenderCommandSuggestions(const char* Id, const ImVec2& InputMin, const ImVec2& InputSize);

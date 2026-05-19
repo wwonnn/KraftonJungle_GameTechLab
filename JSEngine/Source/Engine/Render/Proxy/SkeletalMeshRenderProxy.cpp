@@ -1,5 +1,6 @@
 ﻿#include "SkeletalMeshRenderProxy.h"
 #include "Component/SkeletalMeshComponent.h"
+#include "Core/Logging/Stats.h"
 
 void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& Context, FRenderBus& RenderBus)
 {
@@ -40,6 +41,7 @@ void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& 
     const TArray<FStaticMeshSection>& Sections = SkeletalMesh->GetSections();
     if (Sections.empty()) // fallback
     {
+        STAT_COUNTER_SKELMESH("Drawn Sections", 1);
         FRenderCommand Cmd = {};
         Cmd.PerObjectConstants = FPerObjectConstants{ SkeletalMeshComp->GetWorldMatrix(), FColor::White().ToVector4() };
         Cmd.SourcePrimitive = SkeletalMeshComp;
@@ -69,6 +71,7 @@ void FSkeletalMeshRenderProxy::CollectRenderCommands(const FRenderProxyContext& 
             continue;
         }
 
+        STAT_COUNTER_SKELMESH("Drawn Sections", 1);
         UMaterialInterface* Material = Cast<UMaterialInterface>(SkeletalMeshComp->GetMaterial(SectionIdx));
 
         FRenderCommand Cmd = {};

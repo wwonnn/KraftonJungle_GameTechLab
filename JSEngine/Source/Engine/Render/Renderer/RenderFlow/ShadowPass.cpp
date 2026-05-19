@@ -9,6 +9,7 @@
 #include "Component/PostProcess/Light/DirectionalLightComponent.h"
 #include "Component/PostProcess/Light/PointLightComponent.h"
 #include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
+#include "Core/Logging/GPUProfiler.h"
 
 #include <algorithm>
 #include <cmath>
@@ -139,21 +140,29 @@ void FShadowPass::RenderShadowDepth(
 			continue;
 		}
 
-		Program->Bind(DeviceContext);
-        IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
-        VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
-		CheckOverrideViewMode(Context);
+		Program->Bind(DeviceContext);        
+        {
+            std::unique_ptr<FGPUScopedTimer> SkeletalTimer;
+            if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh && Cmd.VertexFactoryData)
+            {
+                SkeletalTimer = std::make_unique<FGPUScopedTimer>("Skeletal Pass");
+            }
 
-		ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
-		if (IndexBuffer != nullptr)
-		{
-			DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-			DeviceContext->DrawIndexed(Cmd.SectionIndexCount, Cmd.SectionIndexStart, 0);
-		}
-		else
-		{
-            DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
-		}
+            IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+            VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
+		    CheckOverrideViewMode(Context);
+
+		    ID3D11Buffer* IndexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
+		    if (IndexBuffer != nullptr)
+		    {
+			    DeviceContext->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+			    DeviceContext->DrawIndexed(Cmd.SectionIndexCount, Cmd.SectionIndexStart, 0);
+		    }
+		    else
+		    {
+                DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
+		    }
+        }
 	}
 }
 

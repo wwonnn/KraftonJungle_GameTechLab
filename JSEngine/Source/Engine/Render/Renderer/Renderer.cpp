@@ -541,6 +541,7 @@ void FRenderer::InvalidateSceneFinalTargets()
 //	RenderBus에 담긴 모든 RenderCommand에 대해서 Draw Call 수행 (GPU)
 void FRenderer::Render(const FRenderBus& InRenderBus)
 {
+    GPU_SCOPE_STAT("Total GPU Frame");
 	ID3D11DeviceContext* Context = Device.GetDeviceContext();
 	UpdateUberBuffer(Context, InRenderBus);
     UpdateFrameBuffer(Context, InRenderBus);
