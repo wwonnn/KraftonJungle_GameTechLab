@@ -1,0 +1,10 @@
+{
+        "AnimationSequencePaths" : [],
+        "PhysicsAssetPath" : "",
+        "SkeletalMeshAssetPath" : "Asset/SkeletalMesh/Bin/Furina.skmesh",
+        "SkeletonAssetPath" : "Asset/Skeleton/Bin/Furina.skeleton",
+        "SourceFileWriteTime" : "13423228732",
+        "SourcePath" : "Asset/SkeletalMesh/FurinaFBX/Furina.fbx",
+        "Type" : "SkeletalImportManifest",
+        "Version" : 1
+      }
