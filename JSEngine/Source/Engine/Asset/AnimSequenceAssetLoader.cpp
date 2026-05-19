@@ -5,12 +5,14 @@
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Object/ObjectFactory.h"
-#include "SimpleJSON/json.hpp"
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 
 namespace
 {
@@ -34,465 +36,686 @@ namespace
         return std::filesystem::path(FPaths::ToWide(LowerPath)).extension() == L".sequence";
     }
 
-    json::JSON MakeVectorKey(const FVector& Value)
+    constexpr uint32 ANIM_SEQUENCE_BINARY_MAGIC = 0x51455341; // 'ASEQ'
+    constexpr uint32 ANIM_SEQUENCE_BINARY_VERSION = 1;
+
+    constexpr uint32 MAX_SEQUENCE_STRING_LENGTH = 4096;
+    constexpr uint32 MAX_SEQUENCE_TRACK_COUNT = 65'536;
+    constexpr uint32 MAX_SEQUENCE_KEY_COUNT = 1'000'000;
+    constexpr uint32 MAX_SEQUENCE_CURVE_COUNT = 4096;
+    constexpr uint32 MAX_SEQUENCE_NOTIFY_TRACK_COUNT = 4096;
+    constexpr uint32 MAX_SEQUENCE_NOTIFY_EVENT_COUNT = 65'536;
+
+    struct FAnimSequenceBinaryHeader
     {
-        return json::Array(Value.X, Value.Y, Value.Z);
+        uint32 MagicNumber = ANIM_SEQUENCE_BINARY_MAGIC;
+        uint32 Version = ANIM_SEQUENCE_BINARY_VERSION;
+        int32 FrameRateNumerator = 30;
+        int32 FrameRateDenominator = 1;
+        int32 NumberOfFrames = 0;
+        int32 NumberOfKeys = 0;
+        uint32 TrackCount = 0;
+        uint32 FloatCurveCount = 0;
+        uint32 NotifyTrackCount = 0;
+    };
+
+    bool IsValidSequenceCount(size_t Count, uint32 MaxCount)
+    {
+        return Count <= static_cast<size_t>(std::numeric_limits<uint32>::max())
+            && Count <= static_cast<size_t>(MaxCount);
     }
 
-    json::JSON MakeQuatKey(const FQuat& Value)
+    bool IsValidSequenceString(const FString& Value)
     {
-        return json::Array(Value.X, Value.Y, Value.Z, Value.W);
+        return Value.length() <= static_cast<size_t>(MAX_SEQUENCE_STRING_LENGTH);
     }
 
-    FVector ReadVectorKey(const json::JSON& Value)
+    void WriteUInt32LE(std::ofstream& Out, uint32 Value)
     {
-        if (Value.JSONType() != json::JSON::Class::Array || Value.length() < 3)
-        {
-            return FVector::ZeroVector;
-        }
-
-        return FVector(
-            static_cast<float>(Value.at(0).ToFloat()),
-            static_cast<float>(Value.at(1).ToFloat()),
-            static_cast<float>(Value.at(2).ToFloat()));
+        unsigned char Bytes[4];
+        Bytes[0] = static_cast<unsigned char>((Value >> 0) & 0xFF);
+        Bytes[1] = static_cast<unsigned char>((Value >> 8) & 0xFF);
+        Bytes[2] = static_cast<unsigned char>((Value >> 16) & 0xFF);
+        Bytes[3] = static_cast<unsigned char>((Value >> 24) & 0xFF);
+        Out.write(reinterpret_cast<const char*>(Bytes), 4);
     }
 
-    FQuat ReadQuatKey(const json::JSON& Value)
+    void WriteInt32LE(std::ofstream& Out, int32 Value)
     {
-        if (Value.JSONType() != json::JSON::Class::Array || Value.length() < 4)
-        {
-            return FQuat::Identity;
-        }
-
-        return FQuat(
-            static_cast<float>(Value.at(0).ToFloat()),
-            static_cast<float>(Value.at(1).ToFloat()),
-            static_cast<float>(Value.at(2).ToFloat()),
-            static_cast<float>(Value.at(3).ToFloat()));
+        WriteUInt32LE(Out, static_cast<uint32>(Value));
     }
 
-    void WriteVectorKeys(json::JSON& OutArray, const TArray<FVector>& Keys)
+    void WriteFloatLE(std::ofstream& Out, float Value)
     {
-        OutArray = json::Array();
-        for (const FVector& Key : Keys)
-        {
-            OutArray.append(MakeVectorKey(Key));
-        }
+        static_assert(sizeof(float) == sizeof(uint32), "float size must be 4 bytes");
+
+        uint32 Bits = 0;
+        std::memcpy(&Bits, &Value, sizeof(float));
+        WriteUInt32LE(Out, Bits);
     }
 
-    void WriteQuatKeys(json::JSON& OutArray, const TArray<FQuat>& Keys)
+    bool ReadUInt32LE(std::ifstream& In, uint32& OutValue)
     {
-        OutArray = json::Array();
-        for (const FQuat& Key : Keys)
-        {
-            OutArray.append(MakeQuatKey(Key));
-        }
-    }
-
-    void WriteFloatArray(json::JSON& OutArray, const TArray<float>& Values)
-    {
-        OutArray = json::Array();
-        for (float Value : Values)
-        {
-            OutArray.append(Value);
-        }
-    }
-
-    void WriteIntArray(json::JSON& OutArray, const TArray<int32>& Values)
-    {
-        OutArray = json::Array();
-        for (int32 Value : Values)
-        {
-            OutArray.append(Value);
-        }
-    }
-
-    void ReadVectorKeys(const json::JSON& SourceArray, TArray<FVector>& OutKeys)
-    {
-        OutKeys.clear();
-        if (SourceArray.JSONType() != json::JSON::Class::Array)
-        {
-            return;
-        }
-
-        OutKeys.reserve(SourceArray.length());
-        for (int32 Index = 0; Index < SourceArray.length(); ++Index)
-        {
-            OutKeys.push_back(ReadVectorKey(SourceArray.at(static_cast<unsigned>(Index))));
-        }
-    }
-
-    void ReadQuatKeys(const json::JSON& SourceArray, TArray<FQuat>& OutKeys)
-    {
-        OutKeys.clear();
-        if (SourceArray.JSONType() != json::JSON::Class::Array)
-        {
-            return;
-        }
-
-        OutKeys.reserve(SourceArray.length());
-        for (int32 Index = 0; Index < SourceArray.length(); ++Index)
-        {
-            OutKeys.push_back(ReadQuatKey(SourceArray.at(static_cast<unsigned>(Index))));
-        }
-    }
-
-    void ReadFloatArray(const json::JSON& SourceArray, TArray<float>& OutValues)
-    {
-        OutValues.clear();
-        if (SourceArray.JSONType() != json::JSON::Class::Array)
-        {
-            return;
-        }
-
-        OutValues.reserve(SourceArray.length());
-        for (int32 Index = 0; Index < SourceArray.length(); ++Index)
-        {
-            OutValues.push_back(static_cast<float>(SourceArray.at(static_cast<unsigned>(Index)).ToFloat()));
-        }
-    }
-
-    void ReadIntArray(const json::JSON& SourceArray, TArray<int32>& OutValues)
-    {
-        OutValues.clear();
-        if (SourceArray.JSONType() != json::JSON::Class::Array)
-        {
-            return;
-        }
-
-        OutValues.reserve(SourceArray.length());
-        for (int32 Index = 0; Index < SourceArray.length(); ++Index)
-        {
-            OutValues.push_back(static_cast<int32>(SourceArray.at(static_cast<unsigned>(Index)).ToInt()));
-        }
-    }
-
-    void WriteFloatCurve(json::JSON& OutObject, const FFloatCurve& Curve)
-    {
-        OutObject = json::JSON::Make(json::JSON::Class::Object);
-        OutObject["CurveName"] = Curve.CurveName.ToString();
-        OutObject["CurveType"] = AnimationCurveTypeToString(Curve.CurveType);
-        OutObject["SourceKind"] = AnimationCurveSourceKindToString(Curve.SourceKind);
-
-        TArray<float> Times;
-        TArray<float> Values;
-        TArray<int32> InterpModes;
-        TArray<int32> TangentModes;
-        TArray<float> ArriveTangents;
-        TArray<float> LeaveTangents;
-
-        Times.reserve(Curve.Keys.size());
-        Values.reserve(Curve.Keys.size());
-        InterpModes.reserve(Curve.Keys.size());
-        TangentModes.reserve(Curve.Keys.size());
-        ArriveTangents.reserve(Curve.Keys.size());
-        LeaveTangents.reserve(Curve.Keys.size());
-
-        for (const FCurveKey& Key : Curve.Keys)
-        {
-            Times.push_back(Key.Time);
-            Values.push_back(Key.Value);
-            InterpModes.push_back(static_cast<int32>(Key.InterpMode));
-            TangentModes.push_back(static_cast<int32>(Key.TangentMode));
-            ArriveTangents.push_back(Key.ArriveTangent);
-            LeaveTangents.push_back(Key.LeaveTangent);
-        }
-
-        WriteFloatArray(OutObject["Times"], Times);
-        WriteFloatArray(OutObject["Values"], Values);
-        WriteIntArray(OutObject["InterpModes"], InterpModes);
-        WriteIntArray(OutObject["TangentModes"], TangentModes);
-        WriteFloatArray(OutObject["ArriveTangents"], ArriveTangents);
-        WriteFloatArray(OutObject["LeaveTangents"], LeaveTangents);
-    }
-
-    FFloatCurve ReadFloatCurve(const json::JSON& SourceObject)
-    {
-        FFloatCurve Curve;
-        if (SourceObject.JSONType() != json::JSON::Class::Object)
-        {
-            return Curve;
-        }
-
-        FString CurveName;
-        if (SourceObject.hasKey("CurveName"))
-        {
-            CurveName = SourceObject.at("CurveName").ToString();
-        }
-        else if (SourceObject.hasKey("Name"))
-        {
-            CurveName = SourceObject.at("Name").ToString();
-        }
-        Curve.CurveName = FName(CurveName);
-        if (SourceObject.hasKey("CurveType"))
-        {
-            Curve.CurveType = AnimationCurveTypeFromString(SourceObject.at("CurveType").ToString());
-        }
-        if (SourceObject.hasKey("SourceKind"))
-        {
-            Curve.SourceKind = AnimationCurveSourceKindFromString(SourceObject.at("SourceKind").ToString());
-        }
-
-        TArray<float> Times;
-        TArray<float> Values;
-        TArray<int32> InterpModes;
-        TArray<int32> TangentModes;
-        TArray<float> ArriveTangents;
-        TArray<float> LeaveTangents;
-
-        if (SourceObject.hasKey("Times"))
-        {
-            ReadFloatArray(SourceObject.at("Times"), Times);
-        }
-        if (SourceObject.hasKey("Values"))
-        {
-            ReadFloatArray(SourceObject.at("Values"), Values);
-        }
-        if (SourceObject.hasKey("InterpModes"))
-        {
-            ReadIntArray(SourceObject.at("InterpModes"), InterpModes);
-        }
-        if (SourceObject.hasKey("TangentModes"))
-        {
-            ReadIntArray(SourceObject.at("TangentModes"), TangentModes);
-        }
-        if (SourceObject.hasKey("ArriveTangents"))
-        {
-            ReadFloatArray(SourceObject.at("ArriveTangents"), ArriveTangents);
-        }
-        if (SourceObject.hasKey("LeaveTangents"))
-        {
-            ReadFloatArray(SourceObject.at("LeaveTangents"), LeaveTangents);
-        }
-
-        Curve.Keys.reserve(Times.size());
-        for (size_t Index = 0; Index < Times.size(); ++Index)
-        {
-            FCurveKey Key;
-            Key.Time = Times[Index];
-            Key.Value = Index < Values.size() ? Values[Index] : 0.0f;
-            Key.InterpMode = Index < InterpModes.size()
-                ? static_cast<ECurveInterpMode>(InterpModes[Index])
-                : ECurveInterpMode::Cubic;
-            Key.TangentMode = Index < TangentModes.size()
-                ? static_cast<ECurveTangentMode>(TangentModes[Index])
-                : ECurveTangentMode::Auto;
-            Key.ArriveTangent = Index < ArriveTangents.size() ? ArriveTangents[Index] : 0.0f;
-            Key.LeaveTangent = Index < LeaveTangents.size() ? LeaveTangents[Index] : 0.0f;
-            Curve.Keys.push_back(Key);
-        }
-        Curve.SortKeys();
-
-        return Curve;
-    }
-
-    json::JSON MakeColorKey(const FColor& Value)
-    {
-        return json::Array(Value.R, Value.G, Value.B, Value.A);
-    }
-
-    FColor ReadColorKey(const json::JSON& Value)
-    {
-        if (Value.JSONType() != json::JSON::Class::Array || Value.length() < 4)
-        {
-            return FColor(0.9490196f, 0.61960787f, 0.23921569f, 1.0f);
-        }
-
-        const float Red = static_cast<float>(Value.at(0).ToFloat());
-        const float Green = static_cast<float>(Value.at(1).ToFloat());
-        const float Blue = static_cast<float>(Value.at(2).ToFloat());
-        const float Alpha = static_cast<float>(Value.at(3).ToFloat());
-
-        if (Red > 1.0f || Green > 1.0f || Blue > 1.0f || Alpha > 1.0f)
-        {
-            return FColor(
-                static_cast<uint32>(std::clamp(Red, 0.0f, 255.0f)),
-                static_cast<uint32>(std::clamp(Green, 0.0f, 255.0f)),
-                static_cast<uint32>(std::clamp(Blue, 0.0f, 255.0f)),
-                static_cast<uint32>(std::clamp(Alpha, 0.0f, 255.0f)));
-        }
-
-        return FColor(Red, Green, Blue, Alpha);
-    }
-
-    void WriteNotifyTrack(json::JSON& OutObject, const FAnimNotifyTrack& Track)
-    {
-        OutObject = json::JSON::Make(json::JSON::Class::Object);
-        OutObject["TrackName"] = Track.TrackName.ToString();
-        OutObject["Events"] = json::Array();
-
-        for (const FAnimNotifyEvent& Event : Track.Events)
-        {
-            json::JSON EventObject = json::JSON::Make(json::JSON::Class::Object);
-            EventObject["StableId"] = Event.StableId.ToString();
-            EventObject["Name"] = Event.Name.ToString();
-            EventObject["Time"] = Event.Time;
-            EventObject["Duration"] = Event.Duration;
-            EventObject["Color"] = MakeColorKey(Event.Color);
-            EventObject["EventType"] = AnimNotifyEventTypeToString(Event.EventType);
-            EventObject["NotifyClassName"] = Event.GetResolvedNotifyClassName();
-            EventObject["Payload"] = Event.Payload;
-            OutObject["Events"].append(EventObject);
-        }
-    }
-
-    FAnimNotifyTrack ReadNotifyTrack(const json::JSON& SourceObject)
-    {
-        FAnimNotifyTrack Track;
-        if (SourceObject.JSONType() != json::JSON::Class::Object)
-        {
-            return Track;
-        }
-
-        if (SourceObject.hasKey("TrackName"))
-        {
-            Track.TrackName = FName(SourceObject.at("TrackName").ToString());
-        }
-        else if (SourceObject.hasKey("Name"))
-        {
-            Track.TrackName = FName(SourceObject.at("Name").ToString());
-        }
-
-        if (!SourceObject.hasKey("Events") || SourceObject.at("Events").JSONType() != json::JSON::Class::Array)
-        {
-            return Track;
-        }
-
-        const json::JSON& Events = SourceObject.at("Events");
-        Track.Events.reserve(Events.length());
-        for (int32 EventIndex = 0; EventIndex < Events.length(); ++EventIndex)
-        {
-            const json::JSON& EventObject = Events.at(static_cast<unsigned>(EventIndex));
-            if (EventObject.JSONType() != json::JSON::Class::Object)
-            {
-                continue;
-            }
-
-            FAnimNotifyEvent Event;
-            if (EventObject.hasKey("StableId"))
-            {
-                Event.StableId = FGuid::FromString(EventObject.at("StableId").ToString());
-            }
-            if (EventObject.hasKey("Name"))
-            {
-                Event.Name = FName(EventObject.at("Name").ToString());
-            }
-            if (EventObject.hasKey("Time"))
-            {
-                Event.Time = static_cast<float>(EventObject.at("Time").ToFloat());
-            }
-            if (EventObject.hasKey("Duration"))
-            {
-                Event.Duration = static_cast<float>(EventObject.at("Duration").ToFloat());
-            }
-            if (EventObject.hasKey("Color"))
-            {
-                Event.Color = ReadColorKey(EventObject.at("Color"));
-            }
-            if (EventObject.hasKey("EventType"))
-            {
-                Event.EventType = AnimNotifyEventTypeFromString(EventObject.at("EventType").ToString());
-            }
-            if (EventObject.hasKey("NotifyClassName"))
-            {
-                Event.NotifyClassName = EventObject.at("NotifyClassName").ToString();
-            }
-            if (EventObject.hasKey("Payload"))
-            {
-                Event.Payload = EventObject.at("Payload").ToString();
-            }
-            if (Event.NotifyClassName.empty())
-            {
-                Event.NotifyClassName = GetDefaultAnimNotifyClassName(Event.EventType);
-            }
-            Event.EnsureStableId();
-            Track.Events.push_back(Event);
-        }
-
-        return Track;
-    }
-
-    FString TrimJsonToken(FString Value)
-    {
-        auto IsTrimChar = [](unsigned char Ch)
-        {
-            return std::isspace(Ch) != 0 || Ch == ',' || Ch == '"';
-        };
-
-        while (!Value.empty() && IsTrimChar(static_cast<unsigned char>(Value.front())))
-        {
-            Value.erase(Value.begin());
-        }
-
-        while (!Value.empty() && IsTrimChar(static_cast<unsigned char>(Value.back())))
-        {
-            Value.pop_back();
-        }
-
-        return Value;
-    }
-
-    bool TryReadJsonStringValue(const FString& Line, const char* Key, FString& OutValue)
-    {
-        const FString KeyPattern = FString("\"") + Key + "\"";
-        const size_t KeyPos = Line.find(KeyPattern);
-        if (KeyPos == FString::npos)
+        unsigned char Bytes[4] = {};
+        In.read(reinterpret_cast<char*>(Bytes), 4);
+        if (!In.good())
         {
             return false;
         }
 
-        const size_t ColonPos = Line.find(':', KeyPos + KeyPattern.size());
-        if (ColonPos == FString::npos)
-        {
-            return false;
-        }
-
-        const size_t FirstQuotePos = Line.find('"', ColonPos + 1);
-        if (FirstQuotePos == FString::npos)
-        {
-            return false;
-        }
-
-        const size_t SecondQuotePos = Line.find('"', FirstQuotePos + 1);
-        if (SecondQuotePos == FString::npos || SecondQuotePos <= FirstQuotePos + 1)
-        {
-            return false;
-        }
-
-        OutValue = Line.substr(FirstQuotePos + 1, SecondQuotePos - FirstQuotePos - 1);
+        OutValue =
+            (static_cast<uint32>(Bytes[0]) << 0) |
+            (static_cast<uint32>(Bytes[1]) << 8) |
+            (static_cast<uint32>(Bytes[2]) << 16) |
+            (static_cast<uint32>(Bytes[3]) << 24);
         return true;
     }
 
-    bool TryReadJsonIntValue(const FString& Line, const char* Key, int32& OutValue)
+    bool ReadInt32LE(std::ifstream& In, int32& OutValue)
     {
-        const FString KeyPattern = FString("\"") + Key + "\"";
-        const size_t KeyPos = Line.find(KeyPattern);
-        if (KeyPos == FString::npos)
+        uint32 Bits = 0;
+        if (!ReadUInt32LE(In, Bits))
         {
             return false;
         }
 
-        const size_t ColonPos = Line.find(':', KeyPos + KeyPattern.size());
-        if (ColonPos == FString::npos)
+        OutValue = static_cast<int32>(Bits);
+        return true;
+    }
+
+    bool ReadFloatLE(std::ifstream& In, float& OutValue)
+    {
+        uint32 Bits = 0;
+        if (!ReadUInt32LE(In, Bits))
         {
             return false;
         }
 
-        FString Token = TrimJsonToken(Line.substr(ColonPos + 1));
-        if (Token.empty())
+        std::memcpy(&OutValue, &Bits, sizeof(float));
+        return true;
+    }
+
+    void WriteStringBinary(std::ofstream& Out, const FString& Value)
+    {
+        const uint32 Length = static_cast<uint32>(Value.length());
+        WriteUInt32LE(Out, Length);
+        if (Length > 0)
+        {
+            Out.write(Value.data(), Length);
+        }
+    }
+
+    bool ReadStringBinary(std::ifstream& In, FString& OutValue)
+    {
+        uint32 Length = 0;
+        if (!ReadUInt32LE(In, Length))
+        {
+            OutValue.clear();
+            return false;
+        }
+
+        if (Length > MAX_SEQUENCE_STRING_LENGTH)
+        {
+            In.setstate(std::ios::failbit);
+            OutValue.clear();
+            return false;
+        }
+
+        OutValue.resize(Length);
+        if (Length > 0)
+        {
+            In.read(OutValue.data(), Length);
+            if (!In.good())
+            {
+                OutValue.clear();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void WriteBinaryHeader(std::ofstream& Out, const FAnimSequenceBinaryHeader& Header)
+    {
+        WriteUInt32LE(Out, Header.MagicNumber);
+        WriteUInt32LE(Out, Header.Version);
+        WriteInt32LE(Out, Header.FrameRateNumerator);
+        WriteInt32LE(Out, Header.FrameRateDenominator);
+        WriteInt32LE(Out, Header.NumberOfFrames);
+        WriteInt32LE(Out, Header.NumberOfKeys);
+        WriteUInt32LE(Out, Header.TrackCount);
+        WriteUInt32LE(Out, Header.FloatCurveCount);
+        WriteUInt32LE(Out, Header.NotifyTrackCount);
+    }
+
+    bool ReadBinaryHeader(std::ifstream& In, FAnimSequenceBinaryHeader& OutHeader)
+    {
+        return ReadUInt32LE(In, OutHeader.MagicNumber)
+            && ReadUInt32LE(In, OutHeader.Version)
+            && ReadInt32LE(In, OutHeader.FrameRateNumerator)
+            && ReadInt32LE(In, OutHeader.FrameRateDenominator)
+            && ReadInt32LE(In, OutHeader.NumberOfFrames)
+            && ReadInt32LE(In, OutHeader.NumberOfKeys)
+            && ReadUInt32LE(In, OutHeader.TrackCount)
+            && ReadUInt32LE(In, OutHeader.FloatCurveCount)
+            && ReadUInt32LE(In, OutHeader.NotifyTrackCount);
+    }
+
+    bool IsSupportedBinaryHeader(const FAnimSequenceBinaryHeader& Header)
+    {
+        return Header.MagicNumber == ANIM_SEQUENCE_BINARY_MAGIC
+            && Header.Version == ANIM_SEQUENCE_BINARY_VERSION
+            && Header.TrackCount <= MAX_SEQUENCE_TRACK_COUNT
+            && Header.FloatCurveCount <= MAX_SEQUENCE_CURVE_COUNT
+            && Header.NotifyTrackCount <= MAX_SEQUENCE_NOTIFY_TRACK_COUNT;
+    }
+
+    bool TryReadBinaryMagic(const FString& NormalizedPath, uint32& OutMagic)
+    {
+        OutMagic = 0;
+        std::ifstream InFile(
+            std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))),
+            std::ios::binary);
+        return InFile.is_open() && ReadUInt32LE(InFile, OutMagic);
+    }
+
+    void WriteVectorBinary(std::ofstream& Out, const FVector& Value)
+    {
+        WriteFloatLE(Out, Value.X);
+        WriteFloatLE(Out, Value.Y);
+        WriteFloatLE(Out, Value.Z);
+    }
+
+    bool ReadVectorBinary(std::ifstream& In, FVector& OutValue)
+    {
+        return ReadFloatLE(In, OutValue.X)
+            && ReadFloatLE(In, OutValue.Y)
+            && ReadFloatLE(In, OutValue.Z);
+    }
+
+    void WriteQuatBinary(std::ofstream& Out, const FQuat& Value)
+    {
+        WriteFloatLE(Out, Value.X);
+        WriteFloatLE(Out, Value.Y);
+        WriteFloatLE(Out, Value.Z);
+        WriteFloatLE(Out, Value.W);
+    }
+
+    bool ReadQuatBinary(std::ifstream& In, FQuat& OutValue)
+    {
+        return ReadFloatLE(In, OutValue.X)
+            && ReadFloatLE(In, OutValue.Y)
+            && ReadFloatLE(In, OutValue.Z)
+            && ReadFloatLE(In, OutValue.W);
+    }
+
+    void WriteColorBinary(std::ofstream& Out, const FColor& Value)
+    {
+        WriteFloatLE(Out, Value.R);
+        WriteFloatLE(Out, Value.G);
+        WriteFloatLE(Out, Value.B);
+        WriteFloatLE(Out, Value.A);
+    }
+
+    bool ReadColorBinary(std::ifstream& In, FColor& OutValue)
+    {
+        return ReadFloatLE(In, OutValue.R)
+            && ReadFloatLE(In, OutValue.G)
+            && ReadFloatLE(In, OutValue.B)
+            && ReadFloatLE(In, OutValue.A);
+    }
+
+    void WriteGuidBinary(std::ofstream& Out, const FGuid& Value)
+    {
+        WriteUInt32LE(Out, Value.A);
+        WriteUInt32LE(Out, Value.B);
+        WriteUInt32LE(Out, Value.C);
+        WriteUInt32LE(Out, Value.D);
+    }
+
+    bool ReadGuidBinary(std::ifstream& In, FGuid& OutValue)
+    {
+        return ReadUInt32LE(In, OutValue.A)
+            && ReadUInt32LE(In, OutValue.B)
+            && ReadUInt32LE(In, OutValue.C)
+            && ReadUInt32LE(In, OutValue.D);
+    }
+
+    void WriteVectorKeyArrayBinary(std::ofstream& Out, const TArray<FVector>& Keys)
+    {
+        WriteUInt32LE(Out, static_cast<uint32>(Keys.size()));
+        for (const FVector& Key : Keys)
+        {
+            WriteVectorBinary(Out, Key);
+        }
+    }
+
+    bool ReadVectorKeyArrayBinary(std::ifstream& In, TArray<FVector>& OutKeys)
+    {
+        uint32 Count = 0;
+        if (!ReadUInt32LE(In, Count) || Count > MAX_SEQUENCE_KEY_COUNT)
+        {
+            In.setstate(std::ios::failbit);
+            return false;
+        }
+
+        OutKeys.clear();
+        OutKeys.resize(Count);
+        for (FVector& Key : OutKeys)
+        {
+            if (!ReadVectorBinary(In, Key))
+            {
+                OutKeys.clear();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void WriteQuatKeyArrayBinary(std::ofstream& Out, const TArray<FQuat>& Keys)
+    {
+        WriteUInt32LE(Out, static_cast<uint32>(Keys.size()));
+        for (const FQuat& Key : Keys)
+        {
+            WriteQuatBinary(Out, Key);
+        }
+    }
+
+    bool ReadQuatKeyArrayBinary(std::ifstream& In, TArray<FQuat>& OutKeys)
+    {
+        uint32 Count = 0;
+        if (!ReadUInt32LE(In, Count) || Count > MAX_SEQUENCE_KEY_COUNT)
+        {
+            In.setstate(std::ios::failbit);
+            return false;
+        }
+
+        OutKeys.clear();
+        OutKeys.resize(Count);
+        for (FQuat& Key : OutKeys)
+        {
+            if (!ReadQuatBinary(In, Key))
+            {
+                OutKeys.clear();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool ValidateSequenceForBinary(const UAnimSequence* Sequence)
+    {
+        if (!Sequence || !Sequence->DataModel)
         {
             return false;
         }
 
-        try
-        {
-            OutValue = static_cast<int32>(std::stoi(Token));
-            return true;
-        }
-        catch (...)
+        const UAnimDataModel* DataModel = Sequence->DataModel;
+        if (!IsValidSequenceString(Sequence->GetName()) ||
+            !IsValidSequenceString(Sequence->GetSkeletonAssetPath()) ||
+            !IsValidSequenceCount(DataModel->BoneAnimationTracks.size(), MAX_SEQUENCE_TRACK_COUNT) ||
+            !IsValidSequenceCount(DataModel->CurveData.FloatCurves.size(), MAX_SEQUENCE_CURVE_COUNT) ||
+            !IsValidSequenceCount(DataModel->NotifyTracks.size(), MAX_SEQUENCE_NOTIFY_TRACK_COUNT))
         {
             return false;
         }
+
+        for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
+        {
+            if (!IsValidSequenceString(Track.Name.ToString()) ||
+                !IsValidSequenceCount(Track.InternalTrackData.PosKeys.size(), MAX_SEQUENCE_KEY_COUNT) ||
+                !IsValidSequenceCount(Track.InternalTrackData.RotKeys.size(), MAX_SEQUENCE_KEY_COUNT) ||
+                !IsValidSequenceCount(Track.InternalTrackData.ScaleKeys.size(), MAX_SEQUENCE_KEY_COUNT))
+            {
+                return false;
+            }
+        }
+
+        for (const FFloatCurve& Curve : DataModel->CurveData.FloatCurves)
+        {
+            if (!IsValidSequenceString(Curve.CurveName.ToString()) ||
+                !IsValidSequenceCount(Curve.Keys.size(), MAX_SEQUENCE_KEY_COUNT))
+            {
+                return false;
+            }
+        }
+
+        for (const FAnimNotifyTrack& Track : DataModel->NotifyTracks)
+        {
+            if (!IsValidSequenceString(Track.TrackName.ToString()) ||
+                !IsValidSequenceCount(Track.Events.size(), MAX_SEQUENCE_NOTIFY_EVENT_COUNT))
+            {
+                return false;
+            }
+
+            for (const FAnimNotifyEvent& Event : Track.Events)
+            {
+                if (!IsValidSequenceString(Event.Name.ToString()) ||
+                    !IsValidSequenceString(Event.GetResolvedNotifyClassName()) ||
+                    !IsValidSequenceString(Event.Payload))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    void WriteTrackBinary(std::ofstream& Out, const FBoneAnimationTrack& Track)
+    {
+        WriteStringBinary(Out, Track.Name.ToString());
+        WriteInt32LE(Out, Track.BoneTreeIndex);
+        WriteVectorKeyArrayBinary(Out, Track.InternalTrackData.PosKeys);
+        WriteQuatKeyArrayBinary(Out, Track.InternalTrackData.RotKeys);
+        WriteVectorKeyArrayBinary(Out, Track.InternalTrackData.ScaleKeys);
+    }
+
+    bool ReadTrackBinary(std::ifstream& In, FBoneAnimationTrack& OutTrack)
+    {
+        FString TrackName;
+        if (!ReadStringBinary(In, TrackName) ||
+            !ReadInt32LE(In, OutTrack.BoneTreeIndex) ||
+            !ReadVectorKeyArrayBinary(In, OutTrack.InternalTrackData.PosKeys) ||
+            !ReadQuatKeyArrayBinary(In, OutTrack.InternalTrackData.RotKeys) ||
+            !ReadVectorKeyArrayBinary(In, OutTrack.InternalTrackData.ScaleKeys))
+        {
+            return false;
+        }
+
+        OutTrack.Name = FName(TrackName);
+        return true;
+    }
+
+    void WriteFloatCurveBinary(std::ofstream& Out, const FFloatCurve& Curve)
+    {
+        WriteStringBinary(Out, Curve.CurveName.ToString());
+        WriteUInt32LE(Out, static_cast<uint32>(Curve.CurveType));
+        WriteUInt32LE(Out, static_cast<uint32>(Curve.SourceKind));
+        WriteUInt32LE(Out, static_cast<uint32>(Curve.Keys.size()));
+
+        for (const FCurveKey& Key : Curve.Keys)
+        {
+            WriteFloatLE(Out, Key.Time);
+            WriteFloatLE(Out, Key.Value);
+            WriteUInt32LE(Out, static_cast<uint32>(Key.InterpMode));
+            WriteUInt32LE(Out, static_cast<uint32>(Key.TangentMode));
+            WriteFloatLE(Out, Key.ArriveTangent);
+            WriteFloatLE(Out, Key.LeaveTangent);
+        }
+    }
+
+    bool ReadFloatCurveBinary(std::ifstream& In, FFloatCurve& OutCurve)
+    {
+        FString CurveName;
+        uint32 CurveType = 0;
+        uint32 SourceKind = 0;
+        uint32 KeyCount = 0;
+
+        if (!ReadStringBinary(In, CurveName) ||
+            !ReadUInt32LE(In, CurveType) ||
+            !ReadUInt32LE(In, SourceKind) ||
+            !ReadUInt32LE(In, KeyCount) ||
+            KeyCount > MAX_SEQUENCE_KEY_COUNT)
+        {
+            In.setstate(std::ios::failbit);
+            return false;
+        }
+
+        OutCurve.CurveName = FName(CurveName);
+        OutCurve.CurveType = static_cast<EAnimCurveType>(CurveType);
+        OutCurve.SourceKind = static_cast<EAnimCurveSourceKind>(SourceKind);
+        OutCurve.Keys.clear();
+        OutCurve.Keys.reserve(KeyCount);
+
+        for (uint32 KeyIndex = 0; KeyIndex < KeyCount; ++KeyIndex)
+        {
+            uint32 InterpMode = 0;
+            uint32 TangentMode = 0;
+            FCurveKey Key;
+            if (!ReadFloatLE(In, Key.Time) ||
+                !ReadFloatLE(In, Key.Value) ||
+                !ReadUInt32LE(In, InterpMode) ||
+                !ReadUInt32LE(In, TangentMode) ||
+                !ReadFloatLE(In, Key.ArriveTangent) ||
+                !ReadFloatLE(In, Key.LeaveTangent))
+            {
+                OutCurve.Keys.clear();
+                return false;
+            }
+
+            Key.InterpMode = static_cast<ECurveInterpMode>(InterpMode);
+            Key.TangentMode = static_cast<ECurveTangentMode>(TangentMode);
+            OutCurve.Keys.push_back(Key);
+        }
+
+        OutCurve.SortKeys();
+        return true;
+    }
+
+    void WriteNotifyTrackBinary(std::ofstream& Out, const FAnimNotifyTrack& Track)
+    {
+        WriteStringBinary(Out, Track.TrackName.ToString());
+        WriteUInt32LE(Out, static_cast<uint32>(Track.Events.size()));
+
+        for (const FAnimNotifyEvent& Event : Track.Events)
+        {
+            WriteGuidBinary(Out, Event.StableId);
+            WriteStringBinary(Out, Event.Name.ToString());
+            WriteFloatLE(Out, Event.Time);
+            WriteFloatLE(Out, Event.Duration);
+            WriteColorBinary(Out, Event.Color);
+            WriteUInt32LE(Out, static_cast<uint32>(Event.EventType));
+            WriteStringBinary(Out, Event.GetResolvedNotifyClassName());
+            WriteStringBinary(Out, Event.Payload);
+        }
+    }
+
+    bool ReadNotifyTrackBinary(std::ifstream& In, FAnimNotifyTrack& OutTrack)
+    {
+        FString TrackName;
+        uint32 EventCount = 0;
+        if (!ReadStringBinary(In, TrackName) ||
+            !ReadUInt32LE(In, EventCount) ||
+            EventCount > MAX_SEQUENCE_NOTIFY_EVENT_COUNT)
+        {
+            In.setstate(std::ios::failbit);
+            return false;
+        }
+
+        OutTrack.TrackName = FName(TrackName);
+        OutTrack.Events.clear();
+        OutTrack.Events.reserve(EventCount);
+
+        for (uint32 EventIndex = 0; EventIndex < EventCount; ++EventIndex)
+        {
+            FString EventName;
+            FString NotifyClassName;
+            uint32 EventType = 0;
+            FAnimNotifyEvent Event;
+
+            if (!ReadGuidBinary(In, Event.StableId) ||
+                !ReadStringBinary(In, EventName) ||
+                !ReadFloatLE(In, Event.Time) ||
+                !ReadFloatLE(In, Event.Duration) ||
+                !ReadColorBinary(In, Event.Color) ||
+                !ReadUInt32LE(In, EventType) ||
+                !ReadStringBinary(In, NotifyClassName) ||
+                !ReadStringBinary(In, Event.Payload))
+            {
+                OutTrack.Events.clear();
+                return false;
+            }
+
+            Event.Name = FName(EventName);
+            Event.EventType = static_cast<EAnimNotifyEventType>(EventType);
+            Event.NotifyClassName = NotifyClassName.empty()
+                ? GetDefaultAnimNotifyClassName(Event.EventType)
+                : NotifyClassName;
+            Event.EnsureStableId();
+            OutTrack.Events.push_back(Event);
+        }
+
+        return true;
+    }
+
+    uint64 GetFileSizeBytes(const std::filesystem::path& FilePath)
+    {
+        std::error_code ErrorCode;
+        const uint64 Size = static_cast<uint64>(std::filesystem::file_size(FilePath, ErrorCode));
+        return ErrorCode ? 0 : Size;
+    }
+
+    void DestroyLoadedSequence(UAnimSequence* Sequence, UAnimDataModel* DataModel)
+    {
+        if (Sequence)
+        {
+            if (!Sequence->DataModel)
+            {
+                delete DataModel;
+            }
+            UObjectManager::Get().DestroyObject(Sequence);
+            return;
+        }
+
+        delete DataModel;
+    }
+
+    UAnimSequence* LoadBinarySequence(const FString& NormalizedPath)
+    {
+        const auto LoadStart = std::chrono::steady_clock::now();
+        const std::filesystem::path FilePath(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath)));
+
+        std::ifstream InFile(FilePath, std::ios::binary);
+        if (!InFile.is_open())
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to open binary sequence asset: %s", NormalizedPath.c_str());
+            return nullptr;
+        }
+
+        FAnimSequenceBinaryHeader Header;
+        if (!ReadBinaryHeader(InFile, Header) || !IsSupportedBinaryHeader(Header))
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] Invalid binary sequence asset header: %s", NormalizedPath.c_str());
+            return nullptr;
+        }
+
+        FString SequenceName;
+        FString SkeletonAssetPath;
+        if (!ReadStringBinary(InFile, SequenceName) || !ReadStringBinary(InFile, SkeletonAssetPath))
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] Invalid binary sequence asset metadata: %s", NormalizedPath.c_str());
+            return nullptr;
+        }
+
+        UAnimSequence* Sequence = UObjectManager::Get().CreateObject<UAnimSequence>();
+        UAnimDataModel* DataModel = new UAnimDataModel();
+
+        Sequence->SetFName(FName(SequenceName.empty() ? "AnimSequence" : SequenceName));
+        Sequence->SetSkeletonAssetPath(FPaths::ToProjectRelativePath(SkeletonAssetPath));
+
+        DataModel->SetFName(FName(Sequence->GetName() + FString("_Data")));
+        DataModel->FrameRate = FFrameRate(Header.FrameRateNumerator, Header.FrameRateDenominator);
+        DataModel->NumberOfFrames = Header.NumberOfFrames;
+        DataModel->NumberOfKeys = Header.NumberOfKeys;
+        DataModel->BoneAnimationTracks.reserve(Header.TrackCount);
+        DataModel->CurveData.FloatCurves.reserve(Header.FloatCurveCount);
+        DataModel->NotifyTracks.reserve(Header.NotifyTrackCount);
+
+        for (uint32 TrackIndex = 0; TrackIndex < Header.TrackCount; ++TrackIndex)
+        {
+            FBoneAnimationTrack Track;
+            if (!ReadTrackBinary(InFile, Track))
+            {
+                UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to read binary sequence track: %s", NormalizedPath.c_str());
+                DestroyLoadedSequence(Sequence, DataModel);
+                return nullptr;
+            }
+            DataModel->BoneAnimationTracks.push_back(Track);
+        }
+
+        for (uint32 CurveIndex = 0; CurveIndex < Header.FloatCurveCount; ++CurveIndex)
+        {
+            FFloatCurve Curve;
+            if (!ReadFloatCurveBinary(InFile, Curve))
+            {
+                UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to read binary sequence curve: %s", NormalizedPath.c_str());
+                DestroyLoadedSequence(Sequence, DataModel);
+                return nullptr;
+            }
+            DataModel->CurveData.FloatCurves.push_back(Curve);
+        }
+
+        for (uint32 NotifyTrackIndex = 0; NotifyTrackIndex < Header.NotifyTrackCount; ++NotifyTrackIndex)
+        {
+            FAnimNotifyTrack Track;
+            if (!ReadNotifyTrackBinary(InFile, Track))
+            {
+                UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to read binary sequence notify track: %s", NormalizedPath.c_str());
+                DestroyLoadedSequence(Sequence, DataModel);
+                return nullptr;
+            }
+            DataModel->NotifyTracks.push_back(Track);
+        }
+
+        if (!InFile.good() && !InFile.eof())
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed while reading binary sequence asset: %s", NormalizedPath.c_str());
+            DestroyLoadedSequence(Sequence, DataModel);
+            return nullptr;
+        }
+
+        Sequence->DataModel = DataModel;
+
+        const auto LoadEnd = std::chrono::steady_clock::now();
+        const double LoadSec = std::chrono::duration<double>(LoadEnd - LoadStart).count();
+        UE_LOG("[SkeletalMeshLoad] Animation Sequence Load | Format=RawBinary | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Bytes=%llu | Sec=%.6f | Ms=%.3f",
+            NormalizedPath.c_str(),
+            Sequence->GetName().c_str(),
+            DataModel->BoneAnimationTracks.size(),
+            DataModel->NumberOfFrames,
+            DataModel->NumberOfKeys,
+            DataModel->CurveData.FloatCurves.size(),
+            static_cast<unsigned long long>(GetFileSizeBytes(FilePath)),
+            LoadSec,
+            LoadSec * 1000.0);
+
+        return Sequence;
+    }
+
+    bool LoadBinaryMetadata(const FString& NormalizedPath, FAnimSequenceAssetMetadata& OutMetadata)
+    {
+        std::ifstream InFile(
+            std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))),
+            std::ios::binary);
+        if (!InFile.is_open())
+        {
+            return false;
+        }
+
+        FAnimSequenceBinaryHeader Header;
+        if (!ReadBinaryHeader(InFile, Header) || !IsSupportedBinaryHeader(Header))
+        {
+            return false;
+        }
+
+        FString SequenceName;
+        FString SkeletonAssetPath;
+        if (!ReadStringBinary(InFile, SequenceName) || !ReadStringBinary(InFile, SkeletonAssetPath))
+        {
+            return false;
+        }
+
+        OutMetadata.ObjectName = SequenceName;
+        OutMetadata.SkeletonAssetPath = FPaths::Normalize(SkeletonAssetPath);
+        OutMetadata.FrameRateNumerator = Header.FrameRateNumerator;
+        OutMetadata.FrameRateDenominator = Header.FrameRateDenominator;
+        OutMetadata.NumberOfFrames = Header.NumberOfFrames;
+        OutMetadata.NumberOfKeys = Header.NumberOfKeys;
+        OutMetadata.BoneTrackCount = static_cast<int32>(Header.TrackCount);
+        return OutMetadata.IsValid();
     }
 }
 
@@ -504,103 +727,20 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
         return nullptr;
     }
 
-    std::ifstream SequenceFile(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))));
-    if (!SequenceFile.is_open())
+    uint32 Magic = 0;
+    if (!TryReadBinaryMagic(NormalizedPath, Magic))
     {
-        UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to open sequence asset: %s", NormalizedPath.c_str());
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to read sequence asset header: %s", NormalizedPath.c_str());
         return nullptr;
     }
 
-    FString FileContent((std::istreambuf_iterator<char>(SequenceFile)), std::istreambuf_iterator<char>());
-    json::JSON Root = json::JSON::Load(FileContent);
-    if (Root.JSONType() != json::JSON::Class::Object)
+    if (Magic != ANIM_SEQUENCE_BINARY_MAGIC)
     {
-        UE_LOG_ERROR("[AnimSequenceAssetLoader] Invalid sequence asset json: %s", NormalizedPath.c_str());
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Unsupported legacy JSON sequence asset. Reimport or resave as raw binary: %s", NormalizedPath.c_str());
         return nullptr;
     }
 
-    UAnimSequence* Sequence = UObjectManager::Get().CreateObject<UAnimSequence>();
-    UAnimDataModel* DataModel = new UAnimDataModel();
-
-    const FString SequenceName = Root.hasKey("ObjectName") ? Root["ObjectName"].ToString() : FString();
-    Sequence->SetFName(FName(SequenceName.empty() ? "AnimSequence" : SequenceName));
-    if (Root.hasKey("SkeletonAssetPath"))
-    {
-        Sequence->SetSkeletonAssetPath(FPaths::ToProjectRelativePath(Root["SkeletonAssetPath"].ToString()));
-    }
-
-    DataModel->SetFName(FName(Sequence->GetName() + FString("_Data")));
-    DataModel->FrameRate = FFrameRate(
-        Root.hasKey("FrameRateNumerator") ? static_cast<int32>(Root["FrameRateNumerator"].ToInt()) : 30,
-        Root.hasKey("FrameRateDenominator") ? static_cast<int32>(Root["FrameRateDenominator"].ToInt()) : 1);
-    DataModel->NumberOfFrames = Root.hasKey("NumberOfFrames") ? static_cast<int32>(Root["NumberOfFrames"].ToInt()) : 0;
-    DataModel->NumberOfKeys = Root.hasKey("NumberOfKeys") ? static_cast<int32>(Root["NumberOfKeys"].ToInt()) : 0;
-
-    if (Root.hasKey("Tracks") && Root["Tracks"].JSONType() == json::JSON::Class::Array)
-    {
-        json::JSON& Tracks = Root["Tracks"];
-        DataModel->BoneAnimationTracks.reserve(Tracks.length());
-        for (int32 TrackIndex = 0; TrackIndex < Tracks.length(); ++TrackIndex)
-        {
-            json::JSON& TrackObject = Tracks.at(static_cast<unsigned>(TrackIndex));
-            if (TrackObject.JSONType() != json::JSON::Class::Object)
-            {
-                continue;
-            }
-
-            FBoneAnimationTrack Track;
-            Track.Name = FName(TrackObject.hasKey("Name") ? TrackObject["Name"].ToString() : FString());
-            Track.BoneTreeIndex = TrackObject.hasKey("BoneTreeIndex")
-                ? static_cast<int32>(TrackObject["BoneTreeIndex"].ToInt())
-                : -1;
-
-            if (TrackObject.hasKey("PosKeys"))
-            {
-                ReadVectorKeys(TrackObject["PosKeys"], Track.InternalTrackData.PosKeys);
-            }
-            if (TrackObject.hasKey("RotKeys"))
-            {
-                ReadQuatKeys(TrackObject["RotKeys"], Track.InternalTrackData.RotKeys);
-            }
-            if (TrackObject.hasKey("ScaleKeys"))
-            {
-                ReadVectorKeys(TrackObject["ScaleKeys"], Track.InternalTrackData.ScaleKeys);
-            }
-
-            DataModel->BoneAnimationTracks.push_back(Track);
-        }
-    }
-
-    if (Root.hasKey("FloatCurves") && Root["FloatCurves"].JSONType() == json::JSON::Class::Array)
-    {
-        json::JSON& FloatCurves = Root["FloatCurves"];
-        DataModel->CurveData.FloatCurves.reserve(FloatCurves.length());
-        for (int32 CurveIndex = 0; CurveIndex < FloatCurves.length(); ++CurveIndex)
-        {
-            json::JSON& CurveObject = FloatCurves.at(static_cast<unsigned>(CurveIndex));
-            if (CurveObject.JSONType() == json::JSON::Class::Object)
-            {
-                DataModel->CurveData.FloatCurves.push_back(ReadFloatCurve(CurveObject));
-            }
-        }
-    }
-
-    if (Root.hasKey("NotifyTracks") && Root["NotifyTracks"].JSONType() == json::JSON::Class::Array)
-    {
-        json::JSON& NotifyTracks = Root["NotifyTracks"];
-        DataModel->NotifyTracks.reserve(NotifyTracks.length());
-        for (int32 TrackIndex = 0; TrackIndex < NotifyTracks.length(); ++TrackIndex)
-        {
-            json::JSON& TrackObject = NotifyTracks.at(static_cast<unsigned>(TrackIndex));
-            if (TrackObject.JSONType() == json::JSON::Class::Object)
-            {
-                DataModel->NotifyTracks.push_back(ReadNotifyTrack(TrackObject));
-            }
-        }
-    }
-
-    Sequence->DataModel = DataModel;
-    return Sequence;
+    return LoadBinarySequence(NormalizedPath);
 }
 
 bool FAnimSequenceAssetLoader::LoadMetadata(const FString& Path, FAnimSequenceAssetMetadata& OutMetadata) const
@@ -613,63 +753,13 @@ bool FAnimSequenceAssetLoader::LoadMetadata(const FString& Path, FAnimSequenceAs
         return false;
     }
 
-    std::ifstream SequenceFile(FPaths::ToWide(NormalizedPath));
-    if (!SequenceFile.is_open())
+    uint32 Magic = 0;
+    if (!TryReadBinaryMagic(NormalizedPath, Magic) || Magic != ANIM_SEQUENCE_BINARY_MAGIC)
     {
         return false;
     }
 
-    FString Line;
-    while (std::getline(SequenceFile, Line))
-    {
-        FString StringValue;
-        int32 IntValue = 0;
-
-        if (TryReadJsonStringValue(Line, "ObjectName", StringValue))
-        {
-            OutMetadata.ObjectName = StringValue;
-            continue;
-        }
-
-        if (TryReadJsonStringValue(Line, "SkeletonAssetPath", StringValue))
-        {
-            OutMetadata.SkeletonAssetPath = FPaths::Normalize(StringValue);
-            continue;
-        }
-
-        if (TryReadJsonIntValue(Line, "FrameRateNumerator", IntValue))
-        {
-            OutMetadata.FrameRateNumerator = IntValue;
-            continue;
-        }
-
-        if (TryReadJsonIntValue(Line, "FrameRateDenominator", IntValue))
-        {
-            OutMetadata.FrameRateDenominator = IntValue;
-            continue;
-        }
-
-        if (TryReadJsonIntValue(Line, "NumberOfFrames", IntValue))
-        {
-            OutMetadata.NumberOfFrames = IntValue;
-            continue;
-        }
-
-        if (TryReadJsonIntValue(Line, "NumberOfKeys", IntValue))
-        {
-            OutMetadata.NumberOfKeys = IntValue;
-            continue;
-        }
-
-        size_t SearchPos = 0;
-        while ((SearchPos = Line.find("\"BoneTreeIndex\"", SearchPos)) != FString::npos)
-        {
-            ++OutMetadata.BoneTrackCount;
-            SearchPos += 15;
-        }
-    }
-
-    return OutMetadata.IsValid();
+    return LoadBinaryMetadata(NormalizedPath, OutMetadata);
 }
 
 bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Sequence) const
@@ -686,55 +776,72 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     }
 
     const UAnimDataModel* DataModel = Sequence->DataModel;
-    json::JSON Root = json::JSON::Make(json::JSON::Class::Object);
-    Root["Type"] = "UAnimSequence";
-    Root["ObjectName"] = Sequence->GetName();
-    Root["SkeletonAssetPath"] = FPaths::ToProjectRelativePath(Sequence->GetSkeletonAssetPath());
-    Root["FrameRateNumerator"] = DataModel->FrameRate.Numerator;
-    Root["FrameRateDenominator"] = DataModel->FrameRate.Denominator;
-    Root["NumberOfFrames"] = DataModel->NumberOfFrames;
-    Root["NumberOfKeys"] = DataModel->NumberOfKeys;
-
-    Root["Tracks"] = json::Array();
-    for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
+    if (!ValidateSequenceForBinary(Sequence))
     {
-        json::JSON TrackObject = json::JSON::Make(json::JSON::Class::Object);
-        TrackObject["Name"] = Track.Name.ToString();
-        TrackObject["BoneTreeIndex"] = Track.BoneTreeIndex;
-        WriteVectorKeys(TrackObject["PosKeys"], Track.InternalTrackData.PosKeys);
-        WriteQuatKeys(TrackObject["RotKeys"], Track.InternalTrackData.RotKeys);
-        WriteVectorKeys(TrackObject["ScaleKeys"], Track.InternalTrackData.ScaleKeys);
-        Root["Tracks"].append(TrackObject);
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Animation sequence is too large for raw binary format: %s", NormalizedPath.c_str());
+        return false;
     }
 
-    Root["FloatCurves"] = json::Array();
-    for (const FFloatCurve& Curve : DataModel->CurveData.FloatCurves)
-    {
-        json::JSON CurveObject = json::JSON::Make(json::JSON::Class::Object);
-        WriteFloatCurve(CurveObject, Curve);
-        Root["FloatCurves"].append(CurveObject);
-    }
-
-    Root["NotifyTracks"] = json::Array();
-    for (const FAnimNotifyTrack& Track : DataModel->NotifyTracks)
-    {
-        json::JSON TrackObject = json::JSON::Make(json::JSON::Class::Object);
-        WriteNotifyTrack(TrackObject, Track);
-        Root["NotifyTracks"].append(TrackObject);
-    }
+    const auto SaveStart = std::chrono::steady_clock::now();
 
     std::error_code ErrorCode;
     const std::filesystem::path FilePath(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath)));
     std::filesystem::create_directories(FilePath.parent_path(), ErrorCode);
 
-    std::ofstream OutFile(FilePath);
+    std::ofstream OutFile(FilePath, std::ios::binary);
     if (!OutFile.is_open())
     {
         UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to open sequence asset for writing: %s", NormalizedPath.c_str());
         return false;
     }
 
-    OutFile << Root.dump(4);
+    FAnimSequenceBinaryHeader Header;
+    Header.FrameRateNumerator = DataModel->FrameRate.Numerator;
+    Header.FrameRateDenominator = DataModel->FrameRate.Denominator;
+    Header.NumberOfFrames = DataModel->NumberOfFrames;
+    Header.NumberOfKeys = DataModel->NumberOfKeys;
+    Header.TrackCount = static_cast<uint32>(DataModel->BoneAnimationTracks.size());
+    Header.FloatCurveCount = static_cast<uint32>(DataModel->CurveData.FloatCurves.size());
+    Header.NotifyTrackCount = static_cast<uint32>(DataModel->NotifyTracks.size());
+
+    WriteBinaryHeader(OutFile, Header);
+    WriteStringBinary(OutFile, Sequence->GetName());
+    WriteStringBinary(OutFile, FPaths::ToProjectRelativePath(Sequence->GetSkeletonAssetPath()));
+
+    for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
+    {
+        WriteTrackBinary(OutFile, Track);
+    }
+
+    for (const FFloatCurve& Curve : DataModel->CurveData.FloatCurves)
+    {
+        WriteFloatCurveBinary(OutFile, Curve);
+    }
+
+    for (const FAnimNotifyTrack& Track : DataModel->NotifyTracks)
+    {
+        WriteNotifyTrackBinary(OutFile, Track);
+    }
+
+    OutFile.flush();
+    if (!OutFile.good())
+    {
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed while writing raw binary sequence asset: %s", NormalizedPath.c_str());
+        return false;
+    }
+
+    const auto SaveEnd = std::chrono::steady_clock::now();
+    const double SaveElapsedSec = std::chrono::duration<double>(SaveEnd - SaveStart).count();
+    UE_LOG("[SkeletalMeshLoad] Animation Sequence Save | Format=RawBinary | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Bytes=%llu | Sec=%.6f | Ms=%.3f",
+        NormalizedPath.c_str(),
+        Sequence->GetName().c_str(),
+        DataModel->BoneAnimationTracks.size(),
+        DataModel->NumberOfFrames,
+        DataModel->NumberOfKeys,
+        DataModel->CurveData.FloatCurves.size(),
+        static_cast<unsigned long long>(GetFileSizeBytes(FilePath)),
+        SaveElapsedSec,
+        SaveElapsedSec * 1000.0);
     return true;
 }
 
