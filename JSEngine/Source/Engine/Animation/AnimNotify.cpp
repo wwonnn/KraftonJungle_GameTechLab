@@ -1,13 +1,5 @@
 #include "Animation/AnimNotify.h"
 
-#include "Object/ObjectFactory.h"
-
-DEFINE_CLASS(UAnimNotify, UObject)
-REGISTER_FACTORY(UAnimNotify)
-
-DEFINE_CLASS(UAnimNotifyState, UAnimNotify)
-REGISTER_FACTORY(UAnimNotifyState)
-
 FString UAnimNotify::GetNotifyName(const FAnimNotifyEvent& NotifyEvent) const
 {
     return NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : GetName();

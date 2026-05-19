@@ -4,11 +4,13 @@
 #include "Core/CoreMinimal.h"
 #include "Render/Resource/Material.h"
 #include <memory>
+#include "Generated/GizmoComponent.generated.h"
 
 class ITransformProxy;
 class USceneComponent;
 struct FMeshData;
 
+UCLASS()
 class UGizmoComponent : public UPrimitiveComponent
 {
 private:
@@ -61,7 +63,8 @@ private:
 	bool IsTargetComponentAlive() const;
 
 public:
-	DECLARE_CLASS(UGizmoComponent, UPrimitiveComponent)
+	GENERATED_BODY()
+
 	UGizmoComponent();
 
 	// 기즈모 컴포넌트는 복제를 지원하지 않습니다.

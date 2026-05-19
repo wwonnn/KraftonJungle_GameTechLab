@@ -2,22 +2,25 @@
 
 #include "Animation/AnimNotify.h"
 #include "Audio/AudioSystem.h"
+#include "Generated/AnimNotifyBuiltins.generated.h"
 
 class AActor;
 class UPrimitiveComponent;
 
+UCLASS()
 class UAnimNotify_PlaySFX : public UAnimNotify
 {
 public:
-    DECLARE_CLASS(UAnimNotify_PlaySFX, UAnimNotify)
+    GENERATED_BODY()
 
     void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
 };
 
+UCLASS()
 class UAnimNotifyState_PlayLoopingSFX : public UAnimNotifyState
 {
 public:
-    DECLARE_CLASS(UAnimNotifyState_PlayLoopingSFX, UAnimNotifyState)
+    GENERATED_BODY()
 
     ~UAnimNotifyState_PlayLoopingSFX() override;
 
@@ -33,10 +36,11 @@ private:
     bool bSpatialized = false;
 };
 
+UCLASS()
 class UAnimNotifyState_AttackWindow : public UAnimNotifyState
 {
 public:
-    DECLARE_CLASS(UAnimNotifyState_AttackWindow, UAnimNotifyState)
+    GENERATED_BODY()
 
     ~UAnimNotifyState_AttackWindow() override;
 

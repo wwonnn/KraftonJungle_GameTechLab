@@ -1,11 +1,9 @@
-﻿#include "MeshComponent.h"
+#include "MeshComponent.h"
 #include "Render/Resource/Material.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 
 #include <filesystem>
-
-DEFINE_CLASS(UMeshComponent, UPrimitiveComponent)
 
 // UpdateWorldAABB 등의 함수를 오버라이드하지 않았기 때문에 UMeshComponent도 추상 클래스가 됩니다.
 // 추후에 MeshComponent를 사용할 일이 있다면 Duplicate의 주석을 해제하고 수정하시면 됩니다.
@@ -75,8 +73,6 @@ void UMeshComponent::Serialize(FArchive& Ar)
 		Ar << "Materials" << MaterialPaths;
 	}
 
-	Ar << "Scroll U" << ScrollUV.first;
-	Ar << "Scroll V" << ScrollUV.second;
 }
 
 void UMeshComponent::SetMaterial(int32 SlotIndex, UMaterialInterface* InMaterial)
@@ -117,9 +113,6 @@ int32 UMeshComponent::GetNumMaterials() const
 void UMeshComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
 	UPrimitiveComponent::GetEditableProperties(OutProps);
-
-	OutProps.push_back({ "Scroll U", EPropertyType::Float, &ScrollUV.first,  -1.0f, 1.0f, 0.01f });
-	OutProps.push_back({ "Scroll V", EPropertyType::Float, &ScrollUV.second, -1.0f, 1.0f, 0.01f });
 }
 
 void UMeshComponent::PostEditProperty(const char* PropertyName)
@@ -129,8 +122,8 @@ void UMeshComponent::PostEditProperty(const char* PropertyName)
 
 void UMeshComponent::TickComponent(float DeltaTime)
 {
-	//ScrollUV.second += DeltaTime;
+	//ScrollUV.V += DeltaTime;
 
-	//if (ScrollUV.first >= 1.f) ScrollUV.first = 0.f;
+	//if (ScrollUV.U >= 1.f) ScrollUV.U = 0.f;
 }
 

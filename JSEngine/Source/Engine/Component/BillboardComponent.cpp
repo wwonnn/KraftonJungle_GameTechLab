@@ -1,4 +1,4 @@
-﻿#include "BillboardComponent.h"
+#include "BillboardComponent.h"
 #include <cmath>
 #include "GameFramework/World.h"
 #include "Camera/ViewportCamera.h"
@@ -7,9 +7,6 @@
 #include "Core/ResourceManager.h"
 
 #include "Render/Proxy/BillboardRenderProxy.h"
-
-DEFINE_CLASS(UBillboardComponent, UPrimitiveComponent)
-REGISTER_FACTORY(UBillboardComponent)
 
 // GetEditableProperties 에 노출되지 않은 필드를 직접 복사합니다.
 void UBillboardComponent::PostDuplicate(UObject* Original)

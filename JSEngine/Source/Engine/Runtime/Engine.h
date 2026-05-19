@@ -10,6 +10,7 @@
 #include "UI/RmlUi/RmlUiSystem.h"
 
 #include <memory>
+#include "Generated/Engine.generated.h"
 
 class FWindowsWindow;
 class FTimer;
@@ -32,10 +33,11 @@ struct FRuntimeInputPermissions
 	bool bAllowLuaMouseInput = true;
 };
 
+UCLASS()
 class UEngine : public UObject
 {
 public:
-	DECLARE_CLASS(UEngine, UObject)
+	GENERATED_BODY()
 
 	UEngine() = default;
 	~UEngine() override = default;

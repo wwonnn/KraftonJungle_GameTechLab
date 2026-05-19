@@ -1,9 +1,4 @@
-﻿#include "Camera/CameraShakeBase.h"
-
-DEFINE_CLASS(UCameraShakePattern, UObject)
-DEFINE_CLASS(UCameraShakeBase, UObject)
-
-REGISTER_FACTORY(UCameraShakePattern)
+#include "Camera/CameraShakeBase.h"
 
 void FCameraShakeState::Start(const UCameraShakePattern* Pattern, const FCameraShakeStartParams& Params)
 {

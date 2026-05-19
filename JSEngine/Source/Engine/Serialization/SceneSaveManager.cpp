@@ -15,7 +15,7 @@
 #include "Object/Object.h"
 #include "Object/ActorIterator.h"
 #include "Object/ObjectFactory.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "Object/FName.h"
 #include "Math/Matrix.h"
 #include "Math/Vector.h"
@@ -238,7 +238,7 @@ static json::JSON BuildSceneSnapshotJson(const FString& SceneName, FWorldContext
 	int32 Version = 6;
 	uint32 NextUUID = EngineStatics::GetNextUUID();
 
-	Writer << SceneKeys::ClassName << WorldContext.World->GetTypeInfo()->name;
+	Writer << SceneKeys::ClassName << WorldContext.World->GetClass()->GetName();
 	Writer << SceneKeys::Name << FinalName;
 	Writer << SceneKeys::WorldType << WorldTypeToString(WorldContext.WorldType);
 	Writer << SceneKeys::Version << Version;

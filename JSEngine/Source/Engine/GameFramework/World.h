@@ -6,6 +6,7 @@
 #include "GameFramework/AActor.h"
 #include "Level.h"
 #include "Spatial/WorldSpatialIndex.h"
+#include "Generated/World.generated.h"
 
 class UCameraComponent;
 class ULineBatchComponent;
@@ -20,11 +21,13 @@ struct FWorldGameModeSettings
 	FString DefaultPawnPrefabPath;
 };
 
+UCLASS()
 class UWorld : public UObject {
 public:
     using FActorDestroyedListener = std::function<void(AActor*)>;
 
-    DECLARE_CLASS(UWorld, UObject)
+    GENERATED_BODY()
+
 	UWorld();
 	~UWorld() override;
 

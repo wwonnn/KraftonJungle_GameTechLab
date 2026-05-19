@@ -1,11 +1,13 @@
 ﻿#pragma once
 
 #include "MovementComponent.h"
+#include "Generated/RotatingMovementComponent.generated.h"
 
+UCLASS()
 class URotatingMovementComponent : public UMovementComponent
 {	
 public:
-	DECLARE_CLASS(URotatingMovementComponent, UMovementComponent)
+	GENERATED_BODY()
 
 	virtual void TickComponent(float DeltaTime) override;
 

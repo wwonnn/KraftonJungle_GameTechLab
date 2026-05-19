@@ -13,39 +13,39 @@
 
 namespace
 {
-    const FTypeInfo* FindRegisteredTypeInfo(const FString& TypeName)
+    const UClass* FindRegisteredClass(const FString& TypeName)
     {
         if (TypeName.empty())
         {
             return nullptr;
         }
 
-        TArray<const FTypeInfo*> RegisteredTypes;
-        FObjectFactory::Get().GetRegisteredTypeInfos(RegisteredTypes);
-        for (const FTypeInfo* TypeInfo : RegisteredTypes)
+        TArray<const UClass*> RegisteredClasses;
+        FObjectFactory::Get().GetRegisteredClasses(RegisteredClasses);
+        for (const UClass* Class : RegisteredClasses)
         {
-            if (TypeInfo && TypeInfo->name && TypeName == TypeInfo->name)
+            if (Class && Class->GetName() && TypeName == Class->GetName())
             {
-                return TypeInfo;
+                return Class;
             }
         }
 
         return nullptr;
     }
 
-    bool IsNotifyClassCompatible(const FTypeInfo* TypeInfo, EAnimNotifyEventType EventType)
+    bool IsNotifyClassCompatible(const UClass* Class, EAnimNotifyEventType EventType)
     {
-        if (!TypeInfo)
+        if (!Class)
         {
             return false;
         }
 
         if (EventType == EAnimNotifyEventType::NotifyState)
         {
-            return TypeInfo->IsA(&UAnimNotifyState::s_TypeInfo);
+            return Class->IsA(UAnimNotifyState::StaticClass());
         }
 
-        return TypeInfo->IsA(&UAnimNotify::s_TypeInfo) && !TypeInfo->IsA(&UAnimNotifyState::s_TypeInfo);
+        return Class->IsA(UAnimNotify::StaticClass()) && !Class->IsA(UAnimNotifyState::StaticClass());
     }
 
     FString GetNotifyTypeLabel(EAnimNotifyEventType EventType)
@@ -280,8 +280,8 @@ FAnimNotifyValidationReport ValidateAnimNotifyEvent(
 {
     FAnimNotifyValidationReport Report;
     const FString NotifyClassName = NotifyEvent.GetResolvedNotifyClassName();
-    const FTypeInfo* NotifyTypeInfo = FindRegisteredTypeInfo(NotifyClassName);
-    if (!NotifyTypeInfo)
+    const UClass* NotifyClass = FindRegisteredClass(NotifyClassName);
+    if (!NotifyClass)
     {
         Report.AddIssue(
             EAnimNotifyValidationSeverity::Error,
@@ -292,7 +292,7 @@ FAnimNotifyValidationReport ValidateAnimNotifyEvent(
             EventIndex,
             NotifyEvent.StableId);
     }
-    else if (!IsNotifyClassCompatible(NotifyTypeInfo, NotifyEvent.EventType))
+    else if (!IsNotifyClassCompatible(NotifyClass, NotifyEvent.EventType))
     {
         Report.AddIssue(
             EAnimNotifyValidationSeverity::Error,

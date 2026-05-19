@@ -1,10 +1,13 @@
 ﻿#pragma once
 #include "LightComponent.h"
+#include "Generated/PointLightComponent.generated.h"
 
+UCLASS()
 class UPointLightComponent : public ULightComponent
 {
 public:
-    DECLARE_CLASS(UPointLightComponent, ULightComponent)
+    GENERATED_BODY()
+
     virtual void PostDuplicate(UObject* Original) override;
 	virtual void Serialize(FArchive& Ar) override;
 

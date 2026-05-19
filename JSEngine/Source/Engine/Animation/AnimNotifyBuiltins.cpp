@@ -7,7 +7,6 @@
 #include "Component/SkeletalMeshComponent.h"
 #include "Core/Logging/Log.h"
 #include "GameFramework/AActor.h"
-#include "Object/ObjectFactory.h"
 #include "Runtime/Engine.h"
 
 namespace
@@ -187,15 +186,6 @@ namespace
         }
     }
 }
-
-DEFINE_CLASS(UAnimNotify_PlaySFX, UAnimNotify)
-REGISTER_FACTORY(UAnimNotify_PlaySFX)
-
-DEFINE_CLASS(UAnimNotifyState_PlayLoopingSFX, UAnimNotifyState)
-REGISTER_FACTORY(UAnimNotifyState_PlayLoopingSFX)
-
-DEFINE_CLASS(UAnimNotifyState_AttackWindow, UAnimNotifyState)
-REGISTER_FACTORY(UAnimNotifyState_AttackWindow)
 
 void UAnimNotify_PlaySFX::Notify(
     USkeletalMeshComponent* MeshComponent,

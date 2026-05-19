@@ -1,8 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/AnimationStateMachine.h"
 #include "Math/Vector2.h"
 #include "Object/Object.h"
+#include "Generated/AnimInstanceAsset.generated.h"
 
 struct FAnimInstanceParameterAssetData
 {
@@ -35,10 +36,11 @@ struct FAnimInstanceTransitionAssetData
     int32 Priority = 0;
 };
 
+UCLASS()
 class UAnimInstanceAsset : public UObject
 {
 public:
-    DECLARE_CLASS(UAnimInstanceAsset, UObject)
+    GENERATED_BODY()
 
 public:
     void SetAssetPath(const FString& InPath) { AssetPath = InPath; }

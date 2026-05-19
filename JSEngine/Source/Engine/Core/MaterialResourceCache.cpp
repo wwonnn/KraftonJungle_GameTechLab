@@ -121,15 +121,15 @@ UMaterialInstance* FMaterialResourceCache::CreateMaterialInstance(const FString&
 
 	if (UMaterialInstance* Existing = GetMaterialInstance(NormalizedPath))
 	{
-		if (Existing->Parent == nullptr)
+		if (Existing->GetParent() == nullptr)
 		{
-			Existing->Parent = Parent;
+			Existing->GetParent() = Parent;
 		}
 		return Existing;
 	}
 
 	UMaterialInstance* Instance = UObjectManager::Get().CreateObject<UMaterialInstance>();
-	Instance->Parent = Parent;
+	Instance->GetParent() = Parent;
 	Instance->Name = NormalizedPath;
 	Instance->FilePath = NormalizedPath;
 	MaterialInstances[NormalizedPath] = Instance;

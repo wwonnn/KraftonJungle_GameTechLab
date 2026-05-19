@@ -1,19 +1,22 @@
 #pragma once
 
 #include "Animation/AnimNotify.h"
+#include "Generated/AnimNotifyLog.generated.h"
 
+UCLASS()
 class UAnimNotifyLog : public UAnimNotify
 {
 public:
-    DECLARE_CLASS(UAnimNotifyLog, UAnimNotify)
+    GENERATED_BODY()
 
     void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
 };
 
+UCLASS()
 class UAnimNotifyStateLog : public UAnimNotifyState
 {
 public:
-    DECLARE_CLASS(UAnimNotifyStateLog, UAnimNotifyState)
+    GENERATED_BODY()
 
     void NotifyBegin(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
     void NotifyTick(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent, float DeltaTime) override;

@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Object/Object.h"
 #include "Object/FName.h"
 
 #include <functional>
+#include "Generated/AnimationStateMachine.generated.h"
 
 class UAnimInstance;
 class UAnimSequence;
@@ -75,10 +76,11 @@ struct FAnimStateMachineTransition
     int32 Priority = 0;
 };
 
+UCLASS()
 class UAnimationStateMachine : public UObject
 {
 public:
-    DECLARE_CLASS(UAnimationStateMachine, UObject)
+    GENERATED_BODY()
 
 public:
     void SetOwningAnimInstance(UAnimInstance* InAnimInstance) { AnimInstance = InAnimInstance; }

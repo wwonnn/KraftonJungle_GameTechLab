@@ -1,11 +1,12 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Object/Object.h"
-#include "Core/PropertyTypes.h"
 #include "Animation/AnimData/AnimNotifyTypes.h"
+#include "Reflection/Reflection.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Component/SkinnedMeshComponent.h"
+#include "Generated/AnimInstance.generated.h"
 
 class UAnimationStateMachine;
 class UAnimInstanceAsset;
@@ -20,10 +21,11 @@ struct FSkeletonPose
     TArray<FMatrix> ComponentTransforms;
 };
 
+UCLASS()
 class UAnimInstance : public UObject
 {
 public:
-	DECLARE_CLASS(UAnimInstance, UObject)
+	GENERATED_BODY()
 
 public:
     ~UAnimInstance() override;

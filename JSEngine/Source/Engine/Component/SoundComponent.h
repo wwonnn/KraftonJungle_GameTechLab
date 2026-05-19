@@ -1,12 +1,14 @@
-#pragma once
+﻿#pragma once
 
 #include "Audio/AudioSystem.h"
 #include "Component/SceneComponent.h"
+#include "Generated/SoundComponent.generated.h"
 
+UCLASS()
 class USoundComponent : public USceneComponent
 {
 public:
-    DECLARE_CLASS(USoundComponent, USceneComponent)
+    GENERATED_BODY()
 
     void BeginPlay() override;
     void EndPlay() override;

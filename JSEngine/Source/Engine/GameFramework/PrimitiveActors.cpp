@@ -1,4 +1,4 @@
-﻿#include "GameFramework/PrimitiveActors.h"
+#include "GameFramework/PrimitiveActors.h"
 
 #include "Component/FireballComponent.h"
 #include "Component/DecalComponent.h"
@@ -179,84 +179,6 @@ FVector RandomUnitVector()
     return FVector::UpVector;
 }
 }
-
-DEFINE_CLASS(ACubeActor, AActor)
-REGISTER_FACTORY(ACubeActor)
-
-DEFINE_CLASS(ASphereActor, AActor)
-REGISTER_FACTORY(ASphereActor)
-
-DEFINE_CLASS(APlaneActor, AActor)
-REGISTER_FACTORY(APlaneActor)
-
-DEFINE_CLASS(AAttachTestActor, AActor)
-REGISTER_FACTORY(AAttachTestActor)
-
-DEFINE_CLASS(ASceneActor, AActor)
-REGISTER_FACTORY(ASceneActor)
-
-DEFINE_CLASS(APlayerStart, AActor)
-REGISTER_FACTORY(APlayerStart)
-
-DEFINE_CLASS(AFogActor, AActor)
-REGISTER_FACTORY(AFogActor)
-
-DEFINE_CLASS(AStaticMeshActor, AActor)
-REGISTER_FACTORY(AStaticMeshActor)
-
-DEFINE_CLASS(ASkeletalMeshActor, AActor)
-REGISTER_FACTORY(ASkeletalMeshActor)
-
-DEFINE_CLASS(ASubUVActor, AActor)
-REGISTER_FACTORY(ASubUVActor)
-
-DEFINE_CLASS(ATextRenderActor, AActor)
-REGISTER_FACTORY(ATextRenderActor)
-
-DEFINE_CLASS(ABillboardActor, AActor)
-REGISTER_FACTORY(ABillboardActor)
-
-DEFINE_CLASS(ADecalActor, AActor)
-REGISTER_FACTORY(ADecalActor)
-
-DEFINE_CLASS(AFireballActor, AActor)
-REGISTER_FACTORY(AFireballActor)
-
-DEFINE_CLASS(ADecalSpotLightActor, AActor)
-REGISTER_FACTORY(ADecalSpotLightActor)
-
-DEFINE_CLASS(ALightActor, AActor)
-REGISTER_FACTORY(ALightActor)
-
-DEFINE_CLASS(AAmbientLightActor, ALightActor)
-REGISTER_FACTORY(AAmbientLightActor)
-
-DEFINE_CLASS(ADirectionalLightActor, ALightActor)
-REGISTER_FACTORY(ADirectionalLightActor)
-
-DEFINE_CLASS(APointLightActor, ALightActor)
-REGISTER_FACTORY(APointLightActor)
-
-DEFINE_CLASS(ASpotlightActor, APointLightActor)
-REGISTER_FACTORY(ASpotlightActor)
-
-DEFINE_CLASS(ABullet, AActor)
-REGISTER_FACTORY(ABullet)
-
-DEFINE_CLASS(ADestructibleActor, AActor)
-REGISTER_FACTORY(ADestructibleActor)
-
-DEFINE_CLASS(ABoundsBoxActor, AActor)
-REGISTER_FACTORY(ABoundsBoxActor)
-
-DEFINE_CLASS(UMainSceneDestructibleComponent, UActorComponent)
-REGISTER_FACTORY(UMainSceneDestructibleComponent)
-
-DEFINE_CLASS(AMainSceneDestructibleActor, AActor)
-REGISTER_FACTORY(AMainSceneDestructibleActor)
-
-DEFINE_CLASS(ABladeSlash, AActor)
-REGISTER_FACTORY(ABladeSlash)
 
 void ACubeActor::InitDefaultComponents()
 {

@@ -1,9 +1,10 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Engine/Geometry/Transform.h"
 #include "Object/FName.h"
 #include "Object/Object.h"
+#include "Generated/PhysicsAsset.generated.h"
 
 class USkeleton;
 
@@ -50,10 +51,11 @@ struct FPhysicsAssetData
     bool HasValidBodyData() const;
 };
 
+UCLASS()
 class UPhysicsAsset : public UObject
 {
 public:
-    DECLARE_CLASS(UPhysicsAsset, UObject)
+    GENERATED_BODY()
 
     UPhysicsAsset() = default;
     ~UPhysicsAsset() override;

@@ -1,4 +1,4 @@
-﻿#include "Engine/Runtime/GameEngine.h"
+#include "Engine/Runtime/GameEngine.h"
 
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
@@ -16,8 +16,6 @@
 #include <filesystem>
 #include <fstream>
 #include <windows.h>
-
-DEFINE_CLASS(UGameEngine, UEngine)
 
 namespace
 {

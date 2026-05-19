@@ -4,13 +4,15 @@
 #include "Component/ActorComponent.h"
 #include "Math/Utils.h"
 #include "Object/FName.h"
+#include "Generated/SceneComponent.generated.h"
 
 class AActor;
 
+UCLASS()
 class USceneComponent : public UActorComponent
 {
 public:
-	DECLARE_CLASS(USceneComponent, UActorComponent)
+	GENERATED_BODY()
 
 	USceneComponent();
 	~USceneComponent() override;

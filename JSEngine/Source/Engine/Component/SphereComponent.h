@@ -1,10 +1,13 @@
 ﻿#pragma once
 #include "ShapeComponent.h"
+#include "Generated/SphereComponent.generated.h"
 
+UCLASS()
 class USphereComponent : public UShapeComponent
 {
 public:
-    DECLARE_CLASS(USphereComponent, UShapeComponent)
+    GENERATED_BODY()
+
     float GetSphereRadius() const { return SphereRadius; }
 	float GetScaledSphereRadius() const
 	{

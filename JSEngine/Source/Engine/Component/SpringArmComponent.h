@@ -1,11 +1,13 @@
-#pragma once
+﻿#pragma once
 
 #include "Component/SceneComponent.h"
+#include "Generated/SpringArmComponent.generated.h"
 
+UCLASS()
 class USpringArmComponent : public USceneComponent
 {
 public:
-	DECLARE_CLASS(USpringArmComponent, USceneComponent)
+	GENERATED_BODY()
 
 	USpringArmComponent();
 

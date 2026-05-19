@@ -1,9 +1,6 @@
-﻿#include "BoxComponent.h" 
+#include "BoxComponent.h" 
 #include "Object/Object.h"
 
-
-DEFINE_CLASS(UBoxComponent, UShapeComponent)
-REGISTER_FACTORY(UBoxComponent)
 
 void UBoxComponent::PostDuplicate(UObject* Original)
 {
