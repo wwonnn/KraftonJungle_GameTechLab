@@ -1,8 +1,6 @@
-﻿#include "StaticMesh.h"
+#include "StaticMesh.h"
 
 #include "Core/Logging/Log.h"
-
-DEFINE_CLASS(UStaticMesh, UObject)
 
 UStaticMesh::~UStaticMesh()
 {

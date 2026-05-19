@@ -96,6 +96,43 @@ namespace
         }
     }
 
+    void InputAnimSequencePath(UEditorEngine* EditorEngine, const char* Label, FString& Value, bool& bChanged)
+    {
+        const TArray<FString>* SequencePaths =
+            EditorEngine ? &EditorEngine->GetAssetService().GetAnimSequenceAssetPaths() : nullptr;
+        if (!SequencePaths || SequencePaths->empty())
+        {
+            InputFString(Label, Value, bChanged);
+            return;
+        }
+
+        const FString Current = Value;
+        if (ImGui::BeginCombo(Label, Current.empty() ? "<None>" : Current.c_str()))
+        {
+            if (ImGui::Selectable("<None>", Current.empty()))
+            {
+                Value.clear();
+                bChanged = true;
+            }
+
+            for (const FString& Path : *SequencePaths)
+            {
+                const bool bSelected = Current == Path;
+                if (ImGui::Selectable(Path.c_str(), bSelected))
+                {
+                    Value = Path;
+                    bChanged = true;
+                }
+                if (bSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+
+            ImGui::EndCombo();
+        }
+    }
+
     void InputFName(const char* Label, FName& Value, bool& bChanged)
     {
         FString Text = Value.ToString();
@@ -430,7 +467,7 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
         bool bContextChanged = false;
         InputFName("Name", State.Name, bChanged);
         bContextChanged |= bChanged;
-        InputFString("Anim Sequence", State.AnimSequencePath, bChanged);
+        InputAnimSequencePath(EditorEngine, "Anim Sequence", State.AnimSequencePath, bChanged);
         bContextChanged |= bChanged;
         const FString NormalizedSequencePath = NormalizeSequenceAssetPath(State.AnimSequencePath);
         const FString ProjectRelativeSequencePath = FPaths::ToProjectRelativePath(NormalizedSequencePath);

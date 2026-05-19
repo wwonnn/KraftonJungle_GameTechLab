@@ -1,15 +1,17 @@
-#pragma once
+﻿#pragma once
 
 #include "Engine/Runtime/Engine.h"
+#include "Generated/GameEngine.generated.h"
 
 class APlayerController;
 class AGameModeBase;
 class InputSystem;
 
+UCLASS()
 class UGameEngine : public UEngine
 {
 public:
-    DECLARE_CLASS(UGameEngine, UEngine)
+    GENERATED_BODY()
 
     void Init(FWindowsWindow* InWindow) override;
     void Shutdown() override;

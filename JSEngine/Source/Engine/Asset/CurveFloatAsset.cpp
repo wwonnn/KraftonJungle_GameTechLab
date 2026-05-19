@@ -6,9 +6,6 @@
 
 #include <algorithm>
 
-DEFINE_CLASS(UCurveFloatAsset, UObject)
-REGISTER_FACTORY(UCurveFloatAsset)
-
 float FFloatCurve::Evaluate(float Time) const
 {
     if (Keys.empty())

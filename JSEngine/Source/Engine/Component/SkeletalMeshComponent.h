@@ -1,8 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Animation/LuaAnimInstance.h"
 #include "Component/SkinnedMeshComponent.h"
+#include "Generated/SkeletalMeshComponent.generated.h"
 
 class UAnimSequence;
 class UAnimSingleNodeInstance;
@@ -13,10 +14,11 @@ class UAnimSingleNodeInstance;
  *        USkeletalMeshComponent 또한 해당 방식대로 우선은 얇게 유지.
  *        핵심 로직들은 대부분 USkinnedMeshComponent로 옮겼습니다.
  */
+UCLASS()
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
 public:
-    DECLARE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
+    GENERATED_BODY()
 
     USkeletalMeshComponent() = default;
     ~USkeletalMeshComponent() override;

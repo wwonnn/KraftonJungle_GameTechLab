@@ -1,9 +1,6 @@
-﻿#include "AnimSingleNodeInstance.h"
+#include "AnimSingleNodeInstance.h"
 
 #include "Object/ObjectFactory.h"
-
-DEFINE_CLASS(UAnimSingleNodeInstance, UAnimInstance)
-REGISTER_FACTORY(UAnimSingleNodeInstance)
 
 void UAnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
 {

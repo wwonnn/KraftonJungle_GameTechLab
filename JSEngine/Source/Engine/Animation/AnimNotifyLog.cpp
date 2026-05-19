@@ -3,7 +3,6 @@
 #include "Animation/AnimData/AnimSequence.h"
 #include "Component/SkeletalMeshComponent.h"
 #include "Core/Logging/Log.h"
-#include "Object/ObjectFactory.h"
 
 namespace
 {
@@ -32,12 +31,6 @@ namespace
         return NotifyEvent.Payload.empty() ? FString("(EmptyPayload)") : NotifyEvent.Payload;
     }
 }
-
-DEFINE_CLASS(UAnimNotifyLog, UAnimNotify)
-REGISTER_FACTORY(UAnimNotifyLog)
-
-DEFINE_CLASS(UAnimNotifyStateLog, UAnimNotifyState)
-REGISTER_FACTORY(UAnimNotifyStateLog)
 
 void UAnimNotifyLog::Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent)
 {

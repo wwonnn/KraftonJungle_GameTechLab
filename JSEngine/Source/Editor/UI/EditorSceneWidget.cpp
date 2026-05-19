@@ -1,4 +1,4 @@
-﻿#include "Editor/UI/EditorSceneWidget.h"
+#include "Editor/UI/EditorSceneWidget.h"
 
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/EditorViewportClient.h"
@@ -147,7 +147,7 @@ bool FEditorSceneWidget::PromptSavePrefabAs(const AActor* Actor, FString& OutFil
 	FString ActorName = Actor->GetName();
 	if (ActorName.empty())
 	{
-		ActorName = Actor->GetTypeInfo() ? Actor->GetTypeInfo()->name : "Actor";
+		ActorName = Actor->GetClass() ? Actor->GetClass()->GetName() : "Actor";
 	}
 
 	const std::wstring DefaultFile = (PrefabDir / (FPaths::ToWide(ActorName) + FPrefabManager::PrefabExtension)).wstring();
@@ -207,10 +207,10 @@ void FEditorSceneWidget::Render(float DeltaTime)
         FString ActorName = Actor->GetFName().ToString();
         if (ActorName.empty())
         {
-            ActorName = Actor->GetTypeInfo()->name;
+            ActorName = Actor->GetClass()->GetName();
         }
 
-        const FString SearchText = ActorName + " " + Actor->GetTypeInfo()->name;
+        const FString SearchText = ActorName + " " + Actor->GetClass()->GetName();
         if (ContainsCaseInsensitive(SearchText, OutlinerSearchText))
         {
             VisibleActorIndices.push_back(ActorIndex);
@@ -247,7 +247,7 @@ void FEditorSceneWidget::Render(float DeltaTime)
         FString BaseName = StripGeneratedActorNameSuffixes(RequestedName);
         if (BaseName.empty())
         {
-            BaseName = TargetActor ? TargetActor->GetTypeInfo()->name : "Actor";
+            BaseName = TargetActor ? TargetActor->GetClass()->GetName() : "Actor";
         }
 
         if (!RequestedCleanName.empty() && !IsActorNameTaken(TargetActor, RequestedCleanName))
@@ -507,9 +507,9 @@ void FEditorSceneWidget::Render(float DeltaTime)
                 FString ActorName = Actor->GetFName().ToString();
                 if (ActorName.empty())
                 {
-                    ActorName = Actor->GetTypeInfo()->name;
+                    ActorName = Actor->GetClass()->GetName();
                 }
-                const FString ActorType = Actor->GetTypeInfo()->name;
+                const FString ActorType = Actor->GetClass()->GetName();
 
                 ImGui::PushID(i);
                 ImGui::TableNextRow();

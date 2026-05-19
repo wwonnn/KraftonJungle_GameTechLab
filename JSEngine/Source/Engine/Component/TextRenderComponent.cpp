@@ -1,4 +1,4 @@
-﻿#include "TextRenderComponent.h"
+#include "TextRenderComponent.h"
 
 #include <cmath>
 #include <cstring>
@@ -7,9 +7,6 @@
 #include "Core/ResourceManager.h"
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/TextRenderProxy.h"
-
-DEFINE_CLASS(UTextRenderComponent, UPrimitiveComponent)
-REGISTER_FACTORY(UTextRenderComponent)
 
 // GetEditableProperties 에 노출되지 않은 private 필드를 직접 복사합니다.
 void UTextRenderComponent::PostDuplicate(UObject* Original)

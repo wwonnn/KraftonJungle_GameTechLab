@@ -1,11 +1,13 @@
 ﻿#pragma once
 #include "Object/Object.h"
 #include "GameFramework/AActor.h"
+#include "Generated/Level.generated.h"
 
+UCLASS()
 class ULevel : public UObject
 {
 public:
-	DECLARE_CLASS(ULevel, UObject)
+	GENERATED_BODY()
 
 	ULevel() = default;
 	virtual ~ULevel() override;

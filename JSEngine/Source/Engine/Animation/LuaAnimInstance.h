@@ -1,12 +1,14 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/AnimInstance.h"
 #include "ThirdParty/sol/sol.hpp"
+#include "Generated/LuaAnimInstance.generated.h"
 
+UCLASS()
 class ULuaAnimInstance : public UAnimInstance
 {
 public:
-    DECLARE_CLASS(ULuaAnimInstance, UAnimInstance)
+    GENERATED_BODY()
 
 public:
     void SetScriptName(const FString& InScriptName) { ScriptName = InScriptName; }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Engine/Runtime/Engine.h"
 
@@ -18,6 +18,7 @@
 #include "Camera/ViewportCamera.h"
 #include "Editor/Viewport/ViewportLayout.h"
 #include "Editor/Viewer/EditorViewer.h"
+#include "Generated/EditorEngine.generated.h"
 
 class UGizmoComponent;
 class FEditorRenderPipeline;
@@ -25,11 +26,12 @@ class AActor;
 class APlayerController;
 class FViewport;
 
+UCLASS()
 class UEditorEngine : public UEngine
 {
 public:
-	DECLARE_CLASS(UEditorEngine, UEngine)
-
+	GENERATED_BODY()
+	
 	UEditorEngine() = default;
 	~UEditorEngine() override = default;
 

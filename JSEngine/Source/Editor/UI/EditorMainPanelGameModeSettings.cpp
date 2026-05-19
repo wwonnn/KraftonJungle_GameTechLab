@@ -18,17 +18,17 @@
 
 namespace
 {
-TArray<const FTypeInfo*> GetRegisteredTypesAssignableTo(const FTypeInfo* BaseType)
+TArray<const UClass*> GetRegisteredTypesAssignableTo(const UClass* BaseType)
 {
-    TArray<const FTypeInfo*> Types;
+    TArray<const UClass*> Types;
     if (!BaseType)
     {
         return Types;
     }
 
-    TArray<const FTypeInfo*> RegisteredTypes;
-    FObjectFactory::Get().GetRegisteredTypeInfos(RegisteredTypes);
-    for (const FTypeInfo* Type : RegisteredTypes)
+    TArray<const UClass*> RegisteredTypes;
+    FObjectFactory::Get().GetRegisteredClasses(RegisteredTypes);
+    for (const UClass* Type : RegisteredTypes)
     {
         if (Type && Type->IsA(BaseType))
         {
@@ -39,35 +39,35 @@ TArray<const FTypeInfo*> GetRegisteredTypesAssignableTo(const FTypeInfo* BaseTyp
     std::sort(
         Types.begin(),
         Types.end(),
-        [](const FTypeInfo* A, const FTypeInfo* B)
+        [](const UClass* A, const UClass* B)
         {
-            const char* AName = A ? A->name : "";
-            const char* BName = B ? B->name : "";
+            const char* AName = A ? A->GetName() : "";
+            const char* BName = B ? B->GetName() : "";
             return std::strcmp(AName, BName) < 0;
         });
     return Types;
 }
 
-bool DrawClassCombo(const char* Label, char* Buffer, size_t BufferSize, const FTypeInfo* BaseType)
+bool DrawClassCombo(const char* Label, char* Buffer, size_t BufferSize, const UClass* BaseType)
 {
     bool bChanged = false;
-    TArray<const FTypeInfo*> Types = GetRegisteredTypesAssignableTo(BaseType);
+    TArray<const UClass*> Types = GetRegisteredTypesAssignableTo(BaseType);
     const char* CurrentLabel = Buffer && Buffer[0] != '\0' ? Buffer : "None";
 
     ImGui::SetNextItemWidth(260.0f);
     if (ImGui::BeginCombo(Label, CurrentLabel))
     {
-        for (const FTypeInfo* Type : Types)
+        for (const UClass* Type : Types)
         {
-            if (!Type || !Type->name)
+            if (!Type || !Type->GetName())
             {
                 continue;
             }
 
-            const bool bSelected = Buffer && std::strcmp(Buffer, Type->name) == 0;
-            if (ImGui::Selectable(Type->name, bSelected))
+            const bool bSelected = Buffer && std::strcmp(Buffer, Type->GetName()) == 0;
+            if (ImGui::Selectable(Type->GetName(), bSelected))
             {
-                strncpy_s(Buffer, BufferSize, Type->name, _TRUNCATE);
+                strncpy_s(Buffer, BufferSize, Type->GetName(), _TRUNCATE);
                 bChanged = true;
             }
             if (bSelected)
@@ -273,19 +273,19 @@ void FEditorMainPanel::RenderProjectSettingsPanel()
         "Game Mode Class",
         GameModeSettingsState.GameModeClassBuffer,
         IM_ARRAYSIZE(GameModeSettingsState.GameModeClassBuffer),
-        &AGameModeBase::s_TypeInfo);
+        AGameModeBase::StaticClass());
 
     DrawClassCombo(
         "Player Controller Class",
         GameModeSettingsState.PlayerControllerClassBuffer,
         IM_ARRAYSIZE(GameModeSettingsState.PlayerControllerClassBuffer),
-        &APlayerController::s_TypeInfo);
+        APlayerController::StaticClass());
 
     DrawClassCombo(
         "Default Pawn Class",
         GameModeSettingsState.DefaultPawnClassBuffer,
         IM_ARRAYSIZE(GameModeSettingsState.DefaultPawnClassBuffer),
-        &APawn::s_TypeInfo);
+        APawn::StaticClass());
 
     DrawPrefabCombo(
         "Default Pawn Prefab",
@@ -348,19 +348,19 @@ void FEditorMainPanel::RenderWorldSettingsPanel()
         "World Game Mode",
         GameModeSettingsState.SceneGameModeClassBuffer,
         IM_ARRAYSIZE(GameModeSettingsState.SceneGameModeClassBuffer),
-        &AGameModeBase::s_TypeInfo);
+        AGameModeBase::StaticClass());
 
     DrawClassCombo(
         "World Player Controller",
         GameModeSettingsState.ScenePlayerControllerClassBuffer,
         IM_ARRAYSIZE(GameModeSettingsState.ScenePlayerControllerClassBuffer),
-        &APlayerController::s_TypeInfo);
+        APlayerController::StaticClass());
 
     DrawClassCombo(
         "World Default Pawn",
         GameModeSettingsState.SceneDefaultPawnClassBuffer,
         IM_ARRAYSIZE(GameModeSettingsState.SceneDefaultPawnClassBuffer),
-        &APawn::s_TypeInfo);
+        APawn::StaticClass());
 
     DrawPrefabCombo(
         "World Pawn Prefab",

@@ -1,10 +1,7 @@
-﻿#include "InterpToMovementComponent.h"
+#include "InterpToMovementComponent.h"
 #include "Object/ObjectFactory.h"
 #include "Component/SceneComponent.h"
 #include "Math/Quat.h"
-
-DEFINE_CLASS(UInterpToMovementComponent, UMovementComponent)
-REGISTER_FACTORY(UInterpToMovementComponent)
 
 namespace {
 	// Returns normalized direction from A to B
@@ -60,14 +57,6 @@ void UInterpToMovementComponent::PostDuplicate(UObject* Original) {
     NextPointID			= 1;
     TotalDistance		= 0.f;
     NextDistRatio		= 0.f;
-}
-
-void UInterpToMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) {
-    UMovementComponent::GetEditableProperties(OutProps);
-
-	static const char* InterpBehaviourNames[] = { "One Shot", "One Shot Reverse", "Loop", "Ping-Pong" };
-	OutProps.push_back({ "Interp Mode",			  EPropertyType::Enum,		 &InterpBehaviour, 0,0,0, InterpBehaviourNames, 4});
-    OutProps.push_back({ "Control Points",		  EPropertyType::Vec3Array,  &ControlPoints });
 }
 
 // --- Control Point Management--------------------------------------------

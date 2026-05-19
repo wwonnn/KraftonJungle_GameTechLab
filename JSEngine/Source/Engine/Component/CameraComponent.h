@@ -6,24 +6,41 @@
 #include "Math/Utils.h"
 #include "Math/Vector.h"
 #include "Math/Color.h"
+#include "Generated/CameraComponent.generated.h"
 
 // 렌더 전용 구조체
+USTRUCT()
 struct FCameraState
 {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, DisplayName="FOV", Min=0.1, Max=3.14, Speed=0.01, Animatable)
 	float FOV = 3.14159265358979f / 3.0f;
 	float AspectRatio = 16.0f / 9.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Near Z", SerializeName="NearClip", Min=0.01, Max=100.0, Speed=0.01)
 	float NearZ = 0.1f;
+	UPROPERTY(EditAnywhere, DisplayName="Far Z", SerializeName="FarClip", Min=1.0, Max=100000.0, Speed=10.0)
 	float FarZ = 1000.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Ortho Width", Min=0.1, Max=1000.0, Speed=0.5, Animatable)
 	float OrthoWidth = 10.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Orthographic")
 	bool bIsOrthogonal = false;
 };
 
+USTRUCT()
 struct FCameraPostProcessSettings
 {
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, DisplayName="Vignette Enabled", SerializeName="VignetteEnabled")
 	bool bVignetteEnabled = false;
+	UPROPERTY(EditAnywhere, DisplayName="Vignette Intensity", SerializeName="VignetteIntensity", Min=0.0, Max=1.0, Speed=0.01, Animatable)
 	float VignetteIntensity = 0.0f;
+	UPROPERTY(EditAnywhere, DisplayName="Vignette Radius", SerializeName="VignetteRadius", Min=0.0, Max=2.0, Speed=0.01, Animatable)
 	float VignetteRadius = 0.75f;
+	UPROPERTY(EditAnywhere, DisplayName="Vignette Smoothness", SerializeName="VignetteSmoothness", Min=0.001, Max=2.0, Speed=0.01, Animatable)
 	float VignetteSmoothness = 0.35f;
+	UPROPERTY(EditAnywhere, DisplayName="Vignette Color", SerializeName="VignetteColor", Speed=0.01, Animatable)
 	FColor VignetteColor = FColor::Black();
 };
 
@@ -43,14 +60,13 @@ struct FMinimalViewInfo
     FQuat Rotation = FQuat::Identity;
 };
 
+UCLASS()
 class UCameraComponent : public USceneComponent
 {
 public:
-	DECLARE_CLASS(UCameraComponent, USceneComponent)
+	GENERATED_BODY()
 
 	UCameraComponent() = default;
-
-	void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;
 
 	virtual void Serialize(FArchive& Ar) override;
 
@@ -101,6 +117,8 @@ private:
 	void SetViewRotationDegrees(float PitchDegrees, float YawDegrees);
 
 private:
+	UPROPERTY(EditAnywhere)
 	FCameraState CameraState;
+	UPROPERTY(EditAnywhere)
 	FCameraPostProcessSettings PostProcessSettings;
 };

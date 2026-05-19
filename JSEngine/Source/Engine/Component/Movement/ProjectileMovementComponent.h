@@ -1,11 +1,13 @@
 ﻿#pragma once
 
 #include "MovementComponent.h"
+#include "Generated/ProjectileMovementComponent.generated.h"
 
+UCLASS()
 class UProjectileMovementComponent : public UMovementComponent
 {
 public:
-	DECLARE_CLASS(UProjectileMovementComponent, UMovementComponent)
+	GENERATED_BODY()
 
 	virtual void TickComponent(float DeltaTime) override;
 	virtual void BeginPlay() override;

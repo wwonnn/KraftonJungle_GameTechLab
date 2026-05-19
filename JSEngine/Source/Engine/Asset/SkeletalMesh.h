@@ -1,14 +1,16 @@
 ﻿#pragma once
 #include "Object/Object.h"
 #include "SkeletalMeshTypes.h"
+#include "Generated/SkeletalMesh.generated.h"
 
 class UAnimSequence;
 class USkeleton;
 
+UCLASS()
 class USkeletalMesh : public UObject
 {
 public:
-    DECLARE_CLASS(USkeletalMesh, UObject)
+    GENERATED_BODY()
 
     USkeletalMesh() = default;
     ~USkeletalMesh() override;

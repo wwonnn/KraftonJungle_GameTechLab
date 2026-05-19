@@ -22,17 +22,17 @@
 
 namespace
 {
-TArray<const FTypeInfo*> GetPackagingTypesAssignableTo(const FTypeInfo* BaseType)
+TArray<const UClass*> GetPackagingTypesAssignableTo(const UClass* BaseType)
 {
-    TArray<const FTypeInfo*> Types;
+    TArray<const UClass*> Types;
     if (!BaseType)
     {
         return Types;
     }
 
-    TArray<const FTypeInfo*> RegisteredTypes;
-    FObjectFactory::Get().GetRegisteredTypeInfos(RegisteredTypes);
-    for (const FTypeInfo* Type : RegisteredTypes)
+    TArray<const UClass*> RegisteredTypes;
+    FObjectFactory::Get().GetRegisteredClasses(RegisteredTypes);
+    for (const UClass* Type : RegisteredTypes)
     {
         if (Type && Type->IsA(BaseType))
         {
@@ -43,35 +43,35 @@ TArray<const FTypeInfo*> GetPackagingTypesAssignableTo(const FTypeInfo* BaseType
     std::sort(
         Types.begin(),
         Types.end(),
-        [](const FTypeInfo* A, const FTypeInfo* B)
+        [](const UClass* A, const UClass* B)
         {
-            const char* AName = A ? A->name : "";
-            const char* BName = B ? B->name : "";
+            const char* AName = A ? A->GetName() : "";
+            const char* BName = B ? B->GetName() : "";
             return std::strcmp(AName, BName) < 0;
         });
     return Types;
 }
 
-bool DrawPackagingClassCombo(const char* Id, char* Buffer, size_t BufferSize, const FTypeInfo* BaseType)
+bool DrawPackagingClassCombo(const char* Id, char* Buffer, size_t BufferSize, const UClass* BaseType)
 {
     bool bChanged = false;
-    const TArray<const FTypeInfo*> Types = GetPackagingTypesAssignableTo(BaseType);
+    const TArray<const UClass*> Types = GetPackagingTypesAssignableTo(BaseType);
     const char* CurrentLabel = Buffer && Buffer[0] != '\0' ? Buffer : "None";
 
     ImGui::SetNextItemWidth(-FLT_MIN);
     if (ImGui::BeginCombo(Id, CurrentLabel))
     {
-        for (const FTypeInfo* Type : Types)
+        for (const UClass* Type : Types)
         {
-            if (!Type || !Type->name)
+            if (!Type || !Type->GetName())
             {
                 continue;
             }
 
-            const bool bSelected = Buffer && std::strcmp(Buffer, Type->name) == 0;
-            if (ImGui::Selectable(Type->name, bSelected))
+            const bool bSelected = Buffer && std::strcmp(Buffer, Type->GetName()) == 0;
+            if (ImGui::Selectable(Type->GetName(), bSelected))
             {
-                strncpy_s(Buffer, BufferSize, Type->name, _TRUNCATE);
+                strncpy_s(Buffer, BufferSize, Type->GetName(), _TRUNCATE);
                 bChanged = true;
             }
             if (bSelected)
@@ -222,7 +222,7 @@ void FEditorMainPanel::RenderBuildGameModal()
             "##PackageGameMode",
             BuildGameState.GameModeClassBuffer,
             IM_ARRAYSIZE(BuildGameState.GameModeClassBuffer),
-            &AGameModeBase::s_TypeInfo
+            AGameModeBase::StaticClass()
         );
 
         ImGui::TableNextRow();
@@ -253,7 +253,7 @@ void FEditorMainPanel::RenderBuildGameModal()
             "##PackagePlayerController",
             BuildGameState.PlayerControllerClassBuffer,
             IM_ARRAYSIZE(BuildGameState.PlayerControllerClassBuffer),
-            &APlayerController::s_TypeInfo
+            APlayerController::StaticClass()
         );
 
         ImGui::TableNextRow();
@@ -265,7 +265,7 @@ void FEditorMainPanel::RenderBuildGameModal()
             "##PackageDefaultPawnClass",
             BuildGameState.DefaultPawnClassBuffer,
             IM_ARRAYSIZE(BuildGameState.DefaultPawnClassBuffer),
-            &APawn::s_TypeInfo
+            APawn::StaticClass()
         );
 
         ImGui::TableNextRow();

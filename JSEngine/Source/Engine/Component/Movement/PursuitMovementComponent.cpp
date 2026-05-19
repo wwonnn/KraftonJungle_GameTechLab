@@ -1,4 +1,4 @@
-﻿#include "PursuitMovementComponent.h"
+#include "PursuitMovementComponent.h"
 #include "Math/Quat.h"
 #include "Object/ObjectFactory.h"
 #include "Component/SceneComponent.h"
@@ -6,9 +6,6 @@
 #include "GameFramework/AActor.h"
 #include "GameFramework/World.h"
 #include "Engine/Runtime/Engine.h"
-
-DEFINE_CLASS(UPursuitMovementComponent, UMovementComponent)
-REGISTER_FACTORY(UPursuitMovementComponent)
 
 namespace
 {

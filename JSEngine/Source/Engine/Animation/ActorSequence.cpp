@@ -247,12 +247,6 @@ namespace
     }
 }
 
-DEFINE_CLASS(UActorSequence, UObject)
-REGISTER_FACTORY(UActorSequence)
-
-DEFINE_CLASS(UActorSequencePlayer, UObject)
-REGISTER_FACTORY(UActorSequencePlayer)
-
 void UActorSequence::Serialize(FArchive& Ar)
 {
     UObject::Serialize(Ar);

@@ -5,6 +5,7 @@
 #include "Runtime/Script/CoroutineScheduler.h"
 #include "ThirdParty/sol/sol.hpp"
 #include <filesystem>
+#include "Generated/ScriptComponent.generated.h"
 
 #ifdef GetCurrentTime
 #undef GetCurrentTime
@@ -69,10 +70,12 @@ private:
     FTimelinePlayer Player;
 };
 
+UCLASS()
 class UScriptComponent : public UActorComponent
 {
 public:
-	DECLARE_CLASS(UScriptComponent, UActorComponent)
+	GENERATED_BODY()
+
 	UScriptComponent() = default;
 	~UScriptComponent() override;
 

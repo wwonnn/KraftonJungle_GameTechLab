@@ -267,28 +267,28 @@ namespace
 
     TArray<FString> CollectNotifyClassOptions(EAnimNotifyEventType EventType)
     {
-        TArray<const FTypeInfo*> RegisteredTypes;
-        FObjectFactory::Get().GetRegisteredTypeInfos(RegisteredTypes);
+        TArray<const UClass*> RegisteredClasses;
+        FObjectFactory::Get().GetRegisteredClasses(RegisteredClasses);
 
-        const FTypeInfo* RequiredBaseType =
-            EventType == EAnimNotifyEventType::NotifyState ? &UAnimNotifyState::s_TypeInfo : &UAnimNotify::s_TypeInfo;
-        const FTypeInfo* ExcludedBaseType =
-            EventType == EAnimNotifyEventType::NotifyState ? nullptr : &UAnimNotifyState::s_TypeInfo;
+        const UClass* RequiredBaseClass =
+            EventType == EAnimNotifyEventType::NotifyState ? UAnimNotifyState::StaticClass() : UAnimNotify::StaticClass();
+        const UClass* ExcludedBaseClass =
+            EventType == EAnimNotifyEventType::NotifyState ? nullptr : UAnimNotifyState::StaticClass();
 
         TArray<FString> Options;
-        for (const FTypeInfo* TypeInfo : RegisteredTypes)
+        for (const UClass* Class : RegisteredClasses)
         {
-            if (!TypeInfo || !TypeInfo->name || !TypeInfo->IsA(RequiredBaseType))
+            if (!Class || !Class->GetName() || !Class->IsA(RequiredBaseClass))
             {
                 continue;
             }
 
-            if (ExcludedBaseType && TypeInfo->IsA(ExcludedBaseType))
+            if (ExcludedBaseClass && Class->IsA(ExcludedBaseClass))
             {
                 continue;
             }
 
-            Options.push_back(TypeInfo->name);
+            Options.push_back(Class->GetName());
         }
 
         std::sort(Options.begin(), Options.end());

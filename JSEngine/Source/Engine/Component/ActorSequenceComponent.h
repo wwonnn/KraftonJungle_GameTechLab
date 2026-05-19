@@ -1,12 +1,14 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/ActorSequence.h"
 #include "Component/ActorComponent.h"
+#include "Generated/ActorSequenceComponent.generated.h"
 
+UCLASS()
 class UActorSequenceComponent : public UActorComponent
 {
 public:
-    DECLARE_CLASS(UActorSequenceComponent, UActorComponent)
+    GENERATED_BODY()
 
     void BeginPlay() override;
     void EndPlay() override;
