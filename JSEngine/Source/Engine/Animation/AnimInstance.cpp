@@ -1,4 +1,4 @@
-#include "AnimInstance.h"
+﻿#include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
 #include "Animation/AnimNotify.h"
@@ -68,7 +68,7 @@ UAnimInstance::~UAnimInstance()
     ClearActiveAnimNotifyStates(false);
 }
 
-void UAnimInstance::Intialize()
+void UAnimInstance::Initialize()
 {
 	NativeInitializeAnimation();
 

@@ -30,7 +30,7 @@ public:
 public:
     ~UAnimInstance() override;
 
-    void Intialize();
+    void Initialize();
     void SetOwningComponent(USkinnedMeshComponent* InOwner);
     USkinnedMeshComponent* GetOwningComponent() const { return Owner; }
     void SetSequence(UAnimSequence* InSequence);

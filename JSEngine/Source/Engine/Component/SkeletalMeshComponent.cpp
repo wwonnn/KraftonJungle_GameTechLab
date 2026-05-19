@@ -1,4 +1,4 @@
-#include "SkeletalMeshComponent.h"
+﻿#include "SkeletalMeshComponent.h"
 
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -278,7 +278,7 @@ void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
     if (AnimInstance)
     {
         AnimInstance->SetOwningComponent(this);
-        AnimInstance->Intialize();
+        AnimInstance->Initialize();
     }
 }
 
