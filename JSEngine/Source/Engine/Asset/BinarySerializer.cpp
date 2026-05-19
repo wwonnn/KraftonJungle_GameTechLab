@@ -46,7 +46,7 @@ constexpr uint32 SKELETAL_MESH_BINARY_MAGIC   = 0x534D4B53; // 'SKMS'
 constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 4;          // v4: Skeleton/Animation/PhysicsAsset 분리
 
 constexpr uint32 SKELETON_BINARY_MAGIC = 0x4C454B53;        // 'SKEL'
-constexpr uint32 SKELETON_BINARY_VERSION = 1;
+constexpr uint32 SKELETON_BINARY_VERSION = 2;
 
 constexpr uint32 PHYSICS_ASSET_BINARY_MAGIC = 0x53594850;   // 'PHYS'
 constexpr uint32 PHYSICS_ASSET_BINARY_VERSION = 1;
@@ -172,7 +172,7 @@ static bool IsValidSkeletonHeader(const FSkeletonBinaryHeader& Header)
 		return false;
 	}
 
-	if (Header.Version != SKELETON_BINARY_VERSION)
+	if (Header.Version == 0 || Header.Version > SKELETON_BINARY_VERSION)
 	{
 		return false;
 	}
@@ -961,6 +961,13 @@ void FBinarySerializer::WriteSkeletonData(std::ofstream& Out, const FSkeletonDat
 		WriteMatrix4x4(Out, Bone.LocalBindTransform);
 		WriteMatrix4x4(Out, Bone.GlobalBindTransform);
 		WriteMatrix4x4(Out, Bone.InverseBindPose);
+
+		WriteFloatLE(Out, Bone.BoneBounds.Min.X);
+		WriteFloatLE(Out, Bone.BoneBounds.Min.Y);
+		WriteFloatLE(Out, Bone.BoneBounds.Min.Z);
+		WriteFloatLE(Out, Bone.BoneBounds.Max.X);
+		WriteFloatLE(Out, Bone.BoneBounds.Max.Y);
+		WriteFloatLE(Out, Bone.BoneBounds.Max.Z);
 	}
 
 	WriteUInt32LE(Out, static_cast<uint32>(Data.Sockets.size()));
@@ -1016,6 +1023,19 @@ bool FBinarySerializer::ReadSkeletonData(std::ifstream& In, FSkeletonData& OutDa
 			!ReadMatrix4x4(In, Bone.InverseBindPose))
 		{
 			return false;
+		}
+
+		if (Header.Version >= 2)
+		{
+			if (!ReadFloatLE(In, Bone.BoneBounds.Min.X) ||
+				!ReadFloatLE(In, Bone.BoneBounds.Min.Y) ||
+				!ReadFloatLE(In, Bone.BoneBounds.Min.Z) ||
+				!ReadFloatLE(In, Bone.BoneBounds.Max.X) ||
+				!ReadFloatLE(In, Bone.BoneBounds.Max.Y) ||
+				!ReadFloatLE(In, Bone.BoneBounds.Max.Z))
+			{
+				return false;
+			}
 		}
 	}
 

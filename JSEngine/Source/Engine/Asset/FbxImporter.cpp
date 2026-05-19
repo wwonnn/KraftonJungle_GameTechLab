@@ -1051,6 +1051,7 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
 
     SkeletalMesh->LocalBounds = BuildLocalBounds(SkeletalMesh);
     ComputeTangents(SkeletalMesh);
+    CalculateBoneBounds(SkeletalMesh);
 
     const double EndTime = FPlatformTime::Seconds();
     UE_LOG("[FbxImporter] Skeletal FBX Loaded: %s (Vertices=%zu, Indices=%zu, Bones=%zu, Sections=%zu, Slots=%zu, %.3f sec)",
@@ -1074,6 +1075,49 @@ FSkeletalMesh* FFbxImporter::LoadSkeletalMesh(const FString& Path, const FStatic
     }
     ImportedAsset.AnimationSequences.clear();
     return ImportedAsset.SkeletalMesh;
+}
+
+void FFbxImporter::CalculateBoneBounds(FSkeletalMesh* InSkeletalMesh)
+{
+    if (!InSkeletalMesh || !InSkeletalMesh->Skeleton)
+    {
+        return;
+    }
+
+    TArray<FBoneInfo>* Bones = InSkeletalMesh->GetMutableBones();
+    if (!Bones)
+    {
+        return;
+    }
+
+    // Reset bounds
+    for (FBoneInfo& Bone : *Bones)
+    {
+        Bone.BoneBounds.Reset();
+    }
+
+    const TArray<FSkeletalMeshVertex>& Vertices = InSkeletalMesh->Vertices;
+    const int32 NumBones = static_cast<int32>(Bones->size());
+
+    for (const FSkeletalMeshVertex& Vertex : Vertices)
+    {
+        for (int32 i = 0; i < 4; ++i)
+        {
+            if (Vertex.BoneWeights[i] > 0.0f)
+            {
+                int32 BoneIndex = Vertex.BoneIndices[i];
+                if (BoneIndex >= 0 && BoneIndex < NumBones)
+                {
+                    FBoneInfo& Bone = (*Bones)[BoneIndex];
+                    // Vertex.Position is in mesh local space.
+                    // Bone bounds should be in bone local space.
+                    // BoneLocalPos = MeshLocalPos * InverseBindPose
+                    FVector BoneLocalPos = Bone.InverseBindPose.TransformPosition(Vertex.Position);
+                    Bone.BoneBounds.Expand(BoneLocalPos);
+                }
+            }
+        }
+    }
 }
 
 FFbxMeshContentInfo FFbxImporter::InspectMeshContent(const FString& Path)
