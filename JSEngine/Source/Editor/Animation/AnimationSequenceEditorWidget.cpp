@@ -368,37 +368,11 @@ namespace
         bool bExpanded,
         const char* EmptyText)
     {
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        const ImVec2 HeaderMin(Geometry.CanvasPos.x + 4.0f, SectionTop);
-        const ImVec2 HeaderMax(Geometry.CanvasEnd.x - 4.0f, SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight);
-        DrawList->AddRectFilled(HeaderMin, HeaderMax, IM_COL32(29, 34, 41, 255), 4.0f);
-        DrawList->AddRect(HeaderMin, HeaderMax, IM_COL32(255, 255, 255, 18), 4.0f);
-        DrawList->AddText(
-            ImVec2(HeaderMin.x + 8.0f, HeaderMin.y + 4.0f),
-            IM_COL32(208, 214, 226, 255),
-            SectionLabel ? SectionLabel : "Section");
-
-        if (!bExpanded)
-        {
-            return;
-        }
-
-        const float RowTop = SectionTop + FAnimationSequenceSequencerLayout::SectionHeaderHeight + 4.0f;
-        const float RowBottom = RowTop + FAnimationSequenceSequencerLayout::EmptySectionRowHeight;
-        DrawList->AddRectFilled(
-            ImVec2(Geometry.TimelineMinX, RowTop),
-            ImVec2(Geometry.TimelineMaxX, RowBottom),
-            IM_COL32(22, 25, 31, 220),
-            4.0f);
-        DrawList->AddRect(
-            ImVec2(Geometry.TimelineMinX, RowTop),
-            ImVec2(Geometry.TimelineMaxX, RowBottom),
-            IM_COL32(255, 255, 255, 14),
-            4.0f);
-        DrawList->AddText(
-            ImVec2(Geometry.TimelineMinX + 10.0f, RowTop + 4.0f),
-            IM_COL32(132, 139, 150, 255),
-            EmptyText ? EmptyText : "No entries.");
+        (void)Geometry;
+        (void)SectionTop;
+        (void)SectionLabel;
+        (void)bExpanded;
+        (void)EmptyText;
     }
 
     const FFloatCurve* GetSelectedCurve(const UAnimSequence* Sequence, const FAnimationSequenceEditorState* State)
