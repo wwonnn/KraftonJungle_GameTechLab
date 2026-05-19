@@ -18,6 +18,7 @@
 #include "Object/FName.h"
 #include "Render/Renderer/Renderer.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -25,6 +26,15 @@
 #ifdef GetCurrentTime
 #undef GetCurrentTime
 #endif
+
+namespace
+{
+    void SortAndUniqueNames(TArray<FString>& Names)
+    {
+        std::sort(Names.begin(), Names.end());
+        Names.erase(std::unique(Names.begin(), Names.end()), Names.end());
+    }
+}
 
 FAnimationSequencePreviewScene::~FAnimationSequencePreviewScene()
 {
@@ -165,6 +175,38 @@ bool FAnimationSequencePreviewScene::HasPreviewSocket(const FName& SocketName) c
         PreviewComponent->HasSocket(SocketName);
 }
 
+TArray<FString> FAnimationSequencePreviewScene::GetPreviewSocketNames() const
+{
+    TArray<FString> SocketNames;
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return SocketNames;
+    }
+
+    USkeletalMesh* SkeletalMesh = PreviewComponent->GetSkeletalMesh();
+    if (!(AnimationSequenceViewer::IsLiveObject(SkeletalMesh) && SkeletalMesh->HasValidMeshData()))
+    {
+        return SocketNames;
+    }
+
+    for (const FSkeletalMeshSocket& Socket : SkeletalMesh->GetSockets())
+    {
+        if (!Socket.Name.IsValid())
+        {
+            continue;
+        }
+
+        const FString SocketName = Socket.Name.ToString();
+        if (!SocketName.empty())
+        {
+            SocketNames.push_back(SocketName);
+        }
+    }
+
+    SortAndUniqueNames(SocketNames);
+    return SocketNames;
+}
+
 bool FAnimationSequencePreviewScene::HasPreviewPrimitiveComponent(const FString& ComponentName) const
 {
     if (!AnimationSequenceViewer::IsLiveObject(PreviewActor) || ComponentName.empty())
@@ -183,6 +225,33 @@ bool FAnimationSequencePreviewScene::HasPreviewPrimitiveComponent(const FString&
     }
 
     return false;
+}
+
+TArray<FString> FAnimationSequencePreviewScene::GetPreviewPrimitiveComponentNames() const
+{
+    TArray<FString> ComponentNames;
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewActor))
+    {
+        return ComponentNames;
+    }
+
+    for (UActorComponent* Component : PreviewActor->GetComponents())
+    {
+        UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component);
+        if (!AnimationSequenceViewer::IsLiveObject(PrimitiveComponent))
+        {
+            continue;
+        }
+
+        const FString ComponentName = PrimitiveComponent->GetName();
+        if (!ComponentName.empty())
+        {
+            ComponentNames.push_back(ComponentName);
+        }
+    }
+
+    SortAndUniqueNames(ComponentNames);
+    return ComponentNames;
 }
 
 void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)

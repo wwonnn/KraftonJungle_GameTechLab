@@ -10,6 +10,13 @@ enum class EAnimNotifyPayloadFieldType : uint8
     Bool,
 };
 
+enum class EAnimNotifyPayloadFieldEditorHint : uint8
+{
+    Default = 0,
+    SocketPicker,
+    ComponentPicker,
+};
+
 enum class EAnimNotifySemanticFieldId : uint8
 {
     None = 0,
@@ -28,6 +35,7 @@ struct FAnimNotifyPayloadFieldDefinition
     TArray<FString> LegacyKeys;
     FString Label;
     EAnimNotifyPayloadFieldType Type = EAnimNotifyPayloadFieldType::String;
+    EAnimNotifyPayloadFieldEditorHint EditorHint = EAnimNotifyPayloadFieldEditorHint::Default;
     bool bRequired = false;
     FString DefaultValue;
     FString HelpText;

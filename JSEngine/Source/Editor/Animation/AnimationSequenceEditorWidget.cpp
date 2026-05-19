@@ -215,6 +215,20 @@ namespace
             DefaultPayload.GetBool(Field.Key, false));
     }
 
+    const char* GetPickerUnavailableMessage(EAnimNotifyPayloadFieldEditorHint EditorHint)
+    {
+        switch (EditorHint)
+        {
+        case EAnimNotifyPayloadFieldEditorHint::SocketPicker:
+            return "No preview sockets available. Enter a manual value.";
+        case EAnimNotifyPayloadFieldEditorHint::ComponentPicker:
+            return "No preview primitive components available. Enter a manual value.";
+        case EAnimNotifyPayloadFieldEditorHint::Default:
+        default:
+            return nullptr;
+        }
+    }
+
     FString MakeRecentNotifyTrackLabel(const FAnimNotifyEvent& NotifyEvent)
     {
         if (NotifyEvent.SourceTrackName.IsValid())
@@ -1071,6 +1085,17 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
     ImGui::TextDisabled("%s Payload", Schema->SectionLabel.c_str());
     for (const FAnimNotifyPayloadFieldDefinition& Field : Schema->Fields)
     {
+        auto ApplyTextFieldValue = [&](const FString& Value)
+        {
+            return Field.Type == EAnimNotifyPayloadFieldType::Name
+                ? (Value.empty()
+                    ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
+                    : Document->SetSelectedNotifyPayloadNameValue(Field.Key, FName(Value)))
+                : (Value.empty()
+                    ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
+                    : Document->SetSelectedNotifyPayloadStringValue(Field.Key, Value));
+        };
+
         switch (Field.Type)
         {
         case EAnimNotifyPayloadFieldType::String:
@@ -1082,19 +1107,70 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
                 continue;
             }
 
-            if (ImGui::InputText(Field.Label.c_str(), TargetBuffer->data(), TargetBuffer->size()))
+            TArray<FString> PickerOptions;
+            if (PreviewController)
             {
-                const FString Value = TargetBuffer->data();
-                const bool bChanged = Field.Type == EAnimNotifyPayloadFieldType::Name
-                    ? (Value.empty()
-                        ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
-                        : Document->SetSelectedNotifyPayloadNameValue(Field.Key, FName(Value)))
-                    : (Value.empty()
-                        ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
-                        : Document->SetSelectedNotifyPayloadStringValue(Field.Key, Value));
-                if (bChanged)
+                if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::SocketPicker)
                 {
-                    RefreshPayloadBuffers();
+                    PickerOptions = PreviewController->GetPreviewSocketNames();
+                }
+                else if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::ComponentPicker)
+                {
+                    PickerOptions = PreviewController->GetPreviewPrimitiveComponentNames();
+                }
+            }
+
+            if (!PickerOptions.empty())
+            {
+                const FString CurrentValue = TargetBuffer->data();
+                const char* PreviewValue = CurrentValue.empty() ? "(None)" : CurrentValue.c_str();
+                if (ImGui::BeginCombo(Field.Label.c_str(), PreviewValue))
+                {
+                    const bool bIsNoneSelected = CurrentValue.empty();
+                    if (ImGui::Selectable("(None)", bIsNoneSelected))
+                    {
+                        if (ApplyTextFieldValue(FString()))
+                        {
+                            RefreshPayloadBuffers();
+                        }
+                    }
+
+                    for (const FString& Option : PickerOptions)
+                    {
+                        const bool bIsSelected = CurrentValue == Option;
+                        if (ImGui::Selectable(Option.c_str(), bIsSelected))
+                        {
+                            if (ApplyTextFieldValue(Option))
+                            {
+                                RefreshPayloadBuffers();
+                            }
+                        }
+
+                        if (bIsSelected)
+                        {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+
+                    ImGui::EndCombo();
+                }
+
+                ImGui::TextDisabled("Pick from the active preview context. Use Advanced Raw Payload for a manual override.");
+            }
+            else
+            {
+                if (ImGui::InputText(Field.Label.c_str(), TargetBuffer->data(), TargetBuffer->size()))
+                {
+                    const FString Value = TargetBuffer->data();
+                    if (ApplyTextFieldValue(Value))
+                    {
+                        RefreshPayloadBuffers();
+                    }
+                }
+
+                if (const char* UnavailableMessage = GetPickerUnavailableMessage(Field.EditorHint))
+                {
+                    ImGui::TextDisabled("%s", UnavailableMessage);
                 }
             }
             break;

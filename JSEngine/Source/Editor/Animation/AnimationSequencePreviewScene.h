@@ -40,7 +40,9 @@ public:
     float GetPreviewLength() const;
     const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
     bool HasPreviewSocket(const FName& SocketName) const;
+    TArray<FString> GetPreviewSocketNames() const;
     bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
+    TArray<FString> GetPreviewPrimitiveComponentNames() const;
     void RefreshPreviewPose(float DeltaTime);
 
     void SetViewportSize(int32 InWidth, int32 InHeight);
