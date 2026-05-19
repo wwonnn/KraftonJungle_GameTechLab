@@ -357,6 +357,11 @@
     <ClCompile Include="Source\Engine\Component\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
+    <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.cpp" />
+    <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactoryData.cpp" />
+    <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactory.cpp" />
+    <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactoryData.cpp" />
+    <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\VertexFactoryData.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\BillboardRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\FireballRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.cpp" />
@@ -987,6 +992,12 @@
     <ClInclude Include="Source\Engine\Component\SkeletalMeshComponent.h" />
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
+    <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.h" />
+    <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactoryData.h" />
+    <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactory.h" />
+    <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactoryData.h" />
+    <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\VertexFactory.h" />
+    <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\VertexFactoryData.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\FireballRenderProxy.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\HeightFogRenderProxy.h" />

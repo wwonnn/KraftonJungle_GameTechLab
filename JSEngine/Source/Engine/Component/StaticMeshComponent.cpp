@@ -6,6 +6,7 @@
 #include "Core/ResourceManager.h"
 #include "Core/Paths.h"
 #include "Render/Proxy/StaticMeshRenderProxy.h"
+#include "Render/Mesh/VertexFactory/StaticVertexFactoryData.h"
 
 DEFINE_CLASS(UStaticMeshComponent, UMeshComponent)
 REGISTER_FACTORY(UStaticMeshComponent)
@@ -293,6 +294,7 @@ FPrimitiveRenderProxy* UStaticMeshComponent::CreateRenderProxy()
 {
     FStaticMeshRenderProxy* Proxy = new FStaticMeshRenderProxy;
     Proxy->StaticMeshComp = this;
+    Proxy->StaticVFData = new FStaticVertexFactoryData;
 
     return Proxy;
 }

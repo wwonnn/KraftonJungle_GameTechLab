@@ -22,6 +22,7 @@
 #include "Render/Resource/ShadowAtlasManager.h"
 #include "Render/Resource/VertexFactoryTypes.h"
 #include "Core/Logging/Log.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 #include <unordered_map>
 
@@ -127,9 +128,12 @@ namespace
 
 		uint32 PermutationKey = 0;
         TArray<D3D_SHADER_MACRO> Macros;
-		if (ShaderKey == 3 && !Cmd.SkinningMatrices)
+		if (ShaderKey == 3)
 		{
-            PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+			if (!Cmd.VertexFactoryData)
+			{
+                PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+			}
 		}
 
         Macros = FShaderHelper::BuildUberLitMacros(PermutationKey);
@@ -205,27 +209,15 @@ static FMatrix MakeEditorIdPickBillboardMatrix(const UBillboardComponent* Billbo
         RenderBus.GetCameraUp());
 }
 
-static void DrawIdPickCommand(ID3D11DeviceContext* Context, const FRenderCommand& Command)
+static void DrawIdPickCommand(ID3D11DeviceContext* Context, const FRenderCommand& Command, FRenderResources* RenderResources)
 {
     if (!Context || !Command.MeshBuffer || !Command.MeshBuffer->IsValid())
     {
         return;
     }
-
-    ID3D11Buffer* VertexBuffer = Command.MeshBuffer->GetVertexBuffer().GetBuffer();
-    if (!VertexBuffer)
-    {
-        return;
-    }
-
-    uint32 Stride = Command.MeshBuffer->GetVertexBuffer().GetStride();
-    uint32 Offset = 0;
-    if (Stride == 0)
-    {
-        return;
-    }
-
-    Context->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
+	
+	IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Command.VertexFactoryType);
+    VertexFactory->Bind(Command, Context, RenderResources);
 
     ID3D11Buffer* IndexBuffer = Command.MeshBuffer->GetIndexBuffer().GetBuffer();
     if (IndexBuffer)
@@ -698,15 +690,13 @@ void FRenderer::RenderEditorIdPickBuffer(const FRenderBus& InRenderBus, FViewpor
 
             Context->PSSetShaderResources(0, 1, &TextureSRV);
 
-            BindVertexFactoryResources(Context, Command.VertexFactoryType, Command, &Resources);
-
             FShaderProgram* PickProgram = GetEditorIdPickProgram(ShaderKey, Command);
             if (!PickProgram)
             {
                 continue;
             }
             PickProgram->Bind(Context);
-            DrawIdPickCommand(Context, Command);
+            DrawIdPickCommand(Context, Command, &Resources);
         }
     }
 

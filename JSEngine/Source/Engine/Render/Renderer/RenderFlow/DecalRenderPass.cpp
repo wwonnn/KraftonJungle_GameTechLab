@@ -89,20 +89,6 @@ bool FDecalRenderPass::DrawCommand(const FRenderPassContext* Context)
             return false;
         }
 
-        uint32 offset = 0;
-        ID3D11Buffer* vertexBuffer = Cmd.MeshBuffer->GetVertexBuffer().GetBuffer();
-        if (vertexBuffer == nullptr)
-        {
-            return false;
-        }
-
-        uint32 vertexCount = Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount();
-        uint32 stride = Cmd.MeshBuffer->GetVertexBuffer().GetStride();
-        if (vertexCount == 0 || stride == 0)
-        {
-            return false;
-        }
-
 		uint32 PermutationKey = (uint32)ELightingModel::Unlit;
 		switch (Context->RenderBus->GetViewMode())
 		{
@@ -128,10 +114,11 @@ bool FDecalRenderPass::DrawCommand(const FRenderPassContext* Context)
             Program->Bind(Context->DeviceContext);
             Cmd.Material->BindRenderStates(Context->DeviceContext);
             Cmd.Material->BindParameters(Context->DeviceContext, Program->PS);
-            BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
         }
+
+	    IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+        VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
         CheckOverrideViewMode(Context);  
-        Context->DeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
 
         ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
         if (indexBuffer != nullptr)
@@ -143,7 +130,7 @@ bool FDecalRenderPass::DrawCommand(const FRenderPassContext* Context)
         }
         else
         {
-            Context->DeviceContext->Draw(vertexCount, 0);
+            Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
         }
     }
 

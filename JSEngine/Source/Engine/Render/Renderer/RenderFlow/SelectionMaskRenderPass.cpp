@@ -6,6 +6,7 @@
 #include "Render/Resource/ShaderPaths.h"
 #include "Render/Resource/Texture.h"
 #include "Render/Resource/VertexFactoryTypes.h"
+#include "Render/Mesh/VertexFactory/SkeletalVertexFactoryData.h"
 
 static ID3D11ShaderResourceView* GetTextureSRVFromParam(const FMaterialParamValue& Param)
 {
@@ -99,9 +100,12 @@ static FShaderProgram* GetSelectionMaskProgram(const FRenderCommand& Cmd)
 
 	uint32 PermutationKey = 0;
     TArray<D3D_SHADER_MACRO> Macros;
-    if (ShaderKey == 3 && !Cmd.SkinningMatrices)
+    if (ShaderKey == 3)
     {
-        PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		if (!Cmd.VertexFactoryData)
+        {
+            PermutationKey |= (uint32)EShaderFeature::UseCPUSkinning;
+		}
     }
 
     Macros = FShaderHelper::BuildUberLitMacros(PermutationKey);
@@ -224,7 +228,8 @@ bool FSelectionMaskRenderPass::DrawCommand(const FRenderPassContext* Context)
         }
 
         Program->Bind(Context->DeviceContext);
-        BindVertexFactoryResources(Context->DeviceContext, Cmd.VertexFactoryType, Cmd, Context->RenderResources);
+        IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
+        VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
 
         Context->RenderResources->PerObjectConstantBuffer.Update(Context->DeviceContext, &Cmd.PerObjectConstants, sizeof(FPerObjectConstants));
         ID3D11Buffer* cb1 = Context->RenderResources->PerObjectConstantBuffer.GetBuffer();
@@ -248,22 +253,6 @@ bool FSelectionMaskRenderPass::DrawCommand(const FRenderPassContext* Context)
             continue;
         }
 
-        uint32 offset = 0;
-        ID3D11Buffer* vertexBuffer = Cmd.MeshBuffer->GetVertexBuffer().GetBuffer();
-        if (vertexBuffer == nullptr)
-        {
-            continue;
-        }
-
-        uint32 vertexCount = Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount();
-        uint32 stride = Cmd.MeshBuffer->GetVertexBuffer().GetStride();
-        if (vertexCount == 0 || stride == 0)
-        {
-            continue;
-        }
-
-        Context->DeviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-
         ID3D11Buffer* indexBuffer = Cmd.MeshBuffer->GetIndexBuffer().GetBuffer();
         if (indexBuffer != nullptr)
         {
@@ -272,7 +261,7 @@ bool FSelectionMaskRenderPass::DrawCommand(const FRenderPassContext* Context)
         }
         else
         {
-            Context->DeviceContext->Draw(vertexCount, 0);
+            Context->DeviceContext->Draw(Cmd.MeshBuffer->GetVertexBuffer().GetVertexCount(), 0);
         }
     }
 

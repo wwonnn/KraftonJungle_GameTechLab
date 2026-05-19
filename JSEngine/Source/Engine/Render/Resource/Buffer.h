@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Core/CoreTypes.h"
@@ -105,7 +105,7 @@ public:
 	FIndexBuffer& GetIndexBuffer() { return IndexBuffer; }
 	const FVertexBuffer& GetVertexBuffer() const { return VertexBuffer; }
 	const FIndexBuffer& GetIndexBuffer() const { return IndexBuffer; }
-	bool IsValid() const { return VertexBuffer.GetBuffer() != nullptr && VertexBuffer.GetVertexCount() > 0; }
+	bool IsValid() const { return VertexBuffer.GetBuffer() != nullptr && VertexBuffer.GetVertexCount() > 0 && VertexBuffer.GetStride() > 0; }
 
 private:
 	FVertexBuffer VertexBuffer;
