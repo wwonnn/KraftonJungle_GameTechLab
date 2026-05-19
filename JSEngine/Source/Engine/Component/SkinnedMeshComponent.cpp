@@ -11,6 +11,8 @@
 
 DEFINE_CLASS(USkinnedMeshComponent, UMeshComponent)
 
+bool USkinnedMeshComponent::bGlobalEnableCPUSkinning = false;
+
 namespace
 {
 static void ComputeGlobalPoseRecursive(
@@ -49,6 +51,11 @@ static void ComputeGlobalPoseRecursive(
     Visited[BoneIndex] = true;
 }
 } // namespace
+
+USkinnedMeshComponent::USkinnedMeshComponent()
+{
+    bEnableCPUSkinning = bGlobalEnableCPUSkinning;
+}
 
 void USkinnedMeshComponent::Serialize(FArchive& Ar)
 {

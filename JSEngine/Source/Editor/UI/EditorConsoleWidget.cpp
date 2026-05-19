@@ -4,7 +4,9 @@
 
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/ViewportLayout.h"
+#include "Engine/Component/SkinnedMeshComponent.h"
 #include "Engine/Object/FName.h"
+#include "Engine/Object/Object.h"
 
 #include <cctype>
 #include <cstring>
@@ -159,6 +161,7 @@ FEditorConsoleWidget::FEditorConsoleWidget()
 	RegisterCommand("stat", "Viewport and editor stats. Usage: stat <fps|memory|history|nametable|cascadevis|none>", [this](const TArray<FString>& Args) { CmdStat(Args); });
 
 	RegisterCommand("shadow", "Set shadow options. Usage: shadow filter <pcf|vsm>", [this](const TArray<FString>& Args){ CmdShadow(Args); });
+	RegisterCommand("skinning.cpu", "Set skinning mode. Usage: skinning.cpu <0|1>", [this](const TArray<FString>& Args){ CmdSkinning(Args); });
 }
 
 FEditorConsoleWidget::~FEditorConsoleWidget() 
@@ -565,6 +568,12 @@ void FEditorConsoleWidget::CmdSuggest(const TArray<FString>& Args)
 		AddLog("  shadow filter vsm     Use VSM shadow filtering\n");
 		bPrinted = true;
 	}
+	if (Prefix.empty() || FString("skinning").find(Prefix) == 0)
+	{
+		AddLog("  skinning.cpu 0        Use GPU skinning\n");
+		AddLog("  skinning.cpu 1        Use CPU skinning\n");
+		bPrinted = true;
+	}
 	if (Prefix.empty() || FString("help").find(Prefix) == 0 || FString("commands").find(Prefix) == 0)
 	{
 		AddLog("  commands              List every command\n");
@@ -872,6 +881,31 @@ void FEditorConsoleWidget::CmdShadow(const TArray<FString>& Args)
     {
         AddLog("[ERROR] Unknown shadow command target: %s\n", CommandTarget.c_str());
     }
+}
+
+void FEditorConsoleWidget::CmdSkinning(const TArray<FString>& Args)
+{
+	if (Args.size() < 2)
+	{
+		AddLog("[WARN] Usage: skinning.cpu <0|1>\n");
+		return;
+	}
+
+	const int32 Value = std::stoi(Args[1]);
+	const bool bEnableCPU = (Value != 0);
+
+	USkinnedMeshComponent::bGlobalEnableCPUSkinning = bEnableCPU;
+
+	// 기존 인스턴스들도 일괄 변경
+	for (UObject* Obj : GUObjectArray)
+	{
+		if (USkinnedMeshComponent* SkinnedMesh = Cast<USkinnedMeshComponent>(Obj))
+		{
+			SkinnedMesh->SetEnableCPUSkinning(bEnableCPU);
+		}
+	}
+
+	AddLog("Skinning mode changed to: %s\n", bEnableCPU ? "CPU" : "GPU");
 }
 
 ImVector<char*> FEditorConsoleWidget::Messages;
