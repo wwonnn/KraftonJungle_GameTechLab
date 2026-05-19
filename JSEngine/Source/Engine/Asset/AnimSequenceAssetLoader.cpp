@@ -3,6 +3,7 @@
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Core/Logging/Log.h"
+#include "Core/Logging/Stats.h"
 #include "Core/Paths.h"
 #include "Object/ObjectFactory.h"
 #include "SimpleJSON/json.hpp"
@@ -368,6 +369,8 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
         return nullptr;
     }
 
+    SCOPE_STAT_ANIM("Animation Sequence Load");
+
     std::ifstream SequenceFile(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))));
     if (!SequenceFile.is_open())
     {
@@ -534,6 +537,8 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     {
         return false;
     }
+
+    SCOPE_STAT_ANIM("Animation Sequence Save");
 
     const UAnimDataModel* DataModel = Sequence->DataModel;
     json::JSON Root = json::JSON::Make(json::JSON::Class::Object);

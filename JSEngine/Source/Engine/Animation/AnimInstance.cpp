@@ -450,6 +450,8 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
         return;
     }
 
+    SCOPE_STAT_ANIM("Animation Evaluate Pose At Time");
+
     if (Owner)
     {
         const USkeletalMesh* Mesh = Owner->GetSkeletalMesh();
