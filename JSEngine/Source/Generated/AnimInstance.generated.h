@@ -4,7 +4,7 @@
 #undef CURRENT_FILE_ID
 #define CURRENT_FILE_ID Engine_Animation_AnimInstance_h
 
-#define Engine_Animation_AnimInstance_h_24_GENERATED_BODY \
+#define Engine_Animation_AnimInstance_h_28_GENERATED_BODY \
 public: \
     friend const UClass* Z_Construct_UClass_UAnimInstance(); \
     using ThisClass = UAnimInstance; \

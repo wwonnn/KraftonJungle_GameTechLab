@@ -1,8 +1,7 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
 #include "Object/Object.h"
-#include "Core/PropertyTypes.h"
 #include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Reflection/Reflection.h"
 #include "Animation/AnimData/AnimSequence.h"

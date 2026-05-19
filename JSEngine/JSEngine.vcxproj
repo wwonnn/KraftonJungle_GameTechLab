@@ -1354,6 +1354,9 @@
     <ClInclude Include="Source\Generated\AnimationStateMachine.generated.h" />
     <ClInclude Include="Source\Generated\AnimInstance.generated.h" />
     <ClInclude Include="Source\Generated\AnimInstanceAsset.generated.h" />
+    <ClInclude Include="Source\Generated\AnimNotify.generated.h" />
+    <ClInclude Include="Source\Generated\AnimNotifyBuiltins.generated.h" />
+    <ClInclude Include="Source\Generated\AnimNotifyLog.generated.h" />
     <ClInclude Include="Source\Generated\AnimSingleNodeInstance.generated.h" />
     <ClInclude Include="Source\Generated\BillboardComponent.generated.h" />
     <ClInclude Include="Source\Generated\BoxComponent.generated.h" />

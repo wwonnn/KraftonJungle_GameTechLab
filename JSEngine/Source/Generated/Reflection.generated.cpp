@@ -13,6 +13,9 @@
 #include "Engine/Animation/AnimationStateMachine.h"
 #include "Engine/Animation/AnimInstance.h"
 #include "Engine/Animation/AnimInstanceAsset.h"
+#include "Engine/Animation/AnimNotify.h"
+#include "Engine/Animation/AnimNotifyBuiltins.h"
+#include "Engine/Animation/AnimNotifyLog.h"
 #include "Engine/Animation/AnimSingleNodeInstance.h"
 #include "Engine/Animation/LuaAnimInstance.h"
 #include "Engine/Asset/CurveFloatAsset.h"
@@ -76,6 +79,13 @@ const UClass* Z_Construct_UClass_UActorSequencePlayer();
 const UClass* Z_Construct_UClass_UAnimationStateMachine();
 const UClass* Z_Construct_UClass_UAnimInstance();
 const UClass* Z_Construct_UClass_UAnimInstanceAsset();
+const UClass* Z_Construct_UClass_UAnimNotify();
+const UClass* Z_Construct_UClass_UAnimNotifyState();
+const UClass* Z_Construct_UClass_UAnimNotify_PlaySFX();
+const UClass* Z_Construct_UClass_UAnimNotifyState_PlayLoopingSFX();
+const UClass* Z_Construct_UClass_UAnimNotifyState_AttackWindow();
+const UClass* Z_Construct_UClass_UAnimNotifyLog();
+const UClass* Z_Construct_UClass_UAnimNotifyStateLog();
 const UClass* Z_Construct_UClass_UAnimSingleNodeInstance();
 const UClass* Z_Construct_UClass_ULuaAnimInstance();
 const UClass* Z_Construct_UClass_UCurveFloatAsset();
@@ -228,6 +238,76 @@ const UClass* UAnimInstanceAsset::StaticClass()
 const UClass* UAnimInstanceAsset::GetClass() const
 {
     return UAnimInstanceAsset::StaticClass();
+}
+
+const UClass* UAnimNotify::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify();
+}
+
+const UClass* UAnimNotify::GetClass() const
+{
+    return UAnimNotify::StaticClass();
+}
+
+const UClass* UAnimNotifyState::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotifyState();
+}
+
+const UClass* UAnimNotifyState::GetClass() const
+{
+    return UAnimNotifyState::StaticClass();
+}
+
+const UClass* UAnimNotify_PlaySFX::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify_PlaySFX();
+}
+
+const UClass* UAnimNotify_PlaySFX::GetClass() const
+{
+    return UAnimNotify_PlaySFX::StaticClass();
+}
+
+const UClass* UAnimNotifyState_PlayLoopingSFX::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotifyState_PlayLoopingSFX();
+}
+
+const UClass* UAnimNotifyState_PlayLoopingSFX::GetClass() const
+{
+    return UAnimNotifyState_PlayLoopingSFX::StaticClass();
+}
+
+const UClass* UAnimNotifyState_AttackWindow::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotifyState_AttackWindow();
+}
+
+const UClass* UAnimNotifyState_AttackWindow::GetClass() const
+{
+    return UAnimNotifyState_AttackWindow::StaticClass();
+}
+
+const UClass* UAnimNotifyLog::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotifyLog();
+}
+
+const UClass* UAnimNotifyLog::GetClass() const
+{
+    return UAnimNotifyLog::StaticClass();
+}
+
+const UClass* UAnimNotifyStateLog::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotifyStateLog();
+}
+
+const UClass* UAnimNotifyStateLog::GetClass() const
+{
+    return UAnimNotifyStateLog::StaticClass();
 }
 
 const UClass* UAnimSingleNodeInstance::StaticClass()
@@ -1204,6 +1284,97 @@ struct FAutoRegisterFactory_UAnimInstanceAsset
 };
 
 FAutoRegisterFactory_UAnimInstanceAsset GAutoRegisterFactory_UAnimInstanceAsset;
+
+struct FAutoRegisterFactory_UAnimNotify
+{
+    FAutoRegisterFactory_UAnimNotify()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify>(); },
+            UAnimNotify::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify GAutoRegisterFactory_UAnimNotify;
+
+struct FAutoRegisterFactory_UAnimNotifyState
+{
+    FAutoRegisterFactory_UAnimNotifyState()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotifyState",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState>(); },
+            UAnimNotifyState::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotifyState GAutoRegisterFactory_UAnimNotifyState;
+
+struct FAutoRegisterFactory_UAnimNotify_PlaySFX
+{
+    FAutoRegisterFactory_UAnimNotify_PlaySFX()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify_PlaySFX",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_PlaySFX>(); },
+            UAnimNotify_PlaySFX::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify_PlaySFX GAutoRegisterFactory_UAnimNotify_PlaySFX;
+
+struct FAutoRegisterFactory_UAnimNotifyState_PlayLoopingSFX
+{
+    FAutoRegisterFactory_UAnimNotifyState_PlayLoopingSFX()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotifyState_PlayLoopingSFX",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState_PlayLoopingSFX>(); },
+            UAnimNotifyState_PlayLoopingSFX::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotifyState_PlayLoopingSFX GAutoRegisterFactory_UAnimNotifyState_PlayLoopingSFX;
+
+struct FAutoRegisterFactory_UAnimNotifyState_AttackWindow
+{
+    FAutoRegisterFactory_UAnimNotifyState_AttackWindow()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotifyState_AttackWindow",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState_AttackWindow>(); },
+            UAnimNotifyState_AttackWindow::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotifyState_AttackWindow GAutoRegisterFactory_UAnimNotifyState_AttackWindow;
+
+struct FAutoRegisterFactory_UAnimNotifyLog
+{
+    FAutoRegisterFactory_UAnimNotifyLog()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotifyLog",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyLog>(); },
+            UAnimNotifyLog::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotifyLog GAutoRegisterFactory_UAnimNotifyLog;
+
+struct FAutoRegisterFactory_UAnimNotifyStateLog
+{
+    FAutoRegisterFactory_UAnimNotifyStateLog()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotifyStateLog",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyStateLog>(); },
+            UAnimNotifyStateLog::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotifyStateLog GAutoRegisterFactory_UAnimNotifyStateLog;
 
 struct FAutoRegisterFactory_UAnimSingleNodeInstance
 {
@@ -2435,6 +2606,69 @@ const UClass* Z_Construct_UClass_UAnimInstanceAsset()
     static const uint32 PropertyCount = 0;
 
     static const UClass ClassInfo("UAnimInstanceAsset", UObject::StaticClass(), sizeof(UAnimInstanceAsset), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify", UObject::StaticClass(), sizeof(UAnimNotify), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotifyState()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotifyState", UAnimNotify::StaticClass(), sizeof(UAnimNotifyState), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify_PlaySFX()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify_PlaySFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlaySFX), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotifyState_PlayLoopingSFX()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotifyState_PlayLoopingSFX", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_PlayLoopingSFX), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotifyState_AttackWindow()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotifyState_AttackWindow", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_AttackWindow), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotifyLog()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotifyLog", UAnimNotify::StaticClass(), sizeof(UAnimNotifyLog), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotifyStateLog()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotifyStateLog", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyStateLog), Properties, PropertyCount);
     return &ClassInfo;
 }
 

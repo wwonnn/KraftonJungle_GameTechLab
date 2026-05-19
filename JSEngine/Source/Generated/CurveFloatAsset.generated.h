@@ -4,7 +4,7 @@
 #undef CURRENT_FILE_ID
 #define CURRENT_FILE_ID Engine_Asset_CurveFloatAsset_h
 
-#define Engine_Asset_CurveFloatAsset_h_54_GENERATED_BODY \
+#define Engine_Asset_CurveFloatAsset_h_57_GENERATED_BODY \
 public: \
     friend const UClass* Z_Construct_UClass_UCurveFloatAsset(); \
     using ThisClass = UCurveFloatAsset; \
