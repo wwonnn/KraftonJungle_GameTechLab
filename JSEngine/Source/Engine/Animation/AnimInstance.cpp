@@ -99,6 +99,8 @@ void UAnimInstance::SetSequence(UAnimSequence* InSequence)
 	// Next Sequence 초기화
 	NextSequence = nullptr;
 	NextTime = 0.0f;
+    bNextLoop = bLoop;
+    NextPlayRate = PlayRate;
 	BlendFactor = 0.0f;
     RecentNotifyEvents.clear();
     ClearActiveAnimNotifyStates(false);
@@ -112,6 +114,8 @@ void UAnimInstance::SetNextSequence(UAnimSequence* InNext, float InBlendSpeed)
 
     NextSequence = InNext;
     NextTime = 0.0f;
+    bNextLoop = bLoop;
+    NextPlayRate = PlayRate;
     BlendFactor = 0.0f;
     BlendSpeed = InBlendSpeed;
 }
@@ -142,6 +146,8 @@ void UAnimInstance::Stop()
     CurrentTime = 0.0f;
     NextTime = 0.0f;
     NextSequence = nullptr;
+    bNextLoop = bLoop;
+    NextPlayRate = PlayRate;
     BlendFactor = 0.0f;
     bPlaying = false;
     RecentNotifyEvents.clear();
@@ -366,16 +372,22 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
         FAnimStateTransitionResult TransitionResult;
         if (StateMachine->ConsumeTransition(TransitionResult))
         {
-            SetLooping(TransitionResult.bLoop);
-            PlayRate = TransitionResult.PlayRate;
-
             if (!CurrentSequence || !bPlaying)
             {
                 SetSequence(TransitionResult.TargetSequence);
+                SetLooping(TransitionResult.bLoop);
+                PlayRate = TransitionResult.PlayRate;
+                bNextLoop = bLoop;
+                NextPlayRate = PlayRate;
             }
             else
             {
                 SetNextSequence(TransitionResult.TargetSequence, TransitionResult.BlendSpeed);
+                if (NextSequence == TransitionResult.TargetSequence)
+                {
+                    bNextLoop = TransitionResult.bLoop;
+                    NextPlayRate = TransitionResult.PlayRate;
+                }
             }
         }
     }
@@ -415,15 +427,19 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
     {
         const float NextLength = GetSequenceLength(NextSequence);
 
-        NextTime += DeltaTime * PlayRate;
+        NextTime += DeltaTime * NextPlayRate;
 
-        if (NextLength > 0.0f)
+        if (bNextLoop && NextLength > 0.0f)
         {
             NextTime = std::fmod(NextTime, NextLength);
 
 			// PlayRate < 0
             if (NextTime < 0.0f)
                 NextTime += NextLength;
+        }
+        else
+        {
+            NextTime = std::clamp(NextTime, 0.0f, NextLength);
         }
 		
         BlendFactor += DeltaTime * BlendSpeed;
@@ -434,9 +450,14 @@ void UAnimInstance::UpdateAnimation(float DeltaTime)
         {
             CurrentSequence = NextSequence;
             CurrentTime = NextTime;
+            bLoop = bNextLoop;
+            PlayRate = NextPlayRate;
             NextSequence = nullptr;
             NextTime = 0.0f;
+            bNextLoop = bLoop;
+            NextPlayRate = PlayRate;
             BlendFactor = 0.0f;
+            bPlaying = true;
             ClearActiveAnimNotifyStates(false);
         }
     }

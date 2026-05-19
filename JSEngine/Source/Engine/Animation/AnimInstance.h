@@ -115,6 +115,9 @@ protected:
     bool bLoop = true;
     bool bPlaying = true;
 
+    bool bNextLoop = true;
+    float NextPlayRate = 1.0f;
+
 	UPROPERTY(VisibleAnywhere, Transient)
     float BlendFactor = 0.0f; // 0.0f: CurrSequence, 1.0f: NextSequence
     UPROPERTY(EditAnywhere, Min = 0.0, Max = 1.0, Speed = 0.01)
