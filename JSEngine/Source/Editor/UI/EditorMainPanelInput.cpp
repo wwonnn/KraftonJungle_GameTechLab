@@ -344,6 +344,16 @@ void FEditorMainPanel::Update()
         FocusLayout.GetViewportClient(FocusedIdx)->FocusSelection();
     }
 
+    if (!IO.WantTextInput &&
+        !bAnyUIItemActive &&
+        !bAnyPopupOpen &&
+        !bAnyDragDropActive &&
+        !bMouseOverContentBrowser &&
+        ImGui::IsKeyPressed(ImGuiKey_Delete, false))
+    {
+        ExecuteActiveEditorCommand(EEditorCommandId::DeleteSelection);
+    }
+
     if (Window)
     {
         HWND hWnd = Window->GetHWND();

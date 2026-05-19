@@ -3,14 +3,16 @@
 #include "Render/Resource/VertexTypes.h"
 #include "Geometry/Plane.h"
 #include "Render/Common/RenderTypes.h"
+#include "Generated/ProceduralMeshComponent.generated.h"
 
 class UStaticMesh;
 class UStaticMeshComponent;
 
+UCLASS()
 class UProceduralMeshComponent : public UPrimitiveComponent
 {
 public:
-    DECLARE_CLASS(UProceduralMeshComponent, UPrimitiveComponent)
+    GENERATED_BODY()
 
     struct FMeshSection
     {

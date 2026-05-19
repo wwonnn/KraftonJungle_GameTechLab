@@ -1,13 +1,15 @@
 ﻿#pragma once
 
 #include "Component/PrimitiveComponent.h"
+#include "Generated/DecalComponent.generated.h"
 
 class UMaterialInterface;
 
+UCLASS()
 class UDecalComponent : public UPrimitiveComponent
 {
 public:
-	DECLARE_CLASS(UDecalComponent, UPrimitiveComponent)
+	GENERATED_BODY()
 
 	UDecalComponent();
 

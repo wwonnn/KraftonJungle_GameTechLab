@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "PointLightComponent.h"
+#include "Generated/SpotlightComponent.generated.h"
 
+UCLASS()
 class USpotlightComponent : public UPointLightComponent
 {
 public:
-    DECLARE_CLASS(USpotlightComponent, UPointLightComponent)
+    GENERATED_BODY()
 
     void PostDuplicate(UObject* Origiunal) override;
     void GetEditableProperties(TArray<FPropertyDescriptor>& OutProps) override;

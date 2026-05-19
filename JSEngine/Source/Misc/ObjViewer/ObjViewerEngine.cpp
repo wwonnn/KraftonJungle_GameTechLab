@@ -1,4 +1,4 @@
-﻿#include "Misc/ObjViewer/ObjViewerEngine.h"
+#include "Misc/ObjViewer/ObjViewerEngine.h"
 #include "Misc/ObjViewer/ObjViewerRenderPipeline.h"
 
 #include "Component/CameraComponent.h"
@@ -12,9 +12,6 @@
 #include "GameFramework/World.h"
 #include "ImGui/imgui.h"
 #include "Camera/ViewportCamera.h"
-
-DEFINE_CLASS(UObjViewerEngine, UEngine)
-REGISTER_FACTORY(UObjViewerEngine)
 
 void UObjViewerEngine::Init(FWindowsWindow* InWindow)
 {

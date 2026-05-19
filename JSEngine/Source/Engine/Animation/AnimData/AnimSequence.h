@@ -34,6 +34,18 @@ public:
         return SkeletonAssetPath;
     }
 
+    const TArray<FAnimNotifyTrack>& GetNotifyTracks() const
+    {
+        static const TArray<FAnimNotifyTrack> EmptyTracks;
+        return DataModel ? DataModel->NotifyTracks : EmptyTracks;
+    }
+
+    TArray<FAnimNotifyTrack>& GetMutableNotifyTracks()
+    {
+        static TArray<FAnimNotifyTrack> EmptyTracks;
+        return DataModel ? DataModel->NotifyTracks : EmptyTracks;
+    }
+
     UAnimDataModel* DataModel = nullptr;
     FString SkeletonAssetPath;
     USkeleton* Skeleton = nullptr;

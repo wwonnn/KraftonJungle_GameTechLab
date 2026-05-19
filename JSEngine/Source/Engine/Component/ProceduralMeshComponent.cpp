@@ -1,4 +1,4 @@
-﻿#include "ProceduralMeshComponent.h"
+#include "ProceduralMeshComponent.h"
 #include "StaticMeshComponent.h"
 #include "Object/Object.h"
 #include "Object/ObjectFactory.h"
@@ -8,9 +8,6 @@
 #include "Core/Paths.h"
 #include "Render/Proxy/ProceduralMeshRenderProxy.h"
 #include <filesystem>
-
-DEFINE_CLASS(UProceduralMeshComponent, UPrimitiveComponent)
-REGISTER_FACTORY(UProceduralMeshComponent)
 
 void UProceduralMeshComponent::CreateFrom(UStaticMesh* StaticMesh)
 {

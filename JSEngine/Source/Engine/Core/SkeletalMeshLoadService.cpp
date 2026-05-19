@@ -329,6 +329,47 @@ FSkeletalMeshLoadService::FSkeletalMeshLoadService(FResourceManager& InResourceM
 {
 }
 
+bool FSkeletalMeshLoadService::LoadExternalSkeletonAsset(
+	FSkeletalMesh* MeshData,
+	const FString& PreferredSkeletonAssetPath)
+{
+	if (!MeshData)
+	{
+		return false;
+	}
+
+	const FString SkeletonAssetPath = ToStoredAssetPath(
+		!PreferredSkeletonAssetPath.empty() ? PreferredSkeletonAssetPath : MeshData->SkeletonAssetPath);
+	if (SkeletonAssetPath.empty())
+	{
+		return MeshData->HasValidSkeletonData();
+	}
+
+	USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
+	if (!LoadedSkeleton || !ResourceManager.BinarySerializer.LoadSkeleton(SkeletonAssetPath, *LoadedSkeleton))
+	{
+		if (LoadedSkeleton)
+		{
+			UObjectManager::Get().DestroyObject(LoadedSkeleton);
+		}
+		return false;
+	}
+
+	if (MeshData->Skeleton && MeshData->Skeleton != LoadedSkeleton)
+	{
+		UObjectManager::Get().DestroyObject(MeshData->Skeleton);
+	}
+
+	MeshData->Skeleton = LoadedSkeleton;
+	MeshData->SkeletonAssetPath = SkeletonAssetPath;
+	if (LoadedSkeleton->GetSkeletonData())
+	{
+		LoadedSkeleton->GetSkeletonData()->PathFileName = SkeletonAssetPath;
+	}
+
+	return true;
+}
+
 USkeletalMesh* FSkeletalMeshLoadService::Load(const FString& Path)
 {
 	const FString NormalizedPath = ToStoredAssetPath(Path);
@@ -367,25 +408,13 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSkeletalMeshAssetFile(const FString
 		? NormalizedPath
 		: ToStoredAssetPath(LoadedMeshData->PathFileName);
 
-	if (!LoadedMeshData->HasValidSkeletonData())
+	const FString SkeletonAssetPath = ToStoredAssetPath(LoadedMeshData->SkeletonAssetPath);
+	if (!LoadExternalSkeletonAsset(LoadedMeshData, SkeletonAssetPath))
 	{
-		const FString SkeletonAssetPath = ToStoredAssetPath(LoadedMeshData->SkeletonAssetPath);
-		USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
-		if (SkeletonAssetPath.empty() ||
-			!LoadedSkeleton ||
-			!ResourceManager.BinarySerializer.LoadSkeleton(SkeletonAssetPath, *LoadedSkeleton))
-		{
-			if (LoadedSkeleton)
-			{
-				UObjectManager::Get().DestroyObject(LoadedSkeleton);
-			}
-			DestroyLoadedMeshData(LoadedMeshData);
-			UE_LOG_WARNING("[SkeletalMeshLoad] Failed skeletal mesh asset skeleton load | Path=%s | Skeleton=%s",
-			               NormalizedPath.c_str(), SkeletonAssetPath.c_str());
-			return nullptr;
-		}
-
-		LoadedMeshData->Skeleton = LoadedSkeleton;
+		DestroyLoadedMeshData(LoadedMeshData);
+		UE_LOG_WARNING("[SkeletalMeshLoad] Failed skeletal mesh asset skeleton load | Path=%s | Skeleton=%s",
+		               NormalizedPath.c_str(), SkeletonAssetPath.c_str());
+		return nullptr;
 	}
 
 	if (!ResolvePath.empty() && FAssetPathPolicy::FileExists(ResolvePath))
@@ -448,25 +477,9 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		{
 			DestroyLoadedMeshData(LoadedMeshData);
 		}
-		else if (!LoadedMeshData->HasValidSkeletonData())
+		else if (!LoadExternalSkeletonAsset(LoadedMeshData, CachedManifest.SkeletonAssetPath))
 		{
-			USkeleton* LoadedSkeleton = UObjectManager::Get().CreateObject<USkeleton>();
-			if (LoadedSkeleton && ResourceManager.BinarySerializer.LoadSkeleton(CachedManifest.SkeletonAssetPath, *LoadedSkeleton))
-			{
-				LoadedMeshData->Skeleton = LoadedSkeleton;
-				if (LoadedMeshData->SkeletonAssetPath.empty())
-				{
-					LoadedMeshData->SkeletonAssetPath = ToStoredAssetPath(LoadedSkeleton->GetAssetPathFileName());
-				}
-			}
-			else
-			{
-				if (LoadedSkeleton)
-				{
-					UObjectManager::Get().DestroyObject(LoadedSkeleton);
-				}
-				DestroyLoadedMeshData(LoadedMeshData);
-			}
+			DestroyLoadedMeshData(LoadedMeshData);
 		}
 
 		const auto BinaryEnd = std::chrono::steady_clock::now();
@@ -542,6 +555,12 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 				UE_LOG_WARNING("[SkeletalMeshLoad] Legacy skeleton cache conversion failed; legacy mesh cache kept | Path=%s | SkeletonBinaryPath=%s",
 				               NormalizedPath.c_str(),
 				               SkeletonAssetPath.c_str());
+			}
+
+			if (LoadedMeshData && bSaveSkeletonOk &&
+				!LoadExternalSkeletonAsset(LoadedMeshData, SkeletonAssetPath))
+			{
+				DestroyLoadedMeshData(LoadedMeshData);
 			}
 		}
 

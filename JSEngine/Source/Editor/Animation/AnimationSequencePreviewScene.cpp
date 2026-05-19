@@ -2,24 +2,39 @@
 
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/SkeletalMesh.h"
+#include "Component/ActorComponent.h"
 #include "Component/PostProcess/Light/AmbientLightComponent.h"
+#include "Component/PrimitiveComponent.h"
 #include "Component/SkeletalMeshComponent.h"
+#include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/Selection/SelectionManager.h"
+#include "GameFramework/AActor.h"
 #include "GameFramework/PrimitiveActors.h"
 #include "GameFramework/World.h"
 #include "Math/Utils.h"
 #include "Object/FName.h"
 #include "Render/Renderer/Renderer.h"
 
+#include <algorithm>
+#include <filesystem>
 #include <functional>
 #include <string>
 
 #ifdef GetCurrentTime
 #undef GetCurrentTime
 #endif
+
+namespace
+{
+    void SortAndUniqueNames(TArray<FString>& Names)
+    {
+        std::sort(Names.begin(), Names.end());
+        Names.erase(std::unique(Names.begin(), Names.end()), Names.end());
+    }
+}
 
 FAnimationSequencePreviewScene::~FAnimationSequencePreviewScene()
 {
@@ -56,6 +71,7 @@ bool FAnimationSequencePreviewScene::Initialize(
 
 void FAnimationSequencePreviewScene::Shutdown()
 {
+    ClearRecentNotifyHistory();
     PreviewComponent = nullptr;
     PreviewActor = nullptr;
     PreviewMesh = nullptr;
@@ -129,6 +145,7 @@ void FAnimationSequencePreviewScene::SetCurrentTime(float InTime)
         return;
     }
 
+    ClearRecentNotifyHistory();
     PreviewComponent->SetPreviewTime(InTime);
     if (PreviewWorld)
     {
@@ -146,6 +163,97 @@ float FAnimationSequencePreviewScene::GetPreviewLength() const
     return AnimationSequenceViewer::IsLiveObject(PreviewComponent) ? PreviewComponent->GetPreviewLength() : 0.0f;
 }
 
+const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewScene::GetRecentFiredNotifyEvents() const
+{
+    return RecentFiredNotifyHistory;
+}
+
+bool FAnimationSequencePreviewScene::HasPreviewSocket(const FName& SocketName) const
+{
+    return AnimationSequenceViewer::IsLiveObject(PreviewComponent) &&
+        SocketName != FName::None &&
+        PreviewComponent->HasSocket(SocketName);
+}
+
+TArray<FString> FAnimationSequencePreviewScene::GetPreviewSocketNames() const
+{
+    TArray<FString> SocketNames;
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return SocketNames;
+    }
+
+    USkeletalMesh* SkeletalMesh = PreviewComponent->GetSkeletalMesh();
+    if (!(AnimationSequenceViewer::IsLiveObject(SkeletalMesh) && SkeletalMesh->HasValidMeshData()))
+    {
+        return SocketNames;
+    }
+
+    for (const FSkeletalMeshSocket& Socket : SkeletalMesh->GetSockets())
+    {
+        if (!Socket.Name.IsValid())
+        {
+            continue;
+        }
+
+        const FString SocketName = Socket.Name.ToString();
+        if (!SocketName.empty())
+        {
+            SocketNames.push_back(SocketName);
+        }
+    }
+
+    SortAndUniqueNames(SocketNames);
+    return SocketNames;
+}
+
+bool FAnimationSequencePreviewScene::HasPreviewPrimitiveComponent(const FString& ComponentName) const
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewActor) || ComponentName.empty())
+    {
+        return false;
+    }
+
+    for (UActorComponent* Component : PreviewActor->GetComponents())
+    {
+        UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component);
+        if (AnimationSequenceViewer::IsLiveObject(PrimitiveComponent) &&
+            PrimitiveComponent->GetName() == ComponentName)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+TArray<FString> FAnimationSequencePreviewScene::GetPreviewPrimitiveComponentNames() const
+{
+    TArray<FString> ComponentNames;
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewActor))
+    {
+        return ComponentNames;
+    }
+
+    for (UActorComponent* Component : PreviewActor->GetComponents())
+    {
+        UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component);
+        if (!AnimationSequenceViewer::IsLiveObject(PrimitiveComponent))
+        {
+            continue;
+        }
+
+        const FString ComponentName = PrimitiveComponent->GetName();
+        if (!ComponentName.empty())
+        {
+            ComponentNames.push_back(ComponentName);
+        }
+    }
+
+    SortAndUniqueNames(ComponentNames);
+    return ComponentNames;
+}
+
 void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
 {
     if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
@@ -154,6 +262,7 @@ void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
     }
 
     PreviewComponent->TickPreviewAnimation(DeltaTime);
+    CaptureRecentNotifyEvents();
     if (PreviewWorld)
     {
         PreviewWorld->SyncSpatialIndex();
@@ -280,10 +389,58 @@ bool FAnimationSequencePreviewScene::InitializePreviewActor(UAnimSequence* Seque
     PreviewComponent->SetPreviewPlayRate(1.0f);
     PreviewComponent->SetPreviewPlaying(false);
     PreviewComponent->EnsureSkinningUpdated();
+    ClearRecentNotifyHistory();
 
     PreviewWorld->SyncSpatialIndex();
     ConfigurePreviewCamera();
     return true;
+}
+
+void FAnimationSequencePreviewScene::ClearRecentNotifyHistory()
+{
+    RecentFiredNotifyHistory.clear();
+}
+
+void FAnimationSequencePreviewScene::CaptureRecentNotifyEvents()
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    const TArray<FAnimNotifyEvent>& FrameEvents = PreviewComponent->GetRecentFiredNotifyEvents();
+    if (FrameEvents.empty())
+    {
+        return;
+    }
+
+    for (const FAnimNotifyEvent& NotifyEvent : FrameEvents)
+    {
+        FAnimNotifyEvent RuntimeEvent = NotifyEvent;
+        if (RuntimeEvent.SourceSequencePath.empty() && !SequencePath.empty())
+        {
+            RuntimeEvent.SourceSequencePath = FPaths::ToProjectRelativePath(SequencePath);
+        }
+
+        if (RuntimeEvent.SourceSequenceName.empty() && !SequencePath.empty())
+        {
+            RuntimeEvent.SourceSequenceName =
+                FPaths::ToString(std::filesystem::path(FPaths::ToWide(SequencePath)).stem().wstring());
+        }
+
+        RecentFiredNotifyHistory.push_back(RuntimeEvent);
+    }
+
+    if (static_cast<int32>(RecentFiredNotifyHistory.size()) <= MaxRecentNotifyHistoryCount)
+    {
+        return;
+    }
+
+    const int32 OverflowCount =
+        static_cast<int32>(RecentFiredNotifyHistory.size()) - MaxRecentNotifyHistoryCount;
+    RecentFiredNotifyHistory.erase(
+        RecentFiredNotifyHistory.begin(),
+        RecentFiredNotifyHistory.begin() + OverflowCount);
 }
 
 void FAnimationSequencePreviewScene::InitializeViewportClient()

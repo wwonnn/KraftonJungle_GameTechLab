@@ -1,10 +1,13 @@
 ﻿#pragma once
 #include "LightComponent.h"
+#include "Generated/DirectionalLightComponent.generated.h"
 
+UCLASS()
 class UDirectionalLightComponent : public ULightComponent
 {
 public:
-    DECLARE_CLASS(UDirectionalLightComponent, ULightComponent)
+    GENERATED_BODY()
+
 protected:
 	FMatrix ComputePerspectiveShadowMatrix(const FMatrix& CamView, const FMatrix& CamProj,
 		const TArray<FBoundingBox>* VisibleObjectsBounds) const override;

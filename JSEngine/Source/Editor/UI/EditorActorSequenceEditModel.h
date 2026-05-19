@@ -2,7 +2,7 @@
 
 #include "Animation/ActorSequence.h"
 #include "Core/CoreMinimal.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 
 class AActor;
 class UObject;

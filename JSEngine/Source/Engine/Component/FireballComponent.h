@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "PrimitiveComponent.h"
 #include "Core/ResourceTypes.h"
+#include "Generated/FireballComponent.generated.h"
 
+UCLASS()
 class UFireballComponent : public UPrimitiveComponent {
 public:
-	DECLARE_CLASS(UFireballComponent, UPrimitiveComponent)
+	GENERATED_BODY()
 
 	UFireballComponent();
 	~UFireballComponent() override = default;

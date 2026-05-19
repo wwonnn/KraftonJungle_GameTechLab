@@ -1,11 +1,9 @@
-﻿#include "Texture.h"
+#include "Texture.h"
 #include "Core/Paths.h"
 #include "Core/Logging/Log.h"
 
 #include "DDSTextureLoader.h"
 #include "WICTextureLoader.h"
-
-DEFINE_CLASS(UTexture, UObject)
 
 bool UTexture::LoadFromFile(const FString& InFilePath, ID3D11Device* InDevice)
 {

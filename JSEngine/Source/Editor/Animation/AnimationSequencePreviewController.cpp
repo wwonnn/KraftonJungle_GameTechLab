@@ -287,6 +287,32 @@ bool FAnimationSequencePreviewController::HasValidPreview() const
     return PreviewScene && PreviewScene->HasValidPreview();
 }
 
+const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewController::GetRecentFiredNotifyEvents() const
+{
+    static const TArray<FAnimNotifyEvent> EmptyEvents = {};
+    return PreviewScene ? PreviewScene->GetRecentFiredNotifyEvents() : EmptyEvents;
+}
+
+bool FAnimationSequencePreviewController::HasPreviewSocket(const FName& SocketName) const
+{
+    return PreviewScene && PreviewScene->HasPreviewSocket(SocketName);
+}
+
+TArray<FString> FAnimationSequencePreviewController::GetPreviewSocketNames() const
+{
+    return PreviewScene ? PreviewScene->GetPreviewSocketNames() : TArray<FString>();
+}
+
+bool FAnimationSequencePreviewController::HasPreviewPrimitiveComponent(const FString& ComponentName) const
+{
+    return PreviewScene && PreviewScene->HasPreviewPrimitiveComponent(ComponentName);
+}
+
+TArray<FString> FAnimationSequencePreviewController::GetPreviewPrimitiveComponentNames() const
+{
+    return PreviewScene ? PreviewScene->GetPreviewPrimitiveComponentNames() : TArray<FString>();
+}
+
 void FAnimationSequencePreviewController::SetViewportSize(int32 InWidth, int32 InHeight)
 {
     if (PreviewScene)

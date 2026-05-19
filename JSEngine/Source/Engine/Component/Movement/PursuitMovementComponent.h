@@ -1,12 +1,14 @@
 ﻿#pragma once
 #include "MovementComponent.h"
+#include "Generated/PursuitMovementComponent.generated.h"
 
 class FViewportCamera;
 
 // Not intended for complex, non-ghost actors
+UCLASS()
 class UPursuitMovementComponent : public UMovementComponent {
 public:
-	DECLARE_CLASS(UPursuitMovementComponent, UMovementComponent);
+	GENERATED_BODY()
 
 	// Overrides
 	void				BeginPlay() override;

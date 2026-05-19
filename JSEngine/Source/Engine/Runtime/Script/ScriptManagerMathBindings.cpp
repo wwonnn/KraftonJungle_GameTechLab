@@ -17,8 +17,8 @@ namespace
 
     FString LuaGetObjectType(UObject& Object)
     {
-        const FTypeInfo* TypeInfo = Object.GetTypeInfo();
-        return TypeInfo ? TypeInfo->name : "";
+        const UClass* TypeInfo = Object.GetClass();
+        return TypeInfo ? TypeInfo->GetName() : "";
     }
 
     bool LuaObjectIsA(UObject& Object, const FString& TypeName)
@@ -28,9 +28,9 @@ namespace
             return false;
         }
 
-        for (const FTypeInfo* TypeInfo = Object.GetTypeInfo(); TypeInfo; TypeInfo = TypeInfo->Parent)
+        for (const UClass* TypeInfo = Object.GetClass(); TypeInfo; TypeInfo = TypeInfo->GetSuperClass())
         {
-            const FString NativeName = TypeInfo->name;
+            const FString NativeName = TypeInfo->GetName();
             const FString LuaStyleName = (NativeName.size() > 1 && (NativeName[0] == 'A' || NativeName[0] == 'U'))
                 ? NativeName.substr(1)
                 : NativeName;

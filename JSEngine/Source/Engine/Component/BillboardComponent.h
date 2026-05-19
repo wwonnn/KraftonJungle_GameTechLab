@@ -2,11 +2,13 @@
 #include "PrimitiveComponent.h"
 #include "Core/ResourceTypes.h"
 #include "Object/FName.h"
+#include "Generated/BillboardComponent.generated.h"
 
 
 class FViewportCamera;
 struct FTextureResource;
 
+UCLASS()
 class UBillboardComponent : public UPrimitiveComponent
 {
 protected:
@@ -18,7 +20,7 @@ protected:
 	virtual void PostDuplicate(UObject* Original) override;
 
 public:
-	DECLARE_CLASS(UBillboardComponent, UPrimitiveComponent)
+	GENERATED_BODY()
 
 	virtual void Serialize(FArchive& Ar) override;
 

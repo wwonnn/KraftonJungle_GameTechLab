@@ -10,9 +10,6 @@
 #include <fstream>
 #include <sstream>
 
-DEFINE_CLASS(ULuaAnimInstance, UAnimInstance)
-REGISTER_FACTORY(ULuaAnimInstance)
-
 namespace
 {
     bool ReadLuaFile(const FString& ScriptPath, FString& OutSource)
@@ -39,6 +36,34 @@ void ULuaAnimInstance::NativeInitializeAnimation()
 void ULuaAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
     CallLuaUpdate(DeltaTime);
+}
+
+void ULuaAnimInstance::NativeAnimNotify(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent)
+{
+    (void)Sequence;
+    CallLuaNotify("AnimNotify", NotifyEvent);
+    CallNamedLuaNotify("AnimNotify_", NotifyEvent);
+}
+
+void ULuaAnimInstance::NativeAnimNotifyBegin(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent)
+{
+    (void)Sequence;
+    CallLuaNotify("AnimNotifyBegin", NotifyEvent);
+    CallNamedLuaNotify("AnimNotifyBegin_", NotifyEvent);
+}
+
+void ULuaAnimInstance::NativeAnimNotifyTick(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent, float DeltaTime)
+{
+    (void)Sequence;
+    CallLuaNotifyTick("AnimNotifyTick", NotifyEvent, DeltaTime);
+    CallNamedLuaNotifyTick("AnimNotifyTick_", NotifyEvent, DeltaTime);
+}
+
+void ULuaAnimInstance::NativeAnimNotifyEnd(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent)
+{
+    (void)Sequence;
+    CallLuaNotify("AnimNotifyEnd", NotifyEvent);
+    CallNamedLuaNotify("AnimNotifyEnd_", NotifyEvent);
 }
 
 void ULuaAnimInstance::ClearLuaStateReferences()
@@ -186,4 +211,70 @@ void ULuaAnimInstance::CallLuaUpdate(float DeltaTime)
         sol::error Err = Result;
         UE_LOG_ERROR("[LuaAnimInstance] Lua Error in NativeUpdateAnimation: %s", Err.what());
     }
+}
+
+void ULuaAnimInstance::CallLuaNotify(const char* FunctionName, const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, NotifyEvent);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallLuaNotifyTick(const char* FunctionName, const FAnimNotifyEvent& NotifyEvent, float DeltaTime)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, NotifyEvent, DeltaTime);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallNamedLuaNotify(const char* Prefix, const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!NotifyEvent.Name.IsValid())
+    {
+        return;
+    }
+
+    const FString FunctionName = FString(Prefix) + NotifyEvent.Name.ToString();
+    CallLuaNotify(FunctionName.c_str(), NotifyEvent);
+}
+
+void ULuaAnimInstance::CallNamedLuaNotifyTick(const char* Prefix, const FAnimNotifyEvent& NotifyEvent, float DeltaTime)
+{
+    if (!NotifyEvent.Name.IsValid())
+    {
+        return;
+    }
+
+    const FString FunctionName = FString(Prefix) + NotifyEvent.Name.ToString();
+    CallLuaNotifyTick(FunctionName.c_str(), NotifyEvent, DeltaTime);
 }

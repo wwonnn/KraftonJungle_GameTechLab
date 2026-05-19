@@ -1,12 +1,14 @@
-#pragma once
+﻿#pragma once
 
 #include "Object/Object.h"
 #include "SkeletonTypes.h"
+#include "Generated/Skeleton.generated.h"
 
+UCLASS()
 class USkeleton : public UObject
 {
 public:
-    DECLARE_CLASS(USkeleton, UObject)
+    GENERATED_BODY()
 
     USkeleton() = default;
     ~USkeleton() override;

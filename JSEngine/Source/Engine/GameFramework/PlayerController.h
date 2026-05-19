@@ -4,15 +4,17 @@
 #include "GameFramework/Pawn.h"
 #include "Camera/ViewportCamera.h"
 #include "Engine/Input/GameplayInputTypes.h"
+#include "Generated/PlayerController.generated.h"
 
 class UCameraComponent;
 class APlayerCameraManager;
 enum class ECameraBlendType;
 
+UCLASS()
 class APlayerController : public AActor
 {
 public:
-	DECLARE_CLASS(APlayerController, AActor)
+	GENERATED_BODY()
 
 	void BeginPlay() override;
 	void Tick(float DeltaTime) override;

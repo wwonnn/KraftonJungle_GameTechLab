@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Core/CoreMinimal.h"
 #include "Editor/Viewport/FSceneViewport.h"
 #include "Editor/Viewport/SkeletalMeshViewportClient.h"
@@ -37,6 +38,11 @@ public:
     void SetCurrentTime(float InTime);
     float GetCurrentTime() const;
     float GetPreviewLength() const;
+    const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
+    bool HasPreviewSocket(const FName& SocketName) const;
+    TArray<FString> GetPreviewSocketNames() const;
+    bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
+    TArray<FString> GetPreviewPrimitiveComponentNames() const;
     void RefreshPreviewPose(float DeltaTime);
 
     void SetViewportSize(int32 InWidth, int32 InHeight);
@@ -52,8 +58,13 @@ private:
     void ConfigurePreviewCamera();
 
 private:
+    void ClearRecentNotifyHistory();
+    void CaptureRecentNotifyEvents();
+
+private:
     static constexpr uint32 InvalidPreviewResourceIndex = ~0u;
     inline static uint32 NextPreviewResourceIndex = 0;
+    static constexpr int32 MaxRecentNotifyHistoryCount = 16;
 
     UEditorEngine* EditorEngine = nullptr;
     FString SequencePath;
@@ -70,4 +81,5 @@ private:
     uint32 PreviewResourceIndex = InvalidPreviewResourceIndex;
     int32 ViewportWidth = 512;
     int32 ViewportHeight = 512;
+    TArray<FAnimNotifyEvent> RecentFiredNotifyHistory;
 };

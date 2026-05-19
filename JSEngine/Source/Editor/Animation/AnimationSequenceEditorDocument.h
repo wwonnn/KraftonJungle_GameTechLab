@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Animation/AnimData/AnimNotifyTypes.h"
+#include "Animation/AnimNotifyPayloadParser.h"
+#include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -28,16 +31,47 @@ public:
     FSceneViewport* GetSceneViewport() override;
     const FSceneViewport* GetSceneViewport() const override;
 
-    bool CanSave() const override { return false; }
-    bool Save() override { return false; }
+    bool CanSave() const override;
+    bool Save() override;
     bool CanClose() const override { return true; }
     bool IsDetachedSupported() const override { return false; }
 
     const FString& GetSequencePath() const { return SequencePath; }
     UAnimSequence* GetSequence() const { return Sequence; }
+    FAnimationSequenceEditorState& GetEditorState() { return EditorState; }
+    const FAnimationSequenceEditorState& GetEditorState() const { return EditorState; }
+
+    int32 GetNotifyTrackCount() const;
+    const FAnimNotifyTrack* GetNotifyTrack(int32 TrackIndex) const;
+    FAnimNotifyTrack* GetNotifyTrack(int32 TrackIndex);
+    const FAnimNotifyEvent* GetSelectedNotify() const;
+    FAnimNotifyEvent* GetSelectedNotify();
+    bool AddNotifyAtTime(int32 TrackIndex, float TimeSeconds);
+    bool DeleteSelectedNotify();
+    bool SetSelectedNotifyTime(float TimeSeconds, bool bApplySnap);
+    bool SetSelectedNotifyDuration(float DurationSeconds);
+    bool SetSelectedNotifyName(const FName& Name);
+    bool SetSelectedNotifyColor(const FColor& Color);
+    bool SetSelectedNotifyType(EAnimNotifyEventType EventType);
+    bool SetSelectedNotifyClassName(const FString& NotifyClassName);
+    bool SetSelectedNotifyPayload(const FString& Payload);
+    FAnimNotifyPayloadParser GetSelectedNotifyPayloadParser() const;
+    bool SetSelectedNotifyPayloadStringValue(const FString& Key, const FString& Value);
+    bool SetSelectedNotifyPayloadNameValue(const FString& Key, const FName& Value);
+    bool SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value);
+    bool SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value);
+    bool ClearSelectedNotifyPayloadValue(const FString& Key);
+    void SelectNotify(int32 TrackIndex, int32 EventIndex);
+    void ClearNotifySelection();
+    void MarkDirty();
+    bool IsDirty() const { return bDirty; }
+    FAnimNotifyValidationReport BuildSelectedNotifyValidationReport() const;
+    FAnimNotifyValidationReport BuildDocumentNotifyValidationReport() const;
+    const FString& GetLastNotifyValidationStatusText() const { return LastNotifyValidationStatusText; }
 
 private:
     void SyncEditorState();
+    void ValidateNotifySelection();
 
 private:
     UEditorEngine* EditorEngine = nullptr;
@@ -48,4 +82,6 @@ private:
     FAnimationSequenceEditorState EditorState;
     std::unique_ptr<FAnimationSequenceEditorWidget> Widget;
     std::unique_ptr<FAnimationSequencePreviewController> PreviewController;
+    bool bDirty = false;
+    FString LastNotifyValidationStatusText;
 };

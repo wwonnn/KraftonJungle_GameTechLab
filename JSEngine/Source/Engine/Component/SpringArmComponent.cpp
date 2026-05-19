@@ -5,9 +5,6 @@
 #include <cmath>
 #include <cstring>
 
-DEFINE_CLASS(USpringArmComponent, USceneComponent)
-REGISTER_FACTORY(USpringArmComponent)
-
 USpringArmComponent::USpringArmComponent()
 {
 	SetComponentTickEnabled(true);

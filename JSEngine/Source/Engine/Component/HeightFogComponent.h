@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "PrimitiveComponent.h"
+#include "Generated/HeightFogComponent.generated.h"
 
+UCLASS()
 class UHeightFogComponent : public UPrimitiveComponent
 {
 public:
-    DECLARE_CLASS(UHeightFogComponent, UPrimitiveComponent)
+    GENERATED_BODY()
 
     UHeightFogComponent();
     ~UHeightFogComponent() override = default;

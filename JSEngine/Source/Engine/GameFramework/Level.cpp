@@ -1,9 +1,6 @@
-﻿#include "Level.h"
+#include "Level.h"
 
 #include <algorithm>
-
-DEFINE_CLASS(ULevel, UObject)
-REGISTER_FACTORY(ULevel)
 
 // 소멸될 때 가지고 있던 모든 액터들을 메모리에서 완전히 해제한다.
 ULevel::~ULevel()

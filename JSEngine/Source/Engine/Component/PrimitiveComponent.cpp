@@ -1,11 +1,9 @@
-﻿#include "PrimitiveComponent.h"
+#include "PrimitiveComponent.h"
 #include "Engine/Geometry/Ray.h"
 #include "Core/CollisionTypes.h"
 #include "GameFramework/World.h"
 #include "Math/Utils.h"
 #include "Render/Proxy/PrimitiveRenderProxy.h"
-
-DEFINE_CLASS(UPrimitiveComponent, USceneComponent)
 
 UPrimitiveComponent::~UPrimitiveComponent()
 {
@@ -228,12 +226,6 @@ void UPrimitiveComponent::NotifySpatialIndexDirty() const
 }
 
 
-// DEFINE_CLASS(UCubeComponent, UPrimitiveComponent)
-// DEFINE_CLASS(USphereComponent, UPrimitiveComponent)
-// DEFINE_CLASS(UPlaneComponent, UPrimitiveComponent)
-// REGISTER_FACTORY(UCubeComponent)
-// REGISTER_FACTORY(USphereComponent)
-// REGISTER_FACTORY(UPlaneComponent)
 // void UPrimitiveComponent::UpdateWorldAABB() const
 // {
 // 	FVector LExt = LocalExtents;

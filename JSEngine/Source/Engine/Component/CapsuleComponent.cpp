@@ -1,8 +1,5 @@
-﻿#include "CapsuleComponent.h"
+#include "CapsuleComponent.h"
 #include "Object/Object.h"
-
-DEFINE_CLASS(UCapsuleComponent, UShapeComponent)
-REGISTER_FACTORY(UCapsuleComponent)
 
 void UCapsuleComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {

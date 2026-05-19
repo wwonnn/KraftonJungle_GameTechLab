@@ -1,6 +1,7 @@
 #include "Runtime/Script/ScriptManager.h"
 
 #include "Animation/ActorSequence.h"
+#include "Animation/AnimData/AnimNotifyTypes.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimationStateMachine.h"
 #include "Animation/LuaAnimInstance.h"
@@ -36,6 +37,19 @@ void FScriptManager::BindAnimationTypes()
     LUA_METHOD(SetCurrentTime, SetCurrentTime);
     LUA_METHOD(GetCurrentTime, GetCurrentTime);
     LUA_METHOD(IsPlaying, IsPlaying);
+    LUA_END_TYPE();
+
+    LUA_BEGIN_TYPE_NO_CTOR(GLuaState, FAnimNotifyEvent, "AnimNotifyEvent")
+    LUA_FIELD(Time, Time);
+    LUA_FIELD(Duration, Duration);
+    LUA_FIELD(NotifyClassName, NotifyClassName);
+    LUA_FIELD(Payload, Payload);
+    LUA_SET(GetName, [](const FAnimNotifyEvent& Self)
+            { return Self.Name.IsValid() ? Self.Name.ToString() : FString(); });
+    LUA_SET(GetEventType, [](const FAnimNotifyEvent& Self)
+            { return AnimNotifyEventTypeToString(Self.EventType); });
+    LUA_SET(GetTriggerPhase, [](const FAnimNotifyEvent& Self)
+            { return AnimNotifyTriggerPhaseToString(Self.TriggerPhase); });
     LUA_END_TYPE();
 
     LUA_BEGIN_TYPE_NO_CTOR(GLuaState, FLuaTimeline, "LuaTimeline")

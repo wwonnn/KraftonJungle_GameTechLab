@@ -70,6 +70,9 @@
     <Filter Include="Source\Engine">
       <UniqueIdentifier>{bfcd2a84-61fc-3a27-7115-8732c34a60d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\Reflection">
+      <UniqueIdentifier>{2f817590-77f4-4f32-9d8b-76a7cbfe4fd1}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\Audio">
       <UniqueIdentifier>{d43e716f-b7f0-4f52-8c4f-20a99dc3fdf8}</UniqueIdentifier>
     </Filter>
@@ -238,6 +241,21 @@
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceCurveFilter.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.cpp">
@@ -765,8 +783,8 @@
     <ClCompile Include="Source\Engine\Object\Object.cpp">
       <Filter>Source\Engine\Object</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Object\Reflection.cpp">
-      <Filter>Source\Engine\Object</Filter>
+    <ClCompile Include="Source\Engine\Reflection\Reflection.cpp">
+      <Filter>Source\Engine\Reflection</Filter>
     </ClCompile>
     <ClCompile Include="Source\Generated\Reflection.generated.cpp">
       <Filter>Source\Generated</Filter>
@@ -1099,6 +1117,11 @@
     <ClCompile Include="Source\Editor\Viewer\EditorViewer.cpp" />
     <ClCompile Include="Source\Editor\Viewport\SkeletalMeshViewportClient.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotify.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyBuiltins.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyLog.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadParser.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
@@ -1116,6 +1139,9 @@
     <ClCompile Include="Source\Engine\Render\Proxy\SubUVRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\TextRenderProxy.cpp" />
     <ClCompile Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.cpp" />
+    <ClCompile Include="Source\Editor\UI\AnimInstanceStateSequenceContext.cpp">
+      <Filter>Source\Editor\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -1145,6 +1171,21 @@
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceCurveFilter.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyLaneWidget.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
@@ -1155,6 +1196,9 @@
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePreviewScene.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceSequencerLayout.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceTimelineGeometry.h">
@@ -1215,6 +1259,9 @@
       <Filter>Source\Editor\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\UI\EditorContentBrowserWidget.h">
+      <Filter>Source\Editor\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\UI\AnimInstanceStateSequenceContext.h">
       <Filter>Source\Editor\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.h">
@@ -2133,6 +2180,11 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\IAnimationDataModel.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotify.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyBuiltins.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyLog.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadParser.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />
@@ -2142,6 +2194,8 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimationAsset.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequence.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimSequenceBase.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimNotifyTypes.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimData\AnimCurveTypes.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimTypes.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\FrameRate.h" />
     <ClInclude Include="Source\Engine\Render\Proxy\BillboardRenderProxy.h" />
