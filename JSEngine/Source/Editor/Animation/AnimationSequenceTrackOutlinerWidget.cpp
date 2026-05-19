@@ -436,6 +436,12 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
         }
     }
 
+    if (bOpenRenameNotifyTrackPopupPending)
+    {
+        ImGui::OpenPopup("##RenameNotifyTrackPopup");
+        bOpenRenameNotifyTrackPopupPending = false;
+    }
+
     RenderRenameNotifyTrackPopup(Document);
 }
 
@@ -444,13 +450,14 @@ void FAnimationSequenceTrackOutlinerWidget::OpenRenameNotifyTrackPopup(int32 Tra
     RenameNotifyTrackIndex = TrackIndex;
     RenameNotifyTrackBuffer.fill('\0');
     strncpy_s(RenameNotifyTrackBuffer.data(), RenameNotifyTrackBuffer.size(), CurrentLabel.c_str(), _TRUNCATE);
-    ImGui::OpenPopup("##RenameNotifyTrackPopup");
+    bOpenRenameNotifyTrackPopupPending = true;
 }
 
 void FAnimationSequenceTrackOutlinerWidget::RenderRenameNotifyTrackPopup(FAnimationSequenceEditorDocument* Document)
 {
     if (!Document)
     {
+        bOpenRenameNotifyTrackPopupPending = false;
         RenameNotifyTrackIndex = -1;
         return;
     }
@@ -488,14 +495,16 @@ void FAnimationSequenceTrackOutlinerWidget::RenderRenameNotifyTrackPopup(FAnimat
 
         if (bClosePopup)
         {
+            bOpenRenameNotifyTrackPopupPending = false;
             RenameNotifyTrackIndex = -1;
             ImGui::CloseCurrentPopup();
         }
 
         ImGui::EndPopup();
     }
-    else
+    else if (RenameNotifyTrackIndex >= 0 && !ImGui::IsPopupOpen("##RenameNotifyTrackPopup"))
     {
+        bOpenRenameNotifyTrackPopupPending = false;
         RenameNotifyTrackIndex = -1;
     }
 }
