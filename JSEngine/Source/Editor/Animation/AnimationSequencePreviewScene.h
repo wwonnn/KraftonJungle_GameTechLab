@@ -39,6 +39,8 @@ public:
     float GetCurrentTime() const;
     float GetPreviewLength() const;
     const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
+    bool HasPreviewSocket(const FName& SocketName) const;
+    bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
     void RefreshPreviewPose(float DeltaTime);
 
     void SetViewportSize(int32 InWidth, int32 InHeight);

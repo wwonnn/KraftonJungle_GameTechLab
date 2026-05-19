@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
 #include "Editor/Animation/AnimationSequenceCurveFilter.h"
 #include "Editor/Animation/AnimationSequenceNotifyLaneWidget.h"
@@ -57,6 +58,17 @@ private:
     void RenderCurveInspectionPanel() const;
     void RenderRecentNotifySummary() const;
     void RenderFooterStatus() const;
+    void RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const;
+    void RenderNotifyValidationIssues(
+        const FAnimNotifyValidationReport& Report,
+        EAnimNotifyValidationField Field) const;
+    void RenderStructuredNotifyPayloadEditor(
+        const FString& NotifyClassName,
+        const FAnimNotifyValidationReport& Report);
+    void RenderRawNotifyPayloadEditor(
+        const FString& NotifyClassName,
+        const FAnimNotifyValidationReport& Report,
+        bool bRenderValidation);
     void SyncNotifyDetailsBuffers(const FAnimNotifyEvent& NotifyEvent);
 
 private:
@@ -71,5 +83,9 @@ private:
     FAnimationSequenceCurveTrackWidget CurveTrackWidget;
     FString NotifyDetailsBoundStableId;
     std::array<char, 256> NotifyNameEditBuffer = {};
+    std::array<char, 256> NotifySoundEditBuffer = {};
+    std::array<char, 256> NotifySocketEditBuffer = {};
+    std::array<char, 256> NotifyComponentEditBuffer = {};
+    std::array<char, 256> NotifyAttackIdEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
 };

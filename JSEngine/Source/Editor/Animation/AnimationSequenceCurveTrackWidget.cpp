@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
+﻿#include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
 
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceSequencerLayout.h"

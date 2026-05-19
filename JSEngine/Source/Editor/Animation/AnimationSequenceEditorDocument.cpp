@@ -5,6 +5,7 @@
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
+#include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
@@ -77,6 +78,7 @@ bool FAnimationSequenceEditorDocument::Initialize(UEditorEngine* InEditorEngine,
     TabId = MakeAnimationSequenceTabId(SequencePath);
     TabLabel = MakeAnimationSequenceTabLabel(SequencePath);
     bDirty = false;
+    LastNotifyValidationStatusText.clear();
 
     PreviewController = std::make_unique<FAnimationSequencePreviewController>();
     PreviewController->Initialize(InEditorEngine, SequencePath, Sequence);
@@ -175,16 +177,65 @@ bool FAnimationSequenceEditorDocument::Save()
 {
     if (!AnimationSequenceViewer::IsLiveObject(Sequence))
     {
+        LastNotifyValidationStatusText = "Save failed: animation sequence is unavailable.";
         return false;
     }
 
+    const FAnimNotifyValidationReport ValidationReport = BuildDocumentNotifyValidationReport();
     if (!FResourceManager::Get().SaveAnimSequence(SequencePath, Sequence))
     {
+        LastNotifyValidationStatusText = "Save failed: resource manager rejected the sequence write.";
         return false;
     }
 
     bDirty = false;
+    if (ValidationReport.HasAnyIssues())
+    {
+        LastNotifyValidationStatusText = "Saved with " + FormatAnimNotifyValidationSummary(ValidationReport) + ".";
+    }
+    else
+    {
+        LastNotifyValidationStatusText = "Saved with no notify validation issues.";
+    }
     return true;
+}
+
+FAnimNotifyValidationReport FAnimationSequenceEditorDocument::BuildSelectedNotifyValidationReport() const
+{
+    const FAnimNotifyEvent* SelectedNotify = GetSelectedNotify();
+    if (!SelectedNotify)
+    {
+        return FAnimNotifyValidationReport();
+    }
+
+    FAnimNotifyValidationContext Context;
+    Context.PreviewController = PreviewController.get();
+    FAnimNotifyValidationReport Report = ValidateAnimNotifyEvent(
+        *SelectedNotify,
+        EditorState.SelectedNotifyTrackIndex,
+        EditorState.SelectedNotifyEventIndex,
+        Context);
+
+    const FAnimNotifyValidationReport DocumentReport = ValidateAnimNotifyDocument(Sequence, Context);
+    for (const FAnimNotifyValidationIssue& Issue : DocumentReport.Issues)
+    {
+        if (Issue.Field == EAnimNotifyValidationField::General &&
+            Issue.StableId == SelectedNotify->StableId &&
+            Issue.TrackIndex == EditorState.SelectedNotifyTrackIndex &&
+            Issue.EventIndex == EditorState.SelectedNotifyEventIndex)
+        {
+            Report.AddIssue(Issue);
+        }
+    }
+
+    return Report;
+}
+
+FAnimNotifyValidationReport FAnimationSequenceEditorDocument::BuildDocumentNotifyValidationReport() const
+{
+    FAnimNotifyValidationContext Context;
+    Context.PreviewController = PreviewController.get();
+    return ValidateAnimNotifyDocument(Sequence, Context);
 }
 
 int32 FAnimationSequenceEditorDocument::GetNotifyTrackCount() const
@@ -424,6 +475,47 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayload(const FString& P
     NotifyEvent->Payload = Payload;
     MarkDirty();
     return true;
+}
+
+FAnimNotifyPayloadParser FAnimationSequenceEditorDocument::GetSelectedNotifyPayloadParser() const
+{
+    const FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    return NotifyEvent ? FAnimNotifyPayloadParser(NotifyEvent->Payload) : FAnimNotifyPayloadParser();
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadStringValue(const FString& Key, const FString& Value)
+{
+    FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.SetString(Key, Value);
+    return SetSelectedNotifyPayload(Payload.SerializeCanonical());
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadNameValue(const FString& Key, const FName& Value)
+{
+    FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.SetName(Key, Value);
+    return SetSelectedNotifyPayload(Payload.SerializeCanonical());
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value)
+{
+    FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.SetFloat(Key, Value);
+    return SetSelectedNotifyPayload(Payload.SerializeCanonical());
+}
+
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value)
+{
+    FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.SetBool(Key, Value);
+    return SetSelectedNotifyPayload(Payload.SerializeCanonical());
+}
+
+bool FAnimationSequenceEditorDocument::ClearSelectedNotifyPayloadValue(const FString& Key)
+{
+    FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.RemoveValue(Key);
+    return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
 
 void FAnimationSequenceEditorDocument::SelectNotify(int32 TrackIndex, int32 EventIndex)

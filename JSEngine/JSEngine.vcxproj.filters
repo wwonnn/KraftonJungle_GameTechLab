@@ -240,6 +240,12 @@
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
@@ -1109,7 +1115,9 @@
     <ClCompile Include="Source\Editor\Viewport\SkeletalMeshViewportClient.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotify.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyBuiltins.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifyLog.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadParser.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
@@ -1127,6 +1135,9 @@
     <ClCompile Include="Source\Engine\Render\Proxy\SubUVRenderProxy.cpp" />
     <ClCompile Include="Source\Engine\Render\Proxy\TextRenderProxy.cpp" />
     <ClCompile Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.cpp" />
+    <ClCompile Include="Source\Editor\UI\AnimInstanceStateSequenceContext.cpp">
+      <Filter>Source\Editor\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Engine\Audio\AudioSystem.h">
@@ -1154,6 +1165,12 @@
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.h">
@@ -1238,6 +1255,9 @@
       <Filter>Source\Editor\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\UI\EditorContentBrowserWidget.h">
+      <Filter>Source\Editor\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\UI\AnimInstanceStateSequenceContext.h">
       <Filter>Source\Editor\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.h">
@@ -2157,7 +2177,9 @@
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimDataModel.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotify.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyBuiltins.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifyLog.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadParser.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />

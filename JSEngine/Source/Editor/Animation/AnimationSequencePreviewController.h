@@ -53,6 +53,8 @@ public:
     bool HasSequence() const;
     bool HasValidPreview() const;
     const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
+    bool HasPreviewSocket(const FName& SocketName) const;
+    bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
 
     const FString& GetPreviewStatusText() const { return PreviewStatusText; }
     const FString& GetTimelineStatusText() const { return TimelineStatusText; }

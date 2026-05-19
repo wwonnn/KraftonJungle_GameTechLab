@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
+﻿#include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
 
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 

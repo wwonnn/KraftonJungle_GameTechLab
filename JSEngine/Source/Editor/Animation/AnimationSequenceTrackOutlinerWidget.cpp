@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceTrackOutlinerWidget.h"
+﻿#include "Editor/Animation/AnimationSequenceTrackOutlinerWidget.h"
 
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"

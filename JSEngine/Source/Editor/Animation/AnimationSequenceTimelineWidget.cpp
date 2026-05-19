@@ -1,4 +1,4 @@
-#include "Editor/Animation/AnimationSequenceTimelineWidget.h"
+﻿#include "Editor/Animation/AnimationSequenceTimelineWidget.h"
 
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"

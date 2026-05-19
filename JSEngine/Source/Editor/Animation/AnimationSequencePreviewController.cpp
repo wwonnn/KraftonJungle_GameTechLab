@@ -293,6 +293,16 @@ const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewController::GetRecentFi
     return PreviewScene ? PreviewScene->GetRecentFiredNotifyEvents() : EmptyEvents;
 }
 
+bool FAnimationSequencePreviewController::HasPreviewSocket(const FName& SocketName) const
+{
+    return PreviewScene && PreviewScene->HasPreviewSocket(SocketName);
+}
+
+bool FAnimationSequencePreviewController::HasPreviewPrimitiveComponent(const FString& ComponentName) const
+{
+    return PreviewScene && PreviewScene->HasPreviewPrimitiveComponent(ComponentName);
+}
+
 void FAnimationSequencePreviewController::SetViewportSize(int32 InWidth, int32 InHeight)
 {
     if (PreviewScene)

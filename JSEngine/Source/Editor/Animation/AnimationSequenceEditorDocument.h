@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Animation/AnimData/AnimNotifyTypes.h"
+#include "Animation/AnimNotifyPayloadParser.h"
+#include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -53,10 +55,19 @@ public:
     bool SetSelectedNotifyType(EAnimNotifyEventType EventType);
     bool SetSelectedNotifyClassName(const FString& NotifyClassName);
     bool SetSelectedNotifyPayload(const FString& Payload);
+    FAnimNotifyPayloadParser GetSelectedNotifyPayloadParser() const;
+    bool SetSelectedNotifyPayloadStringValue(const FString& Key, const FString& Value);
+    bool SetSelectedNotifyPayloadNameValue(const FString& Key, const FName& Value);
+    bool SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value);
+    bool SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value);
+    bool ClearSelectedNotifyPayloadValue(const FString& Key);
     void SelectNotify(int32 TrackIndex, int32 EventIndex);
     void ClearNotifySelection();
     void MarkDirty();
     bool IsDirty() const { return bDirty; }
+    FAnimNotifyValidationReport BuildSelectedNotifyValidationReport() const;
+    FAnimNotifyValidationReport BuildDocumentNotifyValidationReport() const;
+    const FString& GetLastNotifyValidationStatusText() const { return LastNotifyValidationStatusText; }
 
 private:
     void SyncEditorState();
@@ -72,4 +83,5 @@ private:
     std::unique_ptr<FAnimationSequenceEditorWidget> Widget;
     std::unique_ptr<FAnimationSequencePreviewController> PreviewController;
     bool bDirty = false;
+    FString LastNotifyValidationStatusText;
 };

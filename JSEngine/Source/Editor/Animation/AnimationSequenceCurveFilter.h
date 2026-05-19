@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/AnimData/AnimCurveTypes.h"
 #include "Core/CoreMinimal.h"

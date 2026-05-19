@@ -873,9 +873,10 @@ void UAnimInstance::CollectNotifyEventsCrossed(
 
     const bool bForwardPlayback = PlayRate >= 0.0f;
     const bool bWrapped = bLoop && ((bForwardPlayback && NewTime < PreviousTime) || (!bForwardPlayback && NewTime > PreviousTime));
+    const FString SourceSequenceName = Sequence ? Sequence->GetName() : FString();
 
     auto AppendTrackEvents =
-        [&OutEvents, bForwardPlayback, Length](const FAnimNotifyTrack& Track, auto&& Predicate)
+        [&OutEvents, &SourceSequenceName, bForwardPlayback, Length](const FAnimNotifyTrack& Track, int32 TrackIndex, auto&& Predicate)
         {
             for (const FAnimNotifyEvent& NotifyEvent : Track.Events)
             {
@@ -885,7 +886,11 @@ void UAnimInstance::CollectNotifyEventsCrossed(
                         : NotifyEvent.Time;
                 if (Predicate(TriggerTime))
                 {
-                    OutEvents.push_back(NotifyEvent);
+                    FAnimNotifyEvent RuntimeEvent = NotifyEvent;
+                    RuntimeEvent.SourceTrackName = Track.TrackName;
+                    RuntimeEvent.SourceTrackIndex = TrackIndex;
+                    RuntimeEvent.SourceSequenceName = SourceSequenceName;
+                    OutEvents.push_back(RuntimeEvent);
                 }
             }
         };
@@ -898,10 +903,12 @@ void UAnimInstance::CollectNotifyEventsCrossed(
                 return;
             }
 
-            for (const FAnimNotifyTrack& Track : Model->NotifyTracks)
+            for (int32 TrackIndex = 0; TrackIndex < static_cast<int32>(Model->NotifyTracks.size()); ++TrackIndex)
             {
+                const FAnimNotifyTrack& Track = Model->NotifyTracks[TrackIndex];
                 AppendTrackEvents(
                     Track,
+                    TrackIndex,
                     [StartTime, EndTime, bIncludeStartBoundary](float NotifyTime)
                     {
                         return IsNotifyTriggeredForward(NotifyTime, StartTime, EndTime, bIncludeStartBoundary);
@@ -917,10 +924,12 @@ void UAnimInstance::CollectNotifyEventsCrossed(
                 return;
             }
 
-            for (const FAnimNotifyTrack& Track : Model->NotifyTracks)
+            for (int32 TrackIndex = 0; TrackIndex < static_cast<int32>(Model->NotifyTracks.size()); ++TrackIndex)
             {
+                const FAnimNotifyTrack& Track = Model->NotifyTracks[TrackIndex];
                 AppendTrackEvents(
                     Track,
+                    TrackIndex,
                     [StartTime, EndTime, bIncludeStartBoundary](float NotifyTime)
                     {
                         return IsNotifyTriggeredBackward(NotifyTime, StartTime, EndTime, bIncludeStartBoundary);

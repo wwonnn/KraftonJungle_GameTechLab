@@ -1,9 +1,12 @@
 #include "Editor/Animation/AnimationSequenceEditorWidget.h"
 
 #include "Animation/AnimNotify.h"
+#include "Animation/AnimNotifyPayloadParser.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
+#include "Editor/Animation/AnimationSequenceNotifyPayloadSchema.h"
+#include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceSequencerLayout.h"
@@ -12,6 +15,7 @@
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/EditorViewportClient.h"
 #include "Editor/Viewport/FSceneViewport.h"
+#include "Core/Paths.h"
 #include "Engine/Asset/CurveFloatAsset.h"
 #include "Object/ObjectFactory.h"
 #include "Engine/Runtime/WindowsWindow.h"
@@ -23,6 +27,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <string>
 
 #ifdef GetCurrentTime
@@ -149,11 +154,60 @@ namespace
         return std::find(Options.begin(), Options.end(), Value) != Options.end();
     }
 
+    ImVec4 GetValidationSeverityColor(EAnimNotifyValidationSeverity Severity)
+    {
+        switch (Severity)
+        {
+        case EAnimNotifyValidationSeverity::Error:
+            return ImVec4(0.95f, 0.35f, 0.35f, 1.0f);
+        case EAnimNotifyValidationSeverity::Warning:
+            return ImVec4(0.98f, 0.76f, 0.32f, 1.0f);
+        case EAnimNotifyValidationSeverity::Info:
+        default:
+            return ImVec4(0.58f, 0.72f, 0.96f, 1.0f);
+        }
+    }
+
+    const char* GetValidationSeverityLabel(EAnimNotifyValidationSeverity Severity)
+    {
+        switch (Severity)
+        {
+        case EAnimNotifyValidationSeverity::Error:
+            return "Error";
+        case EAnimNotifyValidationSeverity::Warning:
+            return "Warning";
+        case EAnimNotifyValidationSeverity::Info:
+        default:
+            return "Info";
+        }
+    }
+
     template <size_t BufferSize>
     void CopyStringToBuffer(const FString& Source, std::array<char, BufferSize>& Buffer)
     {
         Buffer.fill('\0');
         strncpy_s(Buffer.data(), Buffer.size(), Source.c_str(), _TRUNCATE);
+    }
+
+    template <size_t BufferSize>
+    void CopyPayloadFieldToBuffer(
+        const FAnimNotifyPayloadParser& Payload,
+        const FString& Key,
+        std::array<char, BufferSize>& Buffer)
+    {
+        CopyStringToBuffer(Payload.GetString(Key), Buffer);
+    }
+
+    float GetSchemaFloatValue(const FAnimNotifyPayloadParser& Payload, const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        const FAnimNotifyPayloadParser DefaultPayload(Field.DefaultValue.empty() ? FString() : Field.Key + "=" + Field.DefaultValue);
+        return Payload.GetFloat(Field.Key, DefaultPayload.GetFloat(Field.Key, 0.0f));
+    }
+
+    bool GetSchemaBoolValue(const FAnimNotifyPayloadParser& Payload, const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        const FAnimNotifyPayloadParser DefaultPayload(Field.DefaultValue.empty() ? FString() : Field.Key + "=" + Field.DefaultValue);
+        return Payload.GetBool(Field.Key, DefaultPayload.GetBool(Field.Key, false));
     }
 
     int32 GetVisibleCurveCount(const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
@@ -237,6 +291,10 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     EditorState = InEditorState;
     NotifyDetailsBoundStableId.clear();
     NotifyNameEditBuffer.fill('\0');
+    NotifySoundEditBuffer.fill('\0');
+    NotifySocketEditBuffer.fill('\0');
+    NotifyComponentEditBuffer.fill('\0');
+    NotifyAttackIdEditBuffer.fill('\0');
     NotifyPayloadEditBuffer.fill('\0');
 }
 
@@ -252,6 +310,12 @@ void FAnimationSequenceEditorWidget::SyncNotifyDetailsBuffers(const FAnimNotifyE
     const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString();
     CopyStringToBuffer(NotifyName, NotifyNameEditBuffer);
     CopyStringToBuffer(NotifyEvent.Payload, NotifyPayloadEditBuffer);
+
+    const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
+    CopyPayloadFieldToBuffer(Payload, "Sound", NotifySoundEditBuffer);
+    CopyPayloadFieldToBuffer(Payload, "Socket", NotifySocketEditBuffer);
+    CopyPayloadFieldToBuffer(Payload, "Component", NotifyComponentEditBuffer);
+    CopyPayloadFieldToBuffer(Payload, "AttackId", NotifyAttackIdEditBuffer);
 }
 
 void FAnimationSequenceEditorWidget::Render(float DeltaTime)
@@ -813,6 +877,272 @@ void FAnimationSequenceEditorWidget::RenderFooterStatus() const
     {
         ImGui::TextDisabled("Animation sequence is unavailable.");
     }
+
+    if (Document)
+    {
+        const FAnimNotifyValidationReport DocumentReport = Document->BuildDocumentNotifyValidationReport();
+        const ImVec4 SummaryColor = GetValidationSeverityColor(
+            DocumentReport.ErrorCount > 0
+                ? EAnimNotifyValidationSeverity::Error
+                : (DocumentReport.WarningCount > 0
+                    ? EAnimNotifyValidationSeverity::Warning
+                    : EAnimNotifyValidationSeverity::Info));
+        ImGui::TextColored(
+            SummaryColor,
+            "Notify Validation: %s",
+            FormatAnimNotifyValidationSummary(DocumentReport).c_str());
+
+        if (!Document->GetLastNotifyValidationStatusText().empty())
+        {
+            ImGui::TextDisabled("Last Save: %s", Document->GetLastNotifyValidationStatusText().c_str());
+        }
+    }
+
+    FString MakeRecentNotifyTrackLabel(const FAnimNotifyEvent& NotifyEvent)
+    {
+        if (NotifyEvent.SourceTrackName.IsValid())
+        {
+            return NotifyEvent.SourceTrackName.ToString();
+        }
+
+        if (NotifyEvent.SourceTrackIndex >= 0)
+        {
+            return FString("Track ") + std::to_string(NotifyEvent.SourceTrackIndex + 1);
+        }
+
+        return "(Unknown Track)";
+    }
+
+    FString MakeRecentNotifySourceLabel(const FAnimNotifyEvent& NotifyEvent)
+    {
+        if (!NotifyEvent.SourceSequencePath.empty())
+        {
+            const FString ProjectRelativePath = FPaths::ToProjectRelativePath(NotifyEvent.SourceSequencePath);
+            const FString& PreferredPath = ProjectRelativePath.empty() ? NotifyEvent.SourceSequencePath : ProjectRelativePath;
+            const std::filesystem::path SourcePath(FPaths::ToWide(PreferredPath));
+            const FString FileName = FPaths::ToString(SourcePath.filename().wstring());
+            return FileName.empty() ? PreferredPath : FileName;
+        }
+
+        if (!NotifyEvent.SourceSequenceName.empty())
+        {
+            return NotifyEvent.SourceSequenceName;
+        }
+
+        return "(Current Preview Sequence)";
+    }
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const
+{
+    const ImVec4 SummaryColor = GetValidationSeverityColor(
+        Report.ErrorCount > 0
+            ? EAnimNotifyValidationSeverity::Error
+            : (Report.WarningCount > 0
+                ? EAnimNotifyValidationSeverity::Warning
+                : EAnimNotifyValidationSeverity::Info));
+
+    ImGui::TextColored(
+        SummaryColor,
+        "Validation: %s",
+        FormatAnimNotifyValidationSummary(Report).c_str());
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyValidationIssues(
+    const FAnimNotifyValidationReport& Report,
+    EAnimNotifyValidationField Field) const
+{
+    if (!(EditorState && EditorState->bShowNotifyValidationDetails))
+    {
+        return;
+    }
+
+    for (const FAnimNotifyValidationIssue& Issue : Report.Issues)
+    {
+        if (Issue.Field != Field)
+        {
+            continue;
+        }
+
+        const ImVec4 SeverityColor = GetValidationSeverityColor(Issue.Severity);
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextColored(
+            SeverityColor,
+            "%s: %s",
+            GetValidationSeverityLabel(Issue.Severity),
+            Issue.Message.c_str());
+        if (!Issue.Hint.empty())
+        {
+            ImGui::TextColored(
+                ImVec4(SeverityColor.x, SeverityColor.y, SeverityColor.z, 0.82f),
+                "Hint: %s",
+                Issue.Hint.c_str());
+        }
+        ImGui::PopTextWrapPos();
+    }
+}
+
+void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
+    const FString& NotifyClassName,
+    const FAnimNotifyValidationReport& Report)
+{
+    if (!Document)
+    {
+        return;
+    }
+
+    const FAnimNotifyPayloadSchema* Schema = FindAnimNotifyPayloadSchema(NotifyClassName);
+    if (!Schema)
+    {
+        RenderRawNotifyPayloadEditor(NotifyClassName, Report, true);
+        return;
+    }
+
+    const FAnimNotifyEvent* CurrentNotify = Document->GetSelectedNotify();
+    const FAnimNotifyPayloadParser Payload = Document->GetSelectedNotifyPayloadParser();
+
+    auto RefreshPayloadBuffers = [this]()
+    {
+        if (const FAnimNotifyEvent* UpdatedNotify = Document ? Document->GetSelectedNotify() : nullptr)
+        {
+            CopyStringToBuffer(UpdatedNotify->Payload, NotifyPayloadEditBuffer);
+            const FAnimNotifyPayloadParser UpdatedPayload(UpdatedNotify->Payload);
+            CopyPayloadFieldToBuffer(UpdatedPayload, "Sound", NotifySoundEditBuffer);
+            CopyPayloadFieldToBuffer(UpdatedPayload, "Socket", NotifySocketEditBuffer);
+            CopyPayloadFieldToBuffer(UpdatedPayload, "Component", NotifyComponentEditBuffer);
+            CopyPayloadFieldToBuffer(UpdatedPayload, "AttackId", NotifyAttackIdEditBuffer);
+        }
+    };
+
+    ImGui::TextDisabled("%s Payload", Schema->SectionLabel.c_str());
+    for (const FAnimNotifyPayloadFieldDefinition& Field : Schema->Fields)
+    {
+        switch (Field.Type)
+        {
+        case EAnimNotifyPayloadFieldType::String:
+        case EAnimNotifyPayloadFieldType::Name:
+        {
+            std::array<char, 256>* TargetBuffer = nullptr;
+            if (Field.Key == "Sound")
+            {
+                TargetBuffer = &NotifySoundEditBuffer;
+            }
+            else if (Field.Key == "Socket")
+            {
+                TargetBuffer = &NotifySocketEditBuffer;
+            }
+            else if (Field.Key == "Component")
+            {
+                TargetBuffer = &NotifyComponentEditBuffer;
+            }
+            else if (Field.Key == "AttackId")
+            {
+                TargetBuffer = &NotifyAttackIdEditBuffer;
+            }
+
+            if (!TargetBuffer)
+            {
+                continue;
+            }
+
+            if (ImGui::InputText(Field.Label.c_str(), TargetBuffer->data(), TargetBuffer->size()))
+            {
+                const FString Value = TargetBuffer->data();
+                const bool bChanged = Field.Type == EAnimNotifyPayloadFieldType::Name
+                    ? (Value.empty()
+                        ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
+                        : Document->SetSelectedNotifyPayloadNameValue(Field.Key, FName(Value)))
+                    : (Value.empty()
+                        ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
+                        : Document->SetSelectedNotifyPayloadStringValue(Field.Key, Value));
+                if (bChanged)
+                {
+                    RefreshPayloadBuffers();
+                }
+            }
+            break;
+        }
+
+        case EAnimNotifyPayloadFieldType::Float:
+        {
+            float FieldValue = GetSchemaFloatValue(Payload, Field);
+            if (ImGui::DragFloat(Field.Label.c_str(), &FieldValue, 0.01f, 0.0f, 100.0f, "%.3f"))
+            {
+                if (Document->SetSelectedNotifyPayloadFloatValue(Field.Key, FieldValue))
+                {
+                    RefreshPayloadBuffers();
+                }
+            }
+            break;
+        }
+
+        case EAnimNotifyPayloadFieldType::Bool:
+        {
+            bool FieldValue = GetSchemaBoolValue(Payload, Field);
+            if (ImGui::Checkbox(Field.Label.c_str(), &FieldValue))
+            {
+                if (Document->SetSelectedNotifyPayloadBoolValue(Field.Key, FieldValue))
+                {
+                    RefreshPayloadBuffers();
+                }
+            }
+            break;
+        }
+
+        default:
+            break;
+        }
+
+        if (!Field.HelpText.empty())
+        {
+            ImGui::TextDisabled("%s", Field.HelpText.c_str());
+        }
+    }
+
+    const FString PayloadPreview = CurrentNotify
+        ? FAnimNotifyPayloadParser(CurrentNotify->Payload).SerializeCanonical()
+        : Payload.SerializeCanonical();
+    ImGui::TextWrapped(
+        "Payload Preview: %s",
+        PayloadPreview.empty() ? "(Empty)" : PayloadPreview.c_str());
+
+    RenderNotifyValidationIssues(Report, EAnimNotifyValidationField::Payload);
+
+    if (ImGui::CollapsingHeader("Advanced Raw Payload"))
+    {
+        RenderRawNotifyPayloadEditor(NotifyClassName, Report, false);
+    }
+}
+
+void FAnimationSequenceEditorWidget::RenderRawNotifyPayloadEditor(
+    const FString& NotifyClassName,
+    const FAnimNotifyValidationReport& Report,
+    bool bRenderValidation)
+{
+    if (!Document)
+    {
+        return;
+    }
+
+    if (ImGui::InputText("Payload", NotifyPayloadEditBuffer.data(), NotifyPayloadEditBuffer.size()))
+    {
+        Document->SetSelectedNotifyPayload(NotifyPayloadEditBuffer.data());
+        const FAnimNotifyPayloadParser Payload(NotifyPayloadEditBuffer.data());
+        CopyPayloadFieldToBuffer(Payload, "Sound", NotifySoundEditBuffer);
+        CopyPayloadFieldToBuffer(Payload, "Socket", NotifySocketEditBuffer);
+        CopyPayloadFieldToBuffer(Payload, "Component", NotifyComponentEditBuffer);
+        CopyPayloadFieldToBuffer(Payload, "AttackId", NotifyAttackIdEditBuffer);
+    }
+
+    if (const char* PayloadExample = GetAnimNotifyPayloadExample(NotifyClassName))
+    {
+        ImGui::TextWrapped("Payload Example: %s", PayloadExample);
+    }
+
+    if (bRenderValidation)
+    {
+        RenderNotifyValidationIssues(Report, EAnimNotifyValidationField::Payload);
+    }
 }
 
 void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
@@ -851,6 +1181,10 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     {
         NotifyDetailsBoundStableId.clear();
         NotifyNameEditBuffer.fill('\0');
+        NotifySoundEditBuffer.fill('\0');
+        NotifySocketEditBuffer.fill('\0');
+        NotifyComponentEditBuffer.fill('\0');
+        NotifyAttackIdEditBuffer.fill('\0');
         NotifyPayloadEditBuffer.fill('\0');
         ImGui::TextDisabled("Select a notify marker to edit it.");
         return;
@@ -858,10 +1192,16 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
 
     const FAnimNotifyEvent NotifySnapshot = *SelectedNotify;
     SyncNotifyDetailsBuffers(NotifySnapshot);
+    const FAnimNotifyValidationReport SelectedValidationReport = Document->BuildSelectedNotifyValidationReport();
+    RenderNotifyValidationSummary(SelectedValidationReport);
+    ImGui::Checkbox("Show Validation Details", &EditorState->bShowNotifyValidationDetails);
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::General);
+
     if (ImGui::InputText("Name", NotifyNameEditBuffer.data(), NotifyNameEditBuffer.size()))
     {
         Document->SetSelectedNotifyName(FName(NotifyNameEditBuffer.data()));
     }
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::Name);
 
     const char* NotifyTypeLabels[] = { "Notify", "Notify State" };
     int32 NotifyTypeIndex = NotifySnapshot.EventType == EAnimNotifyEventType::NotifyState ? 1 : 0;
@@ -869,7 +1209,9 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     {
         Document->SetSelectedNotifyType(
             NotifyTypeIndex == 1 ? EAnimNotifyEventType::NotifyState : EAnimNotifyEventType::Notify);
+        NotifyDetailsBoundStableId.clear();
     }
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::Type);
 
     const FAnimNotifyEvent* CurrentNotify = Document->GetSelectedNotify();
     const EAnimNotifyEventType CurrentNotifyType =
@@ -891,6 +1233,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
             if (ImGui::Selectable(NotifyClassOption.c_str(), bSelected))
             {
                 Document->SetSelectedNotifyClassName(NotifyClassOption);
+                NotifyDetailsBoundStableId.clear();
             }
             if (bSelected)
             {
@@ -904,18 +1247,23 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     {
         ImGui::TextDisabled("Registered class not found: %s", CurrentNotifyClassName.c_str());
     }
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::NotifyClass);
 
     if (!NotifyClassOptions.empty())
     {
         ImGui::TextDisabled(
-            "Sample classes: %s / %s",
+            "Test classes: %s / %s",
             "UAnimNotifyLog",
             "UAnimNotifyStateLog");
     }
 
-    if (ImGui::InputText("Payload", NotifyPayloadEditBuffer.data(), NotifyPayloadEditBuffer.size()))
+    if (HasAnimNotifyPayloadSchema(CurrentNotifyClassName))
     {
-        Document->SetSelectedNotifyPayload(NotifyPayloadEditBuffer.data());
+        RenderStructuredNotifyPayloadEditor(CurrentNotifyClassName, SelectedValidationReport);
+    }
+    else
+    {
+        RenderRawNotifyPayloadEditor(CurrentNotifyClassName, SelectedValidationReport, true);
     }
 
     float NotifyTime = NotifySnapshot.Time;
@@ -930,6 +1278,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     {
         Document->SetSelectedNotifyDuration(NotifyDuration);
     }
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::Duration);
 
     float Color[4] =
     {
@@ -1033,18 +1382,23 @@ void FAnimationSequenceEditorWidget::RenderRecentNotifySummary() const
         const FString PhaseText = NotifyEvent.TriggerPhase == EAnimNotifyTriggerPhase::None
             ? AnimNotifyEventTypeToString(NotifyEvent.EventType)
             : AnimNotifyTriggerPhaseToString(NotifyEvent.TriggerPhase);
-        if (NotifyEvent.Payload.empty())
+        const FString NotifyClassName = NotifyEvent.GetResolvedNotifyClassName();
+        const FString TrackLabel = MakeRecentNotifyTrackLabel(NotifyEvent);
+        const FString SourceLabel = MakeRecentNotifySourceLabel(NotifyEvent);
+
+        ImGui::BulletText("%s [%s] @ %.3fs", NotifyName.c_str(), PhaseText.c_str(), NotifyEvent.Time);
+        ImGui::Indent();
+        ImGui::TextDisabled(
+            "Class: %s | Track: %s | Source: %s",
+            NotifyClassName.c_str(),
+            TrackLabel.c_str(),
+            SourceLabel.c_str());
+        if (!NotifyEvent.Payload.empty())
         {
-            ImGui::BulletText("%s [%s] @ %.3fs", NotifyName.c_str(), PhaseText.c_str(), NotifyEvent.Time);
+            ImGui::PushTextWrapPos(0.0f);
+            ImGui::TextDisabled("Payload: %s", NotifyEvent.Payload.c_str());
+            ImGui::PopTextWrapPos();
         }
-        else
-        {
-            ImGui::BulletText(
-                "%s [%s] @ %.3fs | Payload=%s",
-                NotifyName.c_str(),
-                PhaseText.c_str(),
-                NotifyEvent.Time,
-                NotifyEvent.Payload.c_str());
-        }
+        ImGui::Unindent();
     }
 }

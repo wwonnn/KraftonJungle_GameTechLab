@@ -324,7 +324,9 @@
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstanceAsset.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotify.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyBuiltins.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifyLog.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadParser.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
@@ -433,6 +435,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
@@ -516,6 +526,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\UI\AnimInstanceStateSequenceContext.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -974,7 +988,9 @@
     <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstanceAsset.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotify.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyBuiltins.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifyLog.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadParser.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
@@ -1035,6 +1051,8 @@
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePlaybackController.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceTrackOutlinerWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceCurveTrackWidget.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceCurveFilter.h" />
@@ -1061,6 +1079,7 @@
     <ClInclude Include="Source\Editor\Settings\ProjectSettings.h" />
     <ClInclude Include="Source\Editor\UI\EditorConsoleWidget.h" />
     <ClInclude Include="Source\Editor\UI\EditorContentBrowserWidget.h" />
+    <ClInclude Include="Source\Editor\UI\AnimInstanceStateSequenceContext.h" />
     <ClInclude Include="Source\Editor\UI\EditorAnimInstanceEditorWidget.h" />
     <ClInclude Include="Source\Editor\UI\EditorControlWidget.h" />
     <ClInclude Include="Source\Editor\UI\EditorCurveEditorWidget.h" />

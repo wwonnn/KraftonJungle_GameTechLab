@@ -28,6 +28,7 @@ void FAnimationSequenceEditorState::Reset()
     bShowMaterialCurves = true;
     bShowAttributeCurves = true;
     bShowUnknownCurves = false;
+    bShowNotifyValidationDetails = true;
     SelectedNotifyTrackIndex = -1;
     SelectedNotifyEventIndex = -1;
     HoveredNotifyTrackIndex = -1;

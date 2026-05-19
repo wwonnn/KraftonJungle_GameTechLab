@@ -88,6 +88,11 @@ struct FAnimNotifyEvent
     FString NotifyClassName = GetDefaultAnimNotifyClassName(EAnimNotifyEventType::Notify);
     FString Payload;
     EAnimNotifyTriggerPhase TriggerPhase = EAnimNotifyTriggerPhase::None;
+    // Runtime-only debug metadata used by recent-fired notify summaries.
+    FName SourceTrackName;
+    FString SourceSequencePath;
+    FString SourceSequenceName;
+    int32 SourceTrackIndex = -1;
 
     void EnsureStableId()
     {

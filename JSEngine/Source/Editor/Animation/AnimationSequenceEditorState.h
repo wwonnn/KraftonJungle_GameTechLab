@@ -55,6 +55,7 @@ public:
     bool bShowMaterialCurves = true;
     bool bShowAttributeCurves = true;
     bool bShowUnknownCurves = false;
+    bool bShowNotifyValidationDetails = true;
     int32 SelectedNotifyTrackIndex = -1;
     int32 SelectedNotifyEventIndex = -1;
     int32 HoveredNotifyTrackIndex = -1;
