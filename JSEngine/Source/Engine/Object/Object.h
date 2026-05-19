@@ -3,8 +3,7 @@
 #include "EngineStatics.h"
 #include "Object/FName.h"
 #include "Core/Singleton.h"
-#include "Core/PropertyTypes.h"
-#include "Object/Reflection.h"
+#include "Reflection/Reflection.h"
 #include "Serialization/Archive.h"
 #include "Object/Object.h"
 

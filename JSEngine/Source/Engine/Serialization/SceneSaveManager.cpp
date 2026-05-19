@@ -15,7 +15,7 @@
 #include "Object/Object.h"
 #include "Object/ActorIterator.h"
 #include "Object/ObjectFactory.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "Object/FName.h"
 #include "Math/Matrix.h"
 #include "Math/Vector.h"

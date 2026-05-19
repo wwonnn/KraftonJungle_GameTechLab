@@ -19,7 +19,7 @@
 #include "Component/ActorSequenceComponent.h"
 #include "Component/PostProcess/Light/PointLightComponent.h"
 #include "Core/EditorResourcePaths.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "Core/Paths.h"
 #include "Core/Logging/Log.h"
 #include "Math/Color.h"

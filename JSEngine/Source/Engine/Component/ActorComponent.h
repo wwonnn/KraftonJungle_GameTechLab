@@ -2,7 +2,7 @@
 
 #include "Core/Guid.h"
 #include "Object/Object.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Reflection.h"
 
 class AActor;
 

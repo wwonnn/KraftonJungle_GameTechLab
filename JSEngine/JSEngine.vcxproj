@@ -869,7 +869,7 @@
     <ClCompile Include="Source\Engine\Object\EngineStatics.cpp" />
     <ClCompile Include="Source\Engine\Object\FName.cpp" />
     <ClCompile Include="Source\Engine\Object\Object.cpp" />
-    <ClCompile Include="Source\Engine\Object\Reflection.cpp" />
+    <ClCompile Include="Source\Engine\Reflection\Reflection.cpp" />
     <ClCompile Include="Source\Generated\Reflection.generated.cpp" />
     <ClCompile Include="Source\Engine\Render\FontBatcher.cpp" />
     <ClCompile Include="Source\Engine\Render\LineBatcher.cpp" />
@@ -1028,6 +1028,11 @@
     <ClInclude Include="Source\Engine\Component\SkeletalMeshComponent.h" />
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
+    <ClInclude Include="Source\Engine\Reflection\Enum.h" />
+    <ClInclude Include="Source\Engine\Reflection\Field.h" />
+    <ClInclude Include="Source\Engine\Reflection\Property.h" />
+    <ClInclude Include="Source\Engine\Reflection\Reflection.h" />
+    <ClInclude Include="Source\Engine\Reflection\Struct.h" />
     <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.h" />
     <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactoryData.h" />
     <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactory.h" />
@@ -1201,7 +1206,6 @@
     <ClInclude Include="Source\Engine\Core\MaterialSerializationService.h" />
     <ClInclude Include="Source\Engine\Core\Paths.h" />
     <ClInclude Include="Source\Engine\Core\PlatformTime.h" />
-    <ClInclude Include="Source\Engine\Core\PropertyTypes.h" />
     <ClInclude Include="Source\Engine\Core\ResourceManager.h" />
     <ClInclude Include="Source\Engine\Core\ResourceMemoryReporter.h" />
     <ClInclude Include="Source\Engine\Core\ResourceTypes.h" />
@@ -1273,7 +1277,6 @@
     <ClInclude Include="Source\Engine\Object\Object.h" />
     <ClInclude Include="Source\Engine\Object\ObjectFactory.h" />
     <ClInclude Include="Source\Engine\Object\ObjectIterator.h" />
-    <ClInclude Include="Source\Engine\Object\Reflection.h" />
     <ClInclude Include="Source\Engine\Render\FontBatcher.h" />
     <ClInclude Include="Source\Engine\Render\LineBatcher.h" />
     <ClInclude Include="Source\Engine\Render\SubUVBatcher.h" />

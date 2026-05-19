@@ -2,7 +2,7 @@
 
 #include "Component/ActorComponent.h"
 #include "Component/SceneComponent.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/Level.h"
 #include "GameFramework/World.h"

@@ -3,7 +3,7 @@
 #include "Animation/CurvePlayback.h"
 #include "Core/CoreMinimal.h"
 #include "Core/Guid.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "Object/Object.h"
 
 class UActorComponent;

@@ -2,7 +2,7 @@
 #include "EngineStatics.h"
 #include "Object/FName.h"
 #include "Object/ObjectFactory.h"
-#include "Object/Reflection.h"
+#include "Reflection/Reflection.h"
 #include "Math/Vector.h"
 
 #include <cstring>

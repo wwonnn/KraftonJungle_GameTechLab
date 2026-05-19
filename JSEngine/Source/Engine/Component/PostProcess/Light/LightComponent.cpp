@@ -1,6 +1,6 @@
 ﻿#include "LightComponent.h"
 #include "Object/ObjectFactory.h"
-#include "Core/PropertyTypes.h"
+#include "Reflection/Property.h"
 #include "Render/Resource/ShadowAtlasManager.h"
 
 #include <cmath>

@@ -1,11 +1,12 @@
-﻿#pragma once
+#pragma once
 
 #include <cstdint>
 #include <cstddef>
 #include <vector>
 #include <string>
-#include "CoreTypes.h"      // int32, uint8, …
+#include "Core/CoreTypes.h"      // int32, uint8, …
 #include "Core/Containers/Array.h"
+#include "Reflection/Field.h"
 #include "Math/Vector.h"    // FVector  (for sizeof in GetPropertySize)
 #include "Math/Vector4.h"   // FVector4 (for sizeof in GetPropertySize)
 #include "Math/Color.h"     // FColor
@@ -132,7 +133,7 @@ UField
        ├─ FEnumProperty
        └─ FArrayProperty
 */
-class FProperty
+class FProperty : public UField
 {
 public:
     FProperty(
@@ -145,7 +146,7 @@ public:
         float InMax = 0.0f,
         float InSpeed = 0.1f,
         EPropertyUsageFlags InUsageFlags = EPropertyUsageFlags::None)
-        : Name(InName)
+        : UField(InName)
         , DisplayName(InDisplayName)
         , SerializeName(InSerializeName)
         , Offset(InOffset)
@@ -159,10 +160,9 @@ public:
 
     virtual ~FProperty() = default;
 
-    const char* GetName() const { return Name; }
     const char* GetDisplayName() const { return DisplayName; }
     const char* GetSerializeName() const { return SerializeName; }
-    const char* GetSerializeKey() const { return SerializeName ? SerializeName : (DisplayName ? DisplayName : Name); }
+    const char* GetSerializeKey() const { return SerializeName ? SerializeName : (DisplayName ? DisplayName : GetName()); }
     size_t GetOffset() const { return Offset; }
     EPropertyAccess GetAccess() const { return Access; }
     float GetMin() const { return Min; }
@@ -197,7 +197,6 @@ public:
     virtual void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const = 0;
 
 private:
-    const char* Name = nullptr;
     const char* DisplayName = nullptr;
     const char* SerializeName = nullptr;
     size_t Offset = 0;

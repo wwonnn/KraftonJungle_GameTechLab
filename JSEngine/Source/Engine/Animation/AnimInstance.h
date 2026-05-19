@@ -4,6 +4,7 @@
 #include "Object/Object.h"
 #include "Core/PropertyTypes.h"
 #include "Animation/AnimData/AnimNotifyTypes.h"
+#include "Reflection/Reflection.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Component/SkinnedMeshComponent.h"
 

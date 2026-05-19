@@ -70,6 +70,9 @@
     <Filter Include="Source\Engine">
       <UniqueIdentifier>{bfcd2a84-61fc-3a27-7115-8732c34a60d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\Reflection">
+      <UniqueIdentifier>{2f817590-77f4-4f32-9d8b-76a7cbfe4fd1}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\Audio">
       <UniqueIdentifier>{d43e716f-b7f0-4f52-8c4f-20a99dc3fdf8}</UniqueIdentifier>
     </Filter>
@@ -780,8 +783,8 @@
     <ClCompile Include="Source\Engine\Object\Object.cpp">
       <Filter>Source\Engine\Object</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Object\Reflection.cpp">
-      <Filter>Source\Engine\Object</Filter>
+    <ClCompile Include="Source\Engine\Reflection\Reflection.cpp">
+      <Filter>Source\Engine\Reflection</Filter>
     </ClCompile>
     <ClCompile Include="Source\Generated\Reflection.generated.cpp">
       <Filter>Source\Generated</Filter>
