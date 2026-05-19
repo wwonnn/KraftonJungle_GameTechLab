@@ -7,8 +7,6 @@
 #include <algorithm>
 #include <cstdlib>
 
-REGISTER_FACTORY(USequenceCameraShakePattern)
-
 namespace
 {
     constexpr int32 CameraShakeCurveChannelCount =

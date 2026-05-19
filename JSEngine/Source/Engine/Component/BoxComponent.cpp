@@ -2,8 +2,6 @@
 #include "Object/Object.h"
 
 
-REGISTER_FACTORY(UBoxComponent)
-
 void UBoxComponent::PostDuplicate(UObject* Original)
 {
     UShapeComponent::PostDuplicate(Original);

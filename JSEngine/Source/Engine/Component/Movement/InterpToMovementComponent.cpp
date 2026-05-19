@@ -3,8 +3,6 @@
 #include "Component/SceneComponent.h"
 #include "Math/Quat.h"
 
-REGISTER_FACTORY(UInterpToMovementComponent)
-
 namespace {
 	// Returns normalized direction from A to B
 	FVector GetNormalizedDir(const FVector& A, const FVector& B) {

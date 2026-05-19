@@ -28,7 +28,7 @@ DECLARE_DELEGATE(FOnComponentEndOverlap, UPrimitiveComponent*, AActor*, UPrimiti
 
 class FPrimitiveRenderProxy;
 
-UCLASS()
+UCLASS(Abstract)
 class UPrimitiveComponent : public USceneComponent
 {
 public:

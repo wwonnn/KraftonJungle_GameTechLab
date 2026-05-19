@@ -7,8 +7,6 @@
 
 #include <algorithm>
 
-REGISTER_FACTORY(UWorld)
-
 // FName, UUID 발급, 메모리 추적 등을 위해 UObjectManager를 통해 생성, 삭제한다.
 UWorld::UWorld()
 {

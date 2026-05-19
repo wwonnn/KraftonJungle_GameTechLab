@@ -3,8 +3,6 @@
 #include "Render/Proxy/HeightFogRenderProxy.h"
 
 
-REGISTER_FACTORY(UHeightFogComponent)
-
 UHeightFogComponent::UHeightFogComponent() 
 {
 }

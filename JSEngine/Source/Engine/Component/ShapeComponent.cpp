@@ -1,7 +1,5 @@
 #include "ShapeComponent.h"
 
-REGISTER_FACTORY(UShapeComponent)
-
 void UShapeComponent::UpdateWorldAABB() const
 {
 }

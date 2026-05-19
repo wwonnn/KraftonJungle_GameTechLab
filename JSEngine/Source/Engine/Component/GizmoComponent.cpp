@@ -7,8 +7,6 @@
 #include "TransformProxy.h"
 #include "Engine/Input/InputSystem.h"
 
-REGISTER_FACTORY(UGizmoComponent)
-
 #include <cfloat>
 #include <cmath>
 

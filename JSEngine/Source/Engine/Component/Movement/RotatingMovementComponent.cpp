@@ -2,8 +2,6 @@
 #include "Component/PrimitiveComponent.h"
 #include "Object/ObjectFactory.h"
 
-REGISTER_FACTORY(URotatingMovementComponent)
-
 void URotatingMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UMovementComponent::GetEditableProperties(OutProps);

@@ -9,8 +9,6 @@
 #include "Render/Proxy/ProceduralMeshRenderProxy.h"
 #include <filesystem>
 
-REGISTER_FACTORY(UProceduralMeshComponent)
-
 void UProceduralMeshComponent::CreateFrom(UStaticMesh* StaticMesh)
 {
 	if (StaticMesh)

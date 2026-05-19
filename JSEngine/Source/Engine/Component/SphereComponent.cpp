@@ -1,8 +1,6 @@
 #include "SphereComponent.h"
 #include "Object/Object.h"
 
-REGISTER_FACTORY(USphereComponent)
-
 void USphereComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UShapeComponent::GetEditableProperties(OutProps);

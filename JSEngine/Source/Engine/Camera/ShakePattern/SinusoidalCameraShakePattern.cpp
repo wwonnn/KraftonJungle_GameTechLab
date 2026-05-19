@@ -1,7 +1,5 @@
 #include "SinusoidalCameraShakePattern.h"
 
-REGISTER_FACTORY(USinusoidalCameraShakePattern)
-
 static inline float TwoPi()
 {
     return 6.28318530717958647692f;

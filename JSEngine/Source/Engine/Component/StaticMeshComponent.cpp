@@ -8,8 +8,6 @@
 #include "Render/Proxy/StaticMeshRenderProxy.h"
 #include "Render/Mesh/VertexFactory/StaticVertexFactoryData.h"
 
-REGISTER_FACTORY(UStaticMeshComponent)
-
 UStaticMeshComponent::UStaticMeshComponent()
 {
     //	기본 도형은 Cube로 설정

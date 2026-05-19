@@ -1,8 +1,6 @@
 #include "LightComponentBase.h"
 #include "Object/ObjectFactory.h"
 
-REGISTER_FACTORY(ULightComponentBase)
-
 void ULightComponentBase::PostDuplicate(UObject* Original)
 {
     USceneComponent::PostDuplicate(Original);

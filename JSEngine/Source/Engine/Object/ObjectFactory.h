@@ -5,19 +5,6 @@
 #include "Object/Object.h"
 #include "Core/Singleton.h"
 
-#define REGISTER_FACTORY(TypeName)															\
-namespace {																					\
-	 struct TypeName##_RegisterFactory {													\
-		TypeName##_RegisterFactory() {														\
-				FObjectFactory::Get().Register(												\
-					#TypeName,																\
-					[]()->UObject* {return UObjectManager::Get().CreateObject<TypeName>();},\
-					TypeName::StaticClass()													\
-				);																			\
-		}																					\
-	};																						\
-TypeName##_RegisterFactory G##TypeName##_RegisterFactory;} 																												
-
 struct FObjectFactoryEntry
 {
 	std::function<UObject*()> Spawner;

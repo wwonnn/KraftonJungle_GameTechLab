@@ -63,8 +63,6 @@ namespace
     }
 }
 
-REGISTER_FACTORY(UAnimInstance)
-
 UAnimInstance::~UAnimInstance()
 {
     ClearActiveAnimNotifyStates(false);

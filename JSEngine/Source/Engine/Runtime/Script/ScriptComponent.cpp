@@ -23,8 +23,6 @@
 #undef GetCurrentTime
 #endif
 
-REGISTER_FACTORY(UScriptComponent)
-
 namespace
 {
     UScriptComponent* ResolveLiveScriptComponent(uint32 ScriptComponentUUID)

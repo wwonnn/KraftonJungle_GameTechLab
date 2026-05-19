@@ -9,8 +9,6 @@
 
 #include <algorithm>
 
-REGISTER_FACTORY(UAnimationStateMachine)
-
 namespace
 {
     const FName AnyStateName("Any");

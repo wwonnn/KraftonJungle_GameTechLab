@@ -8,8 +8,6 @@
 #include "Object/ObjectFactory.h"
 #include "Render/Proxy/TextRenderProxy.h"
 
-REGISTER_FACTORY(UTextRenderComponent)
-
 // GetEditableProperties 에 노출되지 않은 private 필드를 직접 복사합니다.
 void UTextRenderComponent::PostDuplicate(UObject* Original)
 {

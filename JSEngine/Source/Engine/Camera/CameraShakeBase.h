@@ -107,7 +107,7 @@ protected:
 };
 
 // 나중에 다른곳으로 뺄것
-UCLASS()
+UCLASS(Abstract)
 class UPerlinCameraShakePattern : public UCameraShakePattern
 {
 public:

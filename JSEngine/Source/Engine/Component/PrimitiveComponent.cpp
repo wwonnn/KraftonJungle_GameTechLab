@@ -226,9 +226,6 @@ void UPrimitiveComponent::NotifySpatialIndexDirty() const
 }
 
 
-// REGISTER_FACTORY(UCubeComponent)
-// REGISTER_FACTORY(USphereComponent)
-// REGISTER_FACTORY(UPlaneComponent)
 // void UPrimitiveComponent::UpdateWorldAABB() const
 // {
 // 	FVector LExt = LocalExtents;

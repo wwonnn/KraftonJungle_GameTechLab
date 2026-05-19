@@ -10,8 +10,6 @@
 #include <fstream>
 #include <sstream>
 
-REGISTER_FACTORY(ULuaAnimInstance)
-
 namespace
 {
     bool ReadLuaFile(const FString& ScriptPath, FString& OutSource)

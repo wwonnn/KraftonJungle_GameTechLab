@@ -247,10 +247,6 @@ namespace
     }
 }
 
-REGISTER_FACTORY(UActorSequence)
-
-REGISTER_FACTORY(UActorSequencePlayer)
-
 void UActorSequence::Serialize(FArchive& Ar)
 {
     UObject::Serialize(Ar);

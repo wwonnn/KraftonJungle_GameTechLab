@@ -15,7 +15,7 @@ struct FScrollUV
 	float V = 0.0f;
 };
 
-UCLASS()
+UCLASS(Abstract)
 class UMeshComponent : public UPrimitiveComponent
 {
 public:

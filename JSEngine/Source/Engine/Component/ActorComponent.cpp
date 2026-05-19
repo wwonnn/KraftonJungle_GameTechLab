@@ -5,8 +5,6 @@
 #include <cctype>
 #include <cstring>
 
-REGISTER_FACTORY(UActorComponent)
-
 namespace
 {
     FString TrimComponentTag(const FString& Value)

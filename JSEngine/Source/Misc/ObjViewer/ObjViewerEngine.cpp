@@ -13,8 +13,6 @@
 #include "ImGui/imgui.h"
 #include "Camera/ViewportCamera.h"
 
-REGISTER_FACTORY(UObjViewerEngine)
-
 void UObjViewerEngine::Init(FWindowsWindow* InWindow)
 {
 	FPaths::RootDir();

@@ -8,8 +8,6 @@
 
 #include "Render/Proxy/BillboardRenderProxy.h"
 
-REGISTER_FACTORY(UBillboardComponent)
-
 // GetEditableProperties 에 노출되지 않은 필드를 직접 복사합니다.
 void UBillboardComponent::PostDuplicate(UObject* Original)
 {

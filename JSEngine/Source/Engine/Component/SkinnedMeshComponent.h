@@ -5,7 +5,7 @@
 #include "Render/Resource/VertexTypes.h"
 #include "Generated/SkinnedMeshComponent.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class USkinnedMeshComponent : public UMeshComponent
 {
 public:

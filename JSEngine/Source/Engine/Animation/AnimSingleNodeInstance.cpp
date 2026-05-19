@@ -2,8 +2,6 @@
 
 #include "Object/ObjectFactory.h"
 
-REGISTER_FACTORY(UAnimSingleNodeInstance)
-
 void UAnimSingleNodeInstance::UpdateAnimation(float DeltaTime)
 {
     UAnimInstance::UpdateAnimation(DeltaTime);

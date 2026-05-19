@@ -1,7 +1,5 @@
 #include "Camera/CameraShakeBase.h"
 
-REGISTER_FACTORY(UCameraShakePattern)
-
 void FCameraShakeState::Start(const UCameraShakePattern* Pattern, const FCameraShakeStartParams& Params)
 {
     ElapsedTime = 0.0f;

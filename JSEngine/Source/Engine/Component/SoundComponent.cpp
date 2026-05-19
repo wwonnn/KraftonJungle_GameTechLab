@@ -5,8 +5,6 @@
 
 #include <algorithm>
 
-REGISTER_FACTORY(USoundComponent)
-
 void USoundComponent::BeginPlay()
 {
     USceneComponent::BeginPlay();

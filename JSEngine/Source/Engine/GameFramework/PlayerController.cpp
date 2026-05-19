@@ -12,8 +12,6 @@
 
 #include <algorithm>
 
-REGISTER_FACTORY(APlayerController)
-
 namespace
 {
 	FQuat MakeViewQuatFromCamera(UCameraComponent* Camera)

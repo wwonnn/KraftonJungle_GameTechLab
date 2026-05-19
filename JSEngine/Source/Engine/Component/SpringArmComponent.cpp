@@ -5,8 +5,6 @@
 #include <cmath>
 #include <cstring>
 
-REGISTER_FACTORY(USpringArmComponent)
-
 USpringArmComponent::USpringArmComponent()
 {
 	SetComponentTickEnabled(true);

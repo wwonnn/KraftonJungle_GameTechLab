@@ -7,8 +7,6 @@
 #include "GameFramework/World.h"
 #include "Engine/Runtime/Engine.h"
 
-REGISTER_FACTORY(UPursuitMovementComponent)
-
 namespace
 {
 // Returns normalized direction from A to B

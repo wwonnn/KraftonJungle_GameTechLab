@@ -2,8 +2,6 @@
 #include "Component/SceneComponent.h"
 #include "Object/ObjectFactory.h"
 
-REGISTER_FACTORY(UProjectileMovementComponent)
-
 void UProjectileMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 {
     UMovementComponent::GetEditableProperties(OutProps);

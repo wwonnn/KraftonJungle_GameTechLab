@@ -5,8 +5,6 @@
 
 #include <cmath>
 
-REGISTER_FACTORY(ULightComponent)
-
 namespace
 {
 	void BuildFrustumSplitCorners(

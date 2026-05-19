@@ -16,8 +16,6 @@ namespace
 	}
 }
 
-REGISTER_FACTORY(USpotlightComponent)
-
 void USpotlightComponent::PostDuplicate(UObject* Original)
 {
 	UPointLightComponent::PostDuplicate(Original);

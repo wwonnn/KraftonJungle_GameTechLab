@@ -31,8 +31,6 @@
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
 
-REGISTER_FACTORY(UEditorEngine)
-
 namespace
 {
     const char* EditorPlayStateName(EViewportPlayState State)

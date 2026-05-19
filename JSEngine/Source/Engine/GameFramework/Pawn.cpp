@@ -2,8 +2,6 @@
 
 #include "GameFramework/PlayerController.h"
 
-REGISTER_FACTORY(APawn)
-
 void APawn::PossessedBy(APlayerController* NewController)
 {
 	Controller = NewController;

@@ -1,8 +1,6 @@
 #include "DirectionalLightComponent.h"
 #include "Object/ObjectFactory.h"
 
-REGISTER_FACTORY(UDirectionalLightComponent)
-
 FMatrix UDirectionalLightComponent::ComputePerspectiveShadowMatrix(const FMatrix& CamView, const FMatrix& CamProj,
 	const TArray<FBoundingBox>* VisibleObjectsBounds) const
 {

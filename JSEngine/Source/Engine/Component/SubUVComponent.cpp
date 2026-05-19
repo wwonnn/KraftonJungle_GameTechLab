@@ -10,8 +10,6 @@
 #include "Math/Utils.h"
 #include "Render/Proxy/SubUVRenderProxy.h"
 
-REGISTER_FACTORY(USubUVComponent)
-
 USubUVComponent::USubUVComponent()
 {
 	SetVisibility(true);

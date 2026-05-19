@@ -12,8 +12,6 @@
 
 #include <cstring>
 
-REGISTER_FACTORY(USkeletalMeshComponent)
-
 USkeletalMeshComponent::~USkeletalMeshComponent()
 {
     ReleaseAnimInstance();

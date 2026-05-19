@@ -2,8 +2,6 @@
 #include "Object/ObjectFactory.h"
 #include <Render/Resource/ShadowAtlasManager.h>
 
-REGISTER_FACTORY(UPointLightComponent)
-
 void UPointLightComponent::PostDuplicate(UObject* Original)
 {
     ULightComponent::PostDuplicate(Original);

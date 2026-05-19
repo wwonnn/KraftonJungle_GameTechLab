@@ -6,8 +6,6 @@
 
 #include <algorithm>
 
-REGISTER_FACTORY(UActorSequenceComponent)
-
 void UActorSequenceComponent::BeginPlay()
 {
     UActorComponent::BeginPlay();

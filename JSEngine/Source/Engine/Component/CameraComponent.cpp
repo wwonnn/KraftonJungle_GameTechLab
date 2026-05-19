@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <cmath>
 
-REGISTER_FACTORY(UCameraComponent)
-
 FMatrix UCameraComponent::GetViewMatrix() const
 {
 	UpdateWorldMatrix();

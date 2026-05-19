@@ -9,8 +9,6 @@
 #include <algorithm>
 #include <cctype>
 
-REGISTER_FACTORY(AActor)
-
 static FString TrimObjectNameText(const FString& Name)
 {
     size_t Begin = 0;
