@@ -1,4 +1,4 @@
-﻿#include "Editor/EditorEngine.h"
+#include "Editor/EditorEngine.h"
 
 #include "Engine/Runtime/WindowsWindow.h"
 #include "Engine/Serialization/SceneSaveManager.h"
@@ -31,7 +31,6 @@
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
 
-DEFINE_CLASS(UEditorEngine, UEngine)
 REGISTER_FACTORY(UEditorEngine)
 
 namespace

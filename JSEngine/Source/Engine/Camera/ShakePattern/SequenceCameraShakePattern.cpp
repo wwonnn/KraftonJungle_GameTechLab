@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cstdlib>
 
-DEFINE_CLASS(USequenceCameraShakePattern, UCameraShakePattern)
 REGISTER_FACTORY(USequenceCameraShakePattern)
 
 namespace

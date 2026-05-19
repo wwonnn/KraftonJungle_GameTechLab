@@ -1,7 +1,4 @@
-﻿#include "Camera/CameraShakeBase.h"
-
-DEFINE_CLASS(UCameraShakePattern, UObject)
-DEFINE_CLASS(UCameraShakeBase, UObject)
+#include "Camera/CameraShakeBase.h"
 
 REGISTER_FACTORY(UCameraShakePattern)
 

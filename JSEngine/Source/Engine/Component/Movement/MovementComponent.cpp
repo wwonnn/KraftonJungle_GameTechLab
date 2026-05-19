@@ -1,4 +1,4 @@
-﻿#include "MovementComponent.h"
+#include "MovementComponent.h"
 
 #include "Component/SceneComponent.h"
 #include "Object/ObjectFactory.h"
@@ -7,8 +7,6 @@
 #include "Spatial/WorldSpatialIndex.h"
 #include "Engine/Geometry/Ray.h"
 #include "Math/Utils.h"
-
-DEFINE_CLASS(UMovementComponent, UActorComponent)
 
 // 순수 가상 함수를 포함하는 추상 클래스이므로 REGISTER_FACTORY는 등록하지 않습니다.
 // 또, 추상 클래스이므로 별도의 복사 함수를 구현하지 않고 자식 클래스에서 복사를 수행합니다.

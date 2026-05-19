@@ -1,4 +1,4 @@
-﻿#include "GameFramework/World.h"
+#include "GameFramework/World.h"
 #include "Engine/Collision/Collision.h"
 #include "Component/PrimitiveComponent.h"
 #include "Core/Logging/Log.h"
@@ -7,7 +7,6 @@
 
 #include <algorithm>
 
-DEFINE_CLASS(UWorld, UObject)
 REGISTER_FACTORY(UWorld)
 
 // FName, UUID 발급, 메모리 추적 등을 위해 UObjectManager를 통해 생성, 삭제한다.
@@ -198,7 +197,7 @@ void UWorld::UpdateOverlaps()
 			{
                 UPrimitiveComponent* B = CollisionCandidates[j];
 				// 같은 액터 타입 끼리는 Overlap 하지 않는다 => 게임잼 내 가정
-                if (A != B && A->GetOwner()->GetTypeInfo() != B->GetOwner()->GetTypeInfo())
+                if (A != B && A->GetOwner()->GetClass() != B->GetOwner()->GetClass())
 				{
 					// Normal 의 경우 A -> B 방향
 					FCollisionResult CollisionResult = FCollision::CheckOverlap(A, B);

@@ -15,10 +15,11 @@ struct FScrollUV
 	float V = 0.0f;
 };
 
+UCLASS()
 class UMeshComponent : public UPrimitiveComponent
 {
 public:
-	DECLARE_CLASS(UMeshComponent, UPrimitiveComponent)
+	GENERATED_BODY()
 
 	virtual void Serialize(FArchive& Ar) override;
 

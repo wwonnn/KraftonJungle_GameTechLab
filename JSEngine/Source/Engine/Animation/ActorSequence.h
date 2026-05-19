@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/CurvePlayback.h"
 #include "Core/CoreMinimal.h"
 #include "Core/Guid.h"
 #include "Reflection/Property.h"
 #include "Object/Object.h"
+#include "Generated/ActorSequence.generated.h"
 
 class UActorComponent;
 class UActorSequenceComponent;
@@ -96,10 +97,11 @@ struct FResolvedActorSequenceTrack
     bool bValid = false;
 };
 
+UCLASS()
 class UActorSequence : public UObject
 {
 public:
-    DECLARE_CLASS(UActorSequence, UObject)
+    GENERATED_BODY()
 
     float StartTime = 0.0f;
     float Duration = 1.0f;
@@ -109,10 +111,11 @@ public:
     void Serialize(FArchive& Ar) override;
 };
 
+UCLASS()
 class UActorSequencePlayer : public UObject
 {
 public:
-    DECLARE_CLASS(UActorSequencePlayer, UObject)
+    GENERATED_BODY()
 
     void Initialize(
         UActorSequenceComponent* InOwner,

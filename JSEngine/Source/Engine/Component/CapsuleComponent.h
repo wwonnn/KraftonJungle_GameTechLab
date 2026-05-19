@@ -1,10 +1,13 @@
 ﻿#pragma once
 #include "ShapeComponent.h"
+#include "Generated/CapsuleComponent.generated.h"
 
+UCLASS()
 class UCapsuleComponent : public UShapeComponent
 {
 public:
-    DECLARE_CLASS(UCapsuleComponent, UShapeComponent)
+    GENERATED_BODY()
+
     float GetCapsuleHalfHeight() const { return CapsuleHalfHeight; }
     float GetCapsuleRadius() const { return CapsuleRadius; }
 

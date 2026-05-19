@@ -1,4 +1,4 @@
-﻿#include "DecalComponent.h"
+#include "DecalComponent.h"
 
 #include "GameFramework/AActor.h"
 #include "GameFramework/World.h"
@@ -7,7 +7,6 @@
 #include "Core/Logging/Log.h"
 #include "Object/ObjectFactory.h"
 
-DEFINE_CLASS(UDecalComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UDecalComponent)
 
 // Decal Box가 화면 밖으로 나가도 컬링되지 않도록 합니다.

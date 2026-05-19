@@ -1,16 +1,10 @@
-#include "Reflection/Reflection.h"
+﻿#include "Reflection/Reflection.h"
 
 #include "Component/ActorComponent.h"
 #include "Component/SceneComponent.h"
 #include "GameFramework/AActor.h"
 #include "Object/Object.h"
 #include "Serialization/Archive.h"
-
-FReflectionRegistry& FReflectionRegistry::Get()
-{
-    static FReflectionRegistry Registry;
-    return Registry;
-}
 
 void UStruct::AppendProperties(void* StructValue, TArray<FPropertyDescriptor>& OutProps) const
 {
@@ -52,6 +46,26 @@ void UStruct::SerializeProperties(FArchive& Ar, UObject* OwnerObject, void* Stru
 
         Property->SerializeItem(Ar, OwnerObject, StructValue);
     }
+}
+
+void UClass::AppendProperties(void* ObjectValue, TArray<FPropertyDescriptor>& OutProps) const
+{
+    if (SuperClass)
+    {
+        SuperClass->AppendProperties(ObjectValue, OutProps);
+    }
+
+    UStruct::AppendProperties(ObjectValue, OutProps);
+}
+
+void UClass::SerializeProperties(FArchive& Ar, UObject* ObjectValue) const
+{
+    if (SuperClass)
+    {
+        SuperClass->SerializeProperties(Ar, ObjectValue);
+    }
+
+    UStruct::SerializeProperties(Ar, ObjectValue, ObjectValue);
 }
 
 void FProperty::AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const
@@ -223,122 +237,4 @@ void FArrayProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Con
 {
     (void)OwnerObject;
     Ar << GetSerializeKey() << *static_cast<TArray<FVector>*>(ContainerPtrToValuePtr(Container));
-}
-
-void FReflectionRegistry::RegisterProperties(
-    const FTypeInfo* Type,
-    const FProperty* const* Properties,
-    uint32 PropertyCount)
-{
-    if (!Type)
-    {
-        return;
-    }
-
-    for (auto& Entry : RegisteredTypes)
-    {
-        if (Entry.first == Type)
-        {
-            Entry.second.Properties = Properties;
-            Entry.second.PropertyCount = PropertyCount;
-            return;
-        }
-    }
-
-    RegisteredTypes.push_back({ Type, { Properties, PropertyCount } });
-}
-
-void FReflectionRegistry::AppendProperties(
-    const FTypeInfo* Type,
-    UObject* Object,
-    TArray<FPropertyDescriptor>& OutProps) const
-{
-    if (!Type || !Object)
-    {
-        return;
-    }
-
-    if (Type->Parent)
-    {
-        AppendProperties(Type->Parent, Object, OutProps);
-    }
-
-    const FRegisteredProperties* Registered = nullptr;
-    for (const auto& Entry : RegisteredTypes)
-    {
-        if (Entry.first == Type)
-        {
-            Registered = &Entry.second;
-            break;
-        }
-    }
-
-    if (!Registered || !Registered->Properties)
-    {
-        return;
-    }
-
-    for (uint32 Index = 0; Index < Registered->PropertyCount; ++Index)
-    {
-        const FProperty* Property = Registered->Properties[Index];
-        if (!Property || !Property->GetName())
-        {
-            continue;
-        }
-
-        Property->AppendEditorDescriptor(Object, OutProps);
-    }
-}
-
-void FReflectionRegistry::SerializeProperties(
-    const FTypeInfo* Type,
-    UObject* Object,
-    FArchive& Ar) const
-{
-    if (!Type || !Object)
-    {
-        return;
-    }
-
-    if (Type->Parent)
-    {
-        SerializeProperties(Type->Parent, Object, Ar);
-    }
-
-    const FRegisteredProperties* Registered = nullptr;
-    for (const auto& Entry : RegisteredTypes)
-    {
-        if (Entry.first == Type)
-        {
-            Registered = &Entry.second;
-            break;
-        }
-    }
-
-    if (!Registered || !Registered->Properties)
-    {
-        return;
-    }
-
-    for (uint32 Index = 0; Index < Registered->PropertyCount; ++Index)
-    {
-        const FProperty* Property = Registered->Properties[Index];
-        if (!Property || !Property->GetName() || !Property->ShouldSerialize())
-        {
-            continue;
-        }
-
-        const char* Key = Property->GetSerializeKey();
-        if (!Key)
-        {
-            continue;
-        }
-
-        if (Ar.IsLoading() && !Ar.HasKey(Key))
-        {
-            continue;
-        }
-
-        Property->SerializeItem(Ar, Object, Object);
-    }
 }

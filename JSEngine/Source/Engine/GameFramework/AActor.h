@@ -7,13 +7,16 @@
 #include "Component/Movement/ProjectileMovementComponent.h"
 #include "Core/Delegates/Delegate.h"
 #include <type_traits>
+#include "Generated/AActor.generated.h"
 
 class UWorld;
 class UPrimitiveComponent;
 
+UCLASS()
 class AActor : public UObject {
 public:
-	DECLARE_CLASS(AActor, UObject)
+	GENERATED_BODY()
+
 	AActor() = default;
 	~AActor() override;
 
@@ -36,7 +39,7 @@ public:
 		bPrimitiveCacheDirty = true;
 
 		Comp->SetOwner(this);
-		Comp->SetFName(FName(MakeUniqueComponentName(Comp, T::s_TypeInfo.name, true)));
+		Comp->SetFName(FName(MakeUniqueComponentName(Comp, T::StaticClass()->GetName(), true)));
 		OwnedComponents.push_back(Comp);
 		bPrimitiveCacheDirty = true;
 		NotifyComponentRegistered(Comp);
@@ -54,8 +57,8 @@ public:
 	bool ShouldTickInEditor() const { return bTickInEditor; }
 	void SetTickInEditor(bool bEnabled)  { bTickInEditor = bEnabled; }
 
-	// FTypeInfo 기반 런타임 컴포넌트 생성
-	UActorComponent* AddComponentByClass(const FTypeInfo* Class);
+	// UClass 기반 런타임 컴포넌트 생성
+	UActorComponent* AddComponentByClass(const UClass* Class);
 	void RemoveComponent(UActorComponent* Component);
 	void RegisterComponent(UActorComponent* Comp);
 

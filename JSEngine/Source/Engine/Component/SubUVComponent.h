@@ -3,6 +3,7 @@
 #include "BillboardComponent.h"
 #include "Core/ResourceTypes.h"
 #include "Object/FName.h"
+#include "Generated/SubUVComponent.generated.h"
 
 // SubUV 파티클 스프라이트를 월드 공간에 빌보드로 렌더링하는 컴포넌트.
 // PrimitiveComponent를 상속받아 RenderCollector에 자동으로 감지됩니다.
@@ -13,10 +14,11 @@
 //   Comp->SetParticle(FName("Explosion"));
 //   Comp->SetFrameIndex(CurrentFrame);
 //   Comp->SetSpriteSize(2.0f, 2.0f);
+UCLASS()
 class USubUVComponent : public UBillboardComponent
 {
 public:
-	DECLARE_CLASS(USubUVComponent, UBillboardComponent)
+	GENERATED_BODY()
 
 	USubUVComponent();
 	~USubUVComponent() override = default;

@@ -3,14 +3,16 @@
 #include "Core/Guid.h"
 #include "Object/Object.h"
 #include "Reflection/Reflection.h"
+#include "Generated/ActorComponent.generated.h"
 
 class AActor;
 
+UCLASS()
 class UActorComponent : public UObject
 {
 public:
-	DECLARE_CLASS(UActorComponent, UObject)
-	
+	GENERATED_BODY()
+
 	virtual void BeginPlay();
 	virtual void EndPlay() {};
 

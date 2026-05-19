@@ -1,9 +1,8 @@
-﻿#include "InterpToMovementComponent.h"
+#include "InterpToMovementComponent.h"
 #include "Object/ObjectFactory.h"
 #include "Component/SceneComponent.h"
 #include "Math/Quat.h"
 
-DEFINE_CLASS(UInterpToMovementComponent, UMovementComponent)
 REGISTER_FACTORY(UInterpToMovementComponent)
 
 namespace {

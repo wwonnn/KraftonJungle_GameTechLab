@@ -147,7 +147,7 @@ namespace
             FString TargetName = UpdatedComp->GetFName().ToString();
             if (TargetName.empty())
             {
-                TargetName = UpdatedComp->GetTypeInfo()->name;
+                TargetName = UpdatedComp->GetClass()->GetName();
             }
             return FString("MC_") + TargetName;
         }
@@ -156,7 +156,7 @@ namespace
         FString DefaultName = MoveComp->GetFName().ToString();
         if (DefaultName.empty())
         {
-            DefaultName = MoveComp->GetTypeInfo()->name;
+            DefaultName = MoveComp->GetClass()->GetName();
         }
         return DefaultName;
     }
@@ -168,8 +168,8 @@ namespace
 
         if (Actor)
         {
-            const FTypeInfo* TypeInfo = Actor->GetTypeInfo();
-            ActorName = TypeInfo ? TypeInfo->name : "Actor";
+            const UClass* TypeInfo = Actor->GetClass();
+            ActorName = TypeInfo ? TypeInfo->GetName() : "Actor";
         }
 
         return ValidSceneName + "_" + ActorName;
@@ -642,7 +642,7 @@ void FEditorPropertyWidget::RenderDetailsLockBar(AActor* CurrentSelection, AActo
 	if (bDetailsLocked && DisplayActor)
 	{
 		FString LockedName = DisplayActor->GetFName().ToString();
-		if (LockedName.empty()) LockedName = DisplayActor->GetTypeInfo()->name;
+		if (LockedName.empty()) LockedName = DisplayActor->GetClass()->GetName();
 		ImGui::TextDisabled("Locked: %s", LockedName.c_str());
 	}
 	else
@@ -720,10 +720,10 @@ void FEditorPropertyWidget::RenderActorHeaderRegion(AActor* PrimaryActor, const 
 
 void FEditorPropertyWidget::RenderMultiSelectionHeader(AActor* PrimaryActor, const TArray<AActor*>& SelectedActors, int32 SelectionCount)
 {
-	ImGui::Text("Class: %s", PrimaryActor->GetTypeInfo()->name);
+	ImGui::Text("Class: %s", PrimaryActor->GetClass()->GetName());
 
 	FString PrimaryName = PrimaryActor->GetFName().ToString();
-	if (PrimaryName.empty()) PrimaryName = PrimaryActor->GetTypeInfo()->name;
+	if (PrimaryName.empty()) PrimaryName = PrimaryActor->GetClass()->GetName();
 
 	const bool bWasActorSelected = bActorSelected;
 	if (bWasActorSelected) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.2f, 1.0f));
@@ -852,7 +852,7 @@ void FEditorPropertyWidget::RenderComponentTree(AActor* Actor)
 
     USceneComponent* Root = Actor->GetRootComponent();
     FString ActorName = Actor->GetFName().ToString();
-    if (ActorName.empty()) ActorName = Actor->GetTypeInfo()->name;
+    if (ActorName.empty()) ActorName = Actor->GetClass()->GetName();
 
     ImGuiTreeNodeFlags ActorFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
     if (bActorSelected) ActorFlags |= ImGuiTreeNodeFlags_Selected;
@@ -937,7 +937,7 @@ void FEditorPropertyWidget::RenderSceneComponentNode(AActor* Actor, USceneCompon
     if (!IsLiveActor(Actor) || !IsLiveComponent(Comp)) return;
 
     FString Name = Comp->GetFName().ToString();
-    if (Name.empty()) Name = Comp->GetTypeInfo()->name;
+    if (Name.empty()) Name = Comp->GetClass()->GetName();
 
     const auto& Children = Comp->GetChildren();
 
@@ -1101,7 +1101,7 @@ void FEditorPropertyWidget::RenderDetails(AActor* PrimaryActor, const TArray<AAc
 
 void FEditorPropertyWidget::RenderActorProperties(AActor* PrimaryActor, const TArray<AActor*>& SelectedActors)
 {
-	ImGui::Text("Actor: %s", PrimaryActor->GetTypeInfo()->name);
+	ImGui::Text("Actor: %s", PrimaryActor->GetClass()->GetName());
 	RenderEditableName("Name##Actor", PrimaryActor, &bFocusActorNameNextFrame); // 편집 가능한 UI
 	RenderActorTags(PrimaryActor, SelectedActors);
 
@@ -1417,7 +1417,7 @@ void FEditorPropertyWidget::RenderComponentProperties()
 
 	const FDetailsPerfClock::time_point TotalStart = bDetailsPerfTraceFrame ? FDetailsPerfClock::now() : FDetailsPerfClock::time_point{};
 
-	ImGui::Text("Component: %s", SelectedComponent->GetTypeInfo()->name);
+	ImGui::Text("Component: %s", SelectedComponent->GetClass()->GetName());
 	RenderEditableName("Name##Component", SelectedComponent, &bFocusComponentNameNextFrame); // 편집 가능한 UI
 	RenderComponentTags(SelectedComponent);
 
@@ -1602,7 +1602,7 @@ void FEditorPropertyWidget::RenderComponentProperties()
 		UE_LOG(
 			"[DetailsPerf] Component=%s Type=%s Total=%.2fms GetEditableProperties=%.2fms PropertyWidgets=%.2fms SkeletalDebug=%.2fms Props=%zu",
 			SelectedComponent ? SelectedComponent->GetFName().ToString().c_str() : "<None>",
-			SelectedComponent ? SelectedComponent->GetTypeInfo()->name : "<None>",
+			SelectedComponent ? SelectedComponent->GetClass()->GetName() : "<None>",
 			TotalMs,
 			GetEditablePropertiesMs,
 			PropertyWidgetMs,
@@ -1633,7 +1633,7 @@ void FEditorPropertyWidget::RenderSceneComponentRefWidget(FPropertyDescriptor& P
 	auto GetLabel = [&](USceneComponent* Comp) -> FString {
 		if (!Comp) return "None";
 		FString Name = Comp->GetFName().ToString();
-		if (Name.empty()) Name = Comp->GetTypeInfo()->name;
+		if (Name.empty()) Name = Comp->GetClass()->GetName();
 		bool bIsRoot = Owner && (Comp == Owner->GetRootComponent());
 		return bIsRoot ? ("[Root] " + Name) : Name;
 	};
@@ -2111,7 +2111,7 @@ void FEditorPropertyWidget::RenderPropertyWidget(FPropertyDescriptor& Prop)
 					continue;
 				}
 
-				if (Prop.ObjectType && !Candidate->GetTypeInfo()->IsA(Prop.ObjectType))
+				if (Prop.ObjectType && !Candidate->GetClass()->IsA(Prop.ObjectType))
 				{
 					continue;
 				}
@@ -2119,7 +2119,7 @@ void FEditorPropertyWidget::RenderPropertyWidget(FPropertyDescriptor& Prop)
 				const bool bSelected = Candidate == Current;
 				FString Label = Candidate->GetName();
 				Label += " [";
-				Label += Candidate->GetTypeInfo()->name;
+				Label += Candidate->GetClass()->GetName();
 				Label += "]";
 
 				if (ImGui::Selectable(Label.c_str(), bSelected))

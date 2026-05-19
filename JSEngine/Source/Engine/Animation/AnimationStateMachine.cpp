@@ -1,4 +1,4 @@
-﻿#include "AnimationStateMachine.h"
+#include "AnimationStateMachine.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimData/AnimSequence.h"
@@ -9,7 +9,6 @@
 
 #include <algorithm>
 
-DEFINE_CLASS(UAnimationStateMachine, UObject)
 REGISTER_FACTORY(UAnimationStateMachine)
 
 namespace

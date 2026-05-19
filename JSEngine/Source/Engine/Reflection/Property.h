@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 #include <cstddef>
@@ -11,11 +11,11 @@
 #include "Math/Vector4.h"   // FVector4 (for sizeof in GetPropertySize)
 #include "Math/Color.h"     // FColor
 
-struct FTypeInfo;
 class UObject;
 struct FArchive;
 class UStruct;
 class UEnum;
+class UClass;
 
 // 에디터에서 자동 위젯 매핑에 사용되는 프로퍼티 타입
 // UPROPERTY() 매크로로 지정할 수 없는 타입: Material, SRV, CubeSRV, Lua
@@ -106,7 +106,7 @@ struct FPropertyDescriptor
     void* ExtraData = nullptr;
 
     EPropertyUsageFlags UsageFlags = EPropertyUsageFlags::Editable;
-    const FTypeInfo* ObjectType = nullptr;
+    const UClass* ObjectType = nullptr;
     const char* DisplayName = nullptr;
 };
 
@@ -191,7 +191,7 @@ public:
     }
 
     virtual EPropertyType GetType() const = 0;
-    virtual const FTypeInfo* GetObjectType() const { return nullptr; }
+    virtual const UClass* GetObjectType() const { return nullptr; }
     virtual bool ShouldCheckSerializeKey() const { return true; }
     virtual void AppendEditorDescriptor(void* Container, TArray<FPropertyDescriptor>& OutProps) const;
     virtual void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const = 0;
@@ -280,7 +280,7 @@ public:
         const char* InSerializeName,
         size_t InOffset,
         EPropertyAccess InAccess,
-        const FTypeInfo* InObjectType,
+        const UClass* InObjectType,
         float InMin = 0.0f,
         float InMax = 0.0f,
         float InSpeed = 0.1f,
@@ -291,11 +291,11 @@ public:
     }
 
     EPropertyType GetType() const override { return EPropertyType::ObjectRef; }
-    const FTypeInfo* GetObjectType() const override { return ObjectType; }
+    const UClass* GetObjectType() const override { return ObjectType; }
     void SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const override;
 
 private:
-    const FTypeInfo* ObjectType = nullptr;
+    const UClass* ObjectType = nullptr;
 };
 
 class FSceneComponentProperty : public FProperty

@@ -30,11 +30,9 @@ UObject::~UObject()
 	GUObjectArray.pop_back();
 }
 
-const FTypeInfo UObject::s_TypeInfo = { "UObject", nullptr, sizeof(UObject) };
-
 void UObject::AppendReflectedProperties(TArray<FPropertyDescriptor>& OutProps)
 {
-    FReflectionRegistry::Get().AppendProperties(GetTypeInfo(), this, OutProps);
+    GetClass()->AppendProperties(this, OutProps);
 }
 
 void UObject::GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps)
@@ -45,7 +43,7 @@ void UObject::GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 
 void UObject::SerializeReflectedProperties(FArchive& Ar)
 {
-    FReflectionRegistry::Get().SerializeProperties(GetTypeInfo(), this, Ar);
+    GetClass()->SerializeProperties(Ar, this);
 }
 
 // FObjectFactory 로 같은 타입의 인스턴스를 생성한 뒤 프로퍼티 복사 → PostDuplicate 훅을 실행합니다.
@@ -53,7 +51,7 @@ void UObject::SerializeReflectedProperties(FArchive& Ar)
 // 그대로 nullptr 를 반환합니다.
 UObject* UObject::Duplicate()
 {
-    UObject* Dup = FObjectFactory::Get().Create(GetTypeInfo()->name);
+    UObject* Dup = FObjectFactory::Get().Create(GetClass()->GetName());
     if (!Dup) return nullptr;
     Dup->CopyPropertiesFrom(this);
     Dup->PostDuplicate(this);
@@ -140,7 +138,7 @@ void UObject::CopyPropertiesFrom(UObject* Src)
 
 void UObject::Serialize(FArchive& Ar)
 {
-	Ar << "Type" << GetTypeInfo()->name;
+	Ar << "Type" << GetClass()->GetName();
     Ar << "ObjectName" << ObjectName;
     SerializeReflectedProperties(Ar);
 }

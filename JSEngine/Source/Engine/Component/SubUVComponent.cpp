@@ -1,4 +1,4 @@
-﻿#include "SubUVComponent.h"
+#include "SubUVComponent.h"
 
 #include <cmath>
 #include <cstring>
@@ -10,7 +10,6 @@
 #include "Math/Utils.h"
 #include "Render/Proxy/SubUVRenderProxy.h"
 
-DEFINE_CLASS(USubUVComponent, UBillboardComponent)
 REGISTER_FACTORY(USubUVComponent)
 
 USubUVComponent::USubUVComponent()

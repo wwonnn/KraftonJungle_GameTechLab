@@ -1,4 +1,4 @@
-﻿#include "AnimInstance.h"
+#include "AnimInstance.h"
 
 #include "Asset/Skeleton.h"
 #include "Animation/AnimNotify.h"
@@ -63,7 +63,6 @@ namespace
     }
 }
 
-DEFINE_CLASS(UAnimInstance, UObject)
 REGISTER_FACTORY(UAnimInstance)
 
 UAnimInstance::~UAnimInstance()

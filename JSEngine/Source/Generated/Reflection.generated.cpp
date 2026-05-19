@@ -7,27 +7,44 @@
 #include "Engine/Component/MeshComponent.h"
 #include "Engine/Component/Movement/InterpToMovementComponent.h"
 #include "Engine/Render/Common/ShadowTypes.h"
+#include "Editor/EditorEngine.h"
+#include "Engine/Animation/ActorSequence.h"
+#include "Engine/Animation/AnimationStateMachine.h"
 #include "Engine/Animation/AnimInstance.h"
+#include "Engine/Animation/AnimInstanceAsset.h"
+#include "Engine/Animation/AnimSingleNodeInstance.h"
+#include "Engine/Animation/LuaAnimInstance.h"
+#include "Engine/Asset/CurveFloatAsset.h"
+#include "Engine/Asset/PhysicsAsset.h"
+#include "Engine/Asset/SkeletalMesh.h"
+#include "Engine/Asset/Skeleton.h"
+#include "Engine/Asset/StaticMesh.h"
 #include "Engine/Camera/CameraShakeBase.h"
 #include "Engine/Camera/ShakePattern/SequenceCameraShakePattern.h"
 #include "Engine/Camera/ShakePattern/SinusoidalCameraShakePattern.h"
 #include "Engine/Component/ActorComponent.h"
+#include "Engine/Component/ActorSequenceComponent.h"
 #include "Engine/Component/BillboardComponent.h"
+#include "Engine/Component/BoxComponent.h"
 #include "Engine/Component/CapsuleComponent.h"
 #include "Engine/Component/DecalComponent.h"
 #include "Engine/Component/FireballComponent.h"
+#include "Engine/Component/GizmoComponent.h"
 #include "Engine/Component/HeightFogComponent.h"
 #include "Engine/Component/Movement/MovementComponent.h"
 #include "Engine/Component/Movement/ProjectileMovementComponent.h"
 #include "Engine/Component/Movement/PursuitMovementComponent.h"
 #include "Engine/Component/Movement/RotatingMovementComponent.h"
+#include "Engine/Component/PostProcess/Light/AmbientLightComponent.h"
 #include "Engine/Component/PostProcess/Light/DirectionalLightComponent.h"
 #include "Engine/Component/PostProcess/Light/LightComponent.h"
 #include "Engine/Component/PostProcess/Light/LightComponentBase.h"
 #include "Engine/Component/PostProcess/Light/PointLightComponent.h"
 #include "Engine/Component/PostProcess/Light/SpotlightComponent.h"
 #include "Engine/Component/PrimitiveComponent.h"
+#include "Engine/Component/ProceduralMeshComponent.h"
 #include "Engine/Component/SceneComponent.h"
+#include "Engine/Component/ShapeComponent.h"
 #include "Engine/Component/SkeletalMeshComponent.h"
 #include "Engine/Component/SkinnedMeshComponent.h"
 #include "Engine/Component/SoundComponent.h"
@@ -36,48 +53,1061 @@
 #include "Engine/Component/StaticMeshComponent.h"
 #include "Engine/Component/SubUVComponent.h"
 #include "Engine/Component/TextRenderComponent.h"
+#include "Engine/GameFramework/AActor.h"
+#include "Engine/GameFramework/DefaultPawn.h"
+#include "Engine/GameFramework/GameModeBase.h"
+#include "Engine/GameFramework/Level.h"
+#include "Engine/GameFramework/Pawn.h"
+#include "Engine/GameFramework/PlayerController.h"
 #include "Engine/GameFramework/PrimitiveActors.h"
+#include "Engine/GameFramework/World.h"
+#include "Engine/Object/Object.h"
+#include "Engine/Render/Resource/Material.h"
+#include "Engine/Render/Resource/Texture.h"
+#include "Engine/Runtime/Engine.h"
+#include "Engine/Runtime/GameEngine.h"
 #include "Engine/Runtime/Script/ScriptComponent.h"
+#include "Misc/ObjViewer/ObjViewerEngine.h"
 
+const UClass* Z_Construct_UClass_UEditorEngine();
+const UClass* Z_Construct_UClass_UActorSequence();
+const UClass* Z_Construct_UClass_UActorSequencePlayer();
+const UClass* Z_Construct_UClass_UAnimationStateMachine();
+const UClass* Z_Construct_UClass_UAnimInstance();
+const UClass* Z_Construct_UClass_UAnimInstanceAsset();
+const UClass* Z_Construct_UClass_UAnimSingleNodeInstance();
+const UClass* Z_Construct_UClass_ULuaAnimInstance();
+const UClass* Z_Construct_UClass_UCurveFloatAsset();
+const UClass* Z_Construct_UClass_UPhysicsAsset();
+const UClass* Z_Construct_UClass_USkeletalMesh();
+const UClass* Z_Construct_UClass_USkeleton();
+const UClass* Z_Construct_UClass_UStaticMesh();
+const UClass* Z_Construct_UClass_UCameraShakePattern();
+const UClass* Z_Construct_UClass_UPerlinCameraShakePattern();
+const UClass* Z_Construct_UClass_UCameraShakeBase();
+const UClass* Z_Construct_UClass_USequenceCameraShakePattern();
+const UClass* Z_Construct_UClass_USinusoidalCameraShakePattern();
+const UClass* Z_Construct_UClass_UActorComponent();
+const UClass* Z_Construct_UClass_UActorSequenceComponent();
+const UClass* Z_Construct_UClass_UBillboardComponent();
+const UClass* Z_Construct_UClass_UBoxComponent();
+const UClass* Z_Construct_UClass_UCameraComponent();
+const UClass* Z_Construct_UClass_UCapsuleComponent();
+const UClass* Z_Construct_UClass_UDecalComponent();
+const UClass* Z_Construct_UClass_UFireballComponent();
+const UClass* Z_Construct_UClass_UGizmoComponent();
+const UClass* Z_Construct_UClass_UHeightFogComponent();
+const UClass* Z_Construct_UClass_UMeshComponent();
+const UClass* Z_Construct_UClass_UInterpToMovementComponent();
+const UClass* Z_Construct_UClass_UMovementComponent();
+const UClass* Z_Construct_UClass_UProjectileMovementComponent();
+const UClass* Z_Construct_UClass_UPursuitMovementComponent();
+const UClass* Z_Construct_UClass_URotatingMovementComponent();
+const UClass* Z_Construct_UClass_UAmbientLightComponent();
+const UClass* Z_Construct_UClass_UDirectionalLightComponent();
+const UClass* Z_Construct_UClass_ULightComponent();
+const UClass* Z_Construct_UClass_ULightComponentBase();
+const UClass* Z_Construct_UClass_UPointLightComponent();
+const UClass* Z_Construct_UClass_USpotlightComponent();
+const UClass* Z_Construct_UClass_UPrimitiveComponent();
+const UClass* Z_Construct_UClass_UProceduralMeshComponent();
+const UClass* Z_Construct_UClass_USceneComponent();
+const UClass* Z_Construct_UClass_UShapeComponent();
+const UClass* Z_Construct_UClass_USkeletalMeshComponent();
+const UClass* Z_Construct_UClass_USkinnedMeshComponent();
+const UClass* Z_Construct_UClass_USoundComponent();
+const UClass* Z_Construct_UClass_USphereComponent();
+const UClass* Z_Construct_UClass_USpringArmComponent();
+const UClass* Z_Construct_UClass_UStaticMeshComponent();
+const UClass* Z_Construct_UClass_USubUVComponent();
+const UClass* Z_Construct_UClass_UTextRenderComponent();
+const UClass* Z_Construct_UClass_AActor();
+const UClass* Z_Construct_UClass_ADefaultPawn();
+const UClass* Z_Construct_UClass_AGameModeBase();
+const UClass* Z_Construct_UClass_ULevel();
+const UClass* Z_Construct_UClass_APawn();
+const UClass* Z_Construct_UClass_APlayerController();
+const UClass* Z_Construct_UClass_ACubeActor();
+const UClass* Z_Construct_UClass_ASphereActor();
+const UClass* Z_Construct_UClass_APlaneActor();
+const UClass* Z_Construct_UClass_AAttachTestActor();
+const UClass* Z_Construct_UClass_ASceneActor();
+const UClass* Z_Construct_UClass_APlayerStart();
+const UClass* Z_Construct_UClass_AFogActor();
+const UClass* Z_Construct_UClass_AStaticMeshActor();
+const UClass* Z_Construct_UClass_ASkeletalMeshActor();
+const UClass* Z_Construct_UClass_ASubUVActor();
+const UClass* Z_Construct_UClass_ATextRenderActor();
+const UClass* Z_Construct_UClass_ABillboardActor();
+const UClass* Z_Construct_UClass_ADecalActor();
+const UClass* Z_Construct_UClass_AFireballActor();
+const UClass* Z_Construct_UClass_ADecalSpotLightActor();
+const UClass* Z_Construct_UClass_ALightActor();
+const UClass* Z_Construct_UClass_AAmbientLightActor();
+const UClass* Z_Construct_UClass_ADirectionalLightActor();
+const UClass* Z_Construct_UClass_APointLightActor();
+const UClass* Z_Construct_UClass_ASpotlightActor();
+const UClass* Z_Construct_UClass_ABullet();
+const UClass* Z_Construct_UClass_ABladeSlash();
+const UClass* Z_Construct_UClass_ADestructibleActor();
+const UClass* Z_Construct_UClass_ABoundsBoxActor();
+const UClass* Z_Construct_UClass_UMainSceneDestructibleComponent();
+const UClass* Z_Construct_UClass_AMainSceneDestructibleActor();
+const UClass* Z_Construct_UClass_UWorld();
+const UClass* Z_Construct_UClass_UObject();
+const UClass* Z_Construct_UClass_UMaterialInterface();
+const UClass* Z_Construct_UClass_UMaterial();
+const UClass* Z_Construct_UClass_UMaterialInstance();
+const UClass* Z_Construct_UClass_UTexture();
+const UClass* Z_Construct_UClass_UEngine();
+const UClass* Z_Construct_UClass_UGameEngine();
+const UClass* Z_Construct_UClass_UScriptComponent();
+const UClass* Z_Construct_UClass_UObjViewerEngine();
 const UStruct* Z_Construct_UStruct_FCameraState();
 const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings();
 const UStruct* Z_Construct_UStruct_FScrollUV();
 const UEnum* Z_Construct_UEnum_EInterpBehaviour();
 const UEnum* Z_Construct_UEnum_EShadowMap();
-void RegisterGeneratedReflection_UAnimInstance();
-void RegisterGeneratedReflection_UCameraShakePattern();
-void RegisterGeneratedReflection_USequenceCameraShakePattern();
-void RegisterGeneratedReflection_USinusoidalCameraShakePattern();
-void RegisterGeneratedReflection_UActorComponent();
-void RegisterGeneratedReflection_UBillboardComponent();
-void RegisterGeneratedReflection_UCameraComponent();
-void RegisterGeneratedReflection_UCapsuleComponent();
-void RegisterGeneratedReflection_UDecalComponent();
-void RegisterGeneratedReflection_UFireballComponent();
-void RegisterGeneratedReflection_UHeightFogComponent();
-void RegisterGeneratedReflection_UMeshComponent();
-void RegisterGeneratedReflection_UInterpToMovementComponent();
-void RegisterGeneratedReflection_UMovementComponent();
-void RegisterGeneratedReflection_UProjectileMovementComponent();
-void RegisterGeneratedReflection_UPursuitMovementComponent();
-void RegisterGeneratedReflection_URotatingMovementComponent();
-void RegisterGeneratedReflection_UDirectionalLightComponent();
-void RegisterGeneratedReflection_ULightComponent();
-void RegisterGeneratedReflection_ULightComponentBase();
-void RegisterGeneratedReflection_UPointLightComponent();
-void RegisterGeneratedReflection_USpotlightComponent();
-void RegisterGeneratedReflection_UPrimitiveComponent();
-void RegisterGeneratedReflection_USceneComponent();
-void RegisterGeneratedReflection_USkeletalMeshComponent();
-void RegisterGeneratedReflection_USkinnedMeshComponent();
-void RegisterGeneratedReflection_USoundComponent();
-void RegisterGeneratedReflection_USphereComponent();
-void RegisterGeneratedReflection_USpringArmComponent();
-void RegisterGeneratedReflection_UStaticMeshComponent();
-void RegisterGeneratedReflection_USubUVComponent();
-void RegisterGeneratedReflection_UTextRenderComponent();
-void RegisterGeneratedReflection_UMainSceneDestructibleComponent();
-void RegisterGeneratedReflection_UScriptComponent();
+
+const UClass* UEditorEngine::StaticClass()
+{
+    return Z_Construct_UClass_UEditorEngine();
+}
+
+const UClass* UEditorEngine::GetClass() const
+{
+    return UEditorEngine::StaticClass();
+}
+
+const UClass* UActorSequence::StaticClass()
+{
+    return Z_Construct_UClass_UActorSequence();
+}
+
+const UClass* UActorSequence::GetClass() const
+{
+    return UActorSequence::StaticClass();
+}
+
+const UClass* UActorSequencePlayer::StaticClass()
+{
+    return Z_Construct_UClass_UActorSequencePlayer();
+}
+
+const UClass* UActorSequencePlayer::GetClass() const
+{
+    return UActorSequencePlayer::StaticClass();
+}
+
+const UClass* UAnimationStateMachine::StaticClass()
+{
+    return Z_Construct_UClass_UAnimationStateMachine();
+}
+
+const UClass* UAnimationStateMachine::GetClass() const
+{
+    return UAnimationStateMachine::StaticClass();
+}
+
+const UClass* UAnimInstance::StaticClass()
+{
+    return Z_Construct_UClass_UAnimInstance();
+}
+
+const UClass* UAnimInstance::GetClass() const
+{
+    return UAnimInstance::StaticClass();
+}
+
+const UClass* UAnimInstanceAsset::StaticClass()
+{
+    return Z_Construct_UClass_UAnimInstanceAsset();
+}
+
+const UClass* UAnimInstanceAsset::GetClass() const
+{
+    return UAnimInstanceAsset::StaticClass();
+}
+
+const UClass* UAnimSingleNodeInstance::StaticClass()
+{
+    return Z_Construct_UClass_UAnimSingleNodeInstance();
+}
+
+const UClass* UAnimSingleNodeInstance::GetClass() const
+{
+    return UAnimSingleNodeInstance::StaticClass();
+}
+
+const UClass* ULuaAnimInstance::StaticClass()
+{
+    return Z_Construct_UClass_ULuaAnimInstance();
+}
+
+const UClass* ULuaAnimInstance::GetClass() const
+{
+    return ULuaAnimInstance::StaticClass();
+}
+
+const UClass* UCurveFloatAsset::StaticClass()
+{
+    return Z_Construct_UClass_UCurveFloatAsset();
+}
+
+const UClass* UCurveFloatAsset::GetClass() const
+{
+    return UCurveFloatAsset::StaticClass();
+}
+
+const UClass* UPhysicsAsset::StaticClass()
+{
+    return Z_Construct_UClass_UPhysicsAsset();
+}
+
+const UClass* UPhysicsAsset::GetClass() const
+{
+    return UPhysicsAsset::StaticClass();
+}
+
+const UClass* USkeletalMesh::StaticClass()
+{
+    return Z_Construct_UClass_USkeletalMesh();
+}
+
+const UClass* USkeletalMesh::GetClass() const
+{
+    return USkeletalMesh::StaticClass();
+}
+
+const UClass* USkeleton::StaticClass()
+{
+    return Z_Construct_UClass_USkeleton();
+}
+
+const UClass* USkeleton::GetClass() const
+{
+    return USkeleton::StaticClass();
+}
+
+const UClass* UStaticMesh::StaticClass()
+{
+    return Z_Construct_UClass_UStaticMesh();
+}
+
+const UClass* UStaticMesh::GetClass() const
+{
+    return UStaticMesh::StaticClass();
+}
+
+const UClass* UCameraShakePattern::StaticClass()
+{
+    return Z_Construct_UClass_UCameraShakePattern();
+}
+
+const UClass* UCameraShakePattern::GetClass() const
+{
+    return UCameraShakePattern::StaticClass();
+}
+
+const UClass* UPerlinCameraShakePattern::StaticClass()
+{
+    return Z_Construct_UClass_UPerlinCameraShakePattern();
+}
+
+const UClass* UPerlinCameraShakePattern::GetClass() const
+{
+    return UPerlinCameraShakePattern::StaticClass();
+}
+
+const UClass* UCameraShakeBase::StaticClass()
+{
+    return Z_Construct_UClass_UCameraShakeBase();
+}
+
+const UClass* UCameraShakeBase::GetClass() const
+{
+    return UCameraShakeBase::StaticClass();
+}
+
+const UClass* USequenceCameraShakePattern::StaticClass()
+{
+    return Z_Construct_UClass_USequenceCameraShakePattern();
+}
+
+const UClass* USequenceCameraShakePattern::GetClass() const
+{
+    return USequenceCameraShakePattern::StaticClass();
+}
+
+const UClass* USinusoidalCameraShakePattern::StaticClass()
+{
+    return Z_Construct_UClass_USinusoidalCameraShakePattern();
+}
+
+const UClass* USinusoidalCameraShakePattern::GetClass() const
+{
+    return USinusoidalCameraShakePattern::StaticClass();
+}
+
+const UClass* UActorComponent::StaticClass()
+{
+    return Z_Construct_UClass_UActorComponent();
+}
+
+const UClass* UActorComponent::GetClass() const
+{
+    return UActorComponent::StaticClass();
+}
+
+const UClass* UActorSequenceComponent::StaticClass()
+{
+    return Z_Construct_UClass_UActorSequenceComponent();
+}
+
+const UClass* UActorSequenceComponent::GetClass() const
+{
+    return UActorSequenceComponent::StaticClass();
+}
+
+const UClass* UBillboardComponent::StaticClass()
+{
+    return Z_Construct_UClass_UBillboardComponent();
+}
+
+const UClass* UBillboardComponent::GetClass() const
+{
+    return UBillboardComponent::StaticClass();
+}
+
+const UClass* UBoxComponent::StaticClass()
+{
+    return Z_Construct_UClass_UBoxComponent();
+}
+
+const UClass* UBoxComponent::GetClass() const
+{
+    return UBoxComponent::StaticClass();
+}
+
+const UClass* UCameraComponent::StaticClass()
+{
+    return Z_Construct_UClass_UCameraComponent();
+}
+
+const UClass* UCameraComponent::GetClass() const
+{
+    return UCameraComponent::StaticClass();
+}
+
+const UClass* UCapsuleComponent::StaticClass()
+{
+    return Z_Construct_UClass_UCapsuleComponent();
+}
+
+const UClass* UCapsuleComponent::GetClass() const
+{
+    return UCapsuleComponent::StaticClass();
+}
+
+const UClass* UDecalComponent::StaticClass()
+{
+    return Z_Construct_UClass_UDecalComponent();
+}
+
+const UClass* UDecalComponent::GetClass() const
+{
+    return UDecalComponent::StaticClass();
+}
+
+const UClass* UFireballComponent::StaticClass()
+{
+    return Z_Construct_UClass_UFireballComponent();
+}
+
+const UClass* UFireballComponent::GetClass() const
+{
+    return UFireballComponent::StaticClass();
+}
+
+const UClass* UGizmoComponent::StaticClass()
+{
+    return Z_Construct_UClass_UGizmoComponent();
+}
+
+const UClass* UGizmoComponent::GetClass() const
+{
+    return UGizmoComponent::StaticClass();
+}
+
+const UClass* UHeightFogComponent::StaticClass()
+{
+    return Z_Construct_UClass_UHeightFogComponent();
+}
+
+const UClass* UHeightFogComponent::GetClass() const
+{
+    return UHeightFogComponent::StaticClass();
+}
+
+const UClass* UMeshComponent::StaticClass()
+{
+    return Z_Construct_UClass_UMeshComponent();
+}
+
+const UClass* UMeshComponent::GetClass() const
+{
+    return UMeshComponent::StaticClass();
+}
+
+const UClass* UInterpToMovementComponent::StaticClass()
+{
+    return Z_Construct_UClass_UInterpToMovementComponent();
+}
+
+const UClass* UInterpToMovementComponent::GetClass() const
+{
+    return UInterpToMovementComponent::StaticClass();
+}
+
+const UClass* UMovementComponent::StaticClass()
+{
+    return Z_Construct_UClass_UMovementComponent();
+}
+
+const UClass* UMovementComponent::GetClass() const
+{
+    return UMovementComponent::StaticClass();
+}
+
+const UClass* UProjectileMovementComponent::StaticClass()
+{
+    return Z_Construct_UClass_UProjectileMovementComponent();
+}
+
+const UClass* UProjectileMovementComponent::GetClass() const
+{
+    return UProjectileMovementComponent::StaticClass();
+}
+
+const UClass* UPursuitMovementComponent::StaticClass()
+{
+    return Z_Construct_UClass_UPursuitMovementComponent();
+}
+
+const UClass* UPursuitMovementComponent::GetClass() const
+{
+    return UPursuitMovementComponent::StaticClass();
+}
+
+const UClass* URotatingMovementComponent::StaticClass()
+{
+    return Z_Construct_UClass_URotatingMovementComponent();
+}
+
+const UClass* URotatingMovementComponent::GetClass() const
+{
+    return URotatingMovementComponent::StaticClass();
+}
+
+const UClass* UAmbientLightComponent::StaticClass()
+{
+    return Z_Construct_UClass_UAmbientLightComponent();
+}
+
+const UClass* UAmbientLightComponent::GetClass() const
+{
+    return UAmbientLightComponent::StaticClass();
+}
+
+const UClass* UDirectionalLightComponent::StaticClass()
+{
+    return Z_Construct_UClass_UDirectionalLightComponent();
+}
+
+const UClass* UDirectionalLightComponent::GetClass() const
+{
+    return UDirectionalLightComponent::StaticClass();
+}
+
+const UClass* ULightComponent::StaticClass()
+{
+    return Z_Construct_UClass_ULightComponent();
+}
+
+const UClass* ULightComponent::GetClass() const
+{
+    return ULightComponent::StaticClass();
+}
+
+const UClass* ULightComponentBase::StaticClass()
+{
+    return Z_Construct_UClass_ULightComponentBase();
+}
+
+const UClass* ULightComponentBase::GetClass() const
+{
+    return ULightComponentBase::StaticClass();
+}
+
+const UClass* UPointLightComponent::StaticClass()
+{
+    return Z_Construct_UClass_UPointLightComponent();
+}
+
+const UClass* UPointLightComponent::GetClass() const
+{
+    return UPointLightComponent::StaticClass();
+}
+
+const UClass* USpotlightComponent::StaticClass()
+{
+    return Z_Construct_UClass_USpotlightComponent();
+}
+
+const UClass* USpotlightComponent::GetClass() const
+{
+    return USpotlightComponent::StaticClass();
+}
+
+const UClass* UPrimitiveComponent::StaticClass()
+{
+    return Z_Construct_UClass_UPrimitiveComponent();
+}
+
+const UClass* UPrimitiveComponent::GetClass() const
+{
+    return UPrimitiveComponent::StaticClass();
+}
+
+const UClass* UProceduralMeshComponent::StaticClass()
+{
+    return Z_Construct_UClass_UProceduralMeshComponent();
+}
+
+const UClass* UProceduralMeshComponent::GetClass() const
+{
+    return UProceduralMeshComponent::StaticClass();
+}
+
+const UClass* USceneComponent::StaticClass()
+{
+    return Z_Construct_UClass_USceneComponent();
+}
+
+const UClass* USceneComponent::GetClass() const
+{
+    return USceneComponent::StaticClass();
+}
+
+const UClass* UShapeComponent::StaticClass()
+{
+    return Z_Construct_UClass_UShapeComponent();
+}
+
+const UClass* UShapeComponent::GetClass() const
+{
+    return UShapeComponent::StaticClass();
+}
+
+const UClass* USkeletalMeshComponent::StaticClass()
+{
+    return Z_Construct_UClass_USkeletalMeshComponent();
+}
+
+const UClass* USkeletalMeshComponent::GetClass() const
+{
+    return USkeletalMeshComponent::StaticClass();
+}
+
+const UClass* USkinnedMeshComponent::StaticClass()
+{
+    return Z_Construct_UClass_USkinnedMeshComponent();
+}
+
+const UClass* USkinnedMeshComponent::GetClass() const
+{
+    return USkinnedMeshComponent::StaticClass();
+}
+
+const UClass* USoundComponent::StaticClass()
+{
+    return Z_Construct_UClass_USoundComponent();
+}
+
+const UClass* USoundComponent::GetClass() const
+{
+    return USoundComponent::StaticClass();
+}
+
+const UClass* USphereComponent::StaticClass()
+{
+    return Z_Construct_UClass_USphereComponent();
+}
+
+const UClass* USphereComponent::GetClass() const
+{
+    return USphereComponent::StaticClass();
+}
+
+const UClass* USpringArmComponent::StaticClass()
+{
+    return Z_Construct_UClass_USpringArmComponent();
+}
+
+const UClass* USpringArmComponent::GetClass() const
+{
+    return USpringArmComponent::StaticClass();
+}
+
+const UClass* UStaticMeshComponent::StaticClass()
+{
+    return Z_Construct_UClass_UStaticMeshComponent();
+}
+
+const UClass* UStaticMeshComponent::GetClass() const
+{
+    return UStaticMeshComponent::StaticClass();
+}
+
+const UClass* USubUVComponent::StaticClass()
+{
+    return Z_Construct_UClass_USubUVComponent();
+}
+
+const UClass* USubUVComponent::GetClass() const
+{
+    return USubUVComponent::StaticClass();
+}
+
+const UClass* UTextRenderComponent::StaticClass()
+{
+    return Z_Construct_UClass_UTextRenderComponent();
+}
+
+const UClass* UTextRenderComponent::GetClass() const
+{
+    return UTextRenderComponent::StaticClass();
+}
+
+const UClass* AActor::StaticClass()
+{
+    return Z_Construct_UClass_AActor();
+}
+
+const UClass* AActor::GetClass() const
+{
+    return AActor::StaticClass();
+}
+
+const UClass* ADefaultPawn::StaticClass()
+{
+    return Z_Construct_UClass_ADefaultPawn();
+}
+
+const UClass* ADefaultPawn::GetClass() const
+{
+    return ADefaultPawn::StaticClass();
+}
+
+const UClass* AGameModeBase::StaticClass()
+{
+    return Z_Construct_UClass_AGameModeBase();
+}
+
+const UClass* AGameModeBase::GetClass() const
+{
+    return AGameModeBase::StaticClass();
+}
+
+const UClass* ULevel::StaticClass()
+{
+    return Z_Construct_UClass_ULevel();
+}
+
+const UClass* ULevel::GetClass() const
+{
+    return ULevel::StaticClass();
+}
+
+const UClass* APawn::StaticClass()
+{
+    return Z_Construct_UClass_APawn();
+}
+
+const UClass* APawn::GetClass() const
+{
+    return APawn::StaticClass();
+}
+
+const UClass* APlayerController::StaticClass()
+{
+    return Z_Construct_UClass_APlayerController();
+}
+
+const UClass* APlayerController::GetClass() const
+{
+    return APlayerController::StaticClass();
+}
+
+const UClass* ACubeActor::StaticClass()
+{
+    return Z_Construct_UClass_ACubeActor();
+}
+
+const UClass* ACubeActor::GetClass() const
+{
+    return ACubeActor::StaticClass();
+}
+
+const UClass* ASphereActor::StaticClass()
+{
+    return Z_Construct_UClass_ASphereActor();
+}
+
+const UClass* ASphereActor::GetClass() const
+{
+    return ASphereActor::StaticClass();
+}
+
+const UClass* APlaneActor::StaticClass()
+{
+    return Z_Construct_UClass_APlaneActor();
+}
+
+const UClass* APlaneActor::GetClass() const
+{
+    return APlaneActor::StaticClass();
+}
+
+const UClass* AAttachTestActor::StaticClass()
+{
+    return Z_Construct_UClass_AAttachTestActor();
+}
+
+const UClass* AAttachTestActor::GetClass() const
+{
+    return AAttachTestActor::StaticClass();
+}
+
+const UClass* ASceneActor::StaticClass()
+{
+    return Z_Construct_UClass_ASceneActor();
+}
+
+const UClass* ASceneActor::GetClass() const
+{
+    return ASceneActor::StaticClass();
+}
+
+const UClass* APlayerStart::StaticClass()
+{
+    return Z_Construct_UClass_APlayerStart();
+}
+
+const UClass* APlayerStart::GetClass() const
+{
+    return APlayerStart::StaticClass();
+}
+
+const UClass* AFogActor::StaticClass()
+{
+    return Z_Construct_UClass_AFogActor();
+}
+
+const UClass* AFogActor::GetClass() const
+{
+    return AFogActor::StaticClass();
+}
+
+const UClass* AStaticMeshActor::StaticClass()
+{
+    return Z_Construct_UClass_AStaticMeshActor();
+}
+
+const UClass* AStaticMeshActor::GetClass() const
+{
+    return AStaticMeshActor::StaticClass();
+}
+
+const UClass* ASkeletalMeshActor::StaticClass()
+{
+    return Z_Construct_UClass_ASkeletalMeshActor();
+}
+
+const UClass* ASkeletalMeshActor::GetClass() const
+{
+    return ASkeletalMeshActor::StaticClass();
+}
+
+const UClass* ASubUVActor::StaticClass()
+{
+    return Z_Construct_UClass_ASubUVActor();
+}
+
+const UClass* ASubUVActor::GetClass() const
+{
+    return ASubUVActor::StaticClass();
+}
+
+const UClass* ATextRenderActor::StaticClass()
+{
+    return Z_Construct_UClass_ATextRenderActor();
+}
+
+const UClass* ATextRenderActor::GetClass() const
+{
+    return ATextRenderActor::StaticClass();
+}
+
+const UClass* ABillboardActor::StaticClass()
+{
+    return Z_Construct_UClass_ABillboardActor();
+}
+
+const UClass* ABillboardActor::GetClass() const
+{
+    return ABillboardActor::StaticClass();
+}
+
+const UClass* ADecalActor::StaticClass()
+{
+    return Z_Construct_UClass_ADecalActor();
+}
+
+const UClass* ADecalActor::GetClass() const
+{
+    return ADecalActor::StaticClass();
+}
+
+const UClass* AFireballActor::StaticClass()
+{
+    return Z_Construct_UClass_AFireballActor();
+}
+
+const UClass* AFireballActor::GetClass() const
+{
+    return AFireballActor::StaticClass();
+}
+
+const UClass* ADecalSpotLightActor::StaticClass()
+{
+    return Z_Construct_UClass_ADecalSpotLightActor();
+}
+
+const UClass* ADecalSpotLightActor::GetClass() const
+{
+    return ADecalSpotLightActor::StaticClass();
+}
+
+const UClass* ALightActor::StaticClass()
+{
+    return Z_Construct_UClass_ALightActor();
+}
+
+const UClass* ALightActor::GetClass() const
+{
+    return ALightActor::StaticClass();
+}
+
+const UClass* AAmbientLightActor::StaticClass()
+{
+    return Z_Construct_UClass_AAmbientLightActor();
+}
+
+const UClass* AAmbientLightActor::GetClass() const
+{
+    return AAmbientLightActor::StaticClass();
+}
+
+const UClass* ADirectionalLightActor::StaticClass()
+{
+    return Z_Construct_UClass_ADirectionalLightActor();
+}
+
+const UClass* ADirectionalLightActor::GetClass() const
+{
+    return ADirectionalLightActor::StaticClass();
+}
+
+const UClass* APointLightActor::StaticClass()
+{
+    return Z_Construct_UClass_APointLightActor();
+}
+
+const UClass* APointLightActor::GetClass() const
+{
+    return APointLightActor::StaticClass();
+}
+
+const UClass* ASpotlightActor::StaticClass()
+{
+    return Z_Construct_UClass_ASpotlightActor();
+}
+
+const UClass* ASpotlightActor::GetClass() const
+{
+    return ASpotlightActor::StaticClass();
+}
+
+const UClass* ABullet::StaticClass()
+{
+    return Z_Construct_UClass_ABullet();
+}
+
+const UClass* ABullet::GetClass() const
+{
+    return ABullet::StaticClass();
+}
+
+const UClass* ABladeSlash::StaticClass()
+{
+    return Z_Construct_UClass_ABladeSlash();
+}
+
+const UClass* ABladeSlash::GetClass() const
+{
+    return ABladeSlash::StaticClass();
+}
+
+const UClass* ADestructibleActor::StaticClass()
+{
+    return Z_Construct_UClass_ADestructibleActor();
+}
+
+const UClass* ADestructibleActor::GetClass() const
+{
+    return ADestructibleActor::StaticClass();
+}
+
+const UClass* ABoundsBoxActor::StaticClass()
+{
+    return Z_Construct_UClass_ABoundsBoxActor();
+}
+
+const UClass* ABoundsBoxActor::GetClass() const
+{
+    return ABoundsBoxActor::StaticClass();
+}
+
+const UClass* UMainSceneDestructibleComponent::StaticClass()
+{
+    return Z_Construct_UClass_UMainSceneDestructibleComponent();
+}
+
+const UClass* UMainSceneDestructibleComponent::GetClass() const
+{
+    return UMainSceneDestructibleComponent::StaticClass();
+}
+
+const UClass* AMainSceneDestructibleActor::StaticClass()
+{
+    return Z_Construct_UClass_AMainSceneDestructibleActor();
+}
+
+const UClass* AMainSceneDestructibleActor::GetClass() const
+{
+    return AMainSceneDestructibleActor::StaticClass();
+}
+
+const UClass* UWorld::StaticClass()
+{
+    return Z_Construct_UClass_UWorld();
+}
+
+const UClass* UWorld::GetClass() const
+{
+    return UWorld::StaticClass();
+}
+
+const UClass* UObject::StaticClass()
+{
+    return Z_Construct_UClass_UObject();
+}
+
+const UClass* UObject::GetClass() const
+{
+    return UObject::StaticClass();
+}
+
+const UClass* UMaterialInterface::StaticClass()
+{
+    return Z_Construct_UClass_UMaterialInterface();
+}
+
+const UClass* UMaterialInterface::GetClass() const
+{
+    return UMaterialInterface::StaticClass();
+}
+
+const UClass* UMaterial::StaticClass()
+{
+    return Z_Construct_UClass_UMaterial();
+}
+
+const UClass* UMaterial::GetClass() const
+{
+    return UMaterial::StaticClass();
+}
+
+const UClass* UMaterialInstance::StaticClass()
+{
+    return Z_Construct_UClass_UMaterialInstance();
+}
+
+const UClass* UMaterialInstance::GetClass() const
+{
+    return UMaterialInstance::StaticClass();
+}
+
+const UClass* UTexture::StaticClass()
+{
+    return Z_Construct_UClass_UTexture();
+}
+
+const UClass* UTexture::GetClass() const
+{
+    return UTexture::StaticClass();
+}
+
+const UClass* UEngine::StaticClass()
+{
+    return Z_Construct_UClass_UEngine();
+}
+
+const UClass* UEngine::GetClass() const
+{
+    return UEngine::StaticClass();
+}
+
+const UClass* UGameEngine::StaticClass()
+{
+    return Z_Construct_UClass_UGameEngine();
+}
+
+const UClass* UGameEngine::GetClass() const
+{
+    return UGameEngine::StaticClass();
+}
+
+const UClass* UScriptComponent::StaticClass()
+{
+    return Z_Construct_UClass_UScriptComponent();
+}
+
+const UClass* UScriptComponent::GetClass() const
+{
+    return UScriptComponent::StaticClass();
+}
+
+const UClass* UObjViewerEngine::StaticClass()
+{
+    return Z_Construct_UClass_UObjViewerEngine();
+}
+
+const UClass* UObjViewerEngine::GetClass() const
+{
+    return UObjViewerEngine::StaticClass();
+}
 
 const UStruct* FCameraState::StaticStruct()
 {
@@ -92,351 +1122,6 @@ const UStruct* FCameraPostProcessSettings::StaticStruct()
 const UStruct* FScrollUV::StaticStruct()
 {
     return Z_Construct_UStruct_FScrollUV();
-}
-
-
-namespace
-{
-    struct FAutoRegister_UAnimInstance
-    {
-        FAutoRegister_UAnimInstance()
-        {
-            RegisterGeneratedReflection_UAnimInstance();
-        }
-    };
-
-    FAutoRegister_UAnimInstance GAutoRegister_UAnimInstance;
-
-    struct FAutoRegister_UCameraShakePattern
-    {
-        FAutoRegister_UCameraShakePattern()
-        {
-            RegisterGeneratedReflection_UCameraShakePattern();
-        }
-    };
-
-    FAutoRegister_UCameraShakePattern GAutoRegister_UCameraShakePattern;
-
-    struct FAutoRegister_USequenceCameraShakePattern
-    {
-        FAutoRegister_USequenceCameraShakePattern()
-        {
-            RegisterGeneratedReflection_USequenceCameraShakePattern();
-        }
-    };
-
-    FAutoRegister_USequenceCameraShakePattern GAutoRegister_USequenceCameraShakePattern;
-
-    struct FAutoRegister_USinusoidalCameraShakePattern
-    {
-        FAutoRegister_USinusoidalCameraShakePattern()
-        {
-            RegisterGeneratedReflection_USinusoidalCameraShakePattern();
-        }
-    };
-
-    FAutoRegister_USinusoidalCameraShakePattern GAutoRegister_USinusoidalCameraShakePattern;
-
-    struct FAutoRegister_UActorComponent
-    {
-        FAutoRegister_UActorComponent()
-        {
-            RegisterGeneratedReflection_UActorComponent();
-        }
-    };
-
-    FAutoRegister_UActorComponent GAutoRegister_UActorComponent;
-
-    struct FAutoRegister_UBillboardComponent
-    {
-        FAutoRegister_UBillboardComponent()
-        {
-            RegisterGeneratedReflection_UBillboardComponent();
-        }
-    };
-
-    FAutoRegister_UBillboardComponent GAutoRegister_UBillboardComponent;
-
-    struct FAutoRegister_UCameraComponent
-    {
-        FAutoRegister_UCameraComponent()
-        {
-            RegisterGeneratedReflection_UCameraComponent();
-        }
-    };
-
-    FAutoRegister_UCameraComponent GAutoRegister_UCameraComponent;
-
-    struct FAutoRegister_UCapsuleComponent
-    {
-        FAutoRegister_UCapsuleComponent()
-        {
-            RegisterGeneratedReflection_UCapsuleComponent();
-        }
-    };
-
-    FAutoRegister_UCapsuleComponent GAutoRegister_UCapsuleComponent;
-
-    struct FAutoRegister_UDecalComponent
-    {
-        FAutoRegister_UDecalComponent()
-        {
-            RegisterGeneratedReflection_UDecalComponent();
-        }
-    };
-
-    FAutoRegister_UDecalComponent GAutoRegister_UDecalComponent;
-
-    struct FAutoRegister_UFireballComponent
-    {
-        FAutoRegister_UFireballComponent()
-        {
-            RegisterGeneratedReflection_UFireballComponent();
-        }
-    };
-
-    FAutoRegister_UFireballComponent GAutoRegister_UFireballComponent;
-
-    struct FAutoRegister_UHeightFogComponent
-    {
-        FAutoRegister_UHeightFogComponent()
-        {
-            RegisterGeneratedReflection_UHeightFogComponent();
-        }
-    };
-
-    FAutoRegister_UHeightFogComponent GAutoRegister_UHeightFogComponent;
-
-    struct FAutoRegister_UMeshComponent
-    {
-        FAutoRegister_UMeshComponent()
-        {
-            RegisterGeneratedReflection_UMeshComponent();
-        }
-    };
-
-    FAutoRegister_UMeshComponent GAutoRegister_UMeshComponent;
-
-    struct FAutoRegister_UInterpToMovementComponent
-    {
-        FAutoRegister_UInterpToMovementComponent()
-        {
-            RegisterGeneratedReflection_UInterpToMovementComponent();
-        }
-    };
-
-    FAutoRegister_UInterpToMovementComponent GAutoRegister_UInterpToMovementComponent;
-
-    struct FAutoRegister_UMovementComponent
-    {
-        FAutoRegister_UMovementComponent()
-        {
-            RegisterGeneratedReflection_UMovementComponent();
-        }
-    };
-
-    FAutoRegister_UMovementComponent GAutoRegister_UMovementComponent;
-
-    struct FAutoRegister_UProjectileMovementComponent
-    {
-        FAutoRegister_UProjectileMovementComponent()
-        {
-            RegisterGeneratedReflection_UProjectileMovementComponent();
-        }
-    };
-
-    FAutoRegister_UProjectileMovementComponent GAutoRegister_UProjectileMovementComponent;
-
-    struct FAutoRegister_UPursuitMovementComponent
-    {
-        FAutoRegister_UPursuitMovementComponent()
-        {
-            RegisterGeneratedReflection_UPursuitMovementComponent();
-        }
-    };
-
-    FAutoRegister_UPursuitMovementComponent GAutoRegister_UPursuitMovementComponent;
-
-    struct FAutoRegister_URotatingMovementComponent
-    {
-        FAutoRegister_URotatingMovementComponent()
-        {
-            RegisterGeneratedReflection_URotatingMovementComponent();
-        }
-    };
-
-    FAutoRegister_URotatingMovementComponent GAutoRegister_URotatingMovementComponent;
-
-    struct FAutoRegister_UDirectionalLightComponent
-    {
-        FAutoRegister_UDirectionalLightComponent()
-        {
-            RegisterGeneratedReflection_UDirectionalLightComponent();
-        }
-    };
-
-    FAutoRegister_UDirectionalLightComponent GAutoRegister_UDirectionalLightComponent;
-
-    struct FAutoRegister_ULightComponent
-    {
-        FAutoRegister_ULightComponent()
-        {
-            RegisterGeneratedReflection_ULightComponent();
-        }
-    };
-
-    FAutoRegister_ULightComponent GAutoRegister_ULightComponent;
-
-    struct FAutoRegister_ULightComponentBase
-    {
-        FAutoRegister_ULightComponentBase()
-        {
-            RegisterGeneratedReflection_ULightComponentBase();
-        }
-    };
-
-    FAutoRegister_ULightComponentBase GAutoRegister_ULightComponentBase;
-
-    struct FAutoRegister_UPointLightComponent
-    {
-        FAutoRegister_UPointLightComponent()
-        {
-            RegisterGeneratedReflection_UPointLightComponent();
-        }
-    };
-
-    FAutoRegister_UPointLightComponent GAutoRegister_UPointLightComponent;
-
-    struct FAutoRegister_USpotlightComponent
-    {
-        FAutoRegister_USpotlightComponent()
-        {
-            RegisterGeneratedReflection_USpotlightComponent();
-        }
-    };
-
-    FAutoRegister_USpotlightComponent GAutoRegister_USpotlightComponent;
-
-    struct FAutoRegister_UPrimitiveComponent
-    {
-        FAutoRegister_UPrimitiveComponent()
-        {
-            RegisterGeneratedReflection_UPrimitiveComponent();
-        }
-    };
-
-    FAutoRegister_UPrimitiveComponent GAutoRegister_UPrimitiveComponent;
-
-    struct FAutoRegister_USceneComponent
-    {
-        FAutoRegister_USceneComponent()
-        {
-            RegisterGeneratedReflection_USceneComponent();
-        }
-    };
-
-    FAutoRegister_USceneComponent GAutoRegister_USceneComponent;
-
-    struct FAutoRegister_USkeletalMeshComponent
-    {
-        FAutoRegister_USkeletalMeshComponent()
-        {
-            RegisterGeneratedReflection_USkeletalMeshComponent();
-        }
-    };
-
-    FAutoRegister_USkeletalMeshComponent GAutoRegister_USkeletalMeshComponent;
-
-    struct FAutoRegister_USkinnedMeshComponent
-    {
-        FAutoRegister_USkinnedMeshComponent()
-        {
-            RegisterGeneratedReflection_USkinnedMeshComponent();
-        }
-    };
-
-    FAutoRegister_USkinnedMeshComponent GAutoRegister_USkinnedMeshComponent;
-
-    struct FAutoRegister_USoundComponent
-    {
-        FAutoRegister_USoundComponent()
-        {
-            RegisterGeneratedReflection_USoundComponent();
-        }
-    };
-
-    FAutoRegister_USoundComponent GAutoRegister_USoundComponent;
-
-    struct FAutoRegister_USphereComponent
-    {
-        FAutoRegister_USphereComponent()
-        {
-            RegisterGeneratedReflection_USphereComponent();
-        }
-    };
-
-    FAutoRegister_USphereComponent GAutoRegister_USphereComponent;
-
-    struct FAutoRegister_USpringArmComponent
-    {
-        FAutoRegister_USpringArmComponent()
-        {
-            RegisterGeneratedReflection_USpringArmComponent();
-        }
-    };
-
-    FAutoRegister_USpringArmComponent GAutoRegister_USpringArmComponent;
-
-    struct FAutoRegister_UStaticMeshComponent
-    {
-        FAutoRegister_UStaticMeshComponent()
-        {
-            RegisterGeneratedReflection_UStaticMeshComponent();
-        }
-    };
-
-    FAutoRegister_UStaticMeshComponent GAutoRegister_UStaticMeshComponent;
-
-    struct FAutoRegister_USubUVComponent
-    {
-        FAutoRegister_USubUVComponent()
-        {
-            RegisterGeneratedReflection_USubUVComponent();
-        }
-    };
-
-    FAutoRegister_USubUVComponent GAutoRegister_USubUVComponent;
-
-    struct FAutoRegister_UTextRenderComponent
-    {
-        FAutoRegister_UTextRenderComponent()
-        {
-            RegisterGeneratedReflection_UTextRenderComponent();
-        }
-    };
-
-    FAutoRegister_UTextRenderComponent GAutoRegister_UTextRenderComponent;
-
-    struct FAutoRegister_UMainSceneDestructibleComponent
-    {
-        FAutoRegister_UMainSceneDestructibleComponent()
-        {
-            RegisterGeneratedReflection_UMainSceneDestructibleComponent();
-        }
-    };
-
-    FAutoRegister_UMainSceneDestructibleComponent GAutoRegister_UMainSceneDestructibleComponent;
-
-    struct FAutoRegister_UScriptComponent
-    {
-        FAutoRegister_UScriptComponent()
-        {
-            RegisterGeneratedReflection_UScriptComponent();
-        }
-    };
-
-    FAutoRegister_UScriptComponent GAutoRegister_UScriptComponent;
-
 }
 
 const UEnum* Z_Construct_UEnum_EInterpBehaviour()
@@ -494,8 +1179,9 @@ const UStruct* Z_Construct_UStruct_FCameraState()
         &Property_OrthoWidth_3,
         &Property_bIsOrthogonal_4,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UStruct StructInfo("FCameraState", sizeof(FCameraState), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UStruct StructInfo("FCameraState", sizeof(FCameraState), Properties, PropertyCount);
     return &StructInfo;
 }
 
@@ -514,8 +1200,9 @@ const UStruct* Z_Construct_UStruct_FCameraPostProcessSettings()
         &Property_VignetteSmoothness_3,
         &Property_VignetteColor_4,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UStruct StructInfo("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UStruct StructInfo("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, PropertyCount);
     return &StructInfo;
 }
 
@@ -528,12 +1215,49 @@ const UStruct* Z_Construct_UStruct_FScrollUV()
         &Property_U_0,
         &Property_V_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UStruct StructInfo("FScrollUV", sizeof(FScrollUV), Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UStruct StructInfo("FScrollUV", sizeof(FScrollUV), Properties, PropertyCount);
     return &StructInfo;
 }
 
-void RegisterGeneratedReflection_UAnimInstance()
+const UClass* Z_Construct_UClass_UEditorEngine()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UEditorEngine", UEngine::StaticClass(), sizeof(UEditorEngine), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UActorSequence()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UActorSequence", UObject::StaticClass(), sizeof(UActorSequence), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UActorSequencePlayer()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UActorSequencePlayer", UObject::StaticClass(), sizeof(UActorSequencePlayer), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimationStateMachine()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimationStateMachine", UObject::StaticClass(), sizeof(UAnimationStateMachine), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimInstance()
 {
     static const FFloatProperty Property_CurrentTime_0("CurrentTime", nullptr, nullptr, offsetof(UAnimInstance, CurrentTime), EPropertyAccess::VisibleAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized);
     static const FFloatProperty Property_NextTime_1("NextTime", nullptr, nullptr, offsetof(UAnimInstance, NextTime), EPropertyAccess::VisibleAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized);
@@ -550,11 +1274,85 @@ void RegisterGeneratedReflection_UAnimInstance()
         &Property_BlendFactor_4,
         &Property_BlendSpeed_5,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UAnimInstance::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UAnimInstance", UObject::StaticClass(), sizeof(UAnimInstance), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UCameraShakePattern()
+const UClass* Z_Construct_UClass_UAnimInstanceAsset()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimInstanceAsset", UObject::StaticClass(), sizeof(UAnimInstanceAsset), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimSingleNodeInstance()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimSingleNodeInstance", UAnimInstance::StaticClass(), sizeof(UAnimSingleNodeInstance), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ULuaAnimInstance()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ULuaAnimInstance", UAnimInstance::StaticClass(), sizeof(ULuaAnimInstance), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UCurveFloatAsset()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UCurveFloatAsset", UObject::StaticClass(), sizeof(UCurveFloatAsset), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UPhysicsAsset()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UPhysicsAsset", UObject::StaticClass(), sizeof(UPhysicsAsset), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_USkeletalMesh()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("USkeletalMesh", UObject::StaticClass(), sizeof(USkeletalMesh), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_USkeleton()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("USkeleton", UObject::StaticClass(), sizeof(USkeleton), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UStaticMesh()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UStaticMesh", UObject::StaticClass(), sizeof(UStaticMesh), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UCameraShakePattern()
 {
     static const FFloatProperty Property_Duration_0("Duration", "Duration", nullptr, offsetof(UCameraShakePattern, Duration), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_BlendInTime_1("BlendInTime", "BlendInTime", nullptr, offsetof(UCameraShakePattern, BlendInTime), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -565,11 +1363,31 @@ void RegisterGeneratedReflection_UCameraShakePattern()
         &Property_BlendInTime_1,
         &Property_BlendOutTime_2,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UCameraShakePattern::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UCameraShakePattern", UObject::StaticClass(), sizeof(UCameraShakePattern), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USequenceCameraShakePattern()
+const UClass* Z_Construct_UClass_UPerlinCameraShakePattern()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UPerlinCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(UPerlinCameraShakePattern), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UCameraShakeBase()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UCameraShakeBase", UObject::StaticClass(), sizeof(UCameraShakeBase), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_USequenceCameraShakePattern()
 {
     static const FFloatProperty Property_PlayRate_0("PlayRate", "PlayRate", nullptr, offsetof(USequenceCameraShakePattern, PlayRate), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_Scale_1("Scale", "Scale", nullptr, offsetof(USequenceCameraShakePattern, Scale), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -592,11 +1410,13 @@ void RegisterGeneratedReflection_USequenceCameraShakePattern()
         &Property_RotationAmplitudeDeg_7,
         &Property_FOVAmplitude_8,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USequenceCameraShakePattern::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USequenceCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(USequenceCameraShakePattern), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USinusoidalCameraShakePattern()
+const UClass* Z_Construct_UClass_USinusoidalCameraShakePattern()
 {
     static const FVectorProperty Property_LocationAmplitude_0("LocationAmplitude", "LocationAmplitude", nullptr, offsetof(USinusoidalCameraShakePattern, LocationAmplitude), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FVectorProperty Property_LocationFrequency_1("LocationFrequency", "LocationFrequency", nullptr, offsetof(USinusoidalCameraShakePattern, LocationFrequency), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -619,11 +1439,13 @@ void RegisterGeneratedReflection_USinusoidalCameraShakePattern()
         &Property_FOVFrequency_7,
         &Property_FOVPhase_8,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USinusoidalCameraShakePattern::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USinusoidalCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(USinusoidalCameraShakePattern), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UActorComponent()
+const UClass* Z_Construct_UClass_UActorComponent()
 {
     static const FStringProperty Property_TagsText_0("TagsText", "Tags", nullptr, offsetof(UActorComponent, TagsText), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::NonSerialized);
     static const FBoolProperty Property_bCanEverTick_1("bCanEverTick", "Enable Tick", nullptr, offsetof(UActorComponent, bCanEverTick), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -636,11 +1458,22 @@ void RegisterGeneratedReflection_UActorComponent()
         &Property_bTransient_2,
         &Property_bIsEditorOnly_3,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UActorComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UActorComponent", UObject::StaticClass(), sizeof(UActorComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UBillboardComponent()
+const UClass* Z_Construct_UClass_UActorSequenceComponent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UActorSequenceComponent", UActorComponent::StaticClass(), sizeof(UActorSequenceComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UBillboardComponent()
 {
     static const FBoolProperty Property_bInheritOwnerScale_0("bInheritOwnerScale", "Inherit Owner Scale", "bInheritOwnerScale", offsetof(UBillboardComponent, bInheritOwnerScale), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FNameProperty Property_TextureName_1("TextureName", "Particle", nullptr, offsetof(UBillboardComponent, TextureName), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -657,11 +1490,22 @@ void RegisterGeneratedReflection_UBillboardComponent()
         &Property_PlayRate_4,
         &Property_bLoop_5,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UBillboardComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UBillboardComponent", UPrimitiveComponent::StaticClass(), sizeof(UBillboardComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UCameraComponent()
+const UClass* Z_Construct_UClass_UBoxComponent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UBoxComponent", UShapeComponent::StaticClass(), sizeof(UBoxComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UCameraComponent()
 {
     static const FStructProperty Property_CameraState_0("CameraState", nullptr, nullptr, offsetof(UCameraComponent, CameraState), EPropertyAccess::EditAnywhere, FCameraState::StaticStruct(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FStructProperty Property_PostProcessSettings_1("PostProcessSettings", nullptr, nullptr, offsetof(UCameraComponent, PostProcessSettings), EPropertyAccess::EditAnywhere, FCameraPostProcessSettings::StaticStruct(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -670,11 +1514,13 @@ void RegisterGeneratedReflection_UCameraComponent()
         &Property_CameraState_0,
         &Property_PostProcessSettings_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UCameraComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UCameraComponent", USceneComponent::StaticClass(), sizeof(UCameraComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UCapsuleComponent()
+const UClass* Z_Construct_UClass_UCapsuleComponent()
 {
     static const FFloatProperty Property_CapsuleHalfHeight_0("CapsuleHalfHeight", "CapsuleHalfHeight", nullptr, offsetof(UCapsuleComponent, CapsuleHalfHeight), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_CapsuleRadius_1("CapsuleRadius", "CapsuleRadius", nullptr, offsetof(UCapsuleComponent, CapsuleRadius), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -683,11 +1529,13 @@ void RegisterGeneratedReflection_UCapsuleComponent()
         &Property_CapsuleHalfHeight_0,
         &Property_CapsuleRadius_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UCapsuleComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UCapsuleComponent", UShapeComponent::StaticClass(), sizeof(UCapsuleComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UDecalComponent()
+const UClass* Z_Construct_UClass_UDecalComponent()
 {
     static const FVectorProperty Property_DecalSize_0("DecalSize", "Size", nullptr, offsetof(UDecalComponent, DecalSize), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FColorProperty Property_DecalColor_1("DecalColor", "Color", nullptr, offsetof(UDecalComponent, DecalColor), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -706,11 +1554,13 @@ void RegisterGeneratedReflection_UDecalComponent()
         &Property_FadeInStartDelay_5,
         &Property_bDestroyOwnerAfterFade_6,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UDecalComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UDecalComponent", UPrimitiveComponent::StaticClass(), sizeof(UDecalComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UFireballComponent()
+const UClass* Z_Construct_UClass_UFireballComponent()
 {
     static const FFloatProperty Property_Intensity_0("Intensity", "Intensity", nullptr, offsetof(UFireballComponent, Intensity), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_Radius_1("Radius", "Radius", nullptr, offsetof(UFireballComponent, Radius), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -723,11 +1573,22 @@ void RegisterGeneratedReflection_UFireballComponent()
         &Property_RadiusFallOff_2,
         &Property_Color_3,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UFireballComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UFireballComponent", UPrimitiveComponent::StaticClass(), sizeof(UFireballComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UHeightFogComponent()
+const UClass* Z_Construct_UClass_UGizmoComponent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UGizmoComponent", UPrimitiveComponent::StaticClass(), sizeof(UGizmoComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UHeightFogComponent()
 {
     static const FColorProperty Property_FogInscatteringColor_0("FogInscatteringColor", "FogInscatteringColor", nullptr, offsetof(UHeightFogComponent, FogInscatteringColor), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_FogDensity_1("FogDensity", "FogDensity", nullptr, offsetof(UHeightFogComponent, FogDensity), EPropertyAccess::EditAnywhere, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
@@ -746,22 +1607,26 @@ void RegisterGeneratedReflection_UHeightFogComponent()
         &Property_FogCutoffDistance_5,
         &Property_FogMaxOpacity_6,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UHeightFogComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UHeightFogComponent", UPrimitiveComponent::StaticClass(), sizeof(UHeightFogComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UMeshComponent()
+const UClass* Z_Construct_UClass_UMeshComponent()
 {
     static const FStructProperty Property_ScrollUV_0("ScrollUV", nullptr, nullptr, offsetof(UMeshComponent, ScrollUV), EPropertyAccess::EditAnywhere, FScrollUV::StaticStruct(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_ScrollUV_0,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UMeshComponent", UPrimitiveComponent::StaticClass(), sizeof(UMeshComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UInterpToMovementComponent()
+const UClass* Z_Construct_UClass_UInterpToMovementComponent()
 {
     static const FEnumProperty Property_InterpBehaviour_0("InterpBehaviour", "Interp Mode", nullptr, offsetof(UInterpToMovementComponent, InterpBehaviour), EPropertyAccess::EditAnywhere, Z_Construct_UEnum_EInterpBehaviour(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FArrayProperty Property_ControlPoints_1("ControlPoints", "Control Points", nullptr, offsetof(UInterpToMovementComponent, ControlPoints), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -776,11 +1641,13 @@ void RegisterGeneratedReflection_UInterpToMovementComponent()
         &Property_bAutoActivate_3,
         &Property_bFaceTargetDir_4,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UInterpToMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UInterpToMovementComponent", UMovementComponent::StaticClass(), sizeof(UInterpToMovementComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UMovementComponent()
+const UClass* Z_Construct_UClass_UMovementComponent()
 {
     static const FSceneComponentProperty Property_UpdatedComponent_0("UpdatedComponent", "Updated Component", nullptr, offsetof(UMovementComponent, UpdatedComponent), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FVectorProperty Property_Velocity_1("Velocity", "Velocity", nullptr, offsetof(UMovementComponent, Velocity), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -795,11 +1662,13 @@ void RegisterGeneratedReflection_UMovementComponent()
         &Property_bUpdateOnlyIfRendered_3,
         &Property_bConstrainToPlane_4,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UMovementComponent", UActorComponent::StaticClass(), sizeof(UMovementComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UProjectileMovementComponent()
+const UClass* Z_Construct_UClass_UProjectileMovementComponent()
 {
     static const FFloatProperty Property_InitialSpeed_0("InitialSpeed", "Initial Speed", nullptr, offsetof(UProjectileMovementComponent, InitialSpeed), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 1.0f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_MaxSpeed_1("MaxSpeed", "Max Speed", nullptr, offsetof(UProjectileMovementComponent, MaxSpeed), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 1.0f, EPropertyUsageFlags::None);
@@ -812,11 +1681,13 @@ void RegisterGeneratedReflection_UProjectileMovementComponent()
         &Property_GravityScale_2,
         &Property_bRotationFollowsVelocity_3,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UProjectileMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UProjectileMovementComponent", UMovementComponent::StaticClass(), sizeof(UProjectileMovementComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UPursuitMovementComponent()
+const UClass* Z_Construct_UClass_UPursuitMovementComponent()
 {
     static const FFloatProperty Property_UpdateLerpInterval_0("UpdateLerpInterval", "Pursuit Interval", nullptr, offsetof(UPursuitMovementComponent, UpdateLerpInterval), EPropertyAccess::EditAnywhere, 0.01f, 5.0f, 0.01f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_DetectionRadius_1("DetectionRadius", "Detection Radius", nullptr, offsetof(UPursuitMovementComponent, DetectionRadius), EPropertyAccess::EditAnywhere, 0.01f, 4096.0f, 0.01f, EPropertyUsageFlags::None);
@@ -829,11 +1700,13 @@ void RegisterGeneratedReflection_UPursuitMovementComponent()
         &Property_PursuitSpeed_2,
         &Property_bFaceTargetDir_3,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UPursuitMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UPursuitMovementComponent", UMovementComponent::StaticClass(), sizeof(UPursuitMovementComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_URotatingMovementComponent()
+const UClass* Z_Construct_UClass_URotatingMovementComponent()
 {
     static const FVectorProperty Property_RotationRate_0("RotationRate", "Rotation Rate", nullptr, offsetof(URotatingMovementComponent, RotationRate), EPropertyAccess::EditAnywhere, -360.0f, 360.0f, 1.0f, EPropertyUsageFlags::None);
     static const FVectorProperty Property_PivotTranslation_1("PivotTranslation", "Pivot Translation", nullptr, offsetof(URotatingMovementComponent, PivotTranslation), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -844,11 +1717,22 @@ void RegisterGeneratedReflection_URotatingMovementComponent()
         &Property_PivotTranslation_1,
         &Property_bRotationInLocalSpace_2,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&URotatingMovementComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("URotatingMovementComponent", UMovementComponent::StaticClass(), sizeof(URotatingMovementComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UDirectionalLightComponent()
+const UClass* Z_Construct_UClass_UAmbientLightComponent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAmbientLightComponent", ULightComponent::StaticClass(), sizeof(UAmbientLightComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UDirectionalLightComponent()
 {
     static const FFloatProperty Property_CSMMaxDistance_0("CSMMaxDistance", "MaxDistance", nullptr, offsetof(UDirectionalLightComponent, CSMMaxDistance), EPropertyAccess::EditAnywhere, 0.0f, 1000.0f, 10.0f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_CSMPractialLambda_1("CSMPractialLambda", "Lambda", nullptr, offsetof(UDirectionalLightComponent, CSMPractialLambda), EPropertyAccess::EditAnywhere, 0.0f, 1.0f, 0.01f, EPropertyUsageFlags::None);
@@ -857,11 +1741,13 @@ void RegisterGeneratedReflection_UDirectionalLightComponent()
         &Property_CSMMaxDistance_0,
         &Property_CSMPractialLambda_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UDirectionalLightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UDirectionalLightComponent", ULightComponent::StaticClass(), sizeof(UDirectionalLightComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_ULightComponent()
+const UClass* Z_Construct_UClass_ULightComponent()
 {
     static const FIntProperty Property_ShadowResolutionScale_0("ShadowResolutionScale", "Shadow Resolution Scale", "ShadowResolutionScale", offsetof(ULightComponent, ShadowResolutionScale), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_ConstantBias_1("ConstantBias", "Constant Bias ( DepthBias ^ (1 / TextureBit))", "ConstantBias", offsetof(ULightComponent, ConstantBias), EPropertyAccess::EditAnywhere, 0.0f, 0.01f, 0.001f, EPropertyUsageFlags::None);
@@ -876,11 +1762,13 @@ void RegisterGeneratedReflection_ULightComponent()
         &Property_ShadowSharpen_3,
         &Property_eShadowMapType_4,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&ULightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("ULightComponent", ULightComponentBase::StaticClass(), sizeof(ULightComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_ULightComponentBase()
+const UClass* Z_Construct_UClass_ULightComponentBase()
 {
     static const FColorProperty Property_LightColor_0("LightColor", "Color", nullptr, offsetof(ULightComponentBase, LightColor), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
     static const FFloatProperty Property_Intensity_1("Intensity", "Intensity", nullptr, offsetof(ULightComponentBase, Intensity), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
@@ -891,11 +1779,13 @@ void RegisterGeneratedReflection_ULightComponentBase()
         &Property_Intensity_1,
         &Property_bCastShadows_2,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&ULightComponentBase::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("ULightComponentBase", USceneComponent::StaticClass(), sizeof(ULightComponentBase), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UPointLightComponent()
+const UClass* Z_Construct_UClass_UPointLightComponent()
 {
     static const FFloatProperty Property_AttenuationRadius_0("AttenuationRadius", "Attenuation Radius", "AttenuationRadius", offsetof(UPointLightComponent, AttenuationRadius), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
     static const FFloatProperty Property_LightFalloffExponent_1("LightFalloffExponent", "Light Falloff", "LightFalloffExponent", offsetof(UPointLightComponent, LightFalloffExponent), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
@@ -904,11 +1794,13 @@ void RegisterGeneratedReflection_UPointLightComponent()
         &Property_AttenuationRadius_0,
         &Property_LightFalloffExponent_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UPointLightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UPointLightComponent", ULightComponent::StaticClass(), sizeof(UPointLightComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USpotlightComponent()
+const UClass* Z_Construct_UClass_USpotlightComponent()
 {
     static const FFloatProperty Property_InnerConeAngle_0("InnerConeAngle", "Inner Cone Angle", "InnerConeAngle", offsetof(USpotlightComponent, InnerConeAngle), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
     static const FFloatProperty Property_OuterConeAngle_1("OuterConeAngle", "Outer Cone Angle", "OuterConeAngle", offsetof(USpotlightComponent, OuterConeAngle), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
@@ -917,11 +1809,13 @@ void RegisterGeneratedReflection_USpotlightComponent()
         &Property_InnerConeAngle_0,
         &Property_OuterConeAngle_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USpotlightComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USpotlightComponent", UPointLightComponent::StaticClass(), sizeof(USpotlightComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UPrimitiveComponent()
+const UClass* Z_Construct_UClass_UPrimitiveComponent()
 {
     static const FBoolProperty Property_bIsVisible_0("bIsVisible", "Visible", nullptr, offsetof(UPrimitiveComponent, bIsVisible), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FBoolProperty Property_bEnableCull_1("bEnableCull", "Enable Cull", nullptr, offsetof(UPrimitiveComponent, bEnableCull), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -934,11 +1828,22 @@ void RegisterGeneratedReflection_UPrimitiveComponent()
         &Property_bCastDecal_2,
         &Property_bGenerateOverlapEvents_3,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UPrimitiveComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UPrimitiveComponent", USceneComponent::StaticClass(), sizeof(UPrimitiveComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USceneComponent()
+const UClass* Z_Construct_UClass_UProceduralMeshComponent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UProceduralMeshComponent", UPrimitiveComponent::StaticClass(), sizeof(UProceduralMeshComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_USceneComponent()
 {
     static const FVectorProperty Property_RelativeLocation_0("RelativeLocation", "Location", nullptr, offsetof(USceneComponent, RelativeLocation), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
     static const FVectorProperty Property_RelativeRotation_1("RelativeRotation", "Rotation", nullptr, offsetof(USceneComponent, RelativeRotation), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::Animatable);
@@ -949,22 +1854,35 @@ void RegisterGeneratedReflection_USceneComponent()
         &Property_RelativeRotation_1,
         &Property_RelativeScale3D_2,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USceneComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USceneComponent", UActorComponent::StaticClass(), sizeof(USceneComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USkeletalMeshComponent()
+const UClass* Z_Construct_UClass_UShapeComponent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UShapeComponent", UPrimitiveComponent::StaticClass(), sizeof(UShapeComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_USkeletalMeshComponent()
 {
     static const FStringProperty Property_AnimInstanceAssetPath_0("AnimInstanceAssetPath", "AnimInstance", nullptr, offsetof(USkeletalMeshComponent, AnimInstanceAssetPath), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_AnimInstanceAssetPath_0,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USkeletalMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USkeletalMeshComponent", USkinnedMeshComponent::StaticClass(), sizeof(USkeletalMeshComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USkinnedMeshComponent()
+const UClass* Z_Construct_UClass_USkinnedMeshComponent()
 {
     static const FStringProperty Property_SkeletalMeshPath_0("SkeletalMeshPath", "SkeletalMesh", "SkeletalMeshAsset", offsetof(USkinnedMeshComponent, SkeletalMeshPath), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FBoolProperty Property_bEnableCPUSkinning_1("bEnableCPUSkinning", "Enable CPU Skinning", nullptr, offsetof(USkinnedMeshComponent, bEnableCPUSkinning), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -973,11 +1891,13 @@ void RegisterGeneratedReflection_USkinnedMeshComponent()
         &Property_SkeletalMeshPath_0,
         &Property_bEnableCPUSkinning_1,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USkinnedMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USkinnedMeshComponent", UMeshComponent::StaticClass(), sizeof(USkinnedMeshComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USoundComponent()
+const UClass* Z_Construct_UClass_USoundComponent()
 {
     static const FStringProperty Property_SoundKeyOrPath_0("SoundKeyOrPath", "Sound", nullptr, offsetof(USoundComponent, SoundKeyOrPath), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FBoolProperty Property_bPlayOnBeginPlay_1("bPlayOnBeginPlay", "Play On BeginPlay", nullptr, offsetof(USoundComponent, bPlayOnBeginPlay), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -1004,22 +1924,26 @@ void RegisterGeneratedReflection_USoundComponent()
         &Property_AttenuationModel_9,
         &Property_RolloffFactor_10,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USoundComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USoundComponent", USceneComponent::StaticClass(), sizeof(USoundComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USphereComponent()
+const UClass* Z_Construct_UClass_USphereComponent()
 {
     static const FFloatProperty Property_SphereRadius_0("SphereRadius", "Sphere Radius", nullptr, offsetof(USphereComponent, SphereRadius), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_SphereRadius_0,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USphereComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USphereComponent", UShapeComponent::StaticClass(), sizeof(USphereComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USpringArmComponent()
+const UClass* Z_Construct_UClass_USpringArmComponent()
 {
     static const FFloatProperty Property_TargetArmLength_0("TargetArmLength", "Target Arm Length", "TargetArmLength", offsetof(USpringArmComponent, TargetArmLength), EPropertyAccess::EditAnywhere, 0.0f, 100.0f, 0.1f, EPropertyUsageFlags::None);
     static const FVectorProperty Property_SocketOffset_1("SocketOffset", "Socket Offset", "SocketOffset", offsetof(USpringArmComponent, SocketOffset), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -1032,33 +1956,39 @@ void RegisterGeneratedReflection_USpringArmComponent()
         &Property_bEnableCameraLag_2,
         &Property_CameraLagSpeed_3,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USpringArmComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USpringArmComponent", USceneComponent::StaticClass(), sizeof(USpringArmComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UStaticMeshComponent()
+const UClass* Z_Construct_UClass_UStaticMeshComponent()
 {
     static const FStringProperty Property_StaticMeshAssetPath_0("StaticMeshAssetPath", "StaticMesh", "ObjStaticMeshAsset", offsetof(UStaticMeshComponent, StaticMeshAssetPath), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_StaticMeshAssetPath_0,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UStaticMeshComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UStaticMeshComponent", UMeshComponent::StaticClass(), sizeof(UStaticMeshComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_USubUVComponent()
+const UClass* Z_Construct_UClass_USubUVComponent()
 {
     static const FNameProperty Property_ParticleName_0("ParticleName", "Particle", nullptr, offsetof(USubUVComponent, ParticleName), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_ParticleName_0,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&USubUVComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("USubUVComponent", UBillboardComponent::StaticClass(), sizeof(USubUVComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UTextRenderComponent()
+const UClass* Z_Construct_UClass_UTextRenderComponent()
 {
     static const FStringProperty Property_Text_0("Text", "Text", nullptr, offsetof(UTextRenderComponent, Text), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FNameProperty Property_FontName_1("FontName", "Font", nullptr, offsetof(UTextRenderComponent, FontName), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
@@ -1069,11 +1999,283 @@ void RegisterGeneratedReflection_UTextRenderComponent()
         &Property_FontName_1,
         &Property_FontSize_2,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UTextRenderComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UTextRenderComponent", UPrimitiveComponent::StaticClass(), sizeof(UTextRenderComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UMainSceneDestructibleComponent()
+const UClass* Z_Construct_UClass_AActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AActor", UObject::StaticClass(), sizeof(AActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ADefaultPawn()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ADefaultPawn", APawn::StaticClass(), sizeof(ADefaultPawn), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_AGameModeBase()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AGameModeBase", AActor::StaticClass(), sizeof(AGameModeBase), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ULevel()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ULevel", UObject::StaticClass(), sizeof(ULevel), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_APawn()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("APawn", AActor::StaticClass(), sizeof(APawn), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_APlayerController()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("APlayerController", AActor::StaticClass(), sizeof(APlayerController), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ACubeActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ACubeActor", AActor::StaticClass(), sizeof(ACubeActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ASphereActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ASphereActor", AActor::StaticClass(), sizeof(ASphereActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_APlaneActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("APlaneActor", AActor::StaticClass(), sizeof(APlaneActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_AAttachTestActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AAttachTestActor", AActor::StaticClass(), sizeof(AAttachTestActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ASceneActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ASceneActor", AActor::StaticClass(), sizeof(ASceneActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_APlayerStart()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("APlayerStart", AActor::StaticClass(), sizeof(APlayerStart), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_AFogActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AFogActor", AActor::StaticClass(), sizeof(AFogActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_AStaticMeshActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AStaticMeshActor", AActor::StaticClass(), sizeof(AStaticMeshActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ASkeletalMeshActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ASkeletalMeshActor", AActor::StaticClass(), sizeof(ASkeletalMeshActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ASubUVActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ASubUVActor", AActor::StaticClass(), sizeof(ASubUVActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ATextRenderActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ATextRenderActor", AActor::StaticClass(), sizeof(ATextRenderActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ABillboardActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ABillboardActor", AActor::StaticClass(), sizeof(ABillboardActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ADecalActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ADecalActor", AActor::StaticClass(), sizeof(ADecalActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_AFireballActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AFireballActor", AActor::StaticClass(), sizeof(AFireballActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ADecalSpotLightActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ADecalSpotLightActor", AActor::StaticClass(), sizeof(ADecalSpotLightActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ALightActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ALightActor", AActor::StaticClass(), sizeof(ALightActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_AAmbientLightActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AAmbientLightActor", ALightActor::StaticClass(), sizeof(AAmbientLightActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ADirectionalLightActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ADirectionalLightActor", ALightActor::StaticClass(), sizeof(ADirectionalLightActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_APointLightActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("APointLightActor", ALightActor::StaticClass(), sizeof(APointLightActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ASpotlightActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ASpotlightActor", APointLightActor::StaticClass(), sizeof(ASpotlightActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ABullet()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ABullet", AActor::StaticClass(), sizeof(ABullet), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ABladeSlash()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ABladeSlash", AActor::StaticClass(), sizeof(ABladeSlash), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ADestructibleActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ADestructibleActor", AActor::StaticClass(), sizeof(ADestructibleActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ABoundsBoxActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ABoundsBoxActor", AActor::StaticClass(), sizeof(ABoundsBoxActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UMainSceneDestructibleComponent()
 {
     static const FBoolProperty Property_bAutoStart_0("bAutoStart", "Auto Start", nullptr, offsetof(UMainSceneDestructibleComponent, bAutoStart), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_SliceDuration_1("SliceDuration", "Slice Duration", nullptr, offsetof(UMainSceneDestructibleComponent, SliceDuration), EPropertyAccess::EditAnywhere, 0.05f, 10.0f, 0.05f, EPropertyUsageFlags::None);
@@ -1092,17 +2294,111 @@ void RegisterGeneratedReflection_UMainSceneDestructibleComponent()
         &Property_SliceCount_5,
         &Property_PresentationTrigger_6,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UMainSceneDestructibleComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UMainSceneDestructibleComponent", UActorComponent::StaticClass(), sizeof(UMainSceneDestructibleComponent), Properties, PropertyCount);
+    return &ClassInfo;
 }
 
-void RegisterGeneratedReflection_UScriptComponent()
+const UClass* Z_Construct_UClass_AMainSceneDestructibleActor()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("AMainSceneDestructibleActor", AActor::StaticClass(), sizeof(AMainSceneDestructibleActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UWorld()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UWorld", UObject::StaticClass(), sizeof(UWorld), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UObject()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UObject", nullptr, sizeof(UObject), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UMaterialInterface()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UMaterialInterface", UObject::StaticClass(), sizeof(UMaterialInterface), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UMaterial()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UMaterial", UMaterialInterface::StaticClass(), sizeof(UMaterial), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UMaterialInstance()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UMaterialInstance", UMaterialInterface::StaticClass(), sizeof(UMaterialInstance), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UTexture()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UTexture", UObject::StaticClass(), sizeof(UTexture), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UEngine()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UEngine", UObject::StaticClass(), sizeof(UEngine), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UGameEngine()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UGameEngine", UEngine::StaticClass(), sizeof(UGameEngine), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UScriptComponent()
 {
     static const FStringProperty Property_ScriptName_0("ScriptName", "ScriptName", nullptr, offsetof(UScriptComponent, ScriptName), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_ScriptName_0,
     };
+    static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    FReflectionRegistry::Get().RegisterProperties(&UScriptComponent::s_TypeInfo, Properties, static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0])));
+    static const UClass ClassInfo("UScriptComponent", UActorComponent::StaticClass(), sizeof(UScriptComponent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UObjViewerEngine()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UObjViewerEngine", UEngine::StaticClass(), sizeof(UObjViewerEngine), Properties, PropertyCount);
+    return &ClassInfo;
 }

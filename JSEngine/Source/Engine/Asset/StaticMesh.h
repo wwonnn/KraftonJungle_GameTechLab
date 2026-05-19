@@ -3,11 +3,13 @@
 
 #include "StaticMeshTypes.h"
 #include "Object/Object.h"
+#include "Generated/StaticMesh.generated.h"
 
+UCLASS()
 class UStaticMesh : public UObject
 {
 public:
-	DECLARE_CLASS(UStaticMesh, UObject)
+	GENERATED_BODY()
 
 	UStaticMesh() = default;
 	~UStaticMesh() override;

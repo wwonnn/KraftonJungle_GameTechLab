@@ -1,4 +1,4 @@
-﻿#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerController.h"
 
 #include "Component/CameraComponent.h"
 #include "Core/Logging/Log.h"
@@ -12,7 +12,6 @@
 
 #include <algorithm>
 
-DEFINE_CLASS(APlayerController, AActor)
 REGISTER_FACTORY(APlayerController)
 
 namespace

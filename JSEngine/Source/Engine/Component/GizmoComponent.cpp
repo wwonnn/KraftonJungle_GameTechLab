@@ -1,4 +1,4 @@
-﻿#include "GizmoComponent.h"
+#include "GizmoComponent.h"
 #include "GameFramework/AActor.h"
 #include "Component/SceneComponent.h"
 #include "Object/Object.h"
@@ -7,7 +7,6 @@
 #include "TransformProxy.h"
 #include "Engine/Input/InputSystem.h"
 
-DEFINE_CLASS(UGizmoComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UGizmoComponent)
 
 #include <cfloat>

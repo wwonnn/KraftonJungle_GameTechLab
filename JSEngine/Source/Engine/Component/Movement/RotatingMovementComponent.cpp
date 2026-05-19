@@ -1,8 +1,7 @@
-﻿#include "RotatingMovementComponent.h"
+#include "RotatingMovementComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Object/ObjectFactory.h"
 
-DEFINE_CLASS(URotatingMovementComponent, UMovementComponent)
 REGISTER_FACTORY(URotatingMovementComponent)
 
 void URotatingMovementComponent::GetEditableProperties(TArray<FPropertyDescriptor>& OutProps)

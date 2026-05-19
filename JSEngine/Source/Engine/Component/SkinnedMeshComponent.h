@@ -3,11 +3,13 @@
 #include "Asset/SkeletalMesh.h"
 #include "Component/MeshComponent.h"
 #include "Render/Resource/VertexTypes.h"
+#include "Generated/SkinnedMeshComponent.generated.h"
 
+UCLASS()
 class USkinnedMeshComponent : public UMeshComponent
 {
 public:
-    DECLARE_CLASS(USkinnedMeshComponent, UMeshComponent)
+    GENERATED_BODY()
 
     USkinnedMeshComponent();
     ~USkinnedMeshComponent() override = default;

@@ -8,6 +8,7 @@
 #include "Engine/Geometry/AABB.h"
 #include "Core/Delegates/Delegate.h"
 #include "Collision/Collision.h"
+#include "Generated/PrimitiveComponent.generated.h"
 
 /*
 	아직 미사용
@@ -27,10 +28,12 @@ DECLARE_DELEGATE(FOnComponentEndOverlap, UPrimitiveComponent*, AActor*, UPrimiti
 
 class FPrimitiveRenderProxy;
 
+UCLASS()
 class UPrimitiveComponent : public USceneComponent
 {
 public:
-    DECLARE_CLASS(UPrimitiveComponent, USceneComponent)
+    GENERATED_BODY()
+
     ~UPrimitiveComponent() override;
 
     FOnComponentBeginOverlap OnComponentBeginOverlap;

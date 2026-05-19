@@ -1,7 +1,6 @@
-﻿#include "SceneComponent.h"
+#include "SceneComponent.h"
 #include "Object/ObjectFactory.h"
 
-DEFINE_CLASS(USceneComponent, UActorComponent)
 REGISTER_FACTORY(USceneComponent)
 
 // 소유자와 부모-자식 관계를 초기 상태로 명시적으로 리셋합니다.

@@ -1,14 +1,16 @@
-#pragma once
+﻿#pragma once
 
 #include "GameFramework/AActor.h"
+#include "Generated/Pawn.generated.h"
 
 class APlayerController;
 struct FInputActionState;
 
+UCLASS()
 class APawn : public AActor
 {
 public:
-	DECLARE_CLASS(APawn, AActor)
+	GENERATED_BODY()
 
 	APlayerController* GetController() const { return Controller; }
 	void PossessedBy(APlayerController* NewController);

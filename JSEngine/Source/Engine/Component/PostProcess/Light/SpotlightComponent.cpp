@@ -1,4 +1,4 @@
-﻿#include "SpotlightComponent.h"
+#include "SpotlightComponent.h"
 #include "Object/ObjectFactory.h"
 #include <algorithm>
 
@@ -16,7 +16,6 @@ namespace
 	}
 }
 
-DEFINE_CLASS(USpotlightComponent, UPointLightComponent)
 REGISTER_FACTORY(USpotlightComponent)
 
 void USpotlightComponent::PostDuplicate(UObject* Original)

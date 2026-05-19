@@ -6,6 +6,7 @@
 #include "ShaderTypes.h"
 #include "RenderResources.h"
 #include <variant>
+#include "Generated/Material.generated.h"
 
 /**
  * @brief MTL 파일의 머테리얼 데이터를 표현하는 구조체.
@@ -72,10 +73,11 @@ struct FMaterialParamValue
 	std::variant<bool, int32, uint32, float, FVector2, FVector, FVector4, FMatrix, UTexture*> Value;
 };
 
+UCLASS()
 class UMaterialInterface : public UObject
 {
 public:
-	DECLARE_CLASS(UMaterialInterface, UObject)
+	GENERATED_BODY()
 
 	virtual const FString& GetName() const = 0;
 	virtual FString& GetNameRef() = 0;
@@ -114,10 +116,11 @@ public:
 	virtual void GatherAllParams(TMap<FString, FMaterialParamValue>& OutParams) const = 0;
 };
 
+UCLASS()
 class UMaterial : public UMaterialInterface
 {
 public:
-	DECLARE_CLASS(UMaterial, UMaterialInterface)
+	GENERATED_BODY()
 
 	FString Name;
 	FString FilePath;
@@ -244,10 +247,11 @@ private:
 	mutable uint32 MaterialConstantBufferSize = 0;
 };
 
+UCLASS()
 class UMaterialInstance : public UMaterialInterface
 {
 public:
-	DECLARE_CLASS(UMaterialInstance, UMaterialInterface)
+	GENERATED_BODY()
 
 	FString Name;
 	FString FilePath;
@@ -256,6 +260,8 @@ public:
 
 	TMap<FString, FMaterialParamValue> OverridedParams;
 
+	UMaterial*& GetParent() { return Parent; }
+	const UMaterial* GetParent() const { return Parent; }
 	const FString& GetName() const override { return Name; }
 	FString& GetNameRef() override { return Name; }
 	const FString& GetFilePath() const override { return FilePath; }
@@ -352,7 +358,7 @@ public:
 	static UMaterialInstance* Create(UMaterial* Material)
 	{
 		UMaterialInstance* Instance = UObjectManager::Get().CreateObject<UMaterialInstance>();
-		Instance->Parent = Material;
+		Instance->GetParent() = Material;
 		return Instance;
 	}
 

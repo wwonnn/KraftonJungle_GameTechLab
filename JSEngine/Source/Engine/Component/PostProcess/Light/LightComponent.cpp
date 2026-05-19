@@ -1,11 +1,10 @@
-﻿#include "LightComponent.h"
+#include "LightComponent.h"
 #include "Object/ObjectFactory.h"
 #include "Reflection/Property.h"
 #include "Render/Resource/ShadowAtlasManager.h"
 
 #include <cmath>
 
-DEFINE_CLASS(ULightComponent, ULightComponentBase)
 REGISTER_FACTORY(ULightComponent)
 
 namespace

@@ -8,7 +8,6 @@
 #include "GameFramework/World.h"
 #include "Serialization/PrefabManager.h"
 
-DEFINE_CLASS(AGameModeBase, AActor)
 REGISTER_FACTORY(AGameModeBase)
 
 void AGameModeBase::SetPlayerControllerClass(const FString& InClassName)

@@ -1,7 +1,6 @@
-﻿#include "FireballComponent.h"
+#include "FireballComponent.h"
 #include "Render/Proxy/FireballRenderProxy.h"
 
-DEFINE_CLASS(UFireballComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UFireballComponent)
 
 // 화면에서 컬링되지 않도록 수정한다.

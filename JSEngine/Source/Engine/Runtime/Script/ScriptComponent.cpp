@@ -1,4 +1,4 @@
-﻿#include "ScriptComponent.h"
+#include "ScriptComponent.h"
 #include "ScriptManager.h"
 #include "Animation/LuaAnimInstance.h"
 #include "Camera/CameraModifier_CameraShake.h"
@@ -23,7 +23,6 @@
 #undef GetCurrentTime
 #endif
 
-DEFINE_CLASS(UScriptComponent, UActorComponent)
 REGISTER_FACTORY(UScriptComponent)
 
 namespace

@@ -4,7 +4,6 @@
 #include "Engine/Input/GameplayInputTypes.h"
 #include "GameFramework/PlayerController.h"
 
-DEFINE_CLASS(ADefaultPawn, APawn)
 REGISTER_FACTORY(ADefaultPawn)
 
 namespace

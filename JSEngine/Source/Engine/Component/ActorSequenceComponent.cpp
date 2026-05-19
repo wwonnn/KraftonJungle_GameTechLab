@@ -6,7 +6,6 @@
 
 #include <algorithm>
 
-DEFINE_CLASS(UActorSequenceComponent, UActorComponent)
 REGISTER_FACTORY(UActorSequenceComponent)
 
 void UActorSequenceComponent::BeginPlay()

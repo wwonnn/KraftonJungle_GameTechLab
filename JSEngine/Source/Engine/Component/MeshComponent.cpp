@@ -1,11 +1,9 @@
-﻿#include "MeshComponent.h"
+#include "MeshComponent.h"
 #include "Render/Resource/Material.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 
 #include <filesystem>
-
-DEFINE_CLASS(UMeshComponent, UPrimitiveComponent)
 
 // UpdateWorldAABB 등의 함수를 오버라이드하지 않았기 때문에 UMeshComponent도 추상 클래스가 됩니다.
 // 추후에 MeshComponent를 사용할 일이 있다면 Duplicate의 주석을 해제하고 수정하시면 됩니다.

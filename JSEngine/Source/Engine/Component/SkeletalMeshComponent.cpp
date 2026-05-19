@@ -1,4 +1,4 @@
-﻿#include "SkeletalMeshComponent.h"
+#include "SkeletalMeshComponent.h"
 
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimSingleNodeInstance.h"
@@ -12,7 +12,6 @@
 
 #include <cstring>
 
-DEFINE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 REGISTER_FACTORY(USkeletalMeshComponent)
 
 USkeletalMeshComponent::~USkeletalMeshComponent()
@@ -22,7 +21,7 @@ USkeletalMeshComponent::~USkeletalMeshComponent()
 
 UObject* USkeletalMeshComponent::Duplicate()
 {
-    UObject* DuplicatedObject = FObjectFactory::Get().Create(GetTypeInfo()->name);
+    UObject* DuplicatedObject = FObjectFactory::Get().Create(GetClass()->GetName());
     USkeletalMeshComponent* DuplicatedComponent = Cast<USkeletalMeshComponent>(DuplicatedObject);
     if (!DuplicatedComponent)
     {

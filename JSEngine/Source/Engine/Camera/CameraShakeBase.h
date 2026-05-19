@@ -2,6 +2,7 @@
 #include "Engine/Object/Object.h"
 #include "Engine/Component/CameraComponent.h"
 #include <algorithm>
+#include "Generated/CameraShakeBase.generated.h"
 
 class APlayerCameraManager;
 class UCameraShakePattern;
@@ -64,10 +65,11 @@ struct FCameraShakeState
     float GetBlendWeight() const {return CurrentBlendWeight;}
 };
 
+UCLASS()
 class UCameraShakePattern : public UObject
 {
 public:
-    DECLARE_CLASS(UCameraShakePattern, UObject)
+    GENERATED_BODY()
 
     void StartShakePattern(const FCameraShakeStartParams& Params);
     void UpdateShakePattern(
@@ -105,10 +107,11 @@ protected:
 };
 
 // 나중에 다른곳으로 뺄것
+UCLASS()
 class UPerlinCameraShakePattern : public UCameraShakePattern
 {
 public:
-    DECLARE_CLASS(UPerlinCameraShakePattern, UCameraShakePattern)
+    GENERATED_BODY()
 
 	float LocationAmplitude = 20.0f;
     float RotationAmplitude = 5.0f;
@@ -122,10 +125,11 @@ private:
         FCameraShakeUpdateResult& OutResult);
 };
 
+UCLASS()
 class UCameraShakeBase : public UObject
 {
 public:
-    DECLARE_CLASS(UCameraShakeBase, UObject)
+    GENERATED_BODY()
 
 	UCameraShakeBase();
 

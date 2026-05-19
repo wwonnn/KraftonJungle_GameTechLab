@@ -5,51 +5,14 @@
 #include "Core/Singleton.h"
 #include "Reflection/Reflection.h"
 #include "Serialization/Archive.h"
-#include "Object/Object.h"
+#include "Generated/Object.generated.h"
 
-#define DECLARE_CLASS(ClassName, ParentClass)                          \
-	using ThisClass = ClassName;									   \
-    friend void RegisterGeneratedReflection_##ClassName();             \
-    static const FTypeInfo s_TypeInfo;                                 \
-    const FTypeInfo* GetTypeInfo() const override {                    \
-        return &s_TypeInfo;                                            \
-    }                                                                  
-
-#define DEFINE_CLASS(ClassName, ParentClass)                           \
-    const FTypeInfo ClassName::s_TypeInfo = {                          \
-        #ClassName,                                                    \
-        &ParentClass::s_TypeInfo,                                      \
-        sizeof(ClassName)                                              \
-    };
-
-enum EClassFlags : uint32_t
-{
-	CF_None = 0,
-	CF_Actor = 1 << 0,
-	CF_Component = 1 << 1,
-	CF_Camera = 1 << 2,
-};
-
-struct FTypeInfo
-{
-	const char* name;
-	const FTypeInfo* Parent;
-	size_t size;
-	uint32_t ClassFlags = CF_None;
-
-	bool IsA(const FTypeInfo* Other) const {
-		for (const FTypeInfo* T = this; T; T = T->Parent) {
-			if (T == Other) {
-				return true;
-			}
-		}
-		return false;
-	}
-};
-
+UCLASS()
 class UObject
 {
 public:
+	GENERATED_BODY()
+
 	UObject();
 	virtual ~UObject();
 
@@ -87,11 +50,8 @@ public:
 
 	FObjectNameProxy GetName() const { return FObjectNameProxy(ObjectName.ToString()); }
 
-	// RTTI stuffs
-	virtual const FTypeInfo* GetTypeInfo() const { return &s_TypeInfo; }
-
 	template<typename T>
-	bool IsA() const { return GetTypeInfo()->IsA(&T::s_TypeInfo); }
+	bool IsA() const { return GetClass()->IsA(T::StaticClass()); }
 
 	bool IsValidLowLevel() const { return this != nullptr; }
 
@@ -112,8 +72,6 @@ public:
 	void CopyPropertiesFrom(UObject* Src);
 
 	virtual void Serialize(FArchive& Ar);
-
-	static const FTypeInfo s_TypeInfo;
 
 protected:
 	FName ObjectName;
@@ -156,7 +114,7 @@ public:
 		static_assert(std::is_base_of<UObject, T>::value, "T must derive from UObject");
 		T* Obj = new T();
 
-		const char* ClassName = T::s_TypeInfo.name;
+		const char* ClassName = T::StaticClass()->GetName();
 		uint32& Counter = NameCounters[ClassName];
 		FString Name = FString(ClassName) + "_" + std::to_string(Counter++);
 		Obj->SetFName(FName(Name));

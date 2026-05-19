@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "MovementComponent.h"
+#include "Generated/InterpToMovementComponent.generated.h"
 
 UENUM()
 enum class EInterpBehaviour {
@@ -9,9 +10,10 @@ enum class EInterpBehaviour {
 	PingPong UMETA(DisplayName="Ping-Pong"),
 };
 
+UCLASS()
 class UInterpToMovementComponent : public UMovementComponent {
 public:
-	DECLARE_CLASS(UInterpToMovementComponent, UMovementComponent)
+	GENERATED_BODY()
 
 	UInterpToMovementComponent() = default;
 

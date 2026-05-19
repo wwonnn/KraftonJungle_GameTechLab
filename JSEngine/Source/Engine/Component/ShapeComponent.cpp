@@ -1,6 +1,5 @@
-﻿#include "ShapeComponent.h"
+#include "ShapeComponent.h"
 
-DEFINE_CLASS(UShapeComponent, UPrimitiveComponent)
 REGISTER_FACTORY(UShapeComponent)
 
 void UShapeComponent::UpdateWorldAABB() const
