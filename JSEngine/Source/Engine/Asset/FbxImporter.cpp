@@ -1043,6 +1043,7 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
 
         {
             SCOPE_STAT_ANIM("Animation FBX Bake");
+            const double BakeStartSec = FPlatformTime::Seconds();
 
 			TArray<TArray<FMatrix>> GlobalTransformCache;
             GlobalTransformCache.resize(FrameCount);
@@ -1114,6 +1115,17 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
 
                 AnimDataModel->BoneAnimationTracks.push_back(Track);
 			}
+
+            const double BakeElapsedSec = FPlatformTime::Seconds() - BakeStartSec;
+            UE_LOG("[AnimationBenchmark] Animation FBX Bake | Path=%s | Stack=%s | Tracks=%zu | Bones=%d | Frames=%d | FPS=%.3f | Sec=%.6f | Ms=%.3f",
+                Path.c_str(),
+                StackName.c_str(),
+                AnimDataModel->BoneAnimationTracks.size(),
+                NumBones,
+                FrameCount,
+                FPS,
+                BakeElapsedSec,
+                BakeElapsedSec * 1000.0);
         }
 
 		// 트랙 2: Curve Reading

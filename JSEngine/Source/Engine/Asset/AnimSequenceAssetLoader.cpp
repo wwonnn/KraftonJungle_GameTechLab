@@ -5,6 +5,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Logging/Stats.h"
 #include "Core/Paths.h"
+#include "Core/PlatformTime.h"
 #include "Object/ObjectFactory.h"
 #include "SimpleJSON/json.hpp"
 
@@ -370,6 +371,7 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
     }
 
     SCOPE_STAT_ANIM("Animation Sequence Load");
+    const double LoadStartSec = FPlatformTime::Seconds();
 
     std::ifstream SequenceFile(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))));
     if (!SequenceFile.is_open())
@@ -453,6 +455,16 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
     }
 
     Sequence->DataModel = DataModel;
+    const double LoadElapsedSec = FPlatformTime::Seconds() - LoadStartSec;
+    UE_LOG("[AnimationBenchmark] Animation Sequence Load | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Sec=%.6f | Ms=%.3f",
+        NormalizedPath.c_str(),
+        Sequence->GetName().c_str(),
+        DataModel->BoneAnimationTracks.size(),
+        DataModel->NumberOfFrames,
+        DataModel->NumberOfKeys,
+        DataModel->CurveData.FloatCurves.size(),
+        LoadElapsedSec,
+        LoadElapsedSec * 1000.0);
     return Sequence;
 }
 
@@ -539,6 +551,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     }
 
     SCOPE_STAT_ANIM("Animation Sequence Save");
+    const double SaveStartSec = FPlatformTime::Seconds();
 
     const UAnimDataModel* DataModel = Sequence->DataModel;
     json::JSON Root = json::JSON::Make(json::JSON::Class::Object);
@@ -582,6 +595,18 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     }
 
     OutFile << Root.dump(4);
+    OutFile.flush();
+
+    const double SaveElapsedSec = FPlatformTime::Seconds() - SaveStartSec;
+    UE_LOG("[AnimationBenchmark] Animation Sequence Save | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Sec=%.6f | Ms=%.3f",
+        NormalizedPath.c_str(),
+        Sequence->GetName().c_str(),
+        DataModel->BoneAnimationTracks.size(),
+        DataModel->NumberOfFrames,
+        DataModel->NumberOfKeys,
+        DataModel->CurveData.FloatCurves.size(),
+        SaveElapsedSec,
+        SaveElapsedSec * 1000.0);
     return true;
 }
 
