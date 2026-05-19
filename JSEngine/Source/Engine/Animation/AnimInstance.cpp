@@ -514,7 +514,7 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
         }
     }
 
-    const float FrameRate = Model->FrameRate.AsDecimal();
+    const float FrameRate = static_cast<float>(Model->FrameRate.AsDecimal());
     if (FrameRate <= 0.0f)
     {
         return;
@@ -590,7 +590,7 @@ FQuat UAnimInstance::InterpolateKeys(const TArray<FQuat>& Keys, float Time, floa
 
 void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose)
 {
-    const int32 BoneCount = PoseA.LocalTransforms.size();
+    const int32 BoneCount = static_cast<int32>(PoseA.LocalTransforms.size());
     OutPose.LocalTransforms.resize(BoneCount);
 
     for (int32 i = 0; i < BoneCount; ++i)
@@ -615,7 +615,7 @@ float UAnimInstance::GetSequenceLength(const UAnimSequence* Sequence) const
         return 0.0f;
     }
 
-    const float FrameRate = Model->FrameRate.AsDecimal();
+    const float FrameRate = static_cast<float>(Model->FrameRate.AsDecimal());
     if (FrameRate <= 0.0f || Model->NumberOfKeys <= 1)
     {
         return 0.0f;

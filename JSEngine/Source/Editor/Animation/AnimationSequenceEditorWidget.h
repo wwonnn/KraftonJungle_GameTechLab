@@ -14,6 +14,8 @@ class UAnimSequence;
 class FAnimationSequenceEditorState;
 class FAnimationSequencePreviewController;
 class FAnimationSequenceEditorDocument;
+class FAnimNotifyPayloadParser;
+enum class EAnimNotifySemanticFieldId : uint8;
 struct FAnimNotifyEvent;
 struct ImVec2;
 
@@ -70,6 +72,9 @@ private:
         const FAnimNotifyValidationReport& Report,
         bool bRenderValidation);
     void SyncNotifyDetailsBuffers(const FAnimNotifyEvent& NotifyEvent);
+    void ResetNotifyPayloadFieldBuffers();
+    void RefreshNotifyPayloadFieldBuffers(const FAnimNotifyPayloadParser& Payload);
+    std::array<char, 256>* GetNotifyTextFieldBuffer(EAnimNotifySemanticFieldId SemanticId);
 
 private:
     FAnimationSequenceEditorDocument* Document = nullptr;
@@ -83,9 +88,9 @@ private:
     FAnimationSequenceCurveTrackWidget CurveTrackWidget;
     FString NotifyDetailsBoundStableId;
     std::array<char, 256> NotifyNameEditBuffer = {};
-    std::array<char, 256> NotifySoundEditBuffer = {};
-    std::array<char, 256> NotifySocketEditBuffer = {};
-    std::array<char, 256> NotifyComponentEditBuffer = {};
+    std::array<char, 256> NotifySoundCueEditBuffer = {};
+    std::array<char, 256> NotifySocketNameEditBuffer = {};
+    std::array<char, 256> NotifyComponentNameEditBuffer = {};
     std::array<char, 256> NotifyAttackIdEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
 };

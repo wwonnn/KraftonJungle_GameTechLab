@@ -2,6 +2,7 @@
 
 #include "Animation/AnimNotify.h"
 #include "Animation/AnimNotifyPayloadParser.h"
+#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
@@ -192,22 +193,60 @@ namespace
     template <size_t BufferSize>
     void CopyPayloadFieldToBuffer(
         const FAnimNotifyPayloadParser& Payload,
-        const FString& Key,
+        const FAnimNotifyPayloadFieldDefinition& Field,
         std::array<char, BufferSize>& Buffer)
     {
-        CopyStringToBuffer(Payload.GetString(Key), Buffer);
+        CopyStringToBuffer(Payload.GetStringAny(GetAnimNotifyPayloadFieldLookupKeys(Field)), Buffer);
     }
 
     float GetSchemaFloatValue(const FAnimNotifyPayloadParser& Payload, const FAnimNotifyPayloadFieldDefinition& Field)
     {
         const FAnimNotifyPayloadParser DefaultPayload(Field.DefaultValue.empty() ? FString() : Field.Key + "=" + Field.DefaultValue);
-        return Payload.GetFloat(Field.Key, DefaultPayload.GetFloat(Field.Key, 0.0f));
+        return Payload.GetFloatAny(
+            GetAnimNotifyPayloadFieldLookupKeys(Field),
+            DefaultPayload.GetFloat(Field.Key, 0.0f));
     }
 
     bool GetSchemaBoolValue(const FAnimNotifyPayloadParser& Payload, const FAnimNotifyPayloadFieldDefinition& Field)
     {
         const FAnimNotifyPayloadParser DefaultPayload(Field.DefaultValue.empty() ? FString() : Field.Key + "=" + Field.DefaultValue);
-        return Payload.GetBool(Field.Key, DefaultPayload.GetBool(Field.Key, false));
+        return Payload.GetBoolAny(
+            GetAnimNotifyPayloadFieldLookupKeys(Field),
+            DefaultPayload.GetBool(Field.Key, false));
+    }
+
+    FString MakeRecentNotifyTrackLabel(const FAnimNotifyEvent& NotifyEvent)
+    {
+        if (NotifyEvent.SourceTrackName.IsValid())
+        {
+            return NotifyEvent.SourceTrackName.ToString();
+        }
+
+        if (NotifyEvent.SourceTrackIndex >= 0)
+        {
+            return FString("Track ") + std::to_string(NotifyEvent.SourceTrackIndex + 1);
+        }
+
+        return "(Unknown Track)";
+    }
+
+    FString MakeRecentNotifySourceLabel(const FAnimNotifyEvent& NotifyEvent)
+    {
+        if (!NotifyEvent.SourceSequencePath.empty())
+        {
+            const FString ProjectRelativePath = FPaths::ToProjectRelativePath(NotifyEvent.SourceSequencePath);
+            const FString& PreferredPath = ProjectRelativePath.empty() ? NotifyEvent.SourceSequencePath : ProjectRelativePath;
+            const std::filesystem::path SourcePath(FPaths::ToWide(PreferredPath));
+            const FString FileName = FPaths::ToString(SourcePath.filename().wstring());
+            return FileName.empty() ? PreferredPath : FileName;
+        }
+
+        if (!NotifyEvent.SourceSequenceName.empty())
+        {
+            return NotifyEvent.SourceSequenceName;
+        }
+
+        return "(Current Preview Sequence)";
     }
 
     int32 GetVisibleCurveCount(const TArray<FAnimationSequenceCurveViewGroup>& CurveGroups)
@@ -291,11 +330,66 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     EditorState = InEditorState;
     NotifyDetailsBoundStableId.clear();
     NotifyNameEditBuffer.fill('\0');
-    NotifySoundEditBuffer.fill('\0');
-    NotifySocketEditBuffer.fill('\0');
-    NotifyComponentEditBuffer.fill('\0');
-    NotifyAttackIdEditBuffer.fill('\0');
+    ResetNotifyPayloadFieldBuffers();
     NotifyPayloadEditBuffer.fill('\0');
+}
+
+void FAnimationSequenceEditorWidget::ResetNotifyPayloadFieldBuffers()
+{
+    NotifySoundCueEditBuffer.fill('\0');
+    NotifySocketNameEditBuffer.fill('\0');
+    NotifyComponentNameEditBuffer.fill('\0');
+    NotifyAttackIdEditBuffer.fill('\0');
+}
+
+void FAnimationSequenceEditorWidget::RefreshNotifyPayloadFieldBuffers(const FAnimNotifyPayloadParser& Payload)
+{
+    const FAnimNotifyPayloadFieldDefinition SoundCueField =
+    {
+        AnimNotifySemanticFieldNames::SoundCueKey(),
+        EAnimNotifySemanticFieldId::SoundCue,
+        AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey())
+    };
+    const FAnimNotifyPayloadFieldDefinition SocketNameField =
+    {
+        AnimNotifySemanticFieldNames::SocketNameKey(),
+        EAnimNotifySemanticFieldId::SocketName,
+        AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey())
+    };
+    const FAnimNotifyPayloadFieldDefinition ComponentNameField =
+    {
+        AnimNotifySemanticFieldNames::ComponentNameKey(),
+        EAnimNotifySemanticFieldId::ComponentName,
+        AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ComponentNameKey())
+    };
+    const FAnimNotifyPayloadFieldDefinition AttackIdField =
+    {
+        AnimNotifySemanticFieldNames::AttackIdKey(),
+        EAnimNotifySemanticFieldId::AttackId,
+        AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::AttackIdKey())
+    };
+
+    CopyPayloadFieldToBuffer(Payload, SoundCueField, NotifySoundCueEditBuffer);
+    CopyPayloadFieldToBuffer(Payload, SocketNameField, NotifySocketNameEditBuffer);
+    CopyPayloadFieldToBuffer(Payload, ComponentNameField, NotifyComponentNameEditBuffer);
+    CopyPayloadFieldToBuffer(Payload, AttackIdField, NotifyAttackIdEditBuffer);
+}
+
+std::array<char, 256>* FAnimationSequenceEditorWidget::GetNotifyTextFieldBuffer(EAnimNotifySemanticFieldId SemanticId)
+{
+    switch (SemanticId)
+    {
+    case EAnimNotifySemanticFieldId::SoundCue:
+        return &NotifySoundCueEditBuffer;
+    case EAnimNotifySemanticFieldId::SocketName:
+        return &NotifySocketNameEditBuffer;
+    case EAnimNotifySemanticFieldId::ComponentName:
+        return &NotifyComponentNameEditBuffer;
+    case EAnimNotifySemanticFieldId::AttackId:
+        return &NotifyAttackIdEditBuffer;
+    default:
+        return nullptr;
+    }
 }
 
 void FAnimationSequenceEditorWidget::SyncNotifyDetailsBuffers(const FAnimNotifyEvent& NotifyEvent)
@@ -312,10 +406,7 @@ void FAnimationSequenceEditorWidget::SyncNotifyDetailsBuffers(const FAnimNotifyE
     CopyStringToBuffer(NotifyEvent.Payload, NotifyPayloadEditBuffer);
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    CopyPayloadFieldToBuffer(Payload, "Sound", NotifySoundEditBuffer);
-    CopyPayloadFieldToBuffer(Payload, "Socket", NotifySocketEditBuffer);
-    CopyPayloadFieldToBuffer(Payload, "Component", NotifyComponentEditBuffer);
-    CopyPayloadFieldToBuffer(Payload, "AttackId", NotifyAttackIdEditBuffer);
+    RefreshNotifyPayloadFieldBuffers(Payload);
 }
 
 void FAnimationSequenceEditorWidget::Render(float DeltaTime)
@@ -897,40 +988,6 @@ void FAnimationSequenceEditorWidget::RenderFooterStatus() const
             ImGui::TextDisabled("Last Save: %s", Document->GetLastNotifyValidationStatusText().c_str());
         }
     }
-
-    FString MakeRecentNotifyTrackLabel(const FAnimNotifyEvent& NotifyEvent)
-    {
-        if (NotifyEvent.SourceTrackName.IsValid())
-        {
-            return NotifyEvent.SourceTrackName.ToString();
-        }
-
-        if (NotifyEvent.SourceTrackIndex >= 0)
-        {
-            return FString("Track ") + std::to_string(NotifyEvent.SourceTrackIndex + 1);
-        }
-
-        return "(Unknown Track)";
-    }
-
-    FString MakeRecentNotifySourceLabel(const FAnimNotifyEvent& NotifyEvent)
-    {
-        if (!NotifyEvent.SourceSequencePath.empty())
-        {
-            const FString ProjectRelativePath = FPaths::ToProjectRelativePath(NotifyEvent.SourceSequencePath);
-            const FString& PreferredPath = ProjectRelativePath.empty() ? NotifyEvent.SourceSequencePath : ProjectRelativePath;
-            const std::filesystem::path SourcePath(FPaths::ToWide(PreferredPath));
-            const FString FileName = FPaths::ToString(SourcePath.filename().wstring());
-            return FileName.empty() ? PreferredPath : FileName;
-        }
-
-        if (!NotifyEvent.SourceSequenceName.empty())
-        {
-            return NotifyEvent.SourceSequenceName;
-        }
-
-        return "(Current Preview Sequence)";
-    }
 }
 
 void FAnimationSequenceEditorWidget::RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const
@@ -1007,10 +1064,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         {
             CopyStringToBuffer(UpdatedNotify->Payload, NotifyPayloadEditBuffer);
             const FAnimNotifyPayloadParser UpdatedPayload(UpdatedNotify->Payload);
-            CopyPayloadFieldToBuffer(UpdatedPayload, "Sound", NotifySoundEditBuffer);
-            CopyPayloadFieldToBuffer(UpdatedPayload, "Socket", NotifySocketEditBuffer);
-            CopyPayloadFieldToBuffer(UpdatedPayload, "Component", NotifyComponentEditBuffer);
-            CopyPayloadFieldToBuffer(UpdatedPayload, "AttackId", NotifyAttackIdEditBuffer);
+            RefreshNotifyPayloadFieldBuffers(UpdatedPayload);
         }
     };
 
@@ -1022,24 +1076,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         case EAnimNotifyPayloadFieldType::String:
         case EAnimNotifyPayloadFieldType::Name:
         {
-            std::array<char, 256>* TargetBuffer = nullptr;
-            if (Field.Key == "Sound")
-            {
-                TargetBuffer = &NotifySoundEditBuffer;
-            }
-            else if (Field.Key == "Socket")
-            {
-                TargetBuffer = &NotifySocketEditBuffer;
-            }
-            else if (Field.Key == "Component")
-            {
-                TargetBuffer = &NotifyComponentEditBuffer;
-            }
-            else if (Field.Key == "AttackId")
-            {
-                TargetBuffer = &NotifyAttackIdEditBuffer;
-            }
-
+            std::array<char, 256>* TargetBuffer = GetNotifyTextFieldBuffer(Field.SemanticId);
             if (!TargetBuffer)
             {
                 continue;
@@ -1128,10 +1165,7 @@ void FAnimationSequenceEditorWidget::RenderRawNotifyPayloadEditor(
     {
         Document->SetSelectedNotifyPayload(NotifyPayloadEditBuffer.data());
         const FAnimNotifyPayloadParser Payload(NotifyPayloadEditBuffer.data());
-        CopyPayloadFieldToBuffer(Payload, "Sound", NotifySoundEditBuffer);
-        CopyPayloadFieldToBuffer(Payload, "Socket", NotifySocketEditBuffer);
-        CopyPayloadFieldToBuffer(Payload, "Component", NotifyComponentEditBuffer);
-        CopyPayloadFieldToBuffer(Payload, "AttackId", NotifyAttackIdEditBuffer);
+        RefreshNotifyPayloadFieldBuffers(Payload);
     }
 
     if (const char* PayloadExample = GetAnimNotifyPayloadExample(NotifyClassName))
@@ -1181,10 +1215,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     {
         NotifyDetailsBoundStableId.clear();
         NotifyNameEditBuffer.fill('\0');
-        NotifySoundEditBuffer.fill('\0');
-        NotifySocketEditBuffer.fill('\0');
-        NotifyComponentEditBuffer.fill('\0');
-        NotifyAttackIdEditBuffer.fill('\0');
+        ResetNotifyPayloadFieldBuffers();
         NotifyPayloadEditBuffer.fill('\0');
         ImGui::TextDisabled("Select a notify marker to edit it.");
         return;

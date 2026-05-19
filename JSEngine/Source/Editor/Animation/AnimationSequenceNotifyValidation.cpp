@@ -70,12 +70,13 @@ namespace
                 continue;
             }
 
-            if (!Payload.HasValue(Field.Key) || Payload.GetString(Field.Key).empty())
+            const TArray<FString> LookupKeys = GetAnimNotifyPayloadFieldLookupKeys(Field);
+            if (!Payload.HasAnyValue(LookupKeys) || Payload.GetStringAny(LookupKeys).empty())
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Error,
                     EAnimNotifyValidationField::Payload,
-                    Field.Key + " key is required for " + Schema.NotifyClassName + ".",
+                    Field.Label + " is required for " + Schema.NotifyClassName + ".",
                     PayloadExampleHint,
                     TrackIndex,
                     EventIndex,
@@ -96,15 +97,16 @@ namespace
         const FString PayloadExampleHint = PayloadExample ? FString("Payload Example: ") + PayloadExample : FString();
         for (const FAnimNotifyPayloadFieldDefinition& Field : Schema.Fields)
         {
+            const TArray<FString> LookupKeys = GetAnimNotifyPayloadFieldLookupKeys(Field);
             if (Field.Type == EAnimNotifyPayloadFieldType::Float)
             {
                 float ParsedValue = 0.0f;
-                if (Payload.HasValue(Field.Key) && !Payload.TryGetFloat(Field.Key, ParsedValue))
+                if (Payload.HasAnyValue(LookupKeys) && !Payload.TryGetFloatAny(LookupKeys, ParsedValue))
                 {
                     Report.AddIssue(
                         EAnimNotifyValidationSeverity::Warning,
                         EAnimNotifyValidationField::Payload,
-                        Field.Key + " value is invalid. Expected a numeric value.",
+                        Field.Label + " value is invalid. Expected a numeric value.",
                         PayloadExampleHint,
                         TrackIndex,
                         EventIndex,
@@ -114,12 +116,12 @@ namespace
             else if (Field.Type == EAnimNotifyPayloadFieldType::Bool)
             {
                 bool ParsedValue = false;
-                if (Payload.HasValue(Field.Key) && !Payload.TryGetBool(Field.Key, ParsedValue))
+                if (Payload.HasAnyValue(LookupKeys) && !Payload.TryGetBoolAny(LookupKeys, ParsedValue))
                 {
                     Report.AddIssue(
                         EAnimNotifyValidationSeverity::Warning,
                         EAnimNotifyValidationField::Payload,
-                        Field.Key + " value is invalid. Expected true/false.",
+                        Field.Label + " value is invalid. Expected true/false.",
                         PayloadExampleHint,
                         TrackIndex,
                         EventIndex,
@@ -131,7 +133,7 @@ namespace
 
     void AddPreviewContextIssues(
         FAnimNotifyValidationReport& Report,
-        const FString& NotifyClassName,
+        const FAnimNotifyPayloadSchema& Schema,
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationContext& Context,
         int32 TrackIndex,
@@ -143,22 +145,30 @@ namespace
             return;
         }
 
-        const FName SocketName = Payload.GetName("Socket");
-        if (SocketName != FName::None && !Context.PreviewController->HasPreviewSocket(SocketName))
+        if (const FAnimNotifyPayloadFieldDefinition* SocketField =
+            FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::SocketName))
         {
-            Report.AddIssue(
-                EAnimNotifyValidationSeverity::Warning,
-                EAnimNotifyValidationField::Payload,
-                "Socket \"" + SocketName.ToString() + "\" is not present on the current preview mesh.",
-                "Verify the socket name or pick a different preview mesh.",
-                TrackIndex,
-                EventIndex,
-                StableId);
+            const FName SocketName = Payload.GetNameAny(GetAnimNotifyPayloadFieldLookupKeys(*SocketField));
+            if (SocketName != FName::None && !Context.PreviewController->HasPreviewSocket(SocketName))
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Socket \"" + SocketName.ToString() + "\" is not present on the current preview mesh.",
+                    "Verify the socket name or pick a different preview mesh.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
         }
 
-        if (NotifyClassName == "UAnimNotifyState_AttackWindow")
+        if (Schema.NotifyClassName == "UAnimNotifyState_AttackWindow")
         {
-            const FString ComponentName = Payload.GetString("Component");
+            const FAnimNotifyPayloadFieldDefinition* ComponentField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::ComponentName);
+            const FString ComponentName = ComponentField
+                ? Payload.GetStringAny(GetAnimNotifyPayloadFieldLookupKeys(*ComponentField))
+                : FString();
             if (!ComponentName.empty() && !Context.PreviewController->HasPreviewPrimitiveComponent(ComponentName))
             {
                 Report.AddIssue(
@@ -334,7 +344,7 @@ FAnimNotifyValidationReport ValidateAnimNotifyEvent(
         const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
         AddRequiredPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
         AddMalformedPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
-        AddPreviewContextIssues(Report, NotifyClassName, Payload, Context, TrackIndex, EventIndex, NotifyEvent.StableId);
+        AddPreviewContextIssues(Report, *Schema, Payload, Context, TrackIndex, EventIndex, NotifyEvent.StableId);
     }
 
     return Report;

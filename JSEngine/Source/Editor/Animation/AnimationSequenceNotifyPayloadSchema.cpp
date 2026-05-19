@@ -1,5 +1,7 @@
 #include "Editor/Animation/AnimationSequenceNotifyPayloadSchema.h"
 
+#include "Animation/AnimNotifySemanticFieldNames.h"
+
 #include <algorithm>
 
 namespace
@@ -11,32 +13,32 @@ namespace
             {
                 "UAnimNotify_PlaySFX",
                 "Audio",
-                "Sound=Footstep_Stone;Socket=foot_l;Volume=0.9;Spatialized=true",
+                "SoundCue=Footstep_Stone;SocketName=foot_l;VolumeMultiplier=0.9;Spatialized=true",
                 {
-                    { "Sound", "Sound", EAnimNotifyPayloadFieldType::String, true, FString(), "Required audio event or asset key." },
-                    { "Socket", "Socket", EAnimNotifyPayloadFieldType::Name, false, FString(), "Optional playback socket on the preview mesh." },
-                    { "Volume", "Volume", EAnimNotifyPayloadFieldType::Float, false, "1.0", "Optional volume multiplier." },
-                    { "Spatialized", "Spatialized", EAnimNotifyPayloadFieldType::Bool, false, "false", "Play in 3D using the socket or mesh location." }
+                    { AnimNotifySemanticFieldNames::SoundCueKey(), EAnimNotifySemanticFieldId::SoundCue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey()), "Sound Cue", EAnimNotifyPayloadFieldType::String, true, FString(), "Required audio event or asset key." },
+                    { AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", EAnimNotifyPayloadFieldType::Name, false, FString(), "Optional playback socket on the preview mesh." },
+                    { AnimNotifySemanticFieldNames::VolumeMultiplierKey(), EAnimNotifySemanticFieldId::VolumeMultiplier, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), "Volume Multiplier", EAnimNotifyPayloadFieldType::Float, false, "1.0", "Optional volume multiplier." },
+                    { AnimNotifySemanticFieldNames::SpatializedKey(), EAnimNotifySemanticFieldId::Spatialized, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SpatializedKey()), "Spatialized", EAnimNotifyPayloadFieldType::Bool, false, "false", "Play in 3D using the socket or mesh location." }
                 }
             },
             {
                 "UAnimNotifyState_PlayLoopingSFX",
                 "Audio",
-                "Sound=SwordHum;Socket=weapon_tip;Volume=1.0;Spatialized=true",
+                "SoundCue=SwordHum;SocketName=weapon_tip;VolumeMultiplier=1.0;Spatialized=true",
                 {
-                    { "Sound", "Sound", EAnimNotifyPayloadFieldType::String, true, FString(), "Required looping audio event or asset key." },
-                    { "Socket", "Socket", EAnimNotifyPayloadFieldType::Name, false, FString(), "Optional playback socket on the preview mesh." },
-                    { "Volume", "Volume", EAnimNotifyPayloadFieldType::Float, false, "1.0", "Optional volume multiplier." },
-                    { "Spatialized", "Spatialized", EAnimNotifyPayloadFieldType::Bool, false, "false", "Track the socket or mesh location while the state is active." }
+                    { AnimNotifySemanticFieldNames::SoundCueKey(), EAnimNotifySemanticFieldId::SoundCue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey()), "Sound Cue", EAnimNotifyPayloadFieldType::String, true, FString(), "Required looping audio event or asset key." },
+                    { AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", EAnimNotifyPayloadFieldType::Name, false, FString(), "Optional playback socket on the preview mesh." },
+                    { AnimNotifySemanticFieldNames::VolumeMultiplierKey(), EAnimNotifySemanticFieldId::VolumeMultiplier, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), "Volume Multiplier", EAnimNotifyPayloadFieldType::Float, false, "1.0", "Optional volume multiplier." },
+                    { AnimNotifySemanticFieldNames::SpatializedKey(), EAnimNotifySemanticFieldId::Spatialized, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SpatializedKey()), "Spatialized", EAnimNotifyPayloadFieldType::Bool, false, "false", "Track the socket or mesh location while the state is active." }
                 }
             },
             {
                 "UAnimNotifyState_AttackWindow",
                 "Collision Window",
-                "Component=WeaponHitbox;AttackId=Light1",
+                "ComponentName=WeaponHitbox;AttackId=Light1",
                 {
-                    { "Component", "Component", EAnimNotifyPayloadFieldType::String, true, FString(), "Primitive component name to toggle overlap events on." },
-                    { "AttackId", "AttackId", EAnimNotifyPayloadFieldType::String, false, FString(), "Optional attack tag suffix applied as AttackId:<value>." }
+                    { AnimNotifySemanticFieldNames::ComponentNameKey(), EAnimNotifySemanticFieldId::ComponentName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ComponentNameKey()), "Component Name", EAnimNotifyPayloadFieldType::String, true, FString(), "Primitive component name to toggle overlap events on." },
+                    { AnimNotifySemanticFieldNames::AttackIdKey(), EAnimNotifySemanticFieldId::AttackId, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::AttackIdKey()), "AttackId", EAnimNotifyPayloadFieldType::String, false, FString(), "Optional attack tag suffix applied as AttackId:<value>." }
                 }
             }
         };
@@ -66,4 +68,37 @@ const char* GetAnimNotifyPayloadExample(const FString& NotifyClassName)
 {
     const FAnimNotifyPayloadSchema* Schema = FindAnimNotifyPayloadSchema(NotifyClassName);
     return (Schema && !Schema->PayloadExample.empty()) ? Schema->PayloadExample.c_str() : nullptr;
+}
+
+TArray<FString> GetAnimNotifyPayloadFieldLookupKeys(const FAnimNotifyPayloadFieldDefinition& Field)
+{
+    TArray<FString> Keys;
+    if (!Field.Key.empty())
+    {
+        Keys.push_back(Field.Key);
+    }
+
+    for (const FString& LegacyKey : Field.LegacyKeys)
+    {
+        if (!LegacyKey.empty())
+        {
+            Keys.push_back(LegacyKey);
+        }
+    }
+
+    return Keys;
+}
+
+const FAnimNotifyPayloadFieldDefinition* FindAnimNotifyPayloadFieldBySemanticId(
+    const FAnimNotifyPayloadSchema& Schema,
+    EAnimNotifySemanticFieldId SemanticId)
+{
+    const auto Iterator = std::find_if(
+        Schema.Fields.begin(),
+        Schema.Fields.end(),
+        [SemanticId](const FAnimNotifyPayloadFieldDefinition& Field)
+        {
+            return Field.SemanticId == SemanticId;
+        });
+    return Iterator != Schema.Fields.end() ? &(*Iterator) : nullptr;
 }

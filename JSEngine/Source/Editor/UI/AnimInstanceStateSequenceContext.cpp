@@ -4,6 +4,7 @@
 #include "Animation/AnimData/AnimSequence.h"
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimNotifyPayloadParser.h"
+#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Asset/AnimSequenceAssetLoader.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
@@ -303,8 +304,8 @@ FAnimInstanceStateSequenceContextReport BuildAnimInstanceStateSequenceContext(
                     if (NotifyClassName == "UAnimNotify_PlaySFX" ||
                         NotifyClassName == "UAnimNotifyState_PlayLoopingSFX")
                     {
-                        const FString Sound = Parser.GetString("Sound");
-                        const FString Socket = Parser.GetString("Socket");
+                        const FString Sound = Parser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SoundCueKey()));
+                        const FString Socket = Parser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
                         AccumulateBuiltInUsage(
                             Report.BuiltInUsage,
                             NotifyClassName,
@@ -313,8 +314,8 @@ FAnimInstanceStateSequenceContextReport BuildAnimInstanceStateSequenceContext(
                     }
                     else if (NotifyClassName == "UAnimNotifyState_AttackWindow")
                     {
-                        const FString Component = Parser.GetString("Component");
-                        const FString AttackId = Parser.GetString("AttackId");
+                        const FString Component = Parser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ComponentNameKey()));
+                        const FString AttackId = Parser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::AttackIdKey()));
                         FString Summary = MakeBuiltInUsageSample(Event, Component, "");
                         if (!AttackId.empty())
                         {

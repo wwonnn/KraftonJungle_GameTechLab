@@ -10,9 +10,22 @@ enum class EAnimNotifyPayloadFieldType : uint8
     Bool,
 };
 
+enum class EAnimNotifySemanticFieldId : uint8
+{
+    None = 0,
+    SoundCue,
+    SocketName,
+    VolumeMultiplier,
+    Spatialized,
+    ComponentName,
+    AttackId,
+};
+
 struct FAnimNotifyPayloadFieldDefinition
 {
     FString Key;
+    EAnimNotifySemanticFieldId SemanticId = EAnimNotifySemanticFieldId::None;
+    TArray<FString> LegacyKeys;
     FString Label;
     EAnimNotifyPayloadFieldType Type = EAnimNotifyPayloadFieldType::String;
     bool bRequired = false;
@@ -31,3 +44,7 @@ struct FAnimNotifyPayloadSchema
 const FAnimNotifyPayloadSchema* FindAnimNotifyPayloadSchema(const FString& NotifyClassName);
 bool HasAnimNotifyPayloadSchema(const FString& NotifyClassName);
 const char* GetAnimNotifyPayloadExample(const FString& NotifyClassName);
+TArray<FString> GetAnimNotifyPayloadFieldLookupKeys(const FAnimNotifyPayloadFieldDefinition& Field);
+const FAnimNotifyPayloadFieldDefinition* FindAnimNotifyPayloadFieldBySemanticId(
+    const FAnimNotifyPayloadSchema& Schema,
+    EAnimNotifySemanticFieldId SemanticId);

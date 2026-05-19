@@ -1,5 +1,6 @@
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 
+#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Core/Paths.h"
@@ -486,6 +487,7 @@ FAnimNotifyPayloadParser FAnimationSequenceEditorDocument::GetSelectedNotifyPayl
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadStringValue(const FString& Key, const FString& Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
     Payload.SetString(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -493,6 +495,7 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadStringValue(const
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadNameValue(const FString& Key, const FName& Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
     Payload.SetName(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -500,6 +503,7 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadNameValue(const F
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
     Payload.SetFloat(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -507,6 +511,7 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadFloatValue(const 
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
     Payload.SetBool(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -514,6 +519,7 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadBoolValue(const F
 bool FAnimationSequenceEditorDocument::ClearSelectedNotifyPayloadValue(const FString& Key)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
+    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
     Payload.RemoveValue(Key);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }

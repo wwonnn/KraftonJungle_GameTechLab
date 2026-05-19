@@ -2,6 +2,7 @@
 
 #include "Animation/AnimData/AnimSequence.h"
 #include "Animation/AnimNotifyPayloadParser.h"
+#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/SkeletalMeshComponent.h"
 #include "Core/Logging/Log.h"
@@ -209,16 +210,16 @@ void UAnimNotify_PlaySFX::Notify(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FString SoundKeyOrPath = Payload.GetString("Sound");
+    const FString SoundKeyOrPath = Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SoundCueKey()));
     if (SoundKeyOrPath.empty())
     {
-        UE_LOG_WARNING("[AnimNotifyBuiltins] PlaySFX notify missing Sound payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
+        UE_LOG_WARNING("[AnimNotifyBuiltins] PlaySFX notify missing SoundCue payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = Payload.GetName("Socket");
-    const float Volume = std::max(0.0f, Payload.GetFloat("Volume", 1.0f));
-    const bool bSpatialized = Payload.GetBool("Spatialized", false);
+    const FName SocketName = Payload.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
+    const float Volume = std::max(0.0f, Payload.GetFloatAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), 1.0f));
+    const bool bSpatialized = Payload.GetBoolAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SpatializedKey()), false);
 
     if (bSpatialized)
     {
@@ -253,16 +254,16 @@ void UAnimNotifyState_PlayLoopingSFX::NotifyBegin(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FString SoundKeyOrPath = Payload.GetString("Sound");
+    const FString SoundKeyOrPath = Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SoundCueKey()));
     if (SoundKeyOrPath.empty())
     {
-        UE_LOG_WARNING("[AnimNotifyBuiltins] LoopingSFX notify missing Sound payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
+        UE_LOG_WARNING("[AnimNotifyBuiltins] LoopingSFX notify missing SoundCue payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = Payload.GetName("Socket");
-    const float Volume = std::max(0.0f, Payload.GetFloat("Volume", 1.0f));
-    bSpatialized = Payload.GetBool("Spatialized", false);
+    const FName SocketName = Payload.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
+    const float Volume = std::max(0.0f, Payload.GetFloatAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), 1.0f));
+    bSpatialized = Payload.GetBoolAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SpatializedKey()), false);
 
     ActiveHandle = GEngine->GetAudioSystem().PlaySoundCue(
         SoundKeyOrPath,
@@ -288,7 +289,7 @@ void UAnimNotifyState_PlayLoopingSFX::NotifyTick(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FName SocketName = Payload.GetName("Socket");
+    const FName SocketName = Payload.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
     GEngine->GetAudioSystem().SetSoundPosition(ActiveHandle, ResolvePlaybackLocation(MeshComponent, SocketName));
 }
 
@@ -335,10 +336,10 @@ void UAnimNotifyState_AttackWindow::NotifyBegin(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FString ComponentName = Payload.GetString("Component");
+    const FString ComponentName = Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ComponentNameKey()));
     if (ComponentName.empty())
     {
-        UE_LOG_WARNING("[AnimNotifyBuiltins] AttackWindow notify missing Component payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
+        UE_LOG_WARNING("[AnimNotifyBuiltins] AttackWindow notify missing ComponentName payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         CachedOwnerActor = nullptr;
         return;
     }
@@ -356,7 +357,7 @@ void UAnimNotifyState_AttackWindow::NotifyBegin(
 
     bWindowAcquired = AcquireAttackWindow(CachedPrimitiveComponent);
 
-    ActiveAttackTag = BuildAttackIdTag(Payload.GetString("AttackId"));
+    ActiveAttackTag = BuildAttackIdTag(Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::AttackIdKey())));
     if (!ActiveAttackTag.empty())
     {
         ActiveAttackTagStateKey = AcquireAttackTagStateKey(CachedOwnerActor, ActiveAttackTag);
