@@ -497,6 +497,19 @@ static int32 ReadCurveNodeRecursive(
     int32 ImportedCurveCount = 0;
     const FbxProperty TargetProperty = FindCurveNodeTargetProperty(CurveNode, AnimLayer, InheritedTargetProperty);
 
+	if (TargetProperty.IsValid())
+    {
+        FString PropName(TargetProperty.GetName());
+
+        // FBX 기본 Transform 속성 이름 확인
+        if (PropName == "Lcl Translation" ||
+            PropName == "Lcl Rotation" ||
+            PropName == "Lcl Scaling")
+        {
+            return 0; // 추출하지 않고 건너뜁니다.
+        }
+    }
+
     if (CurveNode->IsComposite())
     {
         const int32 ChildCount = CurveNode->GetSrcObjectCount<FbxAnimCurveNode>();
