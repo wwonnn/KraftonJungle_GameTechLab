@@ -28,6 +28,7 @@ OUTPUT_CPP = OUTPUT_DIR / "Reflection.generated.cpp"
 DECLARE_CLASS_RE = re.compile(r"DECLARE_CLASS\s*\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\)")
 USTRUCT_RE = re.compile(r"USTRUCT\s*\([^)]*\)\s*(?:\r?\n\s*)*struct\s+([A-Za-z_]\w*)")
 UENUM_RE = re.compile(r"UENUM\s*\([^)]*\)\s*(?:\r?\n\s*)*enum\s+class\s+([A-Za-z_]\w*)(?:\s*:\s*[A-Za-z_]\w*)?")
+GENERATED_BODY_RE = re.compile(r"GENERATED_BODY\s*\([^)]*\)")
 DECL_RE = re.compile(
     r"^(?P<type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)?(?:\s*<[^;{}]+>)?(?:\s*[*&])?)\s+"
     r"(?P<name>[A-Za-z_]\w*)\s*(?:[={].*)?;\s*$"
@@ -71,6 +72,18 @@ def normalize_type(type_text: str) -> str:
     return re.sub(r"\s+", "", type_text.strip())
 
 
+def make_file_id(rel_header: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_]", "_", rel_header)
+
+
+def make_generated_header_name(rel_header: str) -> str:
+    return f"{Path(rel_header).stem}.generated.h"
+
+
+def get_line_number(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
 def get_property_type(
     type_text: str,
     reflected_structs: set[str] | None = None,
@@ -90,7 +103,7 @@ def get_property_type(
         return TYPE_MAP[normalized], "nullptr"
 
     if normalized in reflected_structs:
-        return "EPropertyType::Struct", f"Z_Construct_UStruct_{normalized}()"
+        return "EPropertyType::Struct", f"{normalized}::StaticStruct()"
 
     if normalized in reflected_enums:
         return "EPropertyType::Enum", f"Z_Construct_UEnum_{normalized}()"
@@ -278,8 +291,8 @@ def find_class_ranges(text: str) -> list[tuple[str, int, int]]:
     return ranges
 
 
-def find_reflected_struct_ranges(text: str) -> list[tuple[str, int, int]]:
-    ranges: list[tuple[str, int, int]] = []
+def find_reflected_struct_ranges(text: str, path: Path) -> list[tuple[str, int, int, int]]:
+    ranges: list[tuple[str, int, int, int]] = []
     for match in USTRUCT_RE.finditer(text):
         struct_name = match.group(1)
         brace_start = text.find("{", match.end())
@@ -299,7 +312,11 @@ def find_reflected_struct_ranges(text: str) -> list[tuple[str, int, int]]:
                     break
 
         if end >= 0:
-            ranges.append((struct_name, brace_start, end))
+            generated_body = GENERATED_BODY_RE.search(text, brace_start, end)
+            if not generated_body:
+                line_number = get_line_number(text, match.start())
+                raise ValueError(f"{path}:{line_number}: USTRUCT requires GENERATED_BODY()")
+            ranges.append((struct_name, brace_start, end, get_line_number(text, generated_body.start())))
 
     return ranges
 
@@ -351,7 +368,7 @@ def parse_enum_values(text: str, start: int, end: int) -> list[dict[str, str]]:
 
 def parse_properties_for_ranges(
     path: Path,
-    ranges: list[tuple[str, int, int]],
+    ranges: list[tuple[str, int, int]] | list[tuple[str, int, int, int]],
     reflected_structs: set[str],
     reflected_enums: set[str],
 ) -> dict[str, list[dict[str, str]]]:
@@ -373,7 +390,7 @@ def parse_properties_for_ranges(
     for line_index, line in enumerate(lines):
         offset = line_offsets[line_index]
         active_owner = None
-        for owner_name, start, end in ranges:
+        for owner_name, start, end, *_ in ranges:
             if start <= offset <= end:
                 active_owner = owner_name
                 break
@@ -439,9 +456,12 @@ def main() -> None:
         text = header.read_text(encoding="utf-8-sig", errors="ignore")
         rel_header = header.relative_to(SOURCE_DIR).as_posix()
 
-        for struct_name, _, _ in find_reflected_struct_ranges(text):
+        for struct_name, _, _, generated_body_line in find_reflected_struct_ranges(text, header):
             reflected_structs[struct_name] = {
                 "header": rel_header,
+                "generated_header": make_generated_header_name(rel_header),
+                "file_id": make_file_id(rel_header),
+                "generated_body_line": generated_body_line,
                 "properties": [],
             }
 
@@ -460,7 +480,7 @@ def main() -> None:
 
         parsed_structs = parse_properties_for_ranges(
             header,
-            find_reflected_struct_ranges(text),
+            find_reflected_struct_ranges(text, header),
             reflected_struct_names,
             reflected_enum_names,
         )
@@ -483,6 +503,40 @@ def main() -> None:
             }
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    generated_headers_by_source: dict[str, list[tuple[str, int, str]]] = {}
+    for struct_name, data in reflected_structs.items():
+        header = data["header"]  # type: ignore[assignment]
+        generated_headers_by_source.setdefault(header, []).append(
+            (
+                struct_name,
+                data["generated_body_line"],  # type: ignore[arg-type]
+                data["file_id"],  # type: ignore[arg-type]
+            )
+        )
+
+    for header, entries in generated_headers_by_source.items():
+        generated_header = make_generated_header_name(header)
+        file_id = make_file_id(header)
+        header_lines = [
+            "// Auto-generated by Scripts/GenerateReflection.py. Do not edit manually.",
+            "#pragma once",
+            "",
+            "#undef CURRENT_FILE_ID",
+            f"#define CURRENT_FILE_ID {file_id}",
+            "",
+        ]
+        for struct_name, generated_body_line, _ in entries:
+            header_lines.append(f"#define {file_id}_{generated_body_line}_GENERATED_BODY \\")
+            header_lines.append("public: \\")
+            header_lines.append("    static const UStruct* StaticStruct();")
+            header_lines.append("")
+
+        (OUTPUT_DIR / generated_header).write_text(
+            "\n".join(header_lines),
+            encoding="utf-8",
+            newline="\r\n",
+        )
 
     lines: list[str] = [
         "// Auto-generated by Scripts/GenerateReflection.py. Do not edit manually.",
@@ -509,6 +563,14 @@ def main() -> None:
         lines.append(f"const UEnum* Z_Construct_UEnum_{enum_name}();")
     for class_name in reflected:
         lines.append(f"void RegisterGeneratedReflection_{class_name}();")
+
+    lines.append("")
+    for struct_name in reflected_structs:
+        lines.append(f"const UStruct* {struct_name}::StaticStruct()")
+        lines.append("{")
+        lines.append(f"    return Z_Construct_UStruct_{struct_name}();")
+        lines.append("}")
+        lines.append("")
 
     lines.extend(["", "namespace", "{"])
     for class_name in reflected:

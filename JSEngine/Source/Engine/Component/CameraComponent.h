@@ -6,6 +6,7 @@
 #include "Math/Utils.h"
 #include "Math/Vector.h"
 #include "Math/Color.h"
+#include "Generated/CameraComponent.generated.h"
 
 // 렌더 전용 구조체
 USTRUCT()

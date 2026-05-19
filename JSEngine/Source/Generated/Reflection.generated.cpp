@@ -79,6 +79,22 @@ void RegisterGeneratedReflection_UTextRenderComponent();
 void RegisterGeneratedReflection_UMainSceneDestructibleComponent();
 void RegisterGeneratedReflection_UScriptComponent();
 
+const UStruct* FCameraState::StaticStruct()
+{
+    return Z_Construct_UStruct_FCameraState();
+}
+
+const UStruct* FCameraPostProcessSettings::StaticStruct()
+{
+    return Z_Construct_UStruct_FCameraPostProcessSettings();
+}
+
+const UStruct* FScrollUV::StaticStruct()
+{
+    return Z_Construct_UStruct_FScrollUV();
+}
+
+
 namespace
 {
     struct FAutoRegister_UAnimInstance
@@ -647,8 +663,8 @@ void RegisterGeneratedReflection_UBillboardComponent()
 
 void RegisterGeneratedReflection_UCameraComponent()
 {
-    static const FStructProperty Property_CameraState_0("CameraState", nullptr, nullptr, offsetof(UCameraComponent, CameraState), EPropertyAccess::EditAnywhere, Z_Construct_UStruct_FCameraState(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
-    static const FStructProperty Property_PostProcessSettings_1("PostProcessSettings", nullptr, nullptr, offsetof(UCameraComponent, PostProcessSettings), EPropertyAccess::EditAnywhere, Z_Construct_UStruct_FCameraPostProcessSettings(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FStructProperty Property_CameraState_0("CameraState", nullptr, nullptr, offsetof(UCameraComponent, CameraState), EPropertyAccess::EditAnywhere, FCameraState::StaticStruct(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FStructProperty Property_PostProcessSettings_1("PostProcessSettings", nullptr, nullptr, offsetof(UCameraComponent, PostProcessSettings), EPropertyAccess::EditAnywhere, FCameraPostProcessSettings::StaticStruct(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_CameraState_0,
@@ -736,7 +752,7 @@ void RegisterGeneratedReflection_UHeightFogComponent()
 
 void RegisterGeneratedReflection_UMeshComponent()
 {
-    static const FStructProperty Property_ScrollUV_0("ScrollUV", nullptr, nullptr, offsetof(UMeshComponent, ScrollUV), EPropertyAccess::EditAnywhere, Z_Construct_UStruct_FScrollUV(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FStructProperty Property_ScrollUV_0("ScrollUV", nullptr, nullptr, offsetof(UMeshComponent, ScrollUV), EPropertyAccess::EditAnywhere, FScrollUV::StaticStruct(), 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FProperty* Properties[] =
     {
         &Property_ScrollUV_0,

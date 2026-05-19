@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "PrimitiveComponent.h"
+#include "Generated/MeshComponent.generated.h"
 
 class UMaterialInterface;
 

@@ -1345,6 +1345,8 @@
     <ClInclude Include="Source\Engine\Runtime\GameSplashScreen.h" />
     <ClInclude Include="Source\Engine\Runtime\GameEngine.h" />
     <ClInclude Include="Source\Engine\Runtime\Launch.h" />
+    <ClInclude Include="Source\Generated\CameraComponent.generated.h" />
+    <ClInclude Include="Source\Generated\MeshComponent.generated.h" />
     <ClInclude Include="Source\Launch\LaunchModeFactory.h" />
     <ClInclude Include="Source\Engine\Runtime\SceneView.h" />
     <ClInclude Include="Source\Engine\Runtime\Viewport.h" />
