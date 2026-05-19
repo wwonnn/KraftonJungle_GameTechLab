@@ -651,8 +651,12 @@ TArray<FString> FEditorConsoleWidget::BuildCommandSuggestions(const FString& Que
 		"stat cascadevis",
 		"stat nametable list",
 		"stat none",
+        "stat gpu",
+        "stat anim",
+        "stat skeletalmesh",
 		"shadow filter pcf",
 		"shadow filter vsm",
+        "skinning.cpu"
 	};
 
 	if (Normalized == "help" || Normalized == "?")
