@@ -1,4 +1,4 @@
-#include "Core/SkeletalMeshLoadService.h"
+﻿#include "Core/SkeletalMeshLoadService.h"
 
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/PhysicsAsset.h"
@@ -731,10 +731,7 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 			{
 				OutSavedAnimationSequencePaths->push_back(SequenceAssetPath);
 			}
-			UE_LOG("[SkeletalMeshLoad] Animation sequence asset saved | Mesh=%s | Sequence=%s | Path=%s",
-			       CacheKey.c_str(),
-			       Sequence->GetName().c_str(),
-			       SequenceAssetPath.c_str());
+
 			DestroyImportedSequence(Sequence);
 		}
 		else

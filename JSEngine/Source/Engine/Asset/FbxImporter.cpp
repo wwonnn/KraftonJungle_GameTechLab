@@ -2,7 +2,6 @@
 #include "Asset/Skeleton.h"
 #include "Asset/StaticMeshTypes.h"
 #include "Core/Logging/Log.h"
-#include "Core/Logging/Stats.h"
 #include "Core/Paths.h"
 #include "Core/PlatformTime.h"
 #include "Animation/AnimData/AnimDataModel.h"
@@ -1041,92 +1040,88 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
         AnimDataModel->NumberOfFrames = FrameCount;
         AnimDataModel->NumberOfKeys = FrameCount;
 
+        const double BakeStartSec = FPlatformTime::Seconds();
+
+        TArray<TArray<FMatrix>> GlobalTransformCache;
+        GlobalTransformCache.resize(FrameCount);
+        for (int32 Frame = 0; Frame < FrameCount; ++Frame)
         {
-            SCOPE_STAT_ANIM("Animation FBX Bake");
-            const double BakeStartSec = FPlatformTime::Seconds();
+            GlobalTransformCache[Frame].resize(NumBones);
 
-			TArray<TArray<FMatrix>> GlobalTransformCache;
-            GlobalTransformCache.resize(FrameCount);
-			for (int32 Frame = 0; Frame < FrameCount; ++Frame)
-			{
-                GlobalTransformCache[Frame].resize(NumBones);
+            FbxTime Time;
+            Time.SetSecondDouble(StartSeconds + static_cast<double>(Frame) / FPS);
 
-				FbxTime Time;
-                Time.SetSecondDouble(StartSeconds + static_cast<double>(Frame) / FPS);
-
-				for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
-				{
-                    FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
-					if (BoneNode)
-					{
-                        GlobalTransformCache[Frame][BoneIndex] = ToFMatrix(BoneNode->EvaluateGlobalTransform(Time));
-					}
-					else
-					{
-                        GlobalTransformCache[Frame][BoneIndex] = FMatrix(
-							1.0f, 0.0f, 0.0f, 0.0f,
-							0.0f, 1.0f, 0.0f, 0.0f,
-							0.0f, 0.0f, 1.0f, 0.0f,
-							0.0f, 0.0f, 0.0f, 1.0f
-						);
-					}
-				}
-			}
-
-			// 트랙 1: Baking
-			for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
-			{
-				FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
-				if (!BoneNode)
-				{
-					continue;
-				}
-
-				FBoneAnimationTrack Track;
-				Track.BoneTreeIndex = BoneIndex;
-				Track.Name = FName(BoneNode->GetName());
-
-				Track.InternalTrackData.PosKeys.reserve(FrameCount);
-                Track.InternalTrackData.RotKeys.reserve(FrameCount);
-                Track.InternalTrackData.ScaleKeys.reserve(FrameCount);
-
-				const int32 ParentIndex = SkeletalMesh->GetBones()[BoneIndex].ParentIndex;
-
-				for (int32 Frame = 0; Frame < FrameCount; ++Frame)
-				{
-					const FMatrix& Global = GlobalTransformCache[Frame][BoneIndex];
-
-					FMatrix Local = Global;
-					if (ParentIndex >= 0 && ParentIndex < NumBones)
-					{
-						if (IndexToBoneNode[ParentIndex])
-						{
-                            const FMatrix ParentGlobal = GlobalTransformCache[Frame][ParentIndex];
-                            Local = Global * ParentGlobal.GetInverse();
-						}
-					}
-
-					const FTransform LocalTransform(Local);
-
-					Track.InternalTrackData.PosKeys.push_back(LocalTransform.GetTranslation());
-					Track.InternalTrackData.RotKeys.push_back(LocalTransform.GetRotation());
-					Track.InternalTrackData.ScaleKeys.push_back(LocalTransform.GetScale3D());
-				}
-
-                AnimDataModel->BoneAnimationTracks.push_back(Track);
-			}
-
-            const double BakeElapsedSec = FPlatformTime::Seconds() - BakeStartSec;
-            UE_LOG("[AnimationBenchmark] Animation FBX Bake | Path=%s | Stack=%s | Tracks=%zu | Bones=%d | Frames=%d | FPS=%.3f | Sec=%.6f | Ms=%.3f",
-                Path.c_str(),
-                StackName.c_str(),
-                AnimDataModel->BoneAnimationTracks.size(),
-                NumBones,
-                FrameCount,
-                FPS,
-                BakeElapsedSec,
-                BakeElapsedSec * 1000.0);
+            for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+            {
+                FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
+                if (BoneNode)
+                {
+                    GlobalTransformCache[Frame][BoneIndex] = ToFMatrix(BoneNode->EvaluateGlobalTransform(Time));
+                }
+                else
+                {
+                    GlobalTransformCache[Frame][BoneIndex] = FMatrix(
+                        1.0f, 0.0f, 0.0f, 0.0f,
+                        0.0f, 1.0f, 0.0f, 0.0f,
+                        0.0f, 0.0f, 1.0f, 0.0f,
+                        0.0f, 0.0f, 0.0f, 1.0f);
+                }
+            }
         }
+
+        // 트랙 1: Baking
+        for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+        {
+            FbxNode* BoneNode = IndexToBoneNode[BoneIndex];
+            if (!BoneNode)
+            {
+                continue;
+            }
+
+            FBoneAnimationTrack Track;
+            Track.BoneTreeIndex = BoneIndex;
+            Track.Name = FName(BoneNode->GetName());
+
+            Track.InternalTrackData.PosKeys.reserve(FrameCount);
+            Track.InternalTrackData.RotKeys.reserve(FrameCount);
+            Track.InternalTrackData.ScaleKeys.reserve(FrameCount);
+
+            const int32 ParentIndex = SkeletalMesh->GetBones()[BoneIndex].ParentIndex;
+
+            for (int32 Frame = 0; Frame < FrameCount; ++Frame)
+            {
+                const FMatrix& Global = GlobalTransformCache[Frame][BoneIndex];
+
+                FMatrix Local = Global;
+                if (ParentIndex >= 0 && ParentIndex < NumBones)
+                {
+                    if (IndexToBoneNode[ParentIndex])
+                    {
+                        const FMatrix ParentGlobal = GlobalTransformCache[Frame][ParentIndex];
+                        Local = Global * ParentGlobal.GetInverse();
+                    }
+                }
+
+                const FTransform LocalTransform(Local);
+
+                Track.InternalTrackData.PosKeys.push_back(LocalTransform.GetTranslation());
+                Track.InternalTrackData.RotKeys.push_back(LocalTransform.GetRotation());
+                Track.InternalTrackData.ScaleKeys.push_back(LocalTransform.GetScale3D());
+            }
+
+            AnimDataModel->BoneAnimationTracks.push_back(Track);
+        }
+
+        const double BakeElapsedSec = FPlatformTime::Seconds() - BakeStartSec;
+        UE_LOG("[FbxImporter] Animation FBX Bake | Path=%s | Stack=%s | Tracks=%zu | Bones=%d | Frames=%d | FPS=%.3f | Sec=%.6f | Ms=%.3f",
+               Path.c_str(),
+               StackName.c_str(),
+               AnimDataModel->BoneAnimationTracks.size(),
+               NumBones,
+               FrameCount,
+               FPS,
+               BakeElapsedSec,
+               BakeElapsedSec * 1000.0);
 
 		// 트랙 2: Curve Reading
         const int32 LayerCount = CurAnimStack->GetMemberCount<FbxAnimLayer>();

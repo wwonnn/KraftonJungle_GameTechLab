@@ -3,7 +3,6 @@
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Core/Logging/Log.h"
-#include "Core/Logging/Stats.h"
 #include "Core/Paths.h"
 #include "Core/PlatformTime.h"
 #include "Object/ObjectFactory.h"
@@ -370,7 +369,6 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
         return nullptr;
     }
 
-    SCOPE_STAT_ANIM("Animation Sequence Load");
     const double LoadStartSec = FPlatformTime::Seconds();
 
     std::ifstream SequenceFile(std::filesystem::path(FPaths::ToAbsolute(FPaths::ToWide(NormalizedPath))));
@@ -456,7 +454,7 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
 
     Sequence->DataModel = DataModel;
     const double LoadElapsedSec = FPlatformTime::Seconds() - LoadStartSec;
-    UE_LOG("[AnimationBenchmark] Animation Sequence Load | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Sec=%.6f | Ms=%.3f",
+    UE_LOG("[SkeletalMeshLoad] Animation Sequence Load | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Sec=%.6f | Ms=%.3f",
         NormalizedPath.c_str(),
         Sequence->GetName().c_str(),
         DataModel->BoneAnimationTracks.size(),
@@ -550,7 +548,6 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
         return false;
     }
 
-    SCOPE_STAT_ANIM("Animation Sequence Save");
     const double SaveStartSec = FPlatformTime::Seconds();
 
     const UAnimDataModel* DataModel = Sequence->DataModel;
@@ -598,7 +595,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     OutFile.flush();
 
     const double SaveElapsedSec = FPlatformTime::Seconds() - SaveStartSec;
-    UE_LOG("[AnimationBenchmark] Animation Sequence Save | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Sec=%.6f | Ms=%.3f",
+    UE_LOG("[SkeletalMeshLoad] Animation Sequence Save | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Sec=%.6f | Ms=%.3f",
         NormalizedPath.c_str(),
         Sequence->GetName().c_str(),
         DataModel->BoneAnimationTracks.size(),
