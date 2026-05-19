@@ -17,7 +17,7 @@ public:
 
     void RegisterProperties(
         const FTypeInfo* Type,
-        const FPropertyMeta* Properties,
+        const FProperty* const* Properties,
         uint32 PropertyCount);
 
     void AppendProperties(
@@ -33,7 +33,7 @@ public:
 private:
     struct FRegisteredProperties
     {
-        const FPropertyMeta* Properties = nullptr;
+        const FProperty* const* Properties = nullptr;
         uint32 PropertyCount = 0;
     };
 

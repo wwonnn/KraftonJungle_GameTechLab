@@ -44,6 +44,19 @@ TYPE_MAP = {
     "FName": "EPropertyType::Name",
 }
 
+PROPERTY_CLASS_MAP = {
+    "EPropertyType::Bool": "FBoolProperty",
+    "EPropertyType::Int": "FIntProperty",
+    "EPropertyType::Float": "FFloatProperty",
+    "EPropertyType::Vec3": "FVectorProperty",
+    "EPropertyType::Vec4": "FVector4Property",
+    "EPropertyType::String": "FStringProperty",
+    "EPropertyType::Name": "FNameProperty",
+    "EPropertyType::Color": "FColorProperty",
+    "EPropertyType::ObjectRef": "FObjectProperty",
+    "EPropertyType::SceneComponentRef": "FSceneComponentProperty",
+}
+
 
 def strip_line_comment(line: str) -> str:
     return line.split("//", 1)[0].strip()
@@ -212,6 +225,13 @@ def make_float_literal(value: str) -> str:
     return value
 
 
+def get_property_class(property_type: str, path: Path, line_number: int) -> str:
+    property_class = PROPERTY_CLASS_MAP.get(property_type)
+    if not property_class:
+        raise ValueError(f"{path}:{line_number}: unsupported generated property type '{property_type}'")
+    return property_class
+
+
 def find_class_ranges(text: str) -> list[tuple[str, int, int]]:
     ranges: list[tuple[str, int, int]] = []
     for match in DECLARE_CLASS_RE.finditer(text):
@@ -298,6 +318,7 @@ def parse_header(path: Path) -> dict[str, list[dict[str, str]]]:
                 "access": pending_metadata["access"],
                 "name": member_name,
                 "property_type": property_type,
+                "property_class": get_property_class(property_type, path, pending_line),
                 "object_type": object_type,
                 "display_name": pending_metadata["display_name"],
                 "serialize_name": pending_metadata["serialize_name"],
@@ -362,18 +383,34 @@ def main() -> None:
         properties = data["properties"]
         lines.append(f"void RegisterGeneratedReflection_{class_name}()")
         lines.append("{")
-        lines.append(f"    static const FPropertyMeta Properties[] =")
-        lines.append("    {")
-        for prop in properties:  # type: ignore[assignment]
-            lines.append(
-                f"        {{ \"{prop['name']}\", {prop['display_name']}, {prop['serialize_name']}, {prop['property_type']}, "
+        for index, prop in enumerate(properties):  # type: ignore[assignment]
+            property_var = f"Property_{prop['name']}_{index}"
+            common_args = (
+                f"\"{prop['name']}\", {prop['display_name']}, {prop['serialize_name']}, "
                 f"offsetof({class_name}, {prop['name']}), "
-                f"EPropertyAccess::{prop['access']}, {prop['object_type']}, "
+                f"EPropertyAccess::{prop['access']}"
+            )
+            trailing_args = (
                 f"{make_float_literal(prop['min'])}, "
                 f"{make_float_literal(prop['max'])}, "
                 f"{make_float_literal(prop['speed'])}, "
-                f"{prop['usage_flags']} }},"
+                f"{prop['usage_flags']}"
             )
+            if prop["property_class"] == "FObjectProperty":
+                lines.append(
+                    f"    static const FObjectProperty {property_var}("
+                    f"{common_args}, {prop['object_type']}, {trailing_args});"
+                )
+            else:
+                lines.append(
+                    f"    static const {prop['property_class']} {property_var}("
+                    f"{common_args}, {trailing_args});"
+                )
+
+        lines.append("    static const FProperty* Properties[] =")
+        lines.append("    {")
+        for index, prop in enumerate(properties):  # type: ignore[assignment]
+            lines.append(f"        &Property_{prop['name']}_{index},")
         lines.append("    };")
         lines.append("")
         lines.append(

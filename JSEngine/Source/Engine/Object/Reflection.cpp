@@ -12,9 +12,104 @@ FReflectionRegistry& FReflectionRegistry::Get()
     return Registry;
 }
 
+void FBoolProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<bool*>(ContainerPtrToValuePtr(Container));
+}
+
+void FIntProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<int32*>(ContainerPtrToValuePtr(Container));
+}
+
+void FFloatProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<float*>(ContainerPtrToValuePtr(Container));
+}
+
+void FVectorProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<FVector*>(ContainerPtrToValuePtr(Container));
+}
+
+void FVector4Property::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<FVector4*>(ContainerPtrToValuePtr(Container));
+}
+
+void FStringProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<FString*>(ContainerPtrToValuePtr(Container));
+}
+
+void FNameProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<FName*>(ContainerPtrToValuePtr(Container));
+}
+
+void FColorProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    Ar << GetSerializeKey() << *static_cast<FColor*>(ContainerPtrToValuePtr(Container));
+}
+
+void FObjectProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    (void)OwnerObject;
+    UObject*& Ref = *static_cast<UObject**>(ContainerPtrToValuePtr(Container));
+    uint32 RefUUID = Ref ? Ref->GetUUID() : 0;
+    Ar << GetSerializeKey() << RefUUID;
+    if (Ar.IsLoading())
+    {
+        Ref = nullptr;
+        for (UObject* ObjectCandidate : GUObjectArray)
+        {
+            if (ObjectCandidate && ObjectCandidate->GetUUID() == RefUUID)
+            {
+                Ref = ObjectCandidate;
+                break;
+            }
+        }
+    }
+}
+
+void FSceneComponentProperty::SerializeItem(FArchive& Ar, UObject* OwnerObject, void* Container) const
+{
+    USceneComponent*& Ref = *static_cast<USceneComponent**>(ContainerPtrToValuePtr(Container));
+    uint32 RefUUID = Ref ? Ref->GetUUID() : 0;
+    Ar << GetSerializeKey() << RefUUID;
+    if (Ar.IsLoading())
+    {
+        Ref = nullptr;
+        UActorComponent* OwnerComponent = Cast<UActorComponent>(OwnerObject);
+        AActor* Owner = OwnerComponent ? OwnerComponent->GetOwner() : nullptr;
+        if (!Owner)
+        {
+            return;
+        }
+
+        for (UActorComponent* Component : Owner->GetComponents())
+        {
+            USceneComponent* SceneComponent = Cast<USceneComponent>(Component);
+            if (SceneComponent && SceneComponent->GetUUID() == RefUUID)
+            {
+                Ref = SceneComponent;
+                break;
+            }
+        }
+    }
+}
+
 void FReflectionRegistry::RegisterProperties(
     const FTypeInfo* Type,
-    const FPropertyMeta* Properties,
+    const FProperty* const* Properties,
     uint32 PropertyCount)
 {
     if (!Type)
@@ -65,34 +160,27 @@ void FReflectionRegistry::AppendProperties(
         return;
     }
 
-    uint8* ObjectBytes = reinterpret_cast<uint8*>(Object);
     for (uint32 Index = 0; Index < Registered->PropertyCount; ++Index)
     {
-        const FPropertyMeta& Meta = Registered->Properties[Index];
-        if (!Meta.Name)
+        const FProperty* Property = Registered->Properties[Index];
+        if (!Property || !Property->GetName())
         {
             continue;
         }
 
-        const EPropertyUsageFlags BaseUsage =
-            Meta.Access == EPropertyAccess::EditAnywhere
-                ? (EPropertyUsageFlags::Visible | EPropertyUsageFlags::Editable)
-                : EPropertyUsageFlags::Visible;
-        const EPropertyUsageFlags Usage = BaseUsage | Meta.UsageFlags;
-
         OutProps.push_back({
-            Meta.Name,
-            Meta.Type,
-            ObjectBytes + Meta.Offset,
-            Meta.Min,
-            Meta.Max,
-            Meta.Speed,
+            Property->GetName(),
+            Property->GetType(),
+            Property->ContainerPtrToValuePtr(Object),
+            Property->GetMin(),
+            Property->GetMax(),
+            Property->GetSpeed(),
             nullptr,
             0,
             nullptr,
-            Usage,
-            Meta.ObjectType,
-            Meta.DisplayName
+            Property->GetDescriptorUsageFlags(),
+            Property->GetObjectType(),
+            Property->GetDisplayName()
         });
     }
 }
@@ -127,18 +215,15 @@ void FReflectionRegistry::SerializeProperties(
         return;
     }
 
-    uint8* ObjectBytes = reinterpret_cast<uint8*>(Object);
     for (uint32 Index = 0; Index < Registered->PropertyCount; ++Index)
     {
-        const FPropertyMeta& Meta = Registered->Properties[Index];
-        if (!Meta.Name || HasPropertyUsage(Meta.UsageFlags, EPropertyUsageFlags::NonSerialized))
+        const FProperty* Property = Registered->Properties[Index];
+        if (!Property || !Property->GetName() || !Property->ShouldSerialize())
         {
             continue;
         }
 
-        const char* Key = Meta.SerializeName
-            ? Meta.SerializeName
-            : (Meta.DisplayName ? Meta.DisplayName : Meta.Name);
+        const char* Key = Property->GetSerializeKey();
         if (!Key)
         {
             continue;
@@ -149,81 +234,6 @@ void FReflectionRegistry::SerializeProperties(
             continue;
         }
 
-        void* ValuePtr = ObjectBytes + Meta.Offset;
-        switch (Meta.Type)
-        {
-        case EPropertyType::Bool:
-            Ar << Key << *static_cast<bool*>(ValuePtr);
-            break;
-        case EPropertyType::Int:
-            Ar << Key << *static_cast<int32*>(ValuePtr);
-            break;
-        case EPropertyType::Float:
-            Ar << Key << *static_cast<float*>(ValuePtr);
-            break;
-        case EPropertyType::Vec3:
-            Ar << Key << *static_cast<FVector*>(ValuePtr);
-            break;
-        case EPropertyType::Vec4:
-            Ar << Key << *static_cast<FVector4*>(ValuePtr);
-            break;
-        case EPropertyType::String:
-            Ar << Key << *static_cast<FString*>(ValuePtr);
-            break;
-        case EPropertyType::Name:
-            Ar << Key << *static_cast<FName*>(ValuePtr);
-            break;
-        case EPropertyType::Color:
-            Ar << Key << *static_cast<FColor*>(ValuePtr);
-            break;
-        case EPropertyType::ObjectRef:
-        {
-            UObject*& Ref = *static_cast<UObject**>(ValuePtr);
-            uint32 RefUUID = Ref ? Ref->GetUUID() : 0;
-            Ar << Key << RefUUID;
-            if (Ar.IsLoading())
-            {
-                Ref = nullptr;
-                for (UObject* ObjectCandidate : GUObjectArray)
-                {
-                    if (ObjectCandidate && ObjectCandidate->GetUUID() == RefUUID)
-                    {
-                        Ref = ObjectCandidate;
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-        case EPropertyType::SceneComponentRef:
-        {
-            USceneComponent*& Ref = *static_cast<USceneComponent**>(ValuePtr);
-            uint32 RefUUID = Ref ? Ref->GetUUID() : 0;
-            Ar << Key << RefUUID;
-            if (Ar.IsLoading())
-            {
-                Ref = nullptr;
-                UActorComponent* OwnerComponent = Cast<UActorComponent>(Object);
-                AActor* Owner = OwnerComponent ? OwnerComponent->GetOwner() : nullptr;
-                if (!Owner)
-                {
-                    break;
-                }
-
-                for (UActorComponent* Component : Owner->GetComponents())
-                {
-                    USceneComponent* SceneComponent = Cast<USceneComponent>(Component);
-                    if (SceneComponent && SceneComponent->GetUUID() == RefUUID)
-                    {
-                        Ref = SceneComponent;
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-        default:
-            break;
-        }
+        Property->SerializeItem(Ar, Object, Object);
     }
 }
