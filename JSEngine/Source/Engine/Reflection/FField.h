@@ -1,17 +1,15 @@
 #pragma once
 
-#include "Object/Object.h"
-
-class UField : public UObject
+class FField
 {
 public:
-    UField() = default;
-    explicit UField(const char* InName)
+    FField() = default;
+    explicit FField(const char* InName)
         : Name(InName)
     {
     }
 
-    virtual ~UField() = default;
+    virtual ~FField() = default;
 
     const char* GetName() const { return Name; }
 

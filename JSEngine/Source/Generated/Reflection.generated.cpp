@@ -1292,7 +1292,7 @@ struct FAutoRegisterFactory_UEditorEngine
         FObjectFactory::Get().Register(
             "UEditorEngine",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UEditorEngine>(); },
-            UEditorEngine::StaticClass());
+            []() -> const UClass* { return UEditorEngine::StaticClass(); });
     }
 };
 
@@ -1305,7 +1305,7 @@ struct FAutoRegisterFactory_UActorSequence
         FObjectFactory::Get().Register(
             "UActorSequence",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UActorSequence>(); },
-            UActorSequence::StaticClass());
+            []() -> const UClass* { return UActorSequence::StaticClass(); });
     }
 };
 
@@ -1318,7 +1318,7 @@ struct FAutoRegisterFactory_UActorSequencePlayer
         FObjectFactory::Get().Register(
             "UActorSequencePlayer",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UActorSequencePlayer>(); },
-            UActorSequencePlayer::StaticClass());
+            []() -> const UClass* { return UActorSequencePlayer::StaticClass(); });
     }
 };
 
@@ -1331,7 +1331,7 @@ struct FAutoRegisterFactory_UAnimationStateMachine
         FObjectFactory::Get().Register(
             "UAnimationStateMachine",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimationStateMachine>(); },
-            UAnimationStateMachine::StaticClass());
+            []() -> const UClass* { return UAnimationStateMachine::StaticClass(); });
     }
 };
 
@@ -1344,7 +1344,7 @@ struct FAutoRegisterFactory_UAnimInstance
         FObjectFactory::Get().Register(
             "UAnimInstance",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimInstance>(); },
-            UAnimInstance::StaticClass());
+            []() -> const UClass* { return UAnimInstance::StaticClass(); });
     }
 };
 
@@ -1357,7 +1357,7 @@ struct FAutoRegisterFactory_UAnimInstanceAsset
         FObjectFactory::Get().Register(
             "UAnimInstanceAsset",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimInstanceAsset>(); },
-            UAnimInstanceAsset::StaticClass());
+            []() -> const UClass* { return UAnimInstanceAsset::StaticClass(); });
     }
 };
 
@@ -1370,7 +1370,7 @@ struct FAutoRegisterFactory_UAnimNotify
         FObjectFactory::Get().Register(
             "UAnimNotify",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify>(); },
-            UAnimNotify::StaticClass());
+            []() -> const UClass* { return UAnimNotify::StaticClass(); });
     }
 };
 
@@ -1383,7 +1383,7 @@ struct FAutoRegisterFactory_UAnimNotifyState
         FObjectFactory::Get().Register(
             "UAnimNotifyState",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState>(); },
-            UAnimNotifyState::StaticClass());
+            []() -> const UClass* { return UAnimNotifyState::StaticClass(); });
     }
 };
 
@@ -1396,7 +1396,7 @@ struct FAutoRegisterFactory_UAnimNotify_PlaySFX
         FObjectFactory::Get().Register(
             "UAnimNotify_PlaySFX",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_PlaySFX>(); },
-            UAnimNotify_PlaySFX::StaticClass());
+            []() -> const UClass* { return UAnimNotify_PlaySFX::StaticClass(); });
     }
 };
 
@@ -1409,7 +1409,7 @@ struct FAutoRegisterFactory_UAnimNotify_GameplayEvent
         FObjectFactory::Get().Register(
             "UAnimNotify_GameplayEvent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_GameplayEvent>(); },
-            UAnimNotify_GameplayEvent::StaticClass());
+            []() -> const UClass* { return UAnimNotify_GameplayEvent::StaticClass(); });
     }
 };
 
@@ -1422,7 +1422,7 @@ struct FAutoRegisterFactory_UAnimNotify_CameraShake
         FObjectFactory::Get().Register(
             "UAnimNotify_CameraShake",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_CameraShake>(); },
-            UAnimNotify_CameraShake::StaticClass());
+            []() -> const UClass* { return UAnimNotify_CameraShake::StaticClass(); });
     }
 };
 
@@ -1435,7 +1435,7 @@ struct FAutoRegisterFactory_UAnimNotify_FootstepSurfaceEvent
         FObjectFactory::Get().Register(
             "UAnimNotify_FootstepSurfaceEvent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_FootstepSurfaceEvent>(); },
-            UAnimNotify_FootstepSurfaceEvent::StaticClass());
+            []() -> const UClass* { return UAnimNotify_FootstepSurfaceEvent::StaticClass(); });
     }
 };
 
@@ -1448,7 +1448,7 @@ struct FAutoRegisterFactory_UAnimNotify_PlayVFX
         FObjectFactory::Get().Register(
             "UAnimNotify_PlayVFX",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_PlayVFX>(); },
-            UAnimNotify_PlayVFX::StaticClass());
+            []() -> const UClass* { return UAnimNotify_PlayVFX::StaticClass(); });
     }
 };
 
@@ -1461,7 +1461,7 @@ struct FAutoRegisterFactory_UAnimNotify_SpawnDecal
         FObjectFactory::Get().Register(
             "UAnimNotify_SpawnDecal",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_SpawnDecal>(); },
-            UAnimNotify_SpawnDecal::StaticClass());
+            []() -> const UClass* { return UAnimNotify_SpawnDecal::StaticClass(); });
     }
 };
 
@@ -1474,7 +1474,7 @@ struct FAutoRegisterFactory_UAnimNotifyState_GameplayEventWindow
         FObjectFactory::Get().Register(
             "UAnimNotifyState_GameplayEventWindow",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState_GameplayEventWindow>(); },
-            UAnimNotifyState_GameplayEventWindow::StaticClass());
+            []() -> const UClass* { return UAnimNotifyState_GameplayEventWindow::StaticClass(); });
     }
 };
 
@@ -1487,7 +1487,7 @@ struct FAutoRegisterFactory_UAnimNotifyState_PlayLoopingSFX
         FObjectFactory::Get().Register(
             "UAnimNotifyState_PlayLoopingSFX",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState_PlayLoopingSFX>(); },
-            UAnimNotifyState_PlayLoopingSFX::StaticClass());
+            []() -> const UClass* { return UAnimNotifyState_PlayLoopingSFX::StaticClass(); });
     }
 };
 
@@ -1500,7 +1500,7 @@ struct FAutoRegisterFactory_UAnimNotifyState_AttackWindow
         FObjectFactory::Get().Register(
             "UAnimNotifyState_AttackWindow",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState_AttackWindow>(); },
-            UAnimNotifyState_AttackWindow::StaticClass());
+            []() -> const UClass* { return UAnimNotifyState_AttackWindow::StaticClass(); });
     }
 };
 
@@ -1513,7 +1513,7 @@ struct FAutoRegisterFactory_UAnimNotifyLog
         FObjectFactory::Get().Register(
             "UAnimNotifyLog",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyLog>(); },
-            UAnimNotifyLog::StaticClass());
+            []() -> const UClass* { return UAnimNotifyLog::StaticClass(); });
     }
 };
 
@@ -1526,7 +1526,7 @@ struct FAutoRegisterFactory_UAnimNotifyStateLog
         FObjectFactory::Get().Register(
             "UAnimNotifyStateLog",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyStateLog>(); },
-            UAnimNotifyStateLog::StaticClass());
+            []() -> const UClass* { return UAnimNotifyStateLog::StaticClass(); });
     }
 };
 
@@ -1539,7 +1539,7 @@ struct FAutoRegisterFactory_UAnimSingleNodeInstance
         FObjectFactory::Get().Register(
             "UAnimSingleNodeInstance",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimSingleNodeInstance>(); },
-            UAnimSingleNodeInstance::StaticClass());
+            []() -> const UClass* { return UAnimSingleNodeInstance::StaticClass(); });
     }
 };
 
@@ -1552,7 +1552,7 @@ struct FAutoRegisterFactory_ULuaAnimInstance
         FObjectFactory::Get().Register(
             "ULuaAnimInstance",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ULuaAnimInstance>(); },
-            ULuaAnimInstance::StaticClass());
+            []() -> const UClass* { return ULuaAnimInstance::StaticClass(); });
     }
 };
 
@@ -1565,7 +1565,7 @@ struct FAutoRegisterFactory_UCurveFloatAsset
         FObjectFactory::Get().Register(
             "UCurveFloatAsset",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UCurveFloatAsset>(); },
-            UCurveFloatAsset::StaticClass());
+            []() -> const UClass* { return UCurveFloatAsset::StaticClass(); });
     }
 };
 
@@ -1578,7 +1578,7 @@ struct FAutoRegisterFactory_UPhysicsAsset
         FObjectFactory::Get().Register(
             "UPhysicsAsset",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UPhysicsAsset>(); },
-            UPhysicsAsset::StaticClass());
+            []() -> const UClass* { return UPhysicsAsset::StaticClass(); });
     }
 };
 
@@ -1591,7 +1591,7 @@ struct FAutoRegisterFactory_USkeletalMesh
         FObjectFactory::Get().Register(
             "USkeletalMesh",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USkeletalMesh>(); },
-            USkeletalMesh::StaticClass());
+            []() -> const UClass* { return USkeletalMesh::StaticClass(); });
     }
 };
 
@@ -1604,7 +1604,7 @@ struct FAutoRegisterFactory_USkeleton
         FObjectFactory::Get().Register(
             "USkeleton",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USkeleton>(); },
-            USkeleton::StaticClass());
+            []() -> const UClass* { return USkeleton::StaticClass(); });
     }
 };
 
@@ -1617,7 +1617,7 @@ struct FAutoRegisterFactory_UStaticMesh
         FObjectFactory::Get().Register(
             "UStaticMesh",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UStaticMesh>(); },
-            UStaticMesh::StaticClass());
+            []() -> const UClass* { return UStaticMesh::StaticClass(); });
     }
 };
 
@@ -1630,7 +1630,7 @@ struct FAutoRegisterFactory_UCameraShakePattern
         FObjectFactory::Get().Register(
             "UCameraShakePattern",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UCameraShakePattern>(); },
-            UCameraShakePattern::StaticClass());
+            []() -> const UClass* { return UCameraShakePattern::StaticClass(); });
     }
 };
 
@@ -1643,7 +1643,7 @@ struct FAutoRegisterFactory_UCameraShakeBase
         FObjectFactory::Get().Register(
             "UCameraShakeBase",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UCameraShakeBase>(); },
-            UCameraShakeBase::StaticClass());
+            []() -> const UClass* { return UCameraShakeBase::StaticClass(); });
     }
 };
 
@@ -1656,7 +1656,7 @@ struct FAutoRegisterFactory_USequenceCameraShakePattern
         FObjectFactory::Get().Register(
             "USequenceCameraShakePattern",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USequenceCameraShakePattern>(); },
-            USequenceCameraShakePattern::StaticClass());
+            []() -> const UClass* { return USequenceCameraShakePattern::StaticClass(); });
     }
 };
 
@@ -1669,7 +1669,7 @@ struct FAutoRegisterFactory_USinusoidalCameraShakePattern
         FObjectFactory::Get().Register(
             "USinusoidalCameraShakePattern",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USinusoidalCameraShakePattern>(); },
-            USinusoidalCameraShakePattern::StaticClass());
+            []() -> const UClass* { return USinusoidalCameraShakePattern::StaticClass(); });
     }
 };
 
@@ -1682,7 +1682,7 @@ struct FAutoRegisterFactory_UActorComponent
         FObjectFactory::Get().Register(
             "UActorComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UActorComponent>(); },
-            UActorComponent::StaticClass());
+            []() -> const UClass* { return UActorComponent::StaticClass(); });
     }
 };
 
@@ -1695,7 +1695,7 @@ struct FAutoRegisterFactory_UActorSequenceComponent
         FObjectFactory::Get().Register(
             "UActorSequenceComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UActorSequenceComponent>(); },
-            UActorSequenceComponent::StaticClass());
+            []() -> const UClass* { return UActorSequenceComponent::StaticClass(); });
     }
 };
 
@@ -1708,7 +1708,7 @@ struct FAutoRegisterFactory_UBillboardComponent
         FObjectFactory::Get().Register(
             "UBillboardComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UBillboardComponent>(); },
-            UBillboardComponent::StaticClass());
+            []() -> const UClass* { return UBillboardComponent::StaticClass(); });
     }
 };
 
@@ -1721,7 +1721,7 @@ struct FAutoRegisterFactory_UBoxComponent
         FObjectFactory::Get().Register(
             "UBoxComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UBoxComponent>(); },
-            UBoxComponent::StaticClass());
+            []() -> const UClass* { return UBoxComponent::StaticClass(); });
     }
 };
 
@@ -1734,7 +1734,7 @@ struct FAutoRegisterFactory_UCameraComponent
         FObjectFactory::Get().Register(
             "UCameraComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UCameraComponent>(); },
-            UCameraComponent::StaticClass());
+            []() -> const UClass* { return UCameraComponent::StaticClass(); });
     }
 };
 
@@ -1747,7 +1747,7 @@ struct FAutoRegisterFactory_UCapsuleComponent
         FObjectFactory::Get().Register(
             "UCapsuleComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UCapsuleComponent>(); },
-            UCapsuleComponent::StaticClass());
+            []() -> const UClass* { return UCapsuleComponent::StaticClass(); });
     }
 };
 
@@ -1760,7 +1760,7 @@ struct FAutoRegisterFactory_UDecalComponent
         FObjectFactory::Get().Register(
             "UDecalComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UDecalComponent>(); },
-            UDecalComponent::StaticClass());
+            []() -> const UClass* { return UDecalComponent::StaticClass(); });
     }
 };
 
@@ -1773,7 +1773,7 @@ struct FAutoRegisterFactory_UFireballComponent
         FObjectFactory::Get().Register(
             "UFireballComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UFireballComponent>(); },
-            UFireballComponent::StaticClass());
+            []() -> const UClass* { return UFireballComponent::StaticClass(); });
     }
 };
 
@@ -1786,7 +1786,7 @@ struct FAutoRegisterFactory_UGizmoComponent
         FObjectFactory::Get().Register(
             "UGizmoComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UGizmoComponent>(); },
-            UGizmoComponent::StaticClass());
+            []() -> const UClass* { return UGizmoComponent::StaticClass(); });
     }
 };
 
@@ -1799,7 +1799,7 @@ struct FAutoRegisterFactory_UHeightFogComponent
         FObjectFactory::Get().Register(
             "UHeightFogComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UHeightFogComponent>(); },
-            UHeightFogComponent::StaticClass());
+            []() -> const UClass* { return UHeightFogComponent::StaticClass(); });
     }
 };
 
@@ -1812,7 +1812,7 @@ struct FAutoRegisterFactory_UInterpToMovementComponent
         FObjectFactory::Get().Register(
             "UInterpToMovementComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UInterpToMovementComponent>(); },
-            UInterpToMovementComponent::StaticClass());
+            []() -> const UClass* { return UInterpToMovementComponent::StaticClass(); });
     }
 };
 
@@ -1825,7 +1825,7 @@ struct FAutoRegisterFactory_UProjectileMovementComponent
         FObjectFactory::Get().Register(
             "UProjectileMovementComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UProjectileMovementComponent>(); },
-            UProjectileMovementComponent::StaticClass());
+            []() -> const UClass* { return UProjectileMovementComponent::StaticClass(); });
     }
 };
 
@@ -1838,7 +1838,7 @@ struct FAutoRegisterFactory_UPursuitMovementComponent
         FObjectFactory::Get().Register(
             "UPursuitMovementComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UPursuitMovementComponent>(); },
-            UPursuitMovementComponent::StaticClass());
+            []() -> const UClass* { return UPursuitMovementComponent::StaticClass(); });
     }
 };
 
@@ -1851,7 +1851,7 @@ struct FAutoRegisterFactory_URotatingMovementComponent
         FObjectFactory::Get().Register(
             "URotatingMovementComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<URotatingMovementComponent>(); },
-            URotatingMovementComponent::StaticClass());
+            []() -> const UClass* { return URotatingMovementComponent::StaticClass(); });
     }
 };
 
@@ -1864,7 +1864,7 @@ struct FAutoRegisterFactory_UAmbientLightComponent
         FObjectFactory::Get().Register(
             "UAmbientLightComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UAmbientLightComponent>(); },
-            UAmbientLightComponent::StaticClass());
+            []() -> const UClass* { return UAmbientLightComponent::StaticClass(); });
     }
 };
 
@@ -1877,7 +1877,7 @@ struct FAutoRegisterFactory_UDirectionalLightComponent
         FObjectFactory::Get().Register(
             "UDirectionalLightComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UDirectionalLightComponent>(); },
-            UDirectionalLightComponent::StaticClass());
+            []() -> const UClass* { return UDirectionalLightComponent::StaticClass(); });
     }
 };
 
@@ -1890,7 +1890,7 @@ struct FAutoRegisterFactory_ULightComponent
         FObjectFactory::Get().Register(
             "ULightComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ULightComponent>(); },
-            ULightComponent::StaticClass());
+            []() -> const UClass* { return ULightComponent::StaticClass(); });
     }
 };
 
@@ -1903,7 +1903,7 @@ struct FAutoRegisterFactory_ULightComponentBase
         FObjectFactory::Get().Register(
             "ULightComponentBase",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ULightComponentBase>(); },
-            ULightComponentBase::StaticClass());
+            []() -> const UClass* { return ULightComponentBase::StaticClass(); });
     }
 };
 
@@ -1916,7 +1916,7 @@ struct FAutoRegisterFactory_UPointLightComponent
         FObjectFactory::Get().Register(
             "UPointLightComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UPointLightComponent>(); },
-            UPointLightComponent::StaticClass());
+            []() -> const UClass* { return UPointLightComponent::StaticClass(); });
     }
 };
 
@@ -1929,7 +1929,7 @@ struct FAutoRegisterFactory_USpotlightComponent
         FObjectFactory::Get().Register(
             "USpotlightComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USpotlightComponent>(); },
-            USpotlightComponent::StaticClass());
+            []() -> const UClass* { return USpotlightComponent::StaticClass(); });
     }
 };
 
@@ -1942,7 +1942,7 @@ struct FAutoRegisterFactory_UProceduralMeshComponent
         FObjectFactory::Get().Register(
             "UProceduralMeshComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UProceduralMeshComponent>(); },
-            UProceduralMeshComponent::StaticClass());
+            []() -> const UClass* { return UProceduralMeshComponent::StaticClass(); });
     }
 };
 
@@ -1955,7 +1955,7 @@ struct FAutoRegisterFactory_USceneComponent
         FObjectFactory::Get().Register(
             "USceneComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USceneComponent>(); },
-            USceneComponent::StaticClass());
+            []() -> const UClass* { return USceneComponent::StaticClass(); });
     }
 };
 
@@ -1968,7 +1968,7 @@ struct FAutoRegisterFactory_UShapeComponent
         FObjectFactory::Get().Register(
             "UShapeComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UShapeComponent>(); },
-            UShapeComponent::StaticClass());
+            []() -> const UClass* { return UShapeComponent::StaticClass(); });
     }
 };
 
@@ -1981,7 +1981,7 @@ struct FAutoRegisterFactory_USkeletalMeshComponent
         FObjectFactory::Get().Register(
             "USkeletalMeshComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USkeletalMeshComponent>(); },
-            USkeletalMeshComponent::StaticClass());
+            []() -> const UClass* { return USkeletalMeshComponent::StaticClass(); });
     }
 };
 
@@ -1994,7 +1994,7 @@ struct FAutoRegisterFactory_USoundComponent
         FObjectFactory::Get().Register(
             "USoundComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USoundComponent>(); },
-            USoundComponent::StaticClass());
+            []() -> const UClass* { return USoundComponent::StaticClass(); });
     }
 };
 
@@ -2007,7 +2007,7 @@ struct FAutoRegisterFactory_USphereComponent
         FObjectFactory::Get().Register(
             "USphereComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USphereComponent>(); },
-            USphereComponent::StaticClass());
+            []() -> const UClass* { return USphereComponent::StaticClass(); });
     }
 };
 
@@ -2020,7 +2020,7 @@ struct FAutoRegisterFactory_USpringArmComponent
         FObjectFactory::Get().Register(
             "USpringArmComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USpringArmComponent>(); },
-            USpringArmComponent::StaticClass());
+            []() -> const UClass* { return USpringArmComponent::StaticClass(); });
     }
 };
 
@@ -2033,7 +2033,7 @@ struct FAutoRegisterFactory_UStaticMeshComponent
         FObjectFactory::Get().Register(
             "UStaticMeshComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UStaticMeshComponent>(); },
-            UStaticMeshComponent::StaticClass());
+            []() -> const UClass* { return UStaticMeshComponent::StaticClass(); });
     }
 };
 
@@ -2046,7 +2046,7 @@ struct FAutoRegisterFactory_USubUVComponent
         FObjectFactory::Get().Register(
             "USubUVComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<USubUVComponent>(); },
-            USubUVComponent::StaticClass());
+            []() -> const UClass* { return USubUVComponent::StaticClass(); });
     }
 };
 
@@ -2059,7 +2059,7 @@ struct FAutoRegisterFactory_UTextRenderComponent
         FObjectFactory::Get().Register(
             "UTextRenderComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UTextRenderComponent>(); },
-            UTextRenderComponent::StaticClass());
+            []() -> const UClass* { return UTextRenderComponent::StaticClass(); });
     }
 };
 
@@ -2072,7 +2072,7 @@ struct FAutoRegisterFactory_AActor
         FObjectFactory::Get().Register(
             "AActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AActor>(); },
-            AActor::StaticClass());
+            []() -> const UClass* { return AActor::StaticClass(); });
     }
 };
 
@@ -2085,7 +2085,7 @@ struct FAutoRegisterFactory_ACharacter
         FObjectFactory::Get().Register(
             "ACharacter",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ACharacter>(); },
-            ACharacter::StaticClass());
+            []() -> const UClass* { return ACharacter::StaticClass(); });
     }
 };
 
@@ -2098,7 +2098,7 @@ struct FAutoRegisterFactory_ADefaultPawn
         FObjectFactory::Get().Register(
             "ADefaultPawn",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ADefaultPawn>(); },
-            ADefaultPawn::StaticClass());
+            []() -> const UClass* { return ADefaultPawn::StaticClass(); });
     }
 };
 
@@ -2111,7 +2111,7 @@ struct FAutoRegisterFactory_AGameModeBase
         FObjectFactory::Get().Register(
             "AGameModeBase",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AGameModeBase>(); },
-            AGameModeBase::StaticClass());
+            []() -> const UClass* { return AGameModeBase::StaticClass(); });
     }
 };
 
@@ -2124,7 +2124,7 @@ struct FAutoRegisterFactory_ULevel
         FObjectFactory::Get().Register(
             "ULevel",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ULevel>(); },
-            ULevel::StaticClass());
+            []() -> const UClass* { return ULevel::StaticClass(); });
     }
 };
 
@@ -2137,7 +2137,7 @@ struct FAutoRegisterFactory_APawn
         FObjectFactory::Get().Register(
             "APawn",
             []() -> UObject* { return UObjectManager::Get().CreateObject<APawn>(); },
-            APawn::StaticClass());
+            []() -> const UClass* { return APawn::StaticClass(); });
     }
 };
 
@@ -2150,7 +2150,7 @@ struct FAutoRegisterFactory_APlayerController
         FObjectFactory::Get().Register(
             "APlayerController",
             []() -> UObject* { return UObjectManager::Get().CreateObject<APlayerController>(); },
-            APlayerController::StaticClass());
+            []() -> const UClass* { return APlayerController::StaticClass(); });
     }
 };
 
@@ -2163,7 +2163,7 @@ struct FAutoRegisterFactory_ACubeActor
         FObjectFactory::Get().Register(
             "ACubeActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ACubeActor>(); },
-            ACubeActor::StaticClass());
+            []() -> const UClass* { return ACubeActor::StaticClass(); });
     }
 };
 
@@ -2176,7 +2176,7 @@ struct FAutoRegisterFactory_ASphereActor
         FObjectFactory::Get().Register(
             "ASphereActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ASphereActor>(); },
-            ASphereActor::StaticClass());
+            []() -> const UClass* { return ASphereActor::StaticClass(); });
     }
 };
 
@@ -2189,7 +2189,7 @@ struct FAutoRegisterFactory_APlaneActor
         FObjectFactory::Get().Register(
             "APlaneActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<APlaneActor>(); },
-            APlaneActor::StaticClass());
+            []() -> const UClass* { return APlaneActor::StaticClass(); });
     }
 };
 
@@ -2202,7 +2202,7 @@ struct FAutoRegisterFactory_AAttachTestActor
         FObjectFactory::Get().Register(
             "AAttachTestActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AAttachTestActor>(); },
-            AAttachTestActor::StaticClass());
+            []() -> const UClass* { return AAttachTestActor::StaticClass(); });
     }
 };
 
@@ -2215,7 +2215,7 @@ struct FAutoRegisterFactory_ASceneActor
         FObjectFactory::Get().Register(
             "ASceneActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ASceneActor>(); },
-            ASceneActor::StaticClass());
+            []() -> const UClass* { return ASceneActor::StaticClass(); });
     }
 };
 
@@ -2228,7 +2228,7 @@ struct FAutoRegisterFactory_APlayerStart
         FObjectFactory::Get().Register(
             "APlayerStart",
             []() -> UObject* { return UObjectManager::Get().CreateObject<APlayerStart>(); },
-            APlayerStart::StaticClass());
+            []() -> const UClass* { return APlayerStart::StaticClass(); });
     }
 };
 
@@ -2241,7 +2241,7 @@ struct FAutoRegisterFactory_AFogActor
         FObjectFactory::Get().Register(
             "AFogActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AFogActor>(); },
-            AFogActor::StaticClass());
+            []() -> const UClass* { return AFogActor::StaticClass(); });
     }
 };
 
@@ -2254,7 +2254,7 @@ struct FAutoRegisterFactory_AStaticMeshActor
         FObjectFactory::Get().Register(
             "AStaticMeshActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AStaticMeshActor>(); },
-            AStaticMeshActor::StaticClass());
+            []() -> const UClass* { return AStaticMeshActor::StaticClass(); });
     }
 };
 
@@ -2267,7 +2267,7 @@ struct FAutoRegisterFactory_ASkeletalMeshActor
         FObjectFactory::Get().Register(
             "ASkeletalMeshActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ASkeletalMeshActor>(); },
-            ASkeletalMeshActor::StaticClass());
+            []() -> const UClass* { return ASkeletalMeshActor::StaticClass(); });
     }
 };
 
@@ -2280,7 +2280,7 @@ struct FAutoRegisterFactory_ASubUVActor
         FObjectFactory::Get().Register(
             "ASubUVActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ASubUVActor>(); },
-            ASubUVActor::StaticClass());
+            []() -> const UClass* { return ASubUVActor::StaticClass(); });
     }
 };
 
@@ -2293,7 +2293,7 @@ struct FAutoRegisterFactory_ATextRenderActor
         FObjectFactory::Get().Register(
             "ATextRenderActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ATextRenderActor>(); },
-            ATextRenderActor::StaticClass());
+            []() -> const UClass* { return ATextRenderActor::StaticClass(); });
     }
 };
 
@@ -2306,7 +2306,7 @@ struct FAutoRegisterFactory_ABillboardActor
         FObjectFactory::Get().Register(
             "ABillboardActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ABillboardActor>(); },
-            ABillboardActor::StaticClass());
+            []() -> const UClass* { return ABillboardActor::StaticClass(); });
     }
 };
 
@@ -2319,7 +2319,7 @@ struct FAutoRegisterFactory_ADecalActor
         FObjectFactory::Get().Register(
             "ADecalActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ADecalActor>(); },
-            ADecalActor::StaticClass());
+            []() -> const UClass* { return ADecalActor::StaticClass(); });
     }
 };
 
@@ -2332,7 +2332,7 @@ struct FAutoRegisterFactory_AFireballActor
         FObjectFactory::Get().Register(
             "AFireballActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AFireballActor>(); },
-            AFireballActor::StaticClass());
+            []() -> const UClass* { return AFireballActor::StaticClass(); });
     }
 };
 
@@ -2345,7 +2345,7 @@ struct FAutoRegisterFactory_ADecalSpotLightActor
         FObjectFactory::Get().Register(
             "ADecalSpotLightActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ADecalSpotLightActor>(); },
-            ADecalSpotLightActor::StaticClass());
+            []() -> const UClass* { return ADecalSpotLightActor::StaticClass(); });
     }
 };
 
@@ -2358,7 +2358,7 @@ struct FAutoRegisterFactory_ALightActor
         FObjectFactory::Get().Register(
             "ALightActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ALightActor>(); },
-            ALightActor::StaticClass());
+            []() -> const UClass* { return ALightActor::StaticClass(); });
     }
 };
 
@@ -2371,7 +2371,7 @@ struct FAutoRegisterFactory_AAmbientLightActor
         FObjectFactory::Get().Register(
             "AAmbientLightActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AAmbientLightActor>(); },
-            AAmbientLightActor::StaticClass());
+            []() -> const UClass* { return AAmbientLightActor::StaticClass(); });
     }
 };
 
@@ -2384,7 +2384,7 @@ struct FAutoRegisterFactory_ADirectionalLightActor
         FObjectFactory::Get().Register(
             "ADirectionalLightActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ADirectionalLightActor>(); },
-            ADirectionalLightActor::StaticClass());
+            []() -> const UClass* { return ADirectionalLightActor::StaticClass(); });
     }
 };
 
@@ -2397,7 +2397,7 @@ struct FAutoRegisterFactory_APointLightActor
         FObjectFactory::Get().Register(
             "APointLightActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<APointLightActor>(); },
-            APointLightActor::StaticClass());
+            []() -> const UClass* { return APointLightActor::StaticClass(); });
     }
 };
 
@@ -2410,7 +2410,7 @@ struct FAutoRegisterFactory_ASpotlightActor
         FObjectFactory::Get().Register(
             "ASpotlightActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ASpotlightActor>(); },
-            ASpotlightActor::StaticClass());
+            []() -> const UClass* { return ASpotlightActor::StaticClass(); });
     }
 };
 
@@ -2423,7 +2423,7 @@ struct FAutoRegisterFactory_ABullet
         FObjectFactory::Get().Register(
             "ABullet",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ABullet>(); },
-            ABullet::StaticClass());
+            []() -> const UClass* { return ABullet::StaticClass(); });
     }
 };
 
@@ -2436,7 +2436,7 @@ struct FAutoRegisterFactory_ABladeSlash
         FObjectFactory::Get().Register(
             "ABladeSlash",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ABladeSlash>(); },
-            ABladeSlash::StaticClass());
+            []() -> const UClass* { return ABladeSlash::StaticClass(); });
     }
 };
 
@@ -2449,7 +2449,7 @@ struct FAutoRegisterFactory_ADestructibleActor
         FObjectFactory::Get().Register(
             "ADestructibleActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ADestructibleActor>(); },
-            ADestructibleActor::StaticClass());
+            []() -> const UClass* { return ADestructibleActor::StaticClass(); });
     }
 };
 
@@ -2462,7 +2462,7 @@ struct FAutoRegisterFactory_ABoundsBoxActor
         FObjectFactory::Get().Register(
             "ABoundsBoxActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<ABoundsBoxActor>(); },
-            ABoundsBoxActor::StaticClass());
+            []() -> const UClass* { return ABoundsBoxActor::StaticClass(); });
     }
 };
 
@@ -2475,7 +2475,7 @@ struct FAutoRegisterFactory_UMainSceneDestructibleComponent
         FObjectFactory::Get().Register(
             "UMainSceneDestructibleComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UMainSceneDestructibleComponent>(); },
-            UMainSceneDestructibleComponent::StaticClass());
+            []() -> const UClass* { return UMainSceneDestructibleComponent::StaticClass(); });
     }
 };
 
@@ -2488,7 +2488,7 @@ struct FAutoRegisterFactory_AMainSceneDestructibleActor
         FObjectFactory::Get().Register(
             "AMainSceneDestructibleActor",
             []() -> UObject* { return UObjectManager::Get().CreateObject<AMainSceneDestructibleActor>(); },
-            AMainSceneDestructibleActor::StaticClass());
+            []() -> const UClass* { return AMainSceneDestructibleActor::StaticClass(); });
     }
 };
 
@@ -2501,7 +2501,7 @@ struct FAutoRegisterFactory_UWorld
         FObjectFactory::Get().Register(
             "UWorld",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UWorld>(); },
-            UWorld::StaticClass());
+            []() -> const UClass* { return UWorld::StaticClass(); });
     }
 };
 
@@ -2514,7 +2514,7 @@ struct FAutoRegisterFactory_UObject
         FObjectFactory::Get().Register(
             "UObject",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UObject>(); },
-            UObject::StaticClass());
+            []() -> const UClass* { return UObject::StaticClass(); });
     }
 };
 
@@ -2527,7 +2527,7 @@ struct FAutoRegisterFactory_UMaterial
         FObjectFactory::Get().Register(
             "UMaterial",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UMaterial>(); },
-            UMaterial::StaticClass());
+            []() -> const UClass* { return UMaterial::StaticClass(); });
     }
 };
 
@@ -2540,7 +2540,7 @@ struct FAutoRegisterFactory_UMaterialInstance
         FObjectFactory::Get().Register(
             "UMaterialInstance",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UMaterialInstance>(); },
-            UMaterialInstance::StaticClass());
+            []() -> const UClass* { return UMaterialInstance::StaticClass(); });
     }
 };
 
@@ -2553,7 +2553,7 @@ struct FAutoRegisterFactory_UTexture
         FObjectFactory::Get().Register(
             "UTexture",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UTexture>(); },
-            UTexture::StaticClass());
+            []() -> const UClass* { return UTexture::StaticClass(); });
     }
 };
 
@@ -2566,7 +2566,7 @@ struct FAutoRegisterFactory_UEngine
         FObjectFactory::Get().Register(
             "UEngine",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UEngine>(); },
-            UEngine::StaticClass());
+            []() -> const UClass* { return UEngine::StaticClass(); });
     }
 };
 
@@ -2579,7 +2579,7 @@ struct FAutoRegisterFactory_UGameEngine
         FObjectFactory::Get().Register(
             "UGameEngine",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UGameEngine>(); },
-            UGameEngine::StaticClass());
+            []() -> const UClass* { return UGameEngine::StaticClass(); });
     }
 };
 
@@ -2592,7 +2592,7 @@ struct FAutoRegisterFactory_UScriptComponent
         FObjectFactory::Get().Register(
             "UScriptComponent",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UScriptComponent>(); },
-            UScriptComponent::StaticClass());
+            []() -> const UClass* { return UScriptComponent::StaticClass(); });
     }
 };
 
@@ -2605,7 +2605,7 @@ struct FAutoRegisterFactory_UObjViewerEngine
         FObjectFactory::Get().Register(
             "UObjViewerEngine",
             []() -> UObject* { return UObjectManager::Get().CreateObject<UObjViewerEngine>(); },
-            UObjViewerEngine::StaticClass());
+            []() -> const UClass* { return UObjViewerEngine::StaticClass(); });
     }
 };
 
@@ -2631,8 +2631,12 @@ const UEnum* Z_Construct_UEnum_EInterpBehaviour()
         { "PingPong", static_cast<int64>(EInterpBehaviour::PingPong) },
     };
 
-    static const UEnum EnumInfo("EInterpBehaviour", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));
-    return &EnumInfo;
+    static UEnum* EnumInfo = nullptr;
+    if (!EnumInfo)
+    {
+        EnumInfo = new UEnum("EInterpBehaviour", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));
+    }
+    return EnumInfo;
 }
 
 const UEnum* Z_Construct_UEnum_EShadowMap()
@@ -2649,8 +2653,12 @@ const UEnum* Z_Construct_UEnum_EShadowMap()
         { "PSM", static_cast<int64>(EShadowMap::PSM) },
     };
 
-    static const UEnum EnumInfo("EShadowMap", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));
-    return &EnumInfo;
+    static UEnum* EnumInfo = nullptr;
+    if (!EnumInfo)
+    {
+        EnumInfo = new UEnum("EShadowMap", Names, Values, static_cast<uint32>(sizeof(Values) / sizeof(Values[0])));
+    }
+    return EnumInfo;
 }
 
 const UScriptStruct* Z_Construct_UScriptStruct_FCameraState()
@@ -2670,8 +2678,12 @@ const UScriptStruct* Z_Construct_UScriptStruct_FCameraState()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UScriptStruct StructInfo("FCameraState", sizeof(FCameraState), Properties, PropertyCount);
-    return &StructInfo;
+    static UScriptStruct* StructInfo = nullptr;
+    if (!StructInfo)
+    {
+        StructInfo = new UScriptStruct("FCameraState", sizeof(FCameraState), Properties, PropertyCount);
+    }
+    return StructInfo;
 }
 
 const UScriptStruct* Z_Construct_UScriptStruct_FCameraPostProcessSettings()
@@ -2691,8 +2703,12 @@ const UScriptStruct* Z_Construct_UScriptStruct_FCameraPostProcessSettings()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UScriptStruct StructInfo("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, PropertyCount);
-    return &StructInfo;
+    static UScriptStruct* StructInfo = nullptr;
+    if (!StructInfo)
+    {
+        StructInfo = new UScriptStruct("FCameraPostProcessSettings", sizeof(FCameraPostProcessSettings), Properties, PropertyCount);
+    }
+    return StructInfo;
 }
 
 const UScriptStruct* Z_Construct_UScriptStruct_FScrollUV()
@@ -2706,8 +2722,12 @@ const UScriptStruct* Z_Construct_UScriptStruct_FScrollUV()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UScriptStruct StructInfo("FScrollUV", sizeof(FScrollUV), Properties, PropertyCount);
-    return &StructInfo;
+    static UScriptStruct* StructInfo = nullptr;
+    if (!StructInfo)
+    {
+        StructInfo = new UScriptStruct("FScrollUV", sizeof(FScrollUV), Properties, PropertyCount);
+    }
+    return StructInfo;
 }
 
 const UClass* Z_Construct_UClass_UEditorEngine()
@@ -2715,8 +2735,12 @@ const UClass* Z_Construct_UClass_UEditorEngine()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UEditorEngine", UEngine::StaticClass(), sizeof(UEditorEngine), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UEditorEngine", UEngine::StaticClass(), sizeof(UEditorEngine), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UActorSequence()
@@ -2724,8 +2748,12 @@ const UClass* Z_Construct_UClass_UActorSequence()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UActorSequence", UObject::StaticClass(), sizeof(UActorSequence), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UActorSequence", UObject::StaticClass(), sizeof(UActorSequence), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UActorSequencePlayer()
@@ -2733,8 +2761,12 @@ const UClass* Z_Construct_UClass_UActorSequencePlayer()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UActorSequencePlayer", UObject::StaticClass(), sizeof(UActorSequencePlayer), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UActorSequencePlayer", UObject::StaticClass(), sizeof(UActorSequencePlayer), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimationStateMachine()
@@ -2742,8 +2774,12 @@ const UClass* Z_Construct_UClass_UAnimationStateMachine()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimationStateMachine", UObject::StaticClass(), sizeof(UAnimationStateMachine), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimationStateMachine", UObject::StaticClass(), sizeof(UAnimationStateMachine), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimInstance()
@@ -2765,8 +2801,12 @@ const UClass* Z_Construct_UClass_UAnimInstance()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UAnimInstance", UObject::StaticClass(), sizeof(UAnimInstance), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimInstance", UObject::StaticClass(), sizeof(UAnimInstance), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimInstanceAsset()
@@ -2774,8 +2814,12 @@ const UClass* Z_Construct_UClass_UAnimInstanceAsset()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimInstanceAsset", UObject::StaticClass(), sizeof(UAnimInstanceAsset), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimInstanceAsset", UObject::StaticClass(), sizeof(UAnimInstanceAsset), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify()
@@ -2783,8 +2827,12 @@ const UClass* Z_Construct_UClass_UAnimNotify()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify", UObject::StaticClass(), sizeof(UAnimNotify), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify", UObject::StaticClass(), sizeof(UAnimNotify), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotifyState()
@@ -2792,8 +2840,12 @@ const UClass* Z_Construct_UClass_UAnimNotifyState()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotifyState", UAnimNotify::StaticClass(), sizeof(UAnimNotifyState), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotifyState", UAnimNotify::StaticClass(), sizeof(UAnimNotifyState), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify_PlaySFX()
@@ -2801,8 +2853,12 @@ const UClass* Z_Construct_UClass_UAnimNotify_PlaySFX()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify_PlaySFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlaySFX), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify_PlaySFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlaySFX), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify_GameplayEvent()
@@ -2810,8 +2866,12 @@ const UClass* Z_Construct_UClass_UAnimNotify_GameplayEvent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify_GameplayEvent", UAnimNotify::StaticClass(), sizeof(UAnimNotify_GameplayEvent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify_GameplayEvent", UAnimNotify::StaticClass(), sizeof(UAnimNotify_GameplayEvent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify_CameraShake()
@@ -2819,8 +2879,12 @@ const UClass* Z_Construct_UClass_UAnimNotify_CameraShake()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify_CameraShake", UAnimNotify::StaticClass(), sizeof(UAnimNotify_CameraShake), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify_CameraShake", UAnimNotify::StaticClass(), sizeof(UAnimNotify_CameraShake), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify_FootstepSurfaceEvent()
@@ -2828,8 +2892,12 @@ const UClass* Z_Construct_UClass_UAnimNotify_FootstepSurfaceEvent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify_FootstepSurfaceEvent", UAnimNotify::StaticClass(), sizeof(UAnimNotify_FootstepSurfaceEvent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify_FootstepSurfaceEvent", UAnimNotify::StaticClass(), sizeof(UAnimNotify_FootstepSurfaceEvent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify_PlayVFX()
@@ -2837,8 +2905,12 @@ const UClass* Z_Construct_UClass_UAnimNotify_PlayVFX()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify_PlayVFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlayVFX), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify_PlayVFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlayVFX), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotify_SpawnDecal()
@@ -2846,8 +2918,12 @@ const UClass* Z_Construct_UClass_UAnimNotify_SpawnDecal()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotify_SpawnDecal", UAnimNotify::StaticClass(), sizeof(UAnimNotify_SpawnDecal), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotify_SpawnDecal", UAnimNotify::StaticClass(), sizeof(UAnimNotify_SpawnDecal), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotifyState_GameplayEventWindow()
@@ -2855,8 +2931,12 @@ const UClass* Z_Construct_UClass_UAnimNotifyState_GameplayEventWindow()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotifyState_GameplayEventWindow", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_GameplayEventWindow), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotifyState_GameplayEventWindow", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_GameplayEventWindow), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotifyState_PlayLoopingSFX()
@@ -2864,8 +2944,12 @@ const UClass* Z_Construct_UClass_UAnimNotifyState_PlayLoopingSFX()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotifyState_PlayLoopingSFX", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_PlayLoopingSFX), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotifyState_PlayLoopingSFX", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_PlayLoopingSFX), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotifyState_AttackWindow()
@@ -2873,8 +2957,12 @@ const UClass* Z_Construct_UClass_UAnimNotifyState_AttackWindow()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotifyState_AttackWindow", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_AttackWindow), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotifyState_AttackWindow", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_AttackWindow), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotifyLog()
@@ -2882,8 +2970,12 @@ const UClass* Z_Construct_UClass_UAnimNotifyLog()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotifyLog", UAnimNotify::StaticClass(), sizeof(UAnimNotifyLog), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotifyLog", UAnimNotify::StaticClass(), sizeof(UAnimNotifyLog), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimNotifyStateLog()
@@ -2891,8 +2983,12 @@ const UClass* Z_Construct_UClass_UAnimNotifyStateLog()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimNotifyStateLog", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyStateLog), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimNotifyStateLog", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyStateLog), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAnimSingleNodeInstance()
@@ -2900,8 +2996,12 @@ const UClass* Z_Construct_UClass_UAnimSingleNodeInstance()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAnimSingleNodeInstance", UAnimInstance::StaticClass(), sizeof(UAnimSingleNodeInstance), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAnimSingleNodeInstance", UAnimInstance::StaticClass(), sizeof(UAnimSingleNodeInstance), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ULuaAnimInstance()
@@ -2909,8 +3009,12 @@ const UClass* Z_Construct_UClass_ULuaAnimInstance()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ULuaAnimInstance", UAnimInstance::StaticClass(), sizeof(ULuaAnimInstance), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ULuaAnimInstance", UAnimInstance::StaticClass(), sizeof(ULuaAnimInstance), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UCurveFloatAsset()
@@ -2918,8 +3022,12 @@ const UClass* Z_Construct_UClass_UCurveFloatAsset()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UCurveFloatAsset", UObject::StaticClass(), sizeof(UCurveFloatAsset), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UCurveFloatAsset", UObject::StaticClass(), sizeof(UCurveFloatAsset), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UPhysicsAsset()
@@ -2927,8 +3035,12 @@ const UClass* Z_Construct_UClass_UPhysicsAsset()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UPhysicsAsset", UObject::StaticClass(), sizeof(UPhysicsAsset), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UPhysicsAsset", UObject::StaticClass(), sizeof(UPhysicsAsset), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USkeletalMesh()
@@ -2936,8 +3048,12 @@ const UClass* Z_Construct_UClass_USkeletalMesh()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("USkeletalMesh", UObject::StaticClass(), sizeof(USkeletalMesh), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USkeletalMesh", UObject::StaticClass(), sizeof(USkeletalMesh), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USkeleton()
@@ -2945,8 +3061,12 @@ const UClass* Z_Construct_UClass_USkeleton()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("USkeleton", UObject::StaticClass(), sizeof(USkeleton), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USkeleton", UObject::StaticClass(), sizeof(USkeleton), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UStaticMesh()
@@ -2954,8 +3074,12 @@ const UClass* Z_Construct_UClass_UStaticMesh()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UStaticMesh", UObject::StaticClass(), sizeof(UStaticMesh), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UStaticMesh", UObject::StaticClass(), sizeof(UStaticMesh), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UCameraShakePattern()
@@ -2971,8 +3095,12 @@ const UClass* Z_Construct_UClass_UCameraShakePattern()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UCameraShakePattern", UObject::StaticClass(), sizeof(UCameraShakePattern), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UCameraShakePattern", UObject::StaticClass(), sizeof(UCameraShakePattern), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UPerlinCameraShakePattern()
@@ -2980,8 +3108,12 @@ const UClass* Z_Construct_UClass_UPerlinCameraShakePattern()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UPerlinCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(UPerlinCameraShakePattern), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UPerlinCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(UPerlinCameraShakePattern), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UCameraShakeBase()
@@ -2989,8 +3121,12 @@ const UClass* Z_Construct_UClass_UCameraShakeBase()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UCameraShakeBase", UObject::StaticClass(), sizeof(UCameraShakeBase), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UCameraShakeBase", UObject::StaticClass(), sizeof(UCameraShakeBase), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USequenceCameraShakePattern()
@@ -3018,8 +3154,12 @@ const UClass* Z_Construct_UClass_USequenceCameraShakePattern()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USequenceCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(USequenceCameraShakePattern), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USequenceCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(USequenceCameraShakePattern), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USinusoidalCameraShakePattern()
@@ -3047,8 +3187,12 @@ const UClass* Z_Construct_UClass_USinusoidalCameraShakePattern()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USinusoidalCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(USinusoidalCameraShakePattern), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USinusoidalCameraShakePattern", UCameraShakePattern::StaticClass(), sizeof(USinusoidalCameraShakePattern), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UActorComponent()
@@ -3066,8 +3210,12 @@ const UClass* Z_Construct_UClass_UActorComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UActorComponent", UObject::StaticClass(), sizeof(UActorComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UActorComponent", UObject::StaticClass(), sizeof(UActorComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UActorSequenceComponent()
@@ -3075,8 +3223,12 @@ const UClass* Z_Construct_UClass_UActorSequenceComponent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UActorSequenceComponent", UActorComponent::StaticClass(), sizeof(UActorSequenceComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UActorSequenceComponent", UActorComponent::StaticClass(), sizeof(UActorSequenceComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UBillboardComponent()
@@ -3098,8 +3250,12 @@ const UClass* Z_Construct_UClass_UBillboardComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UBillboardComponent", UPrimitiveComponent::StaticClass(), sizeof(UBillboardComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UBillboardComponent", UPrimitiveComponent::StaticClass(), sizeof(UBillboardComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UBoxComponent()
@@ -3107,8 +3263,12 @@ const UClass* Z_Construct_UClass_UBoxComponent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UBoxComponent", UShapeComponent::StaticClass(), sizeof(UBoxComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UBoxComponent", UShapeComponent::StaticClass(), sizeof(UBoxComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UCameraComponent()
@@ -3122,8 +3282,12 @@ const UClass* Z_Construct_UClass_UCameraComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UCameraComponent", USceneComponent::StaticClass(), sizeof(UCameraComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UCameraComponent", USceneComponent::StaticClass(), sizeof(UCameraComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UCapsuleComponent()
@@ -3137,8 +3301,12 @@ const UClass* Z_Construct_UClass_UCapsuleComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UCapsuleComponent", UShapeComponent::StaticClass(), sizeof(UCapsuleComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UCapsuleComponent", UShapeComponent::StaticClass(), sizeof(UCapsuleComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UDecalComponent()
@@ -3162,8 +3330,12 @@ const UClass* Z_Construct_UClass_UDecalComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UDecalComponent", UPrimitiveComponent::StaticClass(), sizeof(UDecalComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UDecalComponent", UPrimitiveComponent::StaticClass(), sizeof(UDecalComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UFireballComponent()
@@ -3181,8 +3353,12 @@ const UClass* Z_Construct_UClass_UFireballComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UFireballComponent", UPrimitiveComponent::StaticClass(), sizeof(UFireballComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UFireballComponent", UPrimitiveComponent::StaticClass(), sizeof(UFireballComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UGizmoComponent()
@@ -3190,8 +3366,12 @@ const UClass* Z_Construct_UClass_UGizmoComponent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UGizmoComponent", UPrimitiveComponent::StaticClass(), sizeof(UGizmoComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UGizmoComponent", UPrimitiveComponent::StaticClass(), sizeof(UGizmoComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UHeightFogComponent()
@@ -3215,8 +3395,12 @@ const UClass* Z_Construct_UClass_UHeightFogComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UHeightFogComponent", UPrimitiveComponent::StaticClass(), sizeof(UHeightFogComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UHeightFogComponent", UPrimitiveComponent::StaticClass(), sizeof(UHeightFogComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UMeshComponent()
@@ -3228,8 +3412,12 @@ const UClass* Z_Construct_UClass_UMeshComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UMeshComponent", UPrimitiveComponent::StaticClass(), sizeof(UMeshComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UMeshComponent", UPrimitiveComponent::StaticClass(), sizeof(UMeshComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UInterpToMovementComponent()
@@ -3249,8 +3437,12 @@ const UClass* Z_Construct_UClass_UInterpToMovementComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UInterpToMovementComponent", UMovementComponent::StaticClass(), sizeof(UInterpToMovementComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UInterpToMovementComponent", UMovementComponent::StaticClass(), sizeof(UInterpToMovementComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UMovementComponent()
@@ -3270,8 +3462,12 @@ const UClass* Z_Construct_UClass_UMovementComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UMovementComponent", UActorComponent::StaticClass(), sizeof(UMovementComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UMovementComponent", UActorComponent::StaticClass(), sizeof(UMovementComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UProjectileMovementComponent()
@@ -3289,8 +3485,12 @@ const UClass* Z_Construct_UClass_UProjectileMovementComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UProjectileMovementComponent", UMovementComponent::StaticClass(), sizeof(UProjectileMovementComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UProjectileMovementComponent", UMovementComponent::StaticClass(), sizeof(UProjectileMovementComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UPursuitMovementComponent()
@@ -3308,8 +3508,12 @@ const UClass* Z_Construct_UClass_UPursuitMovementComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UPursuitMovementComponent", UMovementComponent::StaticClass(), sizeof(UPursuitMovementComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UPursuitMovementComponent", UMovementComponent::StaticClass(), sizeof(UPursuitMovementComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_URotatingMovementComponent()
@@ -3325,8 +3529,12 @@ const UClass* Z_Construct_UClass_URotatingMovementComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("URotatingMovementComponent", UMovementComponent::StaticClass(), sizeof(URotatingMovementComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("URotatingMovementComponent", UMovementComponent::StaticClass(), sizeof(URotatingMovementComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UAmbientLightComponent()
@@ -3334,8 +3542,12 @@ const UClass* Z_Construct_UClass_UAmbientLightComponent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UAmbientLightComponent", ULightComponent::StaticClass(), sizeof(UAmbientLightComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UAmbientLightComponent", ULightComponent::StaticClass(), sizeof(UAmbientLightComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UDirectionalLightComponent()
@@ -3349,8 +3561,12 @@ const UClass* Z_Construct_UClass_UDirectionalLightComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UDirectionalLightComponent", ULightComponent::StaticClass(), sizeof(UDirectionalLightComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UDirectionalLightComponent", ULightComponent::StaticClass(), sizeof(UDirectionalLightComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ULightComponent()
@@ -3370,8 +3586,12 @@ const UClass* Z_Construct_UClass_ULightComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("ULightComponent", ULightComponentBase::StaticClass(), sizeof(ULightComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ULightComponent", ULightComponentBase::StaticClass(), sizeof(ULightComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ULightComponentBase()
@@ -3387,8 +3607,12 @@ const UClass* Z_Construct_UClass_ULightComponentBase()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("ULightComponentBase", USceneComponent::StaticClass(), sizeof(ULightComponentBase), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ULightComponentBase", USceneComponent::StaticClass(), sizeof(ULightComponentBase), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UPointLightComponent()
@@ -3402,8 +3626,12 @@ const UClass* Z_Construct_UClass_UPointLightComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UPointLightComponent", ULightComponent::StaticClass(), sizeof(UPointLightComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UPointLightComponent", ULightComponent::StaticClass(), sizeof(UPointLightComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USpotlightComponent()
@@ -3417,8 +3645,12 @@ const UClass* Z_Construct_UClass_USpotlightComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USpotlightComponent", UPointLightComponent::StaticClass(), sizeof(USpotlightComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USpotlightComponent", UPointLightComponent::StaticClass(), sizeof(USpotlightComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UPrimitiveComponent()
@@ -3436,8 +3668,12 @@ const UClass* Z_Construct_UClass_UPrimitiveComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UPrimitiveComponent", USceneComponent::StaticClass(), sizeof(UPrimitiveComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UPrimitiveComponent", USceneComponent::StaticClass(), sizeof(UPrimitiveComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UProceduralMeshComponent()
@@ -3445,8 +3681,12 @@ const UClass* Z_Construct_UClass_UProceduralMeshComponent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UProceduralMeshComponent", UPrimitiveComponent::StaticClass(), sizeof(UProceduralMeshComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UProceduralMeshComponent", UPrimitiveComponent::StaticClass(), sizeof(UProceduralMeshComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USceneComponent()
@@ -3462,8 +3702,12 @@ const UClass* Z_Construct_UClass_USceneComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USceneComponent", UActorComponent::StaticClass(), sizeof(USceneComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USceneComponent", UActorComponent::StaticClass(), sizeof(USceneComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UShapeComponent()
@@ -3471,8 +3715,12 @@ const UClass* Z_Construct_UClass_UShapeComponent()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UShapeComponent", UPrimitiveComponent::StaticClass(), sizeof(UShapeComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UShapeComponent", UPrimitiveComponent::StaticClass(), sizeof(UShapeComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USkeletalMeshComponent()
@@ -3484,8 +3732,12 @@ const UClass* Z_Construct_UClass_USkeletalMeshComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USkeletalMeshComponent", USkinnedMeshComponent::StaticClass(), sizeof(USkeletalMeshComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USkeletalMeshComponent", USkinnedMeshComponent::StaticClass(), sizeof(USkeletalMeshComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USkinnedMeshComponent()
@@ -3499,8 +3751,12 @@ const UClass* Z_Construct_UClass_USkinnedMeshComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USkinnedMeshComponent", UMeshComponent::StaticClass(), sizeof(USkinnedMeshComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USkinnedMeshComponent", UMeshComponent::StaticClass(), sizeof(USkinnedMeshComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USoundComponent()
@@ -3532,8 +3788,12 @@ const UClass* Z_Construct_UClass_USoundComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USoundComponent", USceneComponent::StaticClass(), sizeof(USoundComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USoundComponent", USceneComponent::StaticClass(), sizeof(USoundComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USphereComponent()
@@ -3545,8 +3805,12 @@ const UClass* Z_Construct_UClass_USphereComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USphereComponent", UShapeComponent::StaticClass(), sizeof(USphereComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USphereComponent", UShapeComponent::StaticClass(), sizeof(USphereComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USpringArmComponent()
@@ -3564,8 +3828,12 @@ const UClass* Z_Construct_UClass_USpringArmComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USpringArmComponent", USceneComponent::StaticClass(), sizeof(USpringArmComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USpringArmComponent", USceneComponent::StaticClass(), sizeof(USpringArmComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UStaticMeshComponent()
@@ -3577,8 +3845,12 @@ const UClass* Z_Construct_UClass_UStaticMeshComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UStaticMeshComponent", UMeshComponent::StaticClass(), sizeof(UStaticMeshComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UStaticMeshComponent", UMeshComponent::StaticClass(), sizeof(UStaticMeshComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_USubUVComponent()
@@ -3590,8 +3862,12 @@ const UClass* Z_Construct_UClass_USubUVComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("USubUVComponent", UBillboardComponent::StaticClass(), sizeof(USubUVComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("USubUVComponent", UBillboardComponent::StaticClass(), sizeof(USubUVComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UTextRenderComponent()
@@ -3607,8 +3883,12 @@ const UClass* Z_Construct_UClass_UTextRenderComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UTextRenderComponent", UPrimitiveComponent::StaticClass(), sizeof(UTextRenderComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UTextRenderComponent", UPrimitiveComponent::StaticClass(), sizeof(UTextRenderComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AActor()
@@ -3616,8 +3896,12 @@ const UClass* Z_Construct_UClass_AActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AActor", UObject::StaticClass(), sizeof(AActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AActor", UObject::StaticClass(), sizeof(AActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ACharacter()
@@ -3625,8 +3909,12 @@ const UClass* Z_Construct_UClass_ACharacter()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ACharacter", APawn::StaticClass(), sizeof(ACharacter), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ACharacter", APawn::StaticClass(), sizeof(ACharacter), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ADefaultPawn()
@@ -3634,8 +3922,12 @@ const UClass* Z_Construct_UClass_ADefaultPawn()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ADefaultPawn", APawn::StaticClass(), sizeof(ADefaultPawn), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ADefaultPawn", APawn::StaticClass(), sizeof(ADefaultPawn), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AGameModeBase()
@@ -3643,8 +3935,12 @@ const UClass* Z_Construct_UClass_AGameModeBase()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AGameModeBase", AActor::StaticClass(), sizeof(AGameModeBase), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AGameModeBase", AActor::StaticClass(), sizeof(AGameModeBase), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ULevel()
@@ -3652,8 +3948,12 @@ const UClass* Z_Construct_UClass_ULevel()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ULevel", UObject::StaticClass(), sizeof(ULevel), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ULevel", UObject::StaticClass(), sizeof(ULevel), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_APawn()
@@ -3661,8 +3961,12 @@ const UClass* Z_Construct_UClass_APawn()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("APawn", AActor::StaticClass(), sizeof(APawn), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("APawn", AActor::StaticClass(), sizeof(APawn), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_APlayerController()
@@ -3670,8 +3974,12 @@ const UClass* Z_Construct_UClass_APlayerController()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("APlayerController", AActor::StaticClass(), sizeof(APlayerController), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("APlayerController", AActor::StaticClass(), sizeof(APlayerController), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ACubeActor()
@@ -3679,8 +3987,12 @@ const UClass* Z_Construct_UClass_ACubeActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ACubeActor", AActor::StaticClass(), sizeof(ACubeActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ACubeActor", AActor::StaticClass(), sizeof(ACubeActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ASphereActor()
@@ -3688,8 +4000,12 @@ const UClass* Z_Construct_UClass_ASphereActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ASphereActor", AActor::StaticClass(), sizeof(ASphereActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ASphereActor", AActor::StaticClass(), sizeof(ASphereActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_APlaneActor()
@@ -3697,8 +4013,12 @@ const UClass* Z_Construct_UClass_APlaneActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("APlaneActor", AActor::StaticClass(), sizeof(APlaneActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("APlaneActor", AActor::StaticClass(), sizeof(APlaneActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AAttachTestActor()
@@ -3706,8 +4026,12 @@ const UClass* Z_Construct_UClass_AAttachTestActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AAttachTestActor", AActor::StaticClass(), sizeof(AAttachTestActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AAttachTestActor", AActor::StaticClass(), sizeof(AAttachTestActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ASceneActor()
@@ -3715,8 +4039,12 @@ const UClass* Z_Construct_UClass_ASceneActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ASceneActor", AActor::StaticClass(), sizeof(ASceneActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ASceneActor", AActor::StaticClass(), sizeof(ASceneActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_APlayerStart()
@@ -3724,8 +4052,12 @@ const UClass* Z_Construct_UClass_APlayerStart()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("APlayerStart", AActor::StaticClass(), sizeof(APlayerStart), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("APlayerStart", AActor::StaticClass(), sizeof(APlayerStart), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AFogActor()
@@ -3733,8 +4065,12 @@ const UClass* Z_Construct_UClass_AFogActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AFogActor", AActor::StaticClass(), sizeof(AFogActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AFogActor", AActor::StaticClass(), sizeof(AFogActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AStaticMeshActor()
@@ -3742,8 +4078,12 @@ const UClass* Z_Construct_UClass_AStaticMeshActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AStaticMeshActor", AActor::StaticClass(), sizeof(AStaticMeshActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AStaticMeshActor", AActor::StaticClass(), sizeof(AStaticMeshActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ASkeletalMeshActor()
@@ -3751,8 +4091,12 @@ const UClass* Z_Construct_UClass_ASkeletalMeshActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ASkeletalMeshActor", AActor::StaticClass(), sizeof(ASkeletalMeshActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ASkeletalMeshActor", AActor::StaticClass(), sizeof(ASkeletalMeshActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ASubUVActor()
@@ -3760,8 +4104,12 @@ const UClass* Z_Construct_UClass_ASubUVActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ASubUVActor", AActor::StaticClass(), sizeof(ASubUVActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ASubUVActor", AActor::StaticClass(), sizeof(ASubUVActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ATextRenderActor()
@@ -3769,8 +4117,12 @@ const UClass* Z_Construct_UClass_ATextRenderActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ATextRenderActor", AActor::StaticClass(), sizeof(ATextRenderActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ATextRenderActor", AActor::StaticClass(), sizeof(ATextRenderActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ABillboardActor()
@@ -3778,8 +4130,12 @@ const UClass* Z_Construct_UClass_ABillboardActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ABillboardActor", AActor::StaticClass(), sizeof(ABillboardActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ABillboardActor", AActor::StaticClass(), sizeof(ABillboardActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ADecalActor()
@@ -3787,8 +4143,12 @@ const UClass* Z_Construct_UClass_ADecalActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ADecalActor", AActor::StaticClass(), sizeof(ADecalActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ADecalActor", AActor::StaticClass(), sizeof(ADecalActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AFireballActor()
@@ -3796,8 +4156,12 @@ const UClass* Z_Construct_UClass_AFireballActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AFireballActor", AActor::StaticClass(), sizeof(AFireballActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AFireballActor", AActor::StaticClass(), sizeof(AFireballActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ADecalSpotLightActor()
@@ -3805,8 +4169,12 @@ const UClass* Z_Construct_UClass_ADecalSpotLightActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ADecalSpotLightActor", AActor::StaticClass(), sizeof(ADecalSpotLightActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ADecalSpotLightActor", AActor::StaticClass(), sizeof(ADecalSpotLightActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ALightActor()
@@ -3814,8 +4182,12 @@ const UClass* Z_Construct_UClass_ALightActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ALightActor", AActor::StaticClass(), sizeof(ALightActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ALightActor", AActor::StaticClass(), sizeof(ALightActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AAmbientLightActor()
@@ -3823,8 +4195,12 @@ const UClass* Z_Construct_UClass_AAmbientLightActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AAmbientLightActor", ALightActor::StaticClass(), sizeof(AAmbientLightActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AAmbientLightActor", ALightActor::StaticClass(), sizeof(AAmbientLightActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ADirectionalLightActor()
@@ -3832,8 +4208,12 @@ const UClass* Z_Construct_UClass_ADirectionalLightActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ADirectionalLightActor", ALightActor::StaticClass(), sizeof(ADirectionalLightActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ADirectionalLightActor", ALightActor::StaticClass(), sizeof(ADirectionalLightActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_APointLightActor()
@@ -3841,8 +4221,12 @@ const UClass* Z_Construct_UClass_APointLightActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("APointLightActor", ALightActor::StaticClass(), sizeof(APointLightActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("APointLightActor", ALightActor::StaticClass(), sizeof(APointLightActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ASpotlightActor()
@@ -3850,8 +4234,12 @@ const UClass* Z_Construct_UClass_ASpotlightActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ASpotlightActor", APointLightActor::StaticClass(), sizeof(ASpotlightActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ASpotlightActor", APointLightActor::StaticClass(), sizeof(ASpotlightActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ABullet()
@@ -3859,8 +4247,12 @@ const UClass* Z_Construct_UClass_ABullet()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ABullet", AActor::StaticClass(), sizeof(ABullet), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ABullet", AActor::StaticClass(), sizeof(ABullet), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ABladeSlash()
@@ -3868,8 +4260,12 @@ const UClass* Z_Construct_UClass_ABladeSlash()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ABladeSlash", AActor::StaticClass(), sizeof(ABladeSlash), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ABladeSlash", AActor::StaticClass(), sizeof(ABladeSlash), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ADestructibleActor()
@@ -3877,8 +4273,12 @@ const UClass* Z_Construct_UClass_ADestructibleActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ADestructibleActor", AActor::StaticClass(), sizeof(ADestructibleActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ADestructibleActor", AActor::StaticClass(), sizeof(ADestructibleActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_ABoundsBoxActor()
@@ -3886,8 +4286,12 @@ const UClass* Z_Construct_UClass_ABoundsBoxActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("ABoundsBoxActor", AActor::StaticClass(), sizeof(ABoundsBoxActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("ABoundsBoxActor", AActor::StaticClass(), sizeof(ABoundsBoxActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UMainSceneDestructibleComponent()
@@ -3911,8 +4315,12 @@ const UClass* Z_Construct_UClass_UMainSceneDestructibleComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UMainSceneDestructibleComponent", UActorComponent::StaticClass(), sizeof(UMainSceneDestructibleComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UMainSceneDestructibleComponent", UActorComponent::StaticClass(), sizeof(UMainSceneDestructibleComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_AMainSceneDestructibleActor()
@@ -3920,8 +4328,12 @@ const UClass* Z_Construct_UClass_AMainSceneDestructibleActor()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("AMainSceneDestructibleActor", AActor::StaticClass(), sizeof(AMainSceneDestructibleActor), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("AMainSceneDestructibleActor", AActor::StaticClass(), sizeof(AMainSceneDestructibleActor), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UWorld()
@@ -3929,8 +4341,12 @@ const UClass* Z_Construct_UClass_UWorld()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UWorld", UObject::StaticClass(), sizeof(UWorld), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UWorld", UObject::StaticClass(), sizeof(UWorld), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UObject()
@@ -3938,8 +4354,12 @@ const UClass* Z_Construct_UClass_UObject()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UObject", nullptr, sizeof(UObject), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UObject", nullptr, sizeof(UObject), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UMaterialInterface()
@@ -3947,8 +4367,12 @@ const UClass* Z_Construct_UClass_UMaterialInterface()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UMaterialInterface", UObject::StaticClass(), sizeof(UMaterialInterface), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UMaterialInterface", UObject::StaticClass(), sizeof(UMaterialInterface), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UMaterial()
@@ -3956,8 +4380,12 @@ const UClass* Z_Construct_UClass_UMaterial()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UMaterial", UMaterialInterface::StaticClass(), sizeof(UMaterial), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UMaterial", UMaterialInterface::StaticClass(), sizeof(UMaterial), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UMaterialInstance()
@@ -3965,8 +4393,12 @@ const UClass* Z_Construct_UClass_UMaterialInstance()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UMaterialInstance", UMaterialInterface::StaticClass(), sizeof(UMaterialInstance), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UMaterialInstance", UMaterialInterface::StaticClass(), sizeof(UMaterialInstance), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UTexture()
@@ -3974,8 +4406,12 @@ const UClass* Z_Construct_UClass_UTexture()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UTexture", UObject::StaticClass(), sizeof(UTexture), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UTexture", UObject::StaticClass(), sizeof(UTexture), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UEngine()
@@ -3983,8 +4419,12 @@ const UClass* Z_Construct_UClass_UEngine()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UEngine", UObject::StaticClass(), sizeof(UEngine), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UEngine", UObject::StaticClass(), sizeof(UEngine), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UGameEngine()
@@ -3992,8 +4432,12 @@ const UClass* Z_Construct_UClass_UGameEngine()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UGameEngine", UEngine::StaticClass(), sizeof(UGameEngine), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UGameEngine", UEngine::StaticClass(), sizeof(UGameEngine), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UScriptComponent()
@@ -4005,8 +4449,12 @@ const UClass* Z_Construct_UClass_UScriptComponent()
     };
     static const uint32 PropertyCount = static_cast<uint32>(sizeof(Properties) / sizeof(Properties[0]));
 
-    static const UClass ClassInfo("UScriptComponent", UActorComponent::StaticClass(), sizeof(UScriptComponent), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UScriptComponent", UActorComponent::StaticClass(), sizeof(UScriptComponent), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }
 
 const UClass* Z_Construct_UClass_UObjViewerEngine()
@@ -4014,6 +4462,10 @@ const UClass* Z_Construct_UClass_UObjViewerEngine()
     static const FProperty* const* Properties = nullptr;
     static const uint32 PropertyCount = 0;
 
-    static const UClass ClassInfo("UObjViewerEngine", UEngine::StaticClass(), sizeof(UObjViewerEngine), Properties, PropertyCount);
-    return &ClassInfo;
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass("UObjViewerEngine", UEngine::StaticClass(), sizeof(UObjViewerEngine), Properties, PropertyCount);
+    }
+    return ClassInfo;
 }

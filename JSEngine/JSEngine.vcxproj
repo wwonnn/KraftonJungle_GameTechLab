@@ -1080,9 +1080,11 @@
     <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
     <ClInclude Include="Source\Engine\GameFramework\Character.h" />
     <ClInclude Include="Source\Engine\Reflection\Enum.h" />
+    <ClInclude Include="Source\Engine\Reflection\FField.h" />
     <ClInclude Include="Source\Engine\Reflection\Field.h" />
     <ClInclude Include="Source\Engine\Reflection\Class.h" />
     <ClInclude Include="Source\Engine\Reflection\Property.h" />
+    <ClInclude Include="Source\Engine\Reflection\ReflectionMacros.h" />
     <ClInclude Include="Source\Engine\Reflection\Reflection.h" />
     <ClInclude Include="Source\Engine\Reflection\Struct.h" />
     <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.h" />

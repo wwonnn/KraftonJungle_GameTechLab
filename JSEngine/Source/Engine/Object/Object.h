@@ -3,8 +3,18 @@
 #include "EngineStatics.h"
 #include "Object/FName.h"
 #include "Core/Singleton.h"
-#include "Reflection/Reflection.h"
+#include "Core/Containers/Array.h"
+#include "Reflection/ReflectionMacros.h"
 #include "Serialization/Archive.h"
+
+#include <type_traits>
+
+class UClass;
+struct FPropertyDescriptor;
+struct FPropertyChangedEvent;
+
+const char* GetUClassName(const UClass* Class);
+
 #include "Generated/Object.generated.h"
 
 UCLASS()
@@ -50,8 +60,10 @@ public:
 
 	FObjectNameProxy GetName() const { return FObjectNameProxy(ObjectName.ToString()); }
 
+	bool IsA(const UClass* Other) const;
+
 	template<typename T>
-	bool IsA() const { return GetClass()->IsA(T::StaticClass()); }
+	bool IsA() const { return IsA(T::StaticClass()); }
 
 	bool IsValidLowLevel() const { return this != nullptr; }
 
@@ -67,7 +79,7 @@ public:
 	void AppendReflectedProperties(TArray<FPropertyDescriptor>& OutProps);
 	void GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps);
 	void SerializeReflectedProperties(FArchive& Ar);
-	virtual void PostEditChangeProperty(const FPropertyChangedEvent& Event) { PostEditProperty(Event.PropertyName); }
+	virtual void PostEditChangeProperty(const FPropertyChangedEvent& Event);
 	virtual void PostEditProperty(const char* PropertyName) {}
 	void CopyPropertiesFrom(UObject* Src);
 
@@ -114,7 +126,7 @@ public:
 		static_assert(std::is_base_of<UObject, T>::value, "T must derive from UObject");
 		T* Obj = new T();
 
-		const char* ClassName = T::StaticClass()->GetName();
+		const char* ClassName = GetUClassName(T::StaticClass());
 		uint32& Counter = NameCounters[ClassName];
 		FString Name = FString(ClassName) + "_" + std::to_string(Counter++);
 		Obj->SetFName(FName(Name));
