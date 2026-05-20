@@ -2859,7 +2859,7 @@ const UClass* Z_Construct_UClass_UActorSequenceComponent()
 const UClass* Z_Construct_UClass_UBillboardComponent()
 {
     static const FBoolProperty Property_bInheritOwnerScale_0("bInheritOwnerScale", "Inherit Owner Scale", "bInheritOwnerScale", offsetof(UBillboardComponent, bInheritOwnerScale), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
-    static const FNameProperty Property_TextureName_1("TextureName", "Particle", nullptr, offsetof(UBillboardComponent, TextureName), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
+    static const FNameProperty Property_TextureName_1("TextureName", "Texture", nullptr, offsetof(UBillboardComponent, TextureName), EPropertyAccess::EditAnywhere, 0.0f, 0.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_Width_2("Width", "Width", nullptr, offsetof(UBillboardComponent, Width), EPropertyAccess::EditAnywhere, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_Height_3("Height", "Height", nullptr, offsetof(UBillboardComponent, Height), EPropertyAccess::EditAnywhere, 0.1f, 100.0f, 0.1f, EPropertyUsageFlags::None);
     static const FFloatProperty Property_PlayRate_4("PlayRate", "Play Rate", "PlayRate", offsetof(UBillboardComponent, PlayRate), EPropertyAccess::EditAnywhere, 1.0f, 120.0f, 1.0f, EPropertyUsageFlags::None);
