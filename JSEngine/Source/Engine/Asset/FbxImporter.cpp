@@ -1361,6 +1361,10 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
 	const int32 NumBones = static_cast<int32>(IndexToBoneNode.size());
 
     const int32 AnimStackCount = Scene->GetSrcObjectCount<FbxAnimStack>();
+    double TotalBakeSec = 0.0;
+    int32 BakedAnimStackCount = 0;
+    int32 TotalBakedFrameCount = 0;
+    size_t TotalBakedTrackCount = 0;
     for (int32 AnimStackIndex = 0; AnimStackIndex < AnimStackCount; AnimStackIndex++)
     {
         FbxAnimStack* CurAnimStack = Scene->GetSrcObject<FbxAnimStack>(AnimStackIndex);
@@ -1494,6 +1498,10 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
         }
 
         const double BakeElapsedSec = FPlatformTime::Seconds() - BakeStartSec;
+        TotalBakeSec += BakeElapsedSec;
+        ++BakedAnimStackCount;
+        TotalBakedFrameCount += FrameCount;
+        TotalBakedTrackCount += AnimDataModel->BoneAnimationTracks.size();
         UE_LOG("[FbxImporter] Animation FBX Bake | Path=%s | Stack=%s | Tracks=%zu | Bones=%d | Frames=%d | FPS=%.3f | Sec=%.6f | Ms=%.3f",
                Path.c_str(),
                StackName.c_str(),
@@ -1543,6 +1551,16 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
 
         ImportedAsset.AnimationSequences.push_back(AnimSequence);
     }
+
+    UE_LOG("[FbxImporter] Animation FBX Bake Total | Path=%s | Stacks=%d | BakedStacks=%d | Tracks=%zu | Bones=%d | Frames=%d | Sec=%.6f | Ms=%.3f",
+           Path.c_str(),
+           AnimStackCount,
+           BakedAnimStackCount,
+           TotalBakedTrackCount,
+           NumBones,
+           TotalBakedFrameCount,
+           TotalBakeSec,
+           TotalBakeSec * 1000.0);
 
     Manager->Destroy();
 

@@ -726,6 +726,10 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 		}
 	}
 
+	const auto SequenceSaveTotalStart = std::chrono::steady_clock::now();
+	int32 AttemptedSequenceSaveCount = 0;
+	int32 SavedSequenceSaveCount = 0;
+	int32 FailedSequenceSaveCount = 0;
 	for (int32 SequenceIndex = 0; SequenceIndex < static_cast<int32>(ImportedAnimationSequences.size()); ++SequenceIndex)
 	{
 		UAnimSequence* Sequence = ImportedAnimationSequences[SequenceIndex];
@@ -744,8 +748,10 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 		}
 
 		const FString SequenceAssetPath = MakeSequenceAssetPath(ResolvePath, Sequence, SequenceIndex);
+		++AttemptedSequenceSaveCount;
 		if (ResourceManager.SaveAnimSequence(SequenceAssetPath, Sequence))
 		{
+			++SavedSequenceSaveCount;
 			if (OutSavedAnimationSequencePaths)
 			{
 				OutSavedAnimationSequencePaths->push_back(SequenceAssetPath);
@@ -755,12 +761,27 @@ USkeletalMesh* FSkeletalMeshLoadService::FinalizeLoadedMesh(
 		}
 		else
 		{
+			++FailedSequenceSaveCount;
 			UE_LOG_WARNING("[SkeletalMeshLoad] Failed to save animation sequence asset | Mesh=%s | Sequence=%s | Path=%s",
 			               CacheKey.c_str(),
 			               Sequence->GetName().c_str(),
 			               SequenceAssetPath.c_str());
 			DestroyImportedSequence(Sequence);
 		}
+	}
+
+	if (!ImportedAnimationSequences.empty())
+	{
+		const auto SequenceSaveTotalEnd = std::chrono::steady_clock::now();
+		const double SequenceSaveTotalSec = std::chrono::duration<double>(SequenceSaveTotalEnd - SequenceSaveTotalStart).count();
+		UE_LOG("[SkeletalMeshLoad] Animation Sequence Save Total | Format=RawBinary | Mesh=%s | Imported=%zu | Attempted=%d | Saved=%d | Failed=%d | Sec=%.6f | Ms=%.3f",
+		       CacheKey.c_str(),
+		       ImportedAnimationSequences.size(),
+		       AttemptedSequenceSaveCount,
+		       SavedSequenceSaveCount,
+		       FailedSequenceSaveCount,
+		       SequenceSaveTotalSec,
+		       SequenceSaveTotalSec * 1000.0);
 	}
 
 	UE_LOG("[SkeletalMeshLoad] Loaded | Path=%s | Vertices=%zu | Indices=%zu | Bones=%zu | Sections=%zu",
