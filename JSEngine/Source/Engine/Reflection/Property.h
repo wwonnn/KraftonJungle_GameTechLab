@@ -6,7 +6,7 @@
 #include <string>
 #include "Core/CoreTypes.h"      // int32, uint8, …
 #include "Core/Containers/Array.h"
-#include "Reflection/Field.h"
+#include "Reflection/FField.h"
 #include "Math/Vector.h"    // FVector  (for sizeof in GetPropertySize)
 #include "Math/Vector4.h"   // FVector4 (for sizeof in GetPropertySize)
 #include "Math/Color.h"     // FColor
@@ -120,11 +120,14 @@ enum class EPropertyAccess : uint8_t
 /*
 Reflection 시스템 계층구조
 
-UField
-  ├─ UStruct
-  │    ├─ UClass
-  │    └─ UScriptStruct
-  ├─ UEnum
+UObject
+  └ UField
+	 ├─ UStruct
+	 │    ├─ UClass
+	 │    └─ UScriptStruct
+	 └─ UEnum
+
+FField
   └─ FProperty
        ├─ FBoolProperty
        ├─ FIntProperty
@@ -134,7 +137,7 @@ UField
        ├─ FEnumProperty
        └─ FArrayProperty
 */
-class FProperty : public UField
+class FProperty : public FField
 {
 public:
     FProperty(
@@ -147,7 +150,7 @@ public:
         float InMax = 0.0f,
         float InSpeed = 0.1f,
         EPropertyUsageFlags InUsageFlags = EPropertyUsageFlags::None)
-        : UField(InName)
+        : FField(InName)
         , DisplayName(InDisplayName)
         , SerializeName(InSerializeName)
         , Offset(InOffset)

@@ -8,6 +8,7 @@
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Object/ObjectFactory.h"
+#include "Reflection/Class.h"
 
 #include <algorithm>
 #include <cctype>

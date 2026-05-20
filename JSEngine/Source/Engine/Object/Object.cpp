@@ -9,6 +9,11 @@
 
 TArray<UObject*> GUObjectArray;
 
+const char* GetUClassName(const UClass* Class)
+{
+    return Class ? Class->GetName() : "UObject";
+}
+
 UObject::UObject()
 {
 	UUID = EngineStatics::GenUUID();
@@ -44,6 +49,16 @@ void UObject::GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps)
 void UObject::SerializeReflectedProperties(FArchive& Ar)
 {
     GetClass()->SerializeProperties(Ar, this);
+}
+
+bool UObject::IsA(const UClass* Other) const
+{
+    return GetClass()->IsA(Other);
+}
+
+void UObject::PostEditChangeProperty(const FPropertyChangedEvent& Event)
+{
+    PostEditProperty(Event.PropertyName);
 }
 
 // FObjectFactory 로 같은 타입의 인스턴스를 생성한 뒤 프로퍼티 복사 → PostDuplicate 훅을 실행합니다.
