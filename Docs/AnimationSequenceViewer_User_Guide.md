@@ -504,6 +504,14 @@
 
 처음 디버깅할 때는 `Validation`과 `Recent Fired`를 먼저 보는 것을 권장합니다.
 
+## 10.4 어떤 탭을 먼저 보면 좋은가
+
+처음 사용하는 사람에게는 아래 순서를 권장합니다.
+
+1. `Validation`: 설정 오류가 있는지 먼저 확인
+2. `Recent Fired`: 재생했을 때 `Notify`가 실제로 호출되는지 확인
+3. `Event Log`: 더 자세한 실행 흐름이 필요할 때 확인
+
 ## 11. Curves 사용법
 
 시퀀스에 float curve가 있으면 `Curves` 섹션에서 볼 수 있습니다.
@@ -576,6 +584,15 @@
 
 - 문제 없이 저장
 - 경고가 있지만 저장
+
+## 13.1 저장 전에 꼭 보면 좋은 것
+
+저장 직전에는 아래만 확인해도 대부분의 실수를 줄일 수 있습니다.
+
+- 현재 선택한 `Notify`에 `Validation Error`가 없는가
+- `Notify State`인데 `Duration`이 0으로 남아 있지 않은가
+- `SocketName` 또는 `ComponentName`이 실제 프리뷰 대상과 맞는가
+- `Notify Class`가 의도한 타입과 맞는가
 
 ## 14. 자주 쓰는 단축키
 
@@ -687,8 +704,17 @@
 
 이 문서와 함께 보면 좋은 문서:
 
-- [AnimationSequenceViewer_AnimNotify_Guide.md](/C:/development/W11_Team3_Engine/AnimationSequenceViewer_AnimNotify_Guide.md)
-- [AnimationSequenceViewer_Footstep_Example_walk_sound.md](/C:/development/W11_Team3_Engine/AnimationSequenceViewer_Footstep_Example_walk_sound.md)
+- [AnimationSequenceViewer_AnimNotify_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimationSequenceViewer_AnimNotify_Guide.md)
+- [AnimationSequenceViewer_Footstep_Example_walk_sound.md](/C:/development/W11_Team3_Engine/Docs/AnimationSequenceViewer_Footstep_Example_walk_sound.md)
+- [AnimNotify_GameplayEvent_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotify_GameplayEvent_Guide.md)
+- [AnimNotify_CameraShake_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotify_CameraShake_Guide.md)
+- [AnimNotify_PlayVFX_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotify_PlayVFX_Guide.md)
+- [AnimNotify_SpawnDecal_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotify_SpawnDecal_Guide.md)
+- [AnimNotify_FootstepSurfaceEvent_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotify_FootstepSurfaceEvent_Guide.md)
+- [AnimNotifyState_GameplayEventWindow_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotifyState_GameplayEventWindow_Guide.md)
+- [AnimNotifyState_PlayLoopingSFX_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotifyState_PlayLoopingSFX_Guide.md)
+- [AnimNotifyState_AttackWindow_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotifyState_AttackWindow_Guide.md)
+- [AnimNotify_Log_Guide.md](/C:/development/W11_Team3_Engine/Docs/AnimNotify_Log_Guide.md)
 
 ## 20. 요약
 
