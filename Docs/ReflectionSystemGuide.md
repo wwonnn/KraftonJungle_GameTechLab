@@ -20,11 +20,14 @@
 현재 계층은 다음과 같다.
 
 ```text
-UField
-  ├─ UStruct
-  │   ├─ UClass
-  │   └─ UScriptStruct
-  ├─ UEnum
+UObject
+  └─ UField
+      ├─ UStruct
+      │   ├─ UClass
+      │   └─ UScriptStruct
+      └─ UEnum
+
+FField
   └─ FProperty
       ├─ FBoolProperty
       ├─ FIntProperty
@@ -43,23 +46,26 @@ UField
 
 | 타입 | 역할 |
 |---|---|
-| `UField` | 모든 리플렉션 필드의 최상위 타입. 이름을 가진다. |
+| `UField` | `UClass`, `UScriptStruct`, `UEnum`의 공통 기반 타입. `UObject`를 상속하므로 생성되면 `GUObjectArray`에 들어간다. |
 | `UStruct` | 프로퍼티 배열, 크기, 프로퍼티 순회, Serialize 공통 기능을 가진다. |
 | `UClass` | `UObject` 파생 클래스용 메타 타입. 부모 `UClass`와 `IsA`를 가진다. |
 | `UScriptStruct` | `USTRUCT()`로 선언한 C++ struct용 메타 타입. |
 | `UEnum` | `UENUM()`으로 선언한 enum class의 이름과 값 목록을 가진다. |
-| `FProperty` | 멤버 변수 하나의 리플렉션 메타. offset, 표시 이름, serialize 이름, 타입 정보를 가진다. |
+| `FField` | `FProperty` 계층의 가벼운 기반 타입. `UObject`가 아니므로 `GUObjectArray`에 들어가지 않는다. |
+| `FProperty` | 멤버 변수 하나의 리플렉션 메타. `FField`를 상속하며 offset, 표시 이름, serialize 이름, 타입 정보를 가진다. |
 
 주요 파일은 다음과 같다.
 
 | 파일 | 역할 |
 |---|---|
 | `JSEngine/Source/Engine/Reflection/Field.h` | `UField` 정의 |
+| `JSEngine/Source/Engine/Reflection/FField.h` | `FField` 정의 |
 | `JSEngine/Source/Engine/Reflection/Struct.h` | `UStruct`, `UScriptStruct` 정의 |
 | `JSEngine/Source/Engine/Reflection/Class.h` | `UClass` 정의 |
 | `JSEngine/Source/Engine/Reflection/Enum.h` | `UEnum`, `FEnumValue` 정의 |
 | `JSEngine/Source/Engine/Reflection/Property.h` | `FProperty`와 하위 property 타입 정의 |
-| `JSEngine/Source/Engine/Reflection/Reflection.h` | `UCLASS`, `UPROPERTY`, `GENERATED_BODY` 등 매크로 정의 |
+| `JSEngine/Source/Engine/Reflection/ReflectionMacros.h` | `UCLASS`, `UPROPERTY`, `GENERATED_BODY` 등 매크로 정의 |
+| `JSEngine/Source/Engine/Reflection/Reflection.h` | 리플렉션 주요 헤더를 묶어 include하는 편의 헤더 |
 | `JSEngine/Source/Engine/Reflection/Reflection.cpp` | 프로퍼티 순회, Details descriptor 생성, Serialize 구현 |
 | `Scripts/GenerateReflection.py` | 리플렉션 코드 생성기 |
 | `JSEngine/Source/Generated/*.generated.h` | 헤더별 `GENERATED_BODY` 확장 코드 |
@@ -124,7 +130,7 @@ public: \
 
 ## 4. 메타데이터와 offset 기반 접근
 
-각 `UClass`, `UScriptStruct`, `UEnum`은 `Reflection.generated.cpp` 안에서 function-local static 객체로 만들어진다. 이 static 객체의 주소가 런타임 타입 식별자로 쓰인다.
+각 `UClass`, `UScriptStruct`, `UEnum`은 `Reflection.generated.cpp` 안에서 function-local static 포인터로 관리된다. 실제 메타 객체는 최초 요청 시 `new`로 한 번 생성되고, 그 포인터 주소가 런타임 타입 식별자로 쓰인다.
 
 ```cpp
 const UClass* UCameraComponent::StaticClass()
@@ -137,6 +143,29 @@ const UClass* UCameraComponent::GetClass() const
     return UCameraComponent::StaticClass();
 }
 ```
+
+실제 생성 함수는 다음과 같은 형태이다.
+
+```cpp
+const UClass* Z_Construct_UClass_UCameraComponent()
+{
+    static UClass* ClassInfo = nullptr;
+    if (!ClassInfo)
+    {
+        ClassInfo = new UClass(
+            "UCameraComponent",
+            USceneComponent::StaticClass(),
+            sizeof(UCameraComponent),
+            Properties,
+            PropertyCount);
+    }
+    return ClassInfo;
+}
+```
+
+이전처럼 `static const UClass ClassInfo(...)` 값 객체를 쓰지 않는 이유는 `UField`가 이제 `UObject`를 상속하기 때문이다. `UClass`, `UScriptStruct`, `UEnum`은 생성 시 `UObject` 생성자를 통해 `GUObjectArray`에 등록된다. 값 객체 방식은 프로그램 종료 시 자동 소멸되면서 `GUObjectArray`를 다시 건드릴 수 있으므로, 현재 구조에서는 힙에 만든 메타 객체를 엔진 생명주기 동안 유지한다.
+
+반대로 `FProperty`는 `FField` 계층으로 분리되어 `UObject`가 아니다. 따라서 property 메타데이터는 여전히 정적 값 객체로 만들어도 `GUObjectArray`에 들어가지 않는다.
 
 `UClass`는 다음 정보를 가진다.
 
@@ -170,6 +199,17 @@ void* ValuePtr = static_cast<uint8*>(Container) + Offset;
 ```
 
 따라서 같은 `FProperty` 메타데이터를 여러 인스턴스에 공통으로 사용할 수 있다.
+
+정리하면 `UClass`와 `FProperty`의 연결은 다음 구조이다.
+
+```text
+UClass("UMovementComponent")
+  └─ Properties[]
+      └─ FSceneComponentProperty("UpdatedComponent")
+          └─ Offset = offsetof(UMovementComponent, UpdatedComponent)
+```
+
+`FField`로 분리되었어도 `UClass`는 여전히 `const FProperty*` 배열을 들고 있으므로 Details, Serialize, Duplicate 흐름은 동일하게 동작한다.
 
 ## 5. UPROPERTY 지원 범위
 
@@ -401,8 +441,10 @@ USceneComponent* UpdatedComponent = nullptr;
 FObjectFactory::Get().Register(
     "UAnimNotify_PlaySFX",
     []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_PlaySFX>(); },
-    UAnimNotify_PlaySFX::StaticClass());
+    []() -> const UClass* { return UAnimNotify_PlaySFX::StaticClass(); });
 ```
+
+세 번째 인자는 `UClass*`를 즉시 넘기지 않고 getter lambda로 넘긴다. 전역 static factory 등록 시점에 `StaticClass()`를 바로 호출하면, 다른 translation unit의 전역 객체인 `GUObjectArray` 초기화 순서와 충돌할 수 있기 때문이다. getter 방식은 실제 클래스 목록이 필요할 때 `StaticClass()`를 호출하므로 static 초기화 순서 위험을 줄인다.
 
 `UCLASS(Abstract)`가 붙은 클래스는 리플렉션 메타는 생성되지만 factory 등록은 제외된다.
 
@@ -494,6 +536,7 @@ enum class EWeaponMode : uint8
 - Lua script 동적 프로퍼티는 `UPROPERTY`가 아니라 런타임 동적 시스템으로 유지한다.
 - Actor transform처럼 실제 멤버가 아니라 계산/적용 로직이 있는 값은 수동 노출이 필요할 수 있다.
 - 임의 배열, 임의 템플릿, 복잡한 멀티라인 선언은 `GenerateReflection.py`가 파싱하지 않는다.
-- GC는 아직 구현하지 않았다. 다만 `UField`, `UClass`, `FProperty` 구조는 향후 GC를 얹을 수 있는 방향이다.
+- GC는 아직 구현하지 않았다. 현재 `UClass`, `UScriptStruct`, `UEnum`은 `UObject` 기반 메타 객체로 `GUObjectArray`에 들어가지만, 메타 객체 판별 플래그나 GC root 처리는 아직 없다. 나중에 GC를 추가할 때는 이 메타 객체들을 `NativeMeta` 또는 `RootSet` 같은 정책으로 보호해야 한다.
+- `FProperty`는 `FField` 기반이며 `UObject`가 아니므로 `GUObjectArray`에 들어가지 않는다.
 
 새 코드에서는 `DECLARE_CLASS`, `DEFINE_CLASS`, `REGISTER_FACTORY`, `FTypeInfo`, `s_TypeInfo`를 사용하지 않는다.
