@@ -349,6 +349,9 @@
     <ClCompile Include="Source\Engine\Asset\Skeleton.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SequenceCameraShakePattern.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SinusoidalCameraShakePattern.cpp" />
+    <None Include="Asset\Script\Player.lua">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="Shaders\Common\Skinning.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
@@ -362,6 +365,7 @@
     <ClCompile Include="Source\Engine\Component\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
+    <ClCompile Include="Source\Engine\GameFramework\Character.cpp" />
     <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.cpp" />
     <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactoryData.cpp" />
     <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactory.cpp" />
@@ -1044,6 +1048,7 @@
     <ClInclude Include="Source\Engine\Component\SkeletalMeshComponent.h" />
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
+    <ClInclude Include="Source\Engine\GameFramework\Character.h" />
     <ClInclude Include="Source\Engine\Reflection\Enum.h" />
     <ClInclude Include="Source\Engine\Reflection\Field.h" />
     <ClInclude Include="Source\Engine\Reflection\Class.h" />

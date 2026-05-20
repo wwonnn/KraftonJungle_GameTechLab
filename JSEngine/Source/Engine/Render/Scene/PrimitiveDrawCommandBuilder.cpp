@@ -68,7 +68,10 @@ bool FPrimitiveDrawCommandBuilder::CollectPrimitive(UPrimitiveComponent* Primiti
     if (Primitive == nullptr || !Primitive->IsVisible()) return true;
 
 	FPrimitiveRenderProxy* Proxy = Primitive->GetOrCreateRenderProxy();
-    FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
-    Proxy->CollectRenderCommands(Context, RenderBus);
+	if (Proxy)
+	{
+        FRenderProxyContext Context{ ShowFlags, ViewMode, MeshBufferManager };
+        Proxy->CollectRenderCommands(Context, RenderBus);
+	}
     return true; 
 }

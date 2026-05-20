@@ -794,6 +794,11 @@ void FEditorContentBrowserWidget::DrawToolbar()
 
 void FEditorContentBrowserWidget::Refresh()
 {
+	if (EditorEngine)
+	{
+		EditorEngine->GetAssetService().RefreshAssetDatabase();
+	}
+
 	RebuildRootNode();
 	RefreshContent();
 	bPendingMaterialPreviewCacheClear = true;

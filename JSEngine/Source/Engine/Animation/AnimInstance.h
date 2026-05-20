@@ -13,6 +13,7 @@ class UAnimInstanceAsset;
 class UAnimNotify;
 class UAnimNotifyState;
 class USkeletalMeshComponent;
+class USkeleton;
 
 // 시간 t에서의 Skeleton Pose (매 프레임 계산)
 struct FSkeletonPose
@@ -138,6 +139,8 @@ protected:
 
     void InitializeReferencePose(FSkeletonPose& OutPose);
     void EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms);
+    bool IsSkeletonPathCompatible(const USkeleton* TargetSkeleton, const FString& TargetSkeletonPath, const FString& SourceSkeletonPath) const;
+    bool BuildCompatibleSkeletonRemap(const UAnimSequence* Sequence, const USkeleton* TargetSkeleton, TArray<int32>& OutTrackToBoneIndex) const;
     FVector InterpolateKeys(const TArray<FVector>& Keys, float Time, float FrameRate);
     FQuat InterpolateKeys(const TArray<FQuat>& Keys, float Time, float FrameRate);
     float GetSequenceLength(const UAnimSequence* Sequence) const;
@@ -195,4 +198,5 @@ protected:
 
     TArray<FAnimNotifyEvent> RecentNotifyEvents;
     TArray<FActiveAnimNotifyState> ActiveNotifyStates;
+    TMap<const UAnimSequence*, TArray<int32>> SequenceBoneTrackRemaps;
 };
