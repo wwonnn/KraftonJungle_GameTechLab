@@ -58,6 +58,7 @@
 #include "Engine/Component/SubUVComponent.h"
 #include "Engine/Component/TextRenderComponent.h"
 #include "Engine/GameFramework/AActor.h"
+#include "Engine/GameFramework/Character.h"
 #include "Engine/GameFramework/DefaultPawn.h"
 #include "Engine/GameFramework/GameModeBase.h"
 #include "Engine/GameFramework/Level.h"
@@ -133,6 +134,7 @@ const UClass* Z_Construct_UClass_UStaticMeshComponent();
 const UClass* Z_Construct_UClass_USubUVComponent();
 const UClass* Z_Construct_UClass_UTextRenderComponent();
 const UClass* Z_Construct_UClass_AActor();
+const UClass* Z_Construct_UClass_ACharacter();
 const UClass* Z_Construct_UClass_ADefaultPawn();
 const UClass* Z_Construct_UClass_AGameModeBase();
 const UClass* Z_Construct_UClass_ULevel();
@@ -778,6 +780,16 @@ const UClass* AActor::StaticClass()
 const UClass* AActor::GetClass() const
 {
     return AActor::StaticClass();
+}
+
+const UClass* ACharacter::StaticClass()
+{
+    return Z_Construct_UClass_ACharacter();
+}
+
+const UClass* ACharacter::GetClass() const
+{
+    return ACharacter::StaticClass();
 }
 
 const UClass* ADefaultPawn::StaticClass()
@@ -1921,6 +1933,19 @@ struct FAutoRegisterFactory_AActor
 };
 
 FAutoRegisterFactory_AActor GAutoRegisterFactory_AActor;
+
+struct FAutoRegisterFactory_ACharacter
+{
+    FAutoRegisterFactory_ACharacter()
+    {
+        FObjectFactory::Get().Register(
+            "ACharacter",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<ACharacter>(); },
+            ACharacter::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_ACharacter GAutoRegisterFactory_ACharacter;
 
 struct FAutoRegisterFactory_ADefaultPawn
 {
@@ -3394,6 +3419,15 @@ const UClass* Z_Construct_UClass_AActor()
     static const uint32 PropertyCount = 0;
 
     static const UClass ClassInfo("AActor", UObject::StaticClass(), sizeof(AActor), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_ACharacter()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("ACharacter", APawn::StaticClass(), sizeof(ACharacter), Properties, PropertyCount);
     return &ClassInfo;
 }
 
