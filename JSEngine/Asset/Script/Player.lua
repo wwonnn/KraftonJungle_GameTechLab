@@ -2,35 +2,72 @@ local Script = {}
 Script.__index = Script
 
 function Script.new(component, properties)
-	local self = setmetatable({}, Script)
-	self.component = component
-	self.owner = component:GetOwner()
-	return self
+
+    local self = setmetatable({}, Script)
+
+    self.component = component
+    self.owner = component:GetOwner()
+
+    self.moveSpeed = 10.0
+    self.mouseSensitivity = 0.15
+
+    return self
 end
 
 function Script:BeginPlay()
 
+    local input = Engine.API.Input
+
+    input.SetInputModeGameOnly()
+    input.SetCursorLocked(true)
+    input.SetCursorVisible(false)
+
 end
 
 function Script:Tick(dt)
-	local input = Engine.API.Input
-	local dir = Vector(0, 0, 0)
-	local speed = 1
 
-	if input.IsRawKeyDown("W") then
-		dir = self.owner:GetActorForwardVector()
-	end
-	if input.IsRawKeyDown("S") then
-		dir = -self.owner:GetActorForwardVector()
-	end
-	if input.IsRawKeyDown("A") then
-		dir = -self.owner:GetActorRightVector()
-	end
-	if input.IsRawKeyDown("D") then
-		dir = self.owner:GetActorRightVector()
-	end
+    local input = Engine.API.Input
 
-	self.owner.Location = self.owner.Location + speed * dir * dt
+    ------------------------------------------------
+    -- Mouse Look
+    ------------------------------------------------
+
+    local mouseDelta = input.GetRawMouseDelta()
+
+    local rot = self.owner.Rotation
+
+    rot.z = rot.z + mouseDelta.X * self.mouseSensitivity
+
+    self.owner.Rotation = rot
+
+    ------------------------------------------------
+    -- Movement
+    ------------------------------------------------
+
+    local move = Vector(0, 0, 0)
+
+    if input.IsRawKeyDown("W") then
+        move = move + self.owner:GetActorForwardVector()
+    end
+
+    if input.IsRawKeyDown("S") then
+        move = move - self.owner:GetActorForwardVector()
+    end
+
+    if input.IsRawKeyDown("D") then
+        move = move + self.owner:GetActorRightVector()
+    end
+
+    if input.IsRawKeyDown("A") then
+        move = move - self.owner:GetActorRightVector()
+    end
+
+    if move:Size() > 0.001 then
+        move = move:Normalized()
+    end
+
+    self.owner.Location =
+        self.owner.Location + move * self.moveSpeed * dt
 
 end
 
