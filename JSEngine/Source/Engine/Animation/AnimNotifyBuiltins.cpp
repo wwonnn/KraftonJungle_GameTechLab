@@ -3,6 +3,7 @@
 #include "Animation/AnimData/AnimSequence.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimNotifyPayloadParser.h"
+#include "Animation/AnimNotifyPayloadViews.h"
 #include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/SkeletalMeshComponent.h"
@@ -363,29 +364,27 @@ void UAnimNotify_PlaySFX::Notify(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FString SoundKeyOrPath = Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SoundCueKey()));
-    if (SoundKeyOrPath.empty())
+    const FPlaySfxPayloadView PayloadView = BuildPlaySfxPayloadView(Payload);
+    if (PayloadView.SoundCue.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] PlaySFX notify missing SoundCue payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = Payload.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
-    const float Volume = std::max(0.0f, Payload.GetFloatAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), 1.0f));
-    const bool bSpatialized = Payload.GetBoolAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SpatializedKey()), false);
+    const float Volume = std::max(0.0f, PayloadView.VolumeMultiplier);
 
-    if (bSpatialized)
+    if (PayloadView.bSpatialized)
     {
         GEngine->GetAudioSystem().PlaySoundCue(
-            SoundKeyOrPath,
+            PayloadView.SoundCue,
             false,
             true,
-            ResolvePlaybackLocation(MeshComponent, SocketName),
+            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
             Volume);
         return;
     }
 
-    GEngine->GetAudioSystem().PlaySFX(SoundKeyOrPath, Volume);
+    GEngine->GetAudioSystem().PlaySFX(PayloadView.SoundCue, Volume);
 }
 
 void UAnimNotify_GameplayEvent::Notify(
@@ -433,15 +432,14 @@ void UAnimNotify_CameraShake::Notify(
     }
 
     const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
-    const FString Shake = PayloadParser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ShakeKey()));
-    if (Shake.empty())
+    const FCameraShakePayloadView PayloadView = BuildCameraShakePayloadView(PayloadParser);
+    if (PayloadView.Shake.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] CameraShake notify missing Shake payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const float Scale = PayloadParser.GetFloatAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ScaleKey()), 1.0f);
-    AnimInstance->DispatchCameraShakeAnimNotify(Animation, NotifyEvent, Shake, Scale);
+    AnimInstance->DispatchCameraShakeAnimNotify(Animation, NotifyEvent, PayloadView.Shake, PayloadView.Scale);
 }
 
 void UAnimNotify_FootstepSurfaceEvent::Notify(
@@ -512,32 +510,23 @@ void UAnimNotify_PlayVFX::Notify(
     }
 
     const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
-    const FString Effect = PayloadParser.GetStringAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::EffectKey()));
-    if (Effect.empty())
+    const FPlayVfxPayloadView PayloadView = BuildPlayVfxPayloadView(PayloadParser);
+    if (PayloadView.Effect.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] PlayVFX notify missing Effect payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = PayloadParser.GetNameAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
-    const bool bAttached = PayloadParser.GetBoolAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::AttachedKey()),
-        false);
-    const float Scale = PayloadParser.GetFloatAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ScaleKey()),
-        1.0f);
-    const FVector PlaybackLocation = ResolvePlaybackLocation(MeshComponent, SocketName);
+    const FVector PlaybackLocation = ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName);
 
     AnimInstance->DispatchPlayVFXAnimNotify(
         Animation,
         NotifyEvent,
-        Effect,
+        PayloadView.Effect,
         PlaybackLocation,
-        SocketName,
-        bAttached,
-        Scale);
+        PayloadView.SocketName,
+        PayloadView.bAttached,
+        PayloadView.Scale);
 }
 
 void UAnimNotify_SpawnDecal::Notify(
@@ -635,22 +624,21 @@ void UAnimNotifyState_PlayLoopingSFX::NotifyBegin(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FString SoundKeyOrPath = Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SoundCueKey()));
-    if (SoundKeyOrPath.empty())
+    const FPlaySfxPayloadView PayloadView = BuildPlaySfxPayloadView(Payload);
+    if (PayloadView.SoundCue.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] LoopingSFX notify missing SoundCue payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = Payload.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
-    const float Volume = std::max(0.0f, Payload.GetFloatAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), 1.0f));
-    bSpatialized = Payload.GetBoolAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SpatializedKey()), false);
+    const float Volume = std::max(0.0f, PayloadView.VolumeMultiplier);
+    bSpatialized = PayloadView.bSpatialized;
 
     ActiveHandle = GEngine->GetAudioSystem().PlaySoundCue(
-        SoundKeyOrPath,
+        PayloadView.SoundCue,
         true,
         bSpatialized,
-        ResolvePlaybackLocation(MeshComponent, SocketName),
+        ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
         Volume);
 }
 
@@ -670,8 +658,8 @@ void UAnimNotifyState_PlayLoopingSFX::NotifyTick(
     }
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FName SocketName = Payload.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
-    GEngine->GetAudioSystem().SetSoundPosition(ActiveHandle, ResolvePlaybackLocation(MeshComponent, SocketName));
+    const FPlaySfxPayloadView PayloadView = BuildPlaySfxPayloadView(Payload);
+    GEngine->GetAudioSystem().SetSoundPosition(ActiveHandle, ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName));
 }
 
 void UAnimNotifyState_PlayLoopingSFX::NotifyEnd(

@@ -328,6 +328,7 @@
     <ClCompile Include="Source\Engine\Animation\AnimNotifyLog.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadParser.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadViews.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
@@ -1046,6 +1047,7 @@
     <ClInclude Include="Source\Engine\Animation\AnimNotifyLog.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadParser.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadViews.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
