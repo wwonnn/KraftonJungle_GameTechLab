@@ -15,6 +15,12 @@
 
 namespace
 {
+    enum class ENotifyAssetDisplayMode : uint8
+    {
+        FriendlyLabel,
+        RawStoredValue,
+    };
+
     FString ToLowerAscii(FString Value)
     {
         std::transform(
@@ -63,8 +69,9 @@ namespace
 
     void AddSoundCueEntries(TArray<FNotifyAssetPickerEntry>& OutEntries)
     {
-        // The picker enumerates editor-visible assets only; the notify payload
-        // still stores the same project-relative string that runtime lookup uses.
+        // SoundCue payloads store project-relative audio asset paths. The picker
+        // only provides editor-visible choices for that same runtime-facing
+        // string value; it does not introduce a separate editor-only identifier.
         const std::filesystem::path AudioRoot =
             (std::filesystem::path(FPaths::RootDir()) / L"Asset" / L"Audio").lexically_normal();
         if (!std::filesystem::exists(AudioRoot))
@@ -101,6 +108,9 @@ namespace
 
     void AddVfxEntries(TArray<FNotifyAssetPickerEntry>& OutEntries)
     {
+        // VFX payloads store the asset-service path string used by editor lookup
+        // and runtime-facing notify dispatch. Prefer the editor display name when
+        // available, but keep the stored path untouched.
         UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
         if (!EditorEngine)
         {
@@ -127,6 +137,9 @@ namespace
 
     void AddCameraShakeEntries(TArray<FNotifyAssetPickerEntry>& OutEntries)
     {
+        // CameraShake payloads store the registered pattern class name. The
+        // picker trims the leading 'U' only for display; the serialized payload
+        // keeps the original class identifier intact.
         TArray<const UClass*> RegisteredClasses;
         FObjectFactory::Get().GetRegisteredClasses(RegisteredClasses);
         const UClass* BaseClass = UCameraShakePattern::StaticClass();
@@ -193,7 +206,43 @@ namespace
             Entries.end());
     }
 
-    FString MakeFriendlyFallbackLabel(EAnimNotifyPayloadAssetKind AssetKind, const FString& StoredValue)
+    FString BuildSoundCueDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
+    {
+        if (DisplayMode == ENotifyAssetDisplayMode::RawStoredValue)
+        {
+            return StoredValue;
+        }
+
+        const std::filesystem::path AssetPath(FPaths::ToWide(StoredValue));
+        const FString Stem = FPaths::ToUtf8(AssetPath.stem().wstring());
+        return Stem.empty() ? StoredValue : Stem;
+    }
+
+    FString BuildVfxDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
+    {
+        (void)DisplayMode;
+        return StoredValue;
+    }
+
+    FString BuildCameraShakeDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
+    {
+        if (DisplayMode == ENotifyAssetDisplayMode::RawStoredValue)
+        {
+            return StoredValue;
+        }
+
+        if (!StoredValue.empty() && StoredValue.front() == 'U')
+        {
+            return StoredValue.substr(1);
+        }
+
+        return StoredValue;
+    }
+
+    FString BuildNotifyAssetDisplayLabel(
+        EAnimNotifyPayloadAssetKind AssetKind,
+        const FString& StoredValue,
+        ENotifyAssetDisplayMode DisplayMode)
     {
         // If the stored value does not match the current picker inventory (for
         // example after a rename or a custom manual override), keep showing a
@@ -201,23 +250,17 @@ namespace
         switch (AssetKind)
         {
         case EAnimNotifyPayloadAssetKind::SoundCue:
-        {
-            const std::filesystem::path AssetPath(FPaths::ToWide(StoredValue));
-            const FString Stem = FPaths::ToUtf8(AssetPath.stem().wstring());
-            return Stem.empty() ? StoredValue : Stem;
-        }
+            return BuildSoundCueDisplayLabel(StoredValue, DisplayMode);
         case EAnimNotifyPayloadAssetKind::CameraShake:
-            if (!StoredValue.empty() && StoredValue.front() == 'U')
-            {
-                return StoredValue.substr(1);
-            }
-            return StoredValue;
+            return BuildCameraShakeDisplayLabel(StoredValue, DisplayMode);
         case EAnimNotifyPayloadAssetKind::Vfx:
+            return BuildVfxDisplayLabel(StoredValue, DisplayMode);
         case EAnimNotifyPayloadAssetKind::None:
         default:
             return StoredValue;
         }
     }
+
 }
 
 TArray<FNotifyAssetPickerEntry> BuildNotifyAssetPickerEntries(EAnimNotifyPayloadAssetKind AssetKind)
@@ -261,7 +304,10 @@ FString ResolveNotifyAssetPickerDisplayName(
         }
     }
 
-    return MakeFriendlyFallbackLabel(AssetKind, StoredValue);
+    return BuildNotifyAssetDisplayLabel(
+        AssetKind,
+        StoredValue,
+        ENotifyAssetDisplayMode::FriendlyLabel);
 }
 
 const char* GetNotifyAssetPickerEmptyMessage(EAnimNotifyPayloadAssetKind AssetKind)
@@ -285,9 +331,9 @@ const char* GetNotifyAssetPickerManualFallbackMessage(EAnimNotifyPayloadAssetKin
     switch (AssetKind)
     {
     case EAnimNotifyPayloadAssetKind::SoundCue:
-        return "Pick a sound asset path here, or use Advanced Raw Payload to enter a custom sound key.";
+        return "Pick a project-relative sound asset path here, or use Advanced Raw Payload to enter a custom sound key.";
     case EAnimNotifyPayloadAssetKind::Vfx:
-        return "Pick a registered VFX name here, or use Advanced Raw Payload for a manual override.";
+        return "Pick a VFX asset-service path here, or use Advanced Raw Payload for a manual override.";
     case EAnimNotifyPayloadAssetKind::CameraShake:
         return "Pick a registered camera shake pattern class here, or use Advanced Raw Payload for a manual override.";
     case EAnimNotifyPayloadAssetKind::None:

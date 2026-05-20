@@ -5,6 +5,8 @@
 struct FNotifyAssetPickerEntry
 {
     FString DisplayName;
+    // Canonical payload value written into the notify payload string.
+    // This stays stable even when the picker chooses to show a friendlier label.
     FString StoredValue;
 };
 
