@@ -2,6 +2,7 @@
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Animation/Compression/AclCompression.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Object/ObjectFactory.h"
@@ -13,6 +14,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <memory>
 
 namespace
 {
@@ -37,7 +39,7 @@ namespace
     }
 
     constexpr uint32 ANIM_SEQUENCE_BINARY_MAGIC = 0x51455341; // 'ASEQ'
-    constexpr uint32 ANIM_SEQUENCE_BINARY_VERSION = 1;
+    constexpr uint32 ANIM_SEQUENCE_BINARY_VERSION = 2;
 
     constexpr uint32 MAX_SEQUENCE_STRING_LENGTH = 4096;
     constexpr uint32 MAX_SEQUENCE_TRACK_COUNT = 65'536;
@@ -45,6 +47,7 @@ namespace
     constexpr uint32 MAX_SEQUENCE_CURVE_COUNT = 4096;
     constexpr uint32 MAX_SEQUENCE_NOTIFY_TRACK_COUNT = 4096;
     constexpr uint32 MAX_SEQUENCE_NOTIFY_EVENT_COUNT = 65'536;
+    constexpr uint32 MAX_SEQUENCE_ACL_BYTES = 512u * 1024u * 1024u;
 
     struct FAnimSequenceBinaryHeader
     {
@@ -57,6 +60,7 @@ namespace
         uint32 TrackCount = 0;
         uint32 FloatCurveCount = 0;
         uint32 NotifyTrackCount = 0;
+        uint32 AclCompressedSizeBytes = 0;
     };
 
     bool IsValidSequenceCount(size_t Count, uint32 MaxCount)
@@ -186,6 +190,7 @@ namespace
         WriteUInt32LE(Out, Header.TrackCount);
         WriteUInt32LE(Out, Header.FloatCurveCount);
         WriteUInt32LE(Out, Header.NotifyTrackCount);
+        WriteUInt32LE(Out, Header.AclCompressedSizeBytes);
     }
 
     bool ReadBinaryHeader(std::ifstream& In, FAnimSequenceBinaryHeader& OutHeader)
@@ -198,7 +203,8 @@ namespace
             && ReadInt32LE(In, OutHeader.NumberOfKeys)
             && ReadUInt32LE(In, OutHeader.TrackCount)
             && ReadUInt32LE(In, OutHeader.FloatCurveCount)
-            && ReadUInt32LE(In, OutHeader.NotifyTrackCount);
+            && ReadUInt32LE(In, OutHeader.NotifyTrackCount)
+            && ReadUInt32LE(In, OutHeader.AclCompressedSizeBytes);
     }
 
     bool IsSupportedBinaryHeader(const FAnimSequenceBinaryHeader& Header)
@@ -207,7 +213,9 @@ namespace
             && Header.Version == ANIM_SEQUENCE_BINARY_VERSION
             && Header.TrackCount <= MAX_SEQUENCE_TRACK_COUNT
             && Header.FloatCurveCount <= MAX_SEQUENCE_CURVE_COUNT
-            && Header.NotifyTrackCount <= MAX_SEQUENCE_NOTIFY_TRACK_COUNT;
+            && Header.NotifyTrackCount <= MAX_SEQUENCE_NOTIFY_TRACK_COUNT
+            && Header.AclCompressedSizeBytes > 0
+            && Header.AclCompressedSizeBytes <= MAX_SEQUENCE_ACL_BYTES;
     }
 
     bool TryReadBinaryMagic(const FString& NormalizedPath, uint32& OutMagic)
@@ -353,21 +361,28 @@ namespace
         }
 
         const UAnimDataModel* DataModel = Sequence->DataModel;
+        const FAclAnimSequenceRuntimeData* AclRuntimeData = Sequence->GetAclRuntimeData();
+        if (!AclRuntimeData || !AclRuntimeData->IsValid())
+        {
+            return false;
+        }
+
+        const FAclCompressedClipInfo& AclInfo = AclRuntimeData->GetInfo();
         if (!IsValidSequenceString(Sequence->GetName()) ||
             !IsValidSequenceString(Sequence->GetSkeletonAssetPath()) ||
             !IsValidSequenceCount(DataModel->BoneAnimationTracks.size(), MAX_SEQUENCE_TRACK_COUNT) ||
             !IsValidSequenceCount(DataModel->CurveData.FloatCurves.size(), MAX_SEQUENCE_CURVE_COUNT) ||
-            !IsValidSequenceCount(DataModel->NotifyTracks.size(), MAX_SEQUENCE_NOTIFY_TRACK_COUNT))
+            !IsValidSequenceCount(DataModel->NotifyTracks.size(), MAX_SEQUENCE_NOTIFY_TRACK_COUNT) ||
+            AclInfo.TrackCount != static_cast<uint32>(DataModel->BoneAnimationTracks.size()) ||
+            AclInfo.SizeBytes == 0 ||
+            AclInfo.SizeBytes > MAX_SEQUENCE_ACL_BYTES)
         {
             return false;
         }
 
         for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
         {
-            if (!IsValidSequenceString(Track.Name.ToString()) ||
-                !IsValidSequenceCount(Track.InternalTrackData.PosKeys.size(), MAX_SEQUENCE_KEY_COUNT) ||
-                !IsValidSequenceCount(Track.InternalTrackData.RotKeys.size(), MAX_SEQUENCE_KEY_COUNT) ||
-                !IsValidSequenceCount(Track.InternalTrackData.ScaleKeys.size(), MAX_SEQUENCE_KEY_COUNT))
+            if (!IsValidSequenceString(Track.Name.ToString()))
             {
                 return false;
             }
@@ -408,24 +423,21 @@ namespace
     {
         WriteStringBinary(Out, Track.Name.ToString());
         WriteInt32LE(Out, Track.BoneTreeIndex);
-        WriteVectorKeyArrayBinary(Out, Track.InternalTrackData.PosKeys);
-        WriteQuatKeyArrayBinary(Out, Track.InternalTrackData.RotKeys);
-        WriteVectorKeyArrayBinary(Out, Track.InternalTrackData.ScaleKeys);
     }
 
     bool ReadTrackBinary(std::ifstream& In, FBoneAnimationTrack& OutTrack)
     {
         FString TrackName;
         if (!ReadStringBinary(In, TrackName) ||
-            !ReadInt32LE(In, OutTrack.BoneTreeIndex) ||
-            !ReadVectorKeyArrayBinary(In, OutTrack.InternalTrackData.PosKeys) ||
-            !ReadQuatKeyArrayBinary(In, OutTrack.InternalTrackData.RotKeys) ||
-            !ReadVectorKeyArrayBinary(In, OutTrack.InternalTrackData.ScaleKeys))
+            !ReadInt32LE(In, OutTrack.BoneTreeIndex))
         {
             return false;
         }
 
         OutTrack.Name = FName(TrackName);
+        OutTrack.InternalTrackData.PosKeys.clear();
+        OutTrack.InternalTrackData.RotKeys.clear();
+        OutTrack.InternalTrackData.ScaleKeys.clear();
         return true;
     }
 
@@ -660,6 +672,32 @@ namespace
             DataModel->NotifyTracks.push_back(Track);
         }
 
+        TArray<uint8> AclBytes;
+        AclBytes.resize(Header.AclCompressedSizeBytes);
+        InFile.read(reinterpret_cast<char*>(AclBytes.data()), Header.AclCompressedSizeBytes);
+        if (!InFile.good())
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed to read ACL sequence data: %s", NormalizedPath.c_str());
+            DestroyLoadedSequence(Sequence, DataModel);
+            return nullptr;
+        }
+
+        std::unique_ptr<FAclAnimSequenceRuntimeData> AclRuntimeData = std::make_unique<FAclAnimSequenceRuntimeData>();
+        if (!AclRuntimeData->CopyCompressedTracks(AclBytes.data(), Header.AclCompressedSizeBytes))
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] Invalid ACL sequence data: %s", NormalizedPath.c_str());
+            DestroyLoadedSequence(Sequence, DataModel);
+            return nullptr;
+        }
+
+        const FAclCompressedClipInfo& AclInfo = AclRuntimeData->GetInfo();
+        if (AclInfo.TrackCount != Header.TrackCount)
+        {
+            UE_LOG_ERROR("[AnimSequenceAssetLoader] ACL sequence track mismatch: %s", NormalizedPath.c_str());
+            DestroyLoadedSequence(Sequence, DataModel);
+            return nullptr;
+        }
+
         if (!InFile.good() && !InFile.eof())
         {
             UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed while reading binary sequence asset: %s", NormalizedPath.c_str());
@@ -668,10 +706,11 @@ namespace
         }
 
         Sequence->DataModel = DataModel;
+        Sequence->SetAclRuntimeData(AclRuntimeData.release());
 
         const auto LoadEnd = std::chrono::steady_clock::now();
         const double LoadSec = std::chrono::duration<double>(LoadEnd - LoadStart).count();
-        UE_LOG("[SkeletalMeshLoad] Animation Sequence Load | Format=RawBinary | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Bytes=%llu | Sec=%.6f | Ms=%.3f",
+        UE_LOG("[SkeletalMeshLoad] Animation Sequence Load | Format=AclBinary | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Bytes=%llu | AclBytes=%u | Sec=%.6f | Ms=%.3f",
             NormalizedPath.c_str(),
             Sequence->GetName().c_str(),
             DataModel->BoneAnimationTracks.size(),
@@ -679,6 +718,7 @@ namespace
             DataModel->NumberOfKeys,
             DataModel->CurveData.FloatCurves.size(),
             static_cast<unsigned long long>(GetFileSizeBytes(FilePath)),
+            AclInfo.SizeBytes,
             LoadSec,
             LoadSec * 1000.0);
 
@@ -736,7 +776,7 @@ UAnimSequence* FAnimSequenceAssetLoader::Load(const FString& Path) const
 
     if (Magic != ANIM_SEQUENCE_BINARY_MAGIC)
     {
-        UE_LOG_ERROR("[AnimSequenceAssetLoader] Unsupported legacy JSON sequence asset. Reimport or resave as raw binary: %s", NormalizedPath.c_str());
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Unsupported legacy JSON sequence asset. Reimport or resave as ACL binary: %s", NormalizedPath.c_str());
         return nullptr;
     }
 
@@ -778,9 +818,12 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     const UAnimDataModel* DataModel = Sequence->DataModel;
     if (!ValidateSequenceForBinary(Sequence))
     {
-        UE_LOG_ERROR("[AnimSequenceAssetLoader] Animation sequence is too large for raw binary format: %s", NormalizedPath.c_str());
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Animation sequence is not valid for ACL binary format: %s", NormalizedPath.c_str());
         return false;
     }
+
+    const FAclAnimSequenceRuntimeData* AclRuntimeData = Sequence->GetAclRuntimeData();
+    const FAclCompressedClipInfo& AclInfo = AclRuntimeData->GetInfo();
 
     const auto SaveStart = std::chrono::steady_clock::now();
 
@@ -803,6 +846,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
     Header.TrackCount = static_cast<uint32>(DataModel->BoneAnimationTracks.size());
     Header.FloatCurveCount = static_cast<uint32>(DataModel->CurveData.FloatCurves.size());
     Header.NotifyTrackCount = static_cast<uint32>(DataModel->NotifyTracks.size());
+    Header.AclCompressedSizeBytes = AclInfo.SizeBytes;
 
     WriteBinaryHeader(OutFile, Header);
     WriteStringBinary(OutFile, Sequence->GetName());
@@ -823,16 +867,18 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
         WriteNotifyTrackBinary(OutFile, Track);
     }
 
+    OutFile.write(reinterpret_cast<const char*>(AclRuntimeData->GetCompressedData()), AclInfo.SizeBytes);
+
     OutFile.flush();
     if (!OutFile.good())
     {
-        UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed while writing raw binary sequence asset: %s", NormalizedPath.c_str());
+        UE_LOG_ERROR("[AnimSequenceAssetLoader] Failed while writing ACL binary sequence asset: %s", NormalizedPath.c_str());
         return false;
     }
 
     const auto SaveEnd = std::chrono::steady_clock::now();
     const double SaveElapsedSec = std::chrono::duration<double>(SaveEnd - SaveStart).count();
-    UE_LOG("[SkeletalMeshLoad] Animation Sequence Save | Format=RawBinary | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Bytes=%llu | Sec=%.6f | Ms=%.3f",
+    UE_LOG("[SkeletalMeshLoad] Animation Sequence Save | Format=AclBinary | Path=%s | Sequence=%s | Tracks=%zu | Frames=%d | Keys=%d | Curves=%zu | Bytes=%llu | AclBytes=%u | Sec=%.6f | Ms=%.3f",
         NormalizedPath.c_str(),
         Sequence->GetName().c_str(),
         DataModel->BoneAnimationTracks.size(),
@@ -840,6 +886,7 @@ bool FAnimSequenceAssetLoader::Save(const FString& Path, const UAnimSequence* Se
         DataModel->NumberOfKeys,
         DataModel->CurveData.FloatCurves.size(),
         static_cast<unsigned long long>(GetFileSizeBytes(FilePath)),
+        AclInfo.SizeBytes,
         SaveElapsedSec,
         SaveElapsedSec * 1000.0);
     return true;
