@@ -18,6 +18,9 @@ namespace
 {
     constexpr const char* AttackIdTagPrefix = "AttackId:";
 
+    // Runtime-only payload assembly structs. These stay local to built-ins
+    // because they exist to feed execution helpers, not to represent shared
+    // semantic/editor data models.
     struct FGameplayEventPayload
     {
         FString EventName;

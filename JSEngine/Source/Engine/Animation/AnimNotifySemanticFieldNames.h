@@ -2,6 +2,9 @@
 
 #include "Core/CoreMinimal.h"
 
+// Semantic field ids are the shared identity layer above raw payload strings.
+// Runtime, validation, schema, and editor helpers all converge here when they
+// need canonical keys, legacy aliases, or lookup-key sets for one logical field.
 enum class EAnimNotifySemanticFieldId : uint8
 {
     None = 0,

@@ -21,6 +21,7 @@ namespace
         RawStoredValue,
     };
 
+    // Generic asset-picker support helpers
     FString ToLowerAscii(FString Value)
     {
         std::transform(
@@ -67,6 +68,7 @@ namespace
         return false;
     }
 
+    // Asset-kind picker entry builders
     void AddSoundCueEntries(TArray<FNotifyAssetPickerEntry>& OutEntries)
     {
         // SoundCue payloads store project-relative audio asset paths. The picker
@@ -206,6 +208,7 @@ namespace
             Entries.end());
     }
 
+    // Asset-kind display and fallback label helpers
     FString BuildSoundCueDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
     {
         if (DisplayMode == ENotifyAssetDisplayMode::RawStoredValue)

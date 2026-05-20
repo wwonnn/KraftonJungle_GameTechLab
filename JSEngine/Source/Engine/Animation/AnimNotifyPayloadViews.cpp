@@ -3,6 +3,9 @@
 #include "Animation/AnimNotifyPayloadParser.h"
 #include "Animation/AnimNotifySemanticFieldNames.h"
 
+// These builders intentionally stay thin: they interpret semantic fields and
+// defaults for one notify shape, but leave raw parsing, validation, and runtime
+// execution ownership in their respective layers.
 FPlaySfxPayloadView BuildPlaySfxPayloadView(const FAnimNotifyPayloadParser& Payload)
 {
     FPlaySfxPayloadView View;

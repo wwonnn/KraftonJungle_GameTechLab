@@ -526,6 +526,9 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
                 : Document->SetSelectedNotifyPayloadStringValue(Field.Key, Value));
     };
 
+    // Asset picker rendering owns editor-side picker UI only. Stored value,
+    // display label, and fallback-label semantics stay delegated to the asset
+    // picker helper layer so this panel remains an orchestration shell.
     auto RenderAssetPickerField = [this, &RefreshPayloadBuffers, &ApplyTextFieldValue](
         const FAnimNotifyPayloadFieldDefinition& Field,
         std::array<char, 256>& TargetBuffer)
@@ -652,6 +655,9 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         ImGui::Unindent(NotifyPanelSectionIndent);
     };
 
+    // Preview-aware pickers pull candidate data from the preview controller,
+    // but still write back through the same structured payload mutation path as
+    // plain text fields.
     auto CollectPreviewPickerOptions = [this](const FAnimNotifyPayloadFieldDefinition& Field)
     {
         if (!PreviewController)
@@ -723,6 +729,8 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         return true;
     };
 
+    // Primitive field renderers own draw/apply sequencing, while raw payload
+    // serialization and buffer rebinding stay centralized in the shared helpers above.
     auto RenderTextPayloadField = [this, &RefreshPayloadBuffers, &ApplyTextFieldValue, &RenderAssetPickerField, &RenderPreviewPickerField](
         const FAnimNotifyPayloadFieldDefinition& Field)
     {

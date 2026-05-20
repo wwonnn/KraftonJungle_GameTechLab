@@ -5,6 +5,9 @@
 
 class FAnimNotifyPayloadParser;
 
+// Typed payload views sit above the raw parser and below runtime/validation
+// consumers. They expose notify-specific interpretation without owning
+// serialization, editor metadata, or runtime dispatch behavior.
 struct FPlaySfxPayloadView
 {
     FString SoundCue;

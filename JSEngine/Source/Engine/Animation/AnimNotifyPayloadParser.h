@@ -3,6 +3,9 @@
 #include "Core/CoreMinimal.h"
 #include "Object/FName.h"
 
+// The payload parser owns only raw key/value parsing, typed primitive access,
+// mutation helpers, and canonical serialization. It intentionally does not know
+// semantic field meaning or notify-specific interpretation rules.
 class FAnimNotifyPayloadParser
 {
 public:

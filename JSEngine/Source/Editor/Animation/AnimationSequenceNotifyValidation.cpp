@@ -21,6 +21,7 @@ namespace
         FGuid StableId;
     };
 
+    // Generic validation helpers
     bool HasNonWhitespaceValue(const FString& Value)
     {
         return std::any_of(
@@ -319,6 +320,7 @@ namespace
         AddMalformedPayloadIssues(Report, Schema, Payload, Location);
     }
 
+    // Preview/context-sensitive validation helpers
     void AddPreviewAttachTargetIssues(
         FAnimNotifyValidationReport& Report,
         const FAnimNotifyPayloadSchema& Schema,
@@ -391,6 +393,7 @@ namespace
         AddAttackWindowPreviewComponentIssues(Report, Schema, Payload, Context, Location);
     }
 
+    // Built-in notify-specific validation helpers
     void AddCameraShakePayloadIssues(
         FAnimNotifyValidationReport& Report,
         const FAnimNotifyPayloadSchema& Schema,
@@ -417,6 +420,9 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
+        // PlaySFX currently relies on generic required/type checks plus the
+        // shared attach-target preview validation path. Keep this hook in the
+        // built-in-specific section so future audio-only rules have an obvious home.
         (void)Report;
         (void)Schema;
         (void)Payload;
@@ -515,6 +521,9 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
+        // AttackWindow-specific editor checks currently live in the preview-aware
+        // component validation path. This placeholder keeps file ownership explicit
+        // without widening the current warning semantics.
         (void)Report;
         (void)Schema;
         (void)Payload;
@@ -527,6 +536,8 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
+        // GameplayEvent currently adds no built-in-only warnings beyond the
+        // generic schema/required validation path.
         (void)Report;
         (void)Schema;
         (void)Payload;
@@ -539,6 +550,8 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
+        // GameplayEventWindow currently adds no built-in-only warnings beyond
+        // the generic schema/required validation path.
         (void)Report;
         (void)Schema;
         (void)Payload;
