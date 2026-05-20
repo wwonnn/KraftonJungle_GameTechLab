@@ -25,6 +25,10 @@ private:
     void DrawSelectedStateAuthoringHints(const FAnimInstanceStateSequenceContextReport& Context);
     void AddState();
     void AddTransition();
+    void DeleteSelectedState();
+    void DeleteSelectedTransition();
+    bool HasSelectedState() const;
+    bool HasSelectedTransition() const;
     bool SaveAsset();
     bool ReloadAsset();
     void MarkDirty() { bDirty = true; }
