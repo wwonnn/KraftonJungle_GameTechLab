@@ -44,6 +44,7 @@ public:
     UAnimSingleNodeInstance* GetPreviewAnimInstance() const;
     const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const { return RecentFiredNotifyEvents; }
     void TickPreviewAnimation(float DeltaTime);
+    void AdvancePreviewAnimation(float InTime, float DeltaTime, bool bWrapped, float RangeStart, float RangeEnd);
 
     void SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform);
     const FMatrix& GetBoneLocalTransform(int32 BoneIndex) const;

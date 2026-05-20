@@ -44,6 +44,7 @@ public:
     bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
     TArray<FString> GetPreviewPrimitiveComponentNames() const;
     void RefreshPreviewPose(float DeltaTime);
+    void AdvancePreviewPlayback(float InTime, float DeltaTime, bool bWrapped, float RangeStart, float RangeEnd);
 
     void SetViewportSize(int32 InWidth, int32 InHeight);
     ID3D11ShaderResourceView* GetPreviewSRV() const;

@@ -745,6 +745,9 @@ void FAnimationSequenceEditorDocument::SyncEditorState()
     EditorState.TotalFrames = PreviewController->GetFrameCount();
     EditorState.bLoop = PreviewController->IsLooping();
     EditorState.PlayRate = PreviewController->GetPlayRate();
+    EditorState.SetPlaybackRange(
+        PreviewController->GetPlaybackRangeStart(),
+        PreviewController->GetPlaybackRangeEnd());
     EditorState.SetCurrentTime(PreviewController->GetCurrentTime(), false);
     EditorState.SetVisibleRange(EditorState.VisibleTimeStart, EditorState.VisibleTimeEnd);
 

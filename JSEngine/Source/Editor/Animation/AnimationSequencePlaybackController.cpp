@@ -15,6 +15,8 @@ void FAnimationSequencePlaybackController::Initialize(UAnimSequence* InSequence)
     Sequence = InSequence;
     CurrentTime = 0.0f;
     PlayRate = 1.0f;
+    PlaybackRangeStart = 0.0f;
+    PlaybackRangeEnd = GetLength();
     bPlaying = false;
     bLooping = true;
     bPoseDirty = false;
@@ -25,6 +27,8 @@ void FAnimationSequencePlaybackController::Shutdown()
     Sequence = nullptr;
     CurrentTime = 0.0f;
     PlayRate = 1.0f;
+    PlaybackRangeStart = 0.0f;
+    PlaybackRangeEnd = 0.0f;
     bPlaying = false;
     bLooping = true;
     bPoseDirty = false;
@@ -39,9 +43,10 @@ void FAnimationSequencePlaybackController::Tick(float DeltaTime, FAnimationSeque
 {
     if (PreviewScene && PreviewScene->HasValidPreview())
     {
-        // PlaybackController owns time progression; PreviewScene owns how that
-        // time is pushed into the preview component and viewport.
-        PreviewScene->ApplyPlaybackSettings(bLooping, PlayRate, bPlaying);
+        // PlaybackController owns time progression; the preview component stays
+        // paused and only mirrors the controller-authored time so playback
+        // range clamping is respected even when a live preview exists.
+        PreviewScene->ApplyPlaybackSettings(bLooping, PlayRate, false);
 
         if (!bPlaying && !bPoseDirty)
         {
@@ -59,7 +64,18 @@ void FAnimationSequencePlaybackController::Tick(float DeltaTime, FAnimationSeque
             }
         }
 
-        PreviewScene->RefreshPreviewPose(bPlaying ? DeltaTime : 0.0f);
+        const float PreviousTime = CurrentTime;
+        AdvanceWithoutPreview(DeltaTime);
+        const bool bWrapped =
+            bLooping &&
+            ((PlayRate >= 0.0f && CurrentTime < PreviousTime) ||
+             (PlayRate < 0.0f && CurrentTime > PreviousTime));
+        PreviewScene->AdvancePreviewPlayback(
+            CurrentTime,
+            DeltaTime,
+            bWrapped,
+            PlaybackRangeStart,
+            PlaybackRangeEnd);
         CurrentTime = PreviewScene->GetCurrentTime();
         return;
     }
@@ -163,21 +179,45 @@ void FAnimationSequencePlaybackController::StepToPreviousFrame()
 void FAnimationSequencePlaybackController::JumpToStart()
 {
     Pause();
-    SetCurrentTime(0.0f);
+    SetCurrentTime(PlaybackRangeStart);
 }
 
 void FAnimationSequencePlaybackController::JumpToEnd()
 {
-    const int32 FrameCount = GetFrameCount();
     Pause();
+    SetCurrentTime(PlaybackRangeEnd);
+}
 
-    if (FrameCount > 1)
+void FAnimationSequencePlaybackController::SetPlaybackRange(float InStartTime, float InEndTime)
+{
+    const float Length = GetLength();
+    const float MinimumRange = std::max(
+        GetFrameRate().AsDecimal() > 0.0 ? static_cast<float>(1.0 / GetFrameRate().AsDecimal()) : 0.0f,
+        1.0f / 240.0f);
+    float StartTime = std::min(InStartTime, InEndTime);
+    float EndTime = std::max(InStartTime, InEndTime);
+
+    if (Length <= 0.0f)
     {
-        SetCurrentTime(AnimationSequenceViewer::FrameIndexToTime(FrameCount - 1, GetFrameRate()));
+        PlaybackRangeStart = 0.0f;
+        PlaybackRangeEnd = 0.0f;
+        CurrentTime = 0.0f;
+        bPoseDirty = true;
         return;
     }
 
-    SetCurrentTime(GetLength());
+    StartTime = std::clamp(StartTime, 0.0f, Length);
+    EndTime = std::clamp(EndTime, StartTime + MinimumRange, Length);
+    if (EndTime - StartTime < MinimumRange)
+    {
+        EndTime = std::min(Length, StartTime + MinimumRange);
+        StartTime = std::max(0.0f, EndTime - MinimumRange);
+    }
+
+    PlaybackRangeStart = StartTime;
+    PlaybackRangeEnd = EndTime;
+    CurrentTime = ClampCurrentTime(CurrentTime);
+    bPoseDirty = true;
 }
 
 void FAnimationSequencePlaybackController::ApplyPendingPose(FAnimationSequencePreviewScene* PreviewScene)
@@ -195,26 +235,33 @@ void FAnimationSequencePlaybackController::ApplyPendingPose(FAnimationSequencePr
 
 float FAnimationSequencePlaybackController::ClampCurrentTime(float InTime) const
 {
-    return std::clamp(InTime, 0.0f, GetLength());
+    return std::clamp(InTime, PlaybackRangeStart, PlaybackRangeEnd);
+}
+
+float FAnimationSequencePlaybackController::GetPlaybackRangeLength() const
+{
+    return std::max(PlaybackRangeEnd - PlaybackRangeStart, 0.0f);
 }
 
 void FAnimationSequencePlaybackController::AdvanceWithoutPreview(float DeltaTime)
 {
-    const float Length = GetLength();
+    const float RangeLength = GetPlaybackRangeLength();
     CurrentTime += DeltaTime * PlayRate;
 
-    if (bLooping && Length > 0.0f)
+    if (bLooping && RangeLength > 0.0f)
     {
-        CurrentTime = std::fmod(CurrentTime, Length);
+        CurrentTime -= PlaybackRangeStart;
+        CurrentTime = std::fmod(CurrentTime, RangeLength);
         if (CurrentTime < 0.0f)
         {
-            CurrentTime += Length;
+            CurrentTime += RangeLength;
         }
+        CurrentTime += PlaybackRangeStart;
         return;
     }
 
-    CurrentTime = std::clamp(CurrentTime, 0.0f, Length);
-    if ((PlayRate >= 0.0f && CurrentTime >= Length) || (PlayRate < 0.0f && CurrentTime <= 0.0f))
+    CurrentTime = std::clamp(CurrentTime, PlaybackRangeStart, PlaybackRangeEnd);
+    if ((PlayRate >= 0.0f && CurrentTime >= PlaybackRangeEnd) || (PlayRate < 0.0f && CurrentTime <= PlaybackRangeStart))
     {
         bPlaying = false;
     }

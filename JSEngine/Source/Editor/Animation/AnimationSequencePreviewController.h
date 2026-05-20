@@ -46,6 +46,10 @@ public:
     void SetLooping(bool bInLooping);
     bool IsLooping() const;
 
+    void SetPlaybackRange(float InStartTime, float InEndTime);
+    float GetPlaybackRangeStart() const;
+    float GetPlaybackRangeEnd() const;
+
     void SetPlayRate(float InPlayRate);
     float GetPlayRate() const;
 

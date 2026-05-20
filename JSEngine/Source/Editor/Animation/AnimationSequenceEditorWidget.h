@@ -127,5 +127,7 @@ private:
     std::array<char, 256> NotifyAttackIdEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
     std::array<char, 128> TrackFilterEditBuffer = {};
+    std::array<char, 64> TimelineRangeEditBuffer = {};
+    FString ActiveTimelineRangeEditPopupId;
     float PlaybackSpeedCustomValue = 1.0f;
 };

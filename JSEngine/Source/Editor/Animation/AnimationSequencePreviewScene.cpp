@@ -269,6 +269,26 @@ void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
     }
 }
 
+void FAnimationSequencePreviewScene::AdvancePreviewPlayback(
+    float InTime,
+    float DeltaTime,
+    bool bWrapped,
+    float RangeStart,
+    float RangeEnd)
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    PreviewComponent->AdvancePreviewAnimation(InTime, DeltaTime, bWrapped, RangeStart, RangeEnd);
+    CaptureRecentNotifyEvents();
+    if (PreviewWorld)
+    {
+        PreviewWorld->SyncSpatialIndex();
+    }
+}
+
 void FAnimationSequencePreviewScene::SetViewportSize(int32 InWidth, int32 InHeight)
 {
     ViewportWidth = std::max(InWidth, 1);

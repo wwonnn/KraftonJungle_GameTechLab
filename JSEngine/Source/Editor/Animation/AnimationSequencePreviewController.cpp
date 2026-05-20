@@ -49,6 +49,7 @@ bool FAnimationSequencePreviewController::Initialize(
     PlaybackController->SetLooping(true);
     PlaybackController->SetPlayRate(1.0f);
     PlaybackController->Pause();
+    PlaybackController->SetPlaybackRange(0.0f, PlaybackController->GetLength());
     PlaybackController->SetCurrentTime(0.0f);
 
     return TryInitializePreviewScene();
@@ -238,6 +239,27 @@ void FAnimationSequencePreviewController::SetLooping(bool bInLooping)
 bool FAnimationSequencePreviewController::IsLooping() const
 {
     return PlaybackController ? PlaybackController->IsLooping() : true;
+}
+
+void FAnimationSequencePreviewController::SetPlaybackRange(float InStartTime, float InEndTime)
+{
+    if (!PlaybackController)
+    {
+        return;
+    }
+
+    PlaybackController->SetPlaybackRange(InStartTime, InEndTime);
+    PlaybackController->ApplyPendingPose(PreviewScene.get());
+}
+
+float FAnimationSequencePreviewController::GetPlaybackRangeStart() const
+{
+    return PlaybackController ? PlaybackController->GetPlaybackRangeStart() : 0.0f;
+}
+
+float FAnimationSequencePreviewController::GetPlaybackRangeEnd() const
+{
+    return PlaybackController ? PlaybackController->GetPlaybackRangeEnd() : 0.0f;
 }
 
 void FAnimationSequencePreviewController::SetPlayRate(float InPlayRate)

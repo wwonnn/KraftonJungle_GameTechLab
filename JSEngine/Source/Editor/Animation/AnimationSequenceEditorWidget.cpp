@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -500,6 +501,8 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     ResetNotifyPayloadFieldBuffers();
     NotifyPayloadEditBuffer.fill('\0');
     TrackFilterEditBuffer.fill('\0');
+    TimelineRangeEditBuffer.fill('\0');
+    ActiveTimelineRangeEditPopupId.clear();
     PlaybackSpeedCustomValue = InPreviewController ? std::fabs(InPreviewController->GetPlayRate()) : 1.0f;
 }
 
@@ -1490,8 +1493,8 @@ void FAnimationSequenceEditorWidget::RenderTimelineRangeControls(float StripHeig
     const float MaximumTime = std::max(EditorState->GetMaxTime(), EditorState->GetMinimumVisibleRange());
     const float SequenceStart = EditorState->GetTimelineRangeStart();
     const float SequenceEnd = EditorState->GetTimelineRangeEnd();
-    const float PlaybackStart = SequenceStart;
-    const float PlaybackEnd = SequenceEnd;
+    const float PlaybackStart = EditorState->GetPlaybackRangeStart();
+    const float PlaybackEnd = EditorState->GetPlaybackRangeEnd();
 
     const FString ViewStartLabel = FormatCompactTimelineRangeLabel(*EditorState, EditorState->VisibleTimeStart);
     const FString PlaybackStartLabel = FormatCompactTimelineRangeLabel(*EditorState, PlaybackStart);
@@ -1565,23 +1568,67 @@ void FAnimationSequenceEditorWidget::RenderTimelineRangeControls(float StripHeig
 
         if (ImGui::BeginPopup(PopupId))
         {
-            if (EditorState->TotalFrames > 0)
+            const bool bFirstPopupFrame = ActiveTimelineRangeEditPopupId != PopupId;
+            if (bFirstPopupFrame)
             {
-                int32 FrameValue = EditorState->TimeToFrameIndex(CurrentValue);
-                if (ImGui::InputInt("Frame", &FrameValue, 0, 0))
+                ActiveTimelineRangeEditPopupId = PopupId;
+                if (EditorState->TotalFrames > 0)
                 {
-                    ApplyEditedTime(EditorState->FrameToTime(FrameValue));
+                    CopyStringToBuffer(std::to_string(EditorState->TimeToFrameIndex(CurrentValue)), TimelineRangeEditBuffer);
                 }
+                else
+                {
+                    char SecondsBuffer[32];
+                    snprintf(SecondsBuffer, sizeof(SecondsBuffer), "%.3f", CurrentValue);
+                    CopyStringToBuffer(SecondsBuffer, TimelineRangeEditBuffer);
+                }
+                ImGui::SetKeyboardFocusHere();
             }
-            else
+
+            const bool bPressedEnter =
+                ImGui::InputText(
+                    EditorState->TotalFrames > 0 ? "Frame" : "Seconds",
+                    TimelineRangeEditBuffer.data(),
+                    TimelineRangeEditBuffer.size(),
+                    ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+
+            bool bApply = bPressedEnter;
+
+            ImGui::Spacing();
+            if (ImGui::Button("Apply"))
             {
-                float SecondsValue = CurrentValue;
-                if (ImGui::InputFloat("Seconds", &SecondsValue, 0.0f, 0.0f, "%.3f"))
-                {
-                    ApplyEditedTime(SecondsValue);
-                }
+                bApply = true;
             }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+            {
+                ActiveTimelineRangeEditPopupId.clear();
+                TimelineRangeEditBuffer.fill('\0');
+                ImGui::CloseCurrentPopup();
+            }
+
+            if (bApply)
+            {
+                if (EditorState->TotalFrames > 0)
+                {
+                    ApplyEditedTime(EditorState->FrameToTime(std::atoi(TimelineRangeEditBuffer.data())));
+                }
+                else
+                {
+                    ApplyEditedTime(static_cast<float>(std::atof(TimelineRangeEditBuffer.data())));
+                }
+
+                ActiveTimelineRangeEditPopupId.clear();
+                TimelineRangeEditBuffer.fill('\0');
+                ImGui::CloseCurrentPopup();
+            }
+
             ImGui::EndPopup();
+        }
+        else if (ActiveTimelineRangeEditPopupId == PopupId)
+        {
+            ActiveTimelineRangeEditPopupId.clear();
+            TimelineRangeEditBuffer.fill('\0');
         }
     };
 
@@ -1596,8 +1643,17 @@ void FAnimationSequenceEditorWidget::RenderTimelineRangeControls(float StripHeig
     DrawRangeLabel(
         "##AnimSequencePlaybackStartDisplay",
         LeftLabels[1],
-        false,
-        [](float) {},
+        true,
+        [&](float NewTime)
+        {
+            if (PreviewController)
+            {
+                PreviewController->SetPlaybackRange(NewTime, EditorState->GetPlaybackRangeEnd());
+                EditorState->SetPlaybackRange(
+                    PreviewController->GetPlaybackRangeStart(),
+                    PreviewController->GetPlaybackRangeEnd());
+            }
+        },
         PlaybackStart);
     ImGui::SameLine(0.0f, LabelSpacing);
     DrawRangeLabel(
@@ -1749,8 +1805,17 @@ void FAnimationSequenceEditorWidget::RenderTimelineRangeControls(float StripHeig
     DrawRangeLabel(
         "##AnimSequencePlaybackEndDisplay",
         RightLabels[1],
-        false,
-        [](float) {},
+        true,
+        [&](float NewTime)
+        {
+            if (PreviewController)
+            {
+                PreviewController->SetPlaybackRange(EditorState->GetPlaybackRangeStart(), NewTime);
+                EditorState->SetPlaybackRange(
+                    PreviewController->GetPlaybackRangeStart(),
+                    PreviewController->GetPlaybackRangeEnd());
+            }
+        },
         PlaybackEnd);
     ImGui::SameLine(0.0f, LabelSpacing);
     DrawRangeLabel(
