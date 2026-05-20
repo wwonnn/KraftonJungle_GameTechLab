@@ -18,6 +18,53 @@ namespace
 {
     constexpr const char* AttackIdTagPrefix = "AttackId:";
 
+    struct FGameplayEventPayload
+    {
+        FString EventName;
+        FString PayloadValue;
+    };
+
+    struct FGameplayEventWindowPayload
+    {
+        FString EventName;
+        FString EndEventName;
+        FString PayloadValue;
+    };
+
+    struct FFootstepSurfacePayload
+    {
+        FString EventName;
+        FName SocketName = FName::None;
+        float TraceDistance = 25.0f;
+        FString PayloadValue;
+    };
+
+    struct FSpawnDecalPayload
+    {
+        FString Decal;
+        FName SocketName = FName::None;
+        float TraceDistance = 50.0f;
+        float Size = 1.0f;
+        float Lifetime = 0.0f;
+        bool bAlignToHitNormal = true;
+    };
+
+    struct FAttackWindowPayload
+    {
+        FString ComponentName;
+        FString AttackId;
+    };
+
+    struct FAttackWindowAcquireResult
+    {
+        AActor* OwnerActor = nullptr;
+        UPrimitiveComponent* PrimitiveComponent = nullptr;
+        FString AttackTag;
+        FString AttackTagStateKey;
+        bool bWindowAcquired = false;
+        bool bAttackTagAcquired = false;
+    };
+
     struct FAttackWindowComponentState
     {
         int32 RefCount = 0;
@@ -178,6 +225,102 @@ namespace
         return FVector::UpVector;
     }
 
+    // Audio helpers
+    void DispatchPlaySfxNotify(USkeletalMeshComponent* MeshComponent, const FPlaySfxPayloadView& PayloadView)
+    {
+        const float Volume = std::max(0.0f, PayloadView.VolumeMultiplier);
+        if (PayloadView.bSpatialized)
+        {
+            GEngine->GetAudioSystem().PlaySoundCue(
+                PayloadView.SoundCue,
+                false,
+                true,
+                ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
+                Volume);
+            return;
+        }
+
+        GEngine->GetAudioSystem().PlaySFX(PayloadView.SoundCue, Volume);
+    }
+
+    FAudioHandle BeginLoopingSfxPlayback(USkeletalMeshComponent* MeshComponent, const FPlaySfxPayloadView& PayloadView)
+    {
+        const float Volume = std::max(0.0f, PayloadView.VolumeMultiplier);
+        return GEngine->GetAudioSystem().PlaySoundCue(
+            PayloadView.SoundCue,
+            true,
+            PayloadView.bSpatialized,
+            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
+            Volume);
+    }
+
+    void UpdateLoopingSfxPlaybackPosition(
+        FAudioHandle ActiveHandle,
+        USkeletalMeshComponent* MeshComponent,
+        const FPlaySfxPayloadView& PayloadView)
+    {
+        GEngine->GetAudioSystem().SetSoundPosition(
+            ActiveHandle,
+            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName));
+    }
+
+    void DispatchCameraShakeNotify(
+        UAnimInstance* AnimInstance,
+        UAnimSequence* Animation,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FCameraShakePayloadView& PayloadView)
+    {
+        AnimInstance->DispatchCameraShakeAnimNotify(Animation, NotifyEvent, PayloadView.Shake, PayloadView.Scale);
+    }
+
+    // Gameplay event helpers
+    FGameplayEventPayload BuildGameplayEventPayload(const FAnimNotifyPayloadParser& Payload)
+    {
+        FGameplayEventPayload Result;
+        Result.EventName = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::EventName));
+        Result.PayloadValue = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::PayloadValue));
+        return Result;
+    }
+
+    FGameplayEventWindowPayload BuildGameplayEventWindowPayload(const FAnimNotifyPayloadParser& Payload)
+    {
+        FGameplayEventWindowPayload Result;
+        Result.EventName = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::EventName));
+        Result.EndEventName = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::EndEventName));
+        Result.PayloadValue = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::PayloadValue));
+        return Result;
+    }
+
+    FString ResolveGameplayEventWindowDispatchName(
+        const FGameplayEventWindowPayload& Payload,
+        bool bUseEndEventName)
+    {
+        if (bUseEndEventName && !Payload.EndEventName.empty())
+        {
+            return Payload.EndEventName;
+        }
+
+        return Payload.EventName;
+    }
+
+    void DispatchGameplayEventNotify(
+        UAnimInstance* AnimInstance,
+        UAnimSequence* Animation,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FGameplayEventPayload& Payload)
+    {
+        AnimInstance->DispatchGameplayAnimNotifyEvent(
+            Animation,
+            NotifyEvent,
+            Payload.EventName,
+            Payload.PayloadValue);
+    }
+
     bool DispatchGameplayEventWindowPhase(
         USkeletalMeshComponent* MeshComponent,
         UAnimSequence* Animation,
@@ -196,9 +339,8 @@ namespace
         }
 
         const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
-        const FString EventName = PayloadParser.GetStringAny(
-            AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::EventNameKey()));
-        if (EventName.empty())
+        const FGameplayEventWindowPayload Payload = BuildGameplayEventWindowPayload(PayloadParser);
+        if (Payload.EventName.empty())
         {
             UE_LOG_WARNING(
                 "[AnimNotifyBuiltins] GameplayEventWindow notify missing EventName payload | Notify=%s",
@@ -206,21 +348,135 @@ namespace
             return false;
         }
 
-        FString DispatchEventName = EventName;
-        if (bUseEndEventName)
-        {
-            const FString EndEventName = PayloadParser.GetStringAny(
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::EndEventNameKey()));
-            if (!EndEventName.empty())
-            {
-                DispatchEventName = EndEventName;
-            }
-        }
-
-        const FString PayloadValue = PayloadParser.GetStringAny(
-            AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::PayloadKey()));
-        AnimInstance->DispatchGameplayAnimNotifyEvent(Animation, NotifyEvent, DispatchEventName, PayloadValue);
+        AnimInstance->DispatchGameplayAnimNotifyEvent(
+            Animation,
+            NotifyEvent,
+            ResolveGameplayEventWindowDispatchName(Payload, bUseEndEventName),
+            Payload.PayloadValue);
         return true;
+    }
+
+    // Effect / trace helpers
+    FFootstepSurfacePayload BuildFootstepSurfacePayload(const FAnimNotifyPayloadParser& Payload)
+    {
+        FFootstepSurfacePayload Result;
+        Result.EventName = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::EventName));
+        Result.SocketName = Payload.GetNameAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::SocketName));
+        Result.TraceDistance = Payload.GetFloatAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::TraceDistance),
+            25.0f);
+        Result.PayloadValue = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::PayloadValue));
+        return Result;
+    }
+
+    void DispatchFootstepSurfaceNotify(
+        UAnimInstance* AnimInstance,
+        USkeletalMeshComponent* MeshComponent,
+        UAnimSequence* Animation,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FFootstepSurfacePayload& Payload)
+    {
+        const FVector TraceStartLocation = ResolvePlaybackLocation(MeshComponent, Payload.SocketName);
+        FHitResult SurfaceHit;
+        const bool bHasSurfaceHit = TryTraceDownwardSurfaceHit(
+            MeshComponent,
+            TraceStartLocation,
+            Payload.TraceDistance,
+            SurfaceHit);
+        const FString SurfaceName = bHasSurfaceHit ? ResolveFootstepSurfaceName(SurfaceHit) : FString("Default");
+        const FVector HitLocation = bHasSurfaceHit ? SurfaceHit.Location : TraceStartLocation;
+
+        AnimInstance->DispatchFootstepSurfaceAnimNotify(
+            Animation,
+            NotifyEvent,
+            Payload.EventName,
+            SurfaceName,
+            Payload.PayloadValue,
+            HitLocation);
+    }
+
+    void DispatchPlayVfxNotify(
+        UAnimInstance* AnimInstance,
+        USkeletalMeshComponent* MeshComponent,
+        UAnimSequence* Animation,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FPlayVfxPayloadView& PayloadView)
+    {
+        AnimInstance->DispatchPlayVFXAnimNotify(
+            Animation,
+            NotifyEvent,
+            PayloadView.Effect,
+            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
+            PayloadView.SocketName,
+            PayloadView.bAttached,
+            PayloadView.Scale);
+    }
+
+    FSpawnDecalPayload BuildSpawnDecalPayload(const FAnimNotifyPayloadParser& Payload)
+    {
+        FSpawnDecalPayload Result;
+        Result.Decal = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::Decal));
+        Result.SocketName = Payload.GetNameAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::SocketName));
+        Result.TraceDistance = Payload.GetFloatAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::TraceDistance),
+            50.0f);
+        Result.Size = Payload.GetFloatAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::Size),
+            1.0f);
+        Result.Lifetime = Payload.GetFloatAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::Lifetime),
+            0.0f);
+        Result.bAlignToHitNormal = Payload.GetBoolAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::AlignToHitNormal),
+            true);
+        return Result;
+    }
+
+    void DispatchSpawnDecalNotify(
+        UAnimInstance* AnimInstance,
+        USkeletalMeshComponent* MeshComponent,
+        UAnimSequence* Animation,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FSpawnDecalPayload& Payload)
+    {
+        const FVector SpawnOrigin = ResolvePlaybackLocation(MeshComponent, Payload.SocketName);
+        FHitResult SurfaceHit;
+        const bool bHasSurfaceHit = TryTraceDownwardSurfaceHit(
+            MeshComponent,
+            SpawnOrigin,
+            Payload.TraceDistance,
+            SurfaceHit);
+        const FVector SpawnLocation = bHasSurfaceHit ? SurfaceHit.Location : SpawnOrigin;
+        const FVector SpawnNormal = bHasSurfaceHit
+            ? ResolveDecalSurfaceNormal(SurfaceHit, Payload.bAlignToHitNormal)
+            : FVector::UpVector;
+
+        AnimInstance->DispatchSpawnDecalAnimNotify(
+            Animation,
+            NotifyEvent,
+            Payload.Decal,
+            SpawnLocation,
+            SpawnNormal,
+            Payload.SocketName,
+            Payload.Size,
+            Payload.Lifetime,
+            Payload.bAlignToHitNormal);
+    }
+
+    // Attack window helpers
+    FAttackWindowPayload BuildAttackWindowPayload(const FAnimNotifyPayloadParser& Payload)
+    {
+        FAttackWindowPayload Result;
+        Result.ComponentName = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::ComponentName));
+        Result.AttackId = Payload.GetStringAny(
+            AnimNotifySemanticFieldNames::GetLookupKeys(EAnimNotifySemanticFieldId::AttackId));
+        return Result;
     }
 
     UPrimitiveComponent* FindPrimitiveComponentByName(AActor* OwnerActor, const FString& ComponentName)
@@ -349,6 +605,53 @@ namespace
             GAttackWindowTagStates.erase(Iterator);
         }
     }
+
+    FAttackWindowAcquireResult BeginAttackWindowNotify(
+        USkeletalMeshComponent* MeshComponent,
+        const FAnimNotifyEvent& NotifyEvent)
+    {
+        FAttackWindowAcquireResult Result;
+        Result.OwnerActor = ResolveOwnerActor(MeshComponent);
+        if (!Result.OwnerActor)
+        {
+            UE_LOG_WARNING(
+                "[AnimNotifyBuiltins] AttackWindow notify missing owner actor | Notify=%s",
+                GetNotifyLabel(NotifyEvent).c_str());
+            return Result;
+        }
+
+        const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
+        const FAttackWindowPayload Payload = BuildAttackWindowPayload(PayloadParser);
+        if (Payload.ComponentName.empty())
+        {
+            UE_LOG_WARNING(
+                "[AnimNotifyBuiltins] AttackWindow notify missing ComponentName payload | Notify=%s",
+                GetNotifyLabel(NotifyEvent).c_str());
+            Result.OwnerActor = nullptr;
+            return Result;
+        }
+
+        Result.PrimitiveComponent = FindPrimitiveComponentByName(Result.OwnerActor, Payload.ComponentName);
+        if (!Result.PrimitiveComponent)
+        {
+            UE_LOG_WARNING(
+                "[AnimNotifyBuiltins] AttackWindow target component not found or not primitive | Notify=%s | Component=%s",
+                GetNotifyLabel(NotifyEvent).c_str(),
+                Payload.ComponentName.c_str());
+            Result.OwnerActor = nullptr;
+            return Result;
+        }
+
+        Result.bWindowAcquired = AcquireAttackWindow(Result.PrimitiveComponent);
+        Result.AttackTag = BuildAttackIdTag(Payload.AttackId);
+        if (!Result.AttackTag.empty())
+        {
+            Result.AttackTagStateKey = AcquireAttackTagStateKey(Result.OwnerActor, Result.AttackTag);
+            Result.bAttackTagAcquired = !Result.AttackTagStateKey.empty();
+        }
+
+        return Result;
+    }
 }
 
 void UAnimNotify_PlaySFX::Notify(
@@ -371,20 +674,7 @@ void UAnimNotify_PlaySFX::Notify(
         return;
     }
 
-    const float Volume = std::max(0.0f, PayloadView.VolumeMultiplier);
-
-    if (PayloadView.bSpatialized)
-    {
-        GEngine->GetAudioSystem().PlaySoundCue(
-            PayloadView.SoundCue,
-            false,
-            true,
-            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
-            Volume);
-        return;
-    }
-
-    GEngine->GetAudioSystem().PlaySFX(PayloadView.SoundCue, Volume);
+    DispatchPlaySfxNotify(MeshComponent, PayloadView);
 }
 
 void UAnimNotify_GameplayEvent::Notify(
@@ -404,15 +694,14 @@ void UAnimNotify_GameplayEvent::Notify(
     }
 
     const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
-    const FString EventName = PayloadParser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::EventNameKey()));
-    if (EventName.empty())
+    const FGameplayEventPayload Payload = BuildGameplayEventPayload(PayloadParser);
+    if (Payload.EventName.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] GameplayEvent notify missing EventName payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FString PayloadValue = PayloadParser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::PayloadKey()));
-    AnimInstance->DispatchGameplayAnimNotifyEvent(Animation, NotifyEvent, EventName, PayloadValue);
+    DispatchGameplayEventNotify(AnimInstance, Animation, NotifyEvent, Payload);
 }
 
 void UAnimNotify_CameraShake::Notify(
@@ -439,7 +728,7 @@ void UAnimNotify_CameraShake::Notify(
         return;
     }
 
-    AnimInstance->DispatchCameraShakeAnimNotify(Animation, NotifyEvent, PayloadView.Shake, PayloadView.Scale);
+    DispatchCameraShakeNotify(AnimInstance, Animation, NotifyEvent, PayloadView);
 }
 
 void UAnimNotify_FootstepSurfaceEvent::Notify(
@@ -459,38 +748,20 @@ void UAnimNotify_FootstepSurfaceEvent::Notify(
     }
 
     const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
-    const FString EventName = PayloadParser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::EventNameKey()));
-    if (EventName.empty())
+    const FFootstepSurfacePayload Payload = BuildFootstepSurfacePayload(PayloadParser);
+    if (Payload.EventName.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] FootstepSurfaceEvent notify missing EventName payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = PayloadParser.GetNameAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
-    if (SocketName == FName::None)
+    if (Payload.SocketName == FName::None)
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] FootstepSurfaceEvent notify missing SocketName payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const float TraceDistance = PayloadParser.GetFloatAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::TraceDistanceKey()),
-        25.0f);
-    const FString PayloadValue = PayloadParser.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::PayloadKey()));
-
-    const FVector TraceStartLocation = ResolvePlaybackLocation(MeshComponent, SocketName);
-    FHitResult SurfaceHit;
-    const bool bHasSurfaceHit = TryTraceDownwardSurfaceHit(MeshComponent, TraceStartLocation, TraceDistance, SurfaceHit);
-    const FString SurfaceName = bHasSurfaceHit ? ResolveFootstepSurfaceName(SurfaceHit) : FString("Default");
-    const FVector HitLocation = bHasSurfaceHit ? SurfaceHit.Location : TraceStartLocation;
-
-    AnimInstance->DispatchFootstepSurfaceAnimNotify(
-        Animation,
-        NotifyEvent,
-        EventName,
-        SurfaceName,
-        PayloadValue,
-        HitLocation);
+    DispatchFootstepSurfaceNotify(AnimInstance, MeshComponent, Animation, NotifyEvent, Payload);
 }
 
 void UAnimNotify_PlayVFX::Notify(
@@ -517,16 +788,7 @@ void UAnimNotify_PlayVFX::Notify(
         return;
     }
 
-    const FVector PlaybackLocation = ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName);
-
-    AnimInstance->DispatchPlayVFXAnimNotify(
-        Animation,
-        NotifyEvent,
-        PayloadView.Effect,
-        PlaybackLocation,
-        PayloadView.SocketName,
-        PayloadView.bAttached,
-        PayloadView.Scale);
+    DispatchPlayVfxNotify(AnimInstance, MeshComponent, Animation, NotifyEvent, PayloadView);
 }
 
 void UAnimNotify_SpawnDecal::Notify(
@@ -546,47 +808,14 @@ void UAnimNotify_SpawnDecal::Notify(
     }
 
     const FAnimNotifyPayloadParser PayloadParser(NotifyEvent.Payload);
-    const FString Decal = PayloadParser.GetStringAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::DecalKey()));
-    if (Decal.empty())
+    const FSpawnDecalPayload Payload = BuildSpawnDecalPayload(PayloadParser);
+    if (Payload.Decal.empty())
     {
         UE_LOG_WARNING("[AnimNotifyBuiltins] SpawnDecal notify missing Decal payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
         return;
     }
 
-    const FName SocketName = PayloadParser.GetNameAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SocketNameKey()));
-    const float TraceDistance = PayloadParser.GetFloatAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::TraceDistanceKey()),
-        50.0f);
-    const float Size = PayloadParser.GetFloatAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SizeKey()),
-        1.0f);
-    const float Lifetime = PayloadParser.GetFloatAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::LifetimeKey()),
-        0.0f);
-    const bool bAlignToHitNormal = PayloadParser.GetBoolAny(
-        AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::AlignToHitNormalKey()),
-        true);
-
-    const FVector SpawnOrigin = ResolvePlaybackLocation(MeshComponent, SocketName);
-    FHitResult SurfaceHit;
-    const bool bHasSurfaceHit = TryTraceDownwardSurfaceHit(MeshComponent, SpawnOrigin, TraceDistance, SurfaceHit);
-    const FVector SpawnLocation = bHasSurfaceHit ? SurfaceHit.Location : SpawnOrigin;
-    const FVector SpawnNormal = bHasSurfaceHit
-        ? ResolveDecalSurfaceNormal(SurfaceHit, bAlignToHitNormal)
-        : FVector::UpVector;
-
-    AnimInstance->DispatchSpawnDecalAnimNotify(
-        Animation,
-        NotifyEvent,
-        Decal,
-        SpawnLocation,
-        SpawnNormal,
-        SocketName,
-        Size,
-        Lifetime,
-        bAlignToHitNormal);
+    DispatchSpawnDecalNotify(AnimInstance, MeshComponent, Animation, NotifyEvent, Payload);
 }
 
 void UAnimNotifyState_GameplayEventWindow::NotifyBegin(
@@ -631,15 +860,8 @@ void UAnimNotifyState_PlayLoopingSFX::NotifyBegin(
         return;
     }
 
-    const float Volume = std::max(0.0f, PayloadView.VolumeMultiplier);
     bSpatialized = PayloadView.bSpatialized;
-
-    ActiveHandle = GEngine->GetAudioSystem().PlaySoundCue(
-        PayloadView.SoundCue,
-        true,
-        bSpatialized,
-        ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
-        Volume);
+    ActiveHandle = BeginLoopingSfxPlayback(MeshComponent, PayloadView);
 }
 
 void UAnimNotifyState_PlayLoopingSFX::NotifyTick(
@@ -659,7 +881,7 @@ void UAnimNotifyState_PlayLoopingSFX::NotifyTick(
 
     const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
     const FPlaySfxPayloadView PayloadView = BuildPlaySfxPayloadView(Payload);
-    GEngine->GetAudioSystem().SetSoundPosition(ActiveHandle, ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName));
+    UpdateLoopingSfxPlaybackPosition(ActiveHandle, MeshComponent, PayloadView);
 }
 
 void UAnimNotifyState_PlayLoopingSFX::NotifyEnd(
@@ -697,41 +919,13 @@ void UAnimNotifyState_AttackWindow::NotifyBegin(
     (void)Animation;
     Cleanup();
 
-    CachedOwnerActor = ResolveOwnerActor(MeshComponent);
-    if (!CachedOwnerActor)
-    {
-        UE_LOG_WARNING("[AnimNotifyBuiltins] AttackWindow notify missing owner actor | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
-        return;
-    }
-
-    const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-    const FString ComponentName = Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ComponentNameKey()));
-    if (ComponentName.empty())
-    {
-        UE_LOG_WARNING("[AnimNotifyBuiltins] AttackWindow notify missing ComponentName payload | Notify=%s", GetNotifyLabel(NotifyEvent).c_str());
-        CachedOwnerActor = nullptr;
-        return;
-    }
-
-    CachedPrimitiveComponent = FindPrimitiveComponentByName(CachedOwnerActor, ComponentName);
-    if (!CachedPrimitiveComponent)
-    {
-        UE_LOG_WARNING(
-            "[AnimNotifyBuiltins] AttackWindow target component not found or not primitive | Notify=%s | Component=%s",
-            GetNotifyLabel(NotifyEvent).c_str(),
-            ComponentName.c_str());
-        CachedOwnerActor = nullptr;
-        return;
-    }
-
-    bWindowAcquired = AcquireAttackWindow(CachedPrimitiveComponent);
-
-    ActiveAttackTag = BuildAttackIdTag(Payload.GetStringAny(AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::AttackIdKey())));
-    if (!ActiveAttackTag.empty())
-    {
-        ActiveAttackTagStateKey = AcquireAttackTagStateKey(CachedOwnerActor, ActiveAttackTag);
-        bAttackTagAcquired = !ActiveAttackTagStateKey.empty();
-    }
+    const FAttackWindowAcquireResult AcquireResult = BeginAttackWindowNotify(MeshComponent, NotifyEvent);
+    CachedOwnerActor = AcquireResult.OwnerActor;
+    CachedPrimitiveComponent = AcquireResult.PrimitiveComponent;
+    ActiveAttackTag = AcquireResult.AttackTag;
+    ActiveAttackTagStateKey = AcquireResult.AttackTagStateKey;
+    bWindowAcquired = AcquireResult.bWindowAcquired;
+    bAttackTagAcquired = AcquireResult.bAttackTagAcquired;
 }
 
 void UAnimNotifyState_AttackWindow::NotifyEnd(
