@@ -432,7 +432,8 @@ void FAnimationSequenceEditorWidget::RenderPreviewSkeletonTree(float Height)
     {
         ImGui::Separator();
         ImGui::TextDisabled("Selected Bone");
-        ImGui::Text("%s", Bones[PreviewSkeletonTreeSelectedBoneIndex].Name.c_str());
+        const FString SelectedBoneName = Bones[PreviewSkeletonTreeSelectedBoneIndex].Name.ToString();
+        ImGui::Text("%s", SelectedBoneName.c_str());
     }
 
     ImGui::EndChild();
@@ -578,7 +579,9 @@ void FAnimationSequenceEditorWidget::DrawPreviewSkeletonBoneNode(
         Flags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    const bool bOpen = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(BoneIndex)), Flags, "%s", Bone.Name.c_str());
+    const FString BoneName = Bone.Name.ToString();
+    const bool bOpen =
+        ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(BoneIndex)), Flags, "%s", BoneName.c_str());
     if (ImGui::IsItemClicked())
     {
         PreviewSkeletonTreeSelectedBoneIndex = BoneIndex;
