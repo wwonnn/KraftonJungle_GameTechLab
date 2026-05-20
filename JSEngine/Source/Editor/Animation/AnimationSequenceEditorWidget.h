@@ -74,6 +74,8 @@ private:
     void RenderTimelineRangeControls(float StripHeight);
     void RenderPlaybackSpeedPopup();
     void RenderSelectionDetailsPane(float Height);
+    void RenderNotifyLowerPanel(float Height);
+    void RenderNotifyLowerPanelSplit();
     void EnsurePlaybackControlIconsLoaded();
     bool DrawPlaybackControlButton(
         const char* ButtonId,
@@ -84,9 +86,31 @@ private:
         bool bSelected = false) const;
     void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight);
     void RenderNotifyDetailsPanel();
+    void RenderSelectedNotifyEditorPanel();
+    void RenderSelectedNotifyToolbar(bool bHasSelection, int32 DefaultTrackIndex);
+    void RenderSelectedNotifyBasicSection(
+        const FAnimNotifyEvent& NotifySnapshot,
+        const FAnimNotifyValidationReport& SelectedValidationReport);
+    void RenderSelectedNotifyTimingSection(
+        const FAnimNotifyEvent& NotifySnapshot,
+        const FAnimNotifyValidationReport& SelectedValidationReport);
+    void RenderSelectedNotifyPayloadSection(
+        const FString& CurrentNotifyClassName,
+        const FAnimNotifyValidationReport& SelectedValidationReport);
+    void RenderSelectedNotifyVisualSection(const FAnimNotifyEvent& NotifySnapshot);
+    void RenderSelectedNotifyInlineValidationSection(const FAnimNotifyValidationReport& SelectedValidationReport) const;
+    void RenderSelectedNotifyMetaFooter(const FAnimNotifyEvent& NotifySnapshot) const;
     void RenderNotifyValidationBrowser();
+    void RenderNotifyDebugPanel();
+    void RenderNotifyDebugTabs();
+    void RenderNotifyValidationTab();
+    void RenderNotifyValidationSummaryBlock(const FAnimNotifyValidationReport& Report) const;
+    void RenderNotifyValidationFilters();
+    void RenderNotifyValidationMessageList(const FAnimNotifyValidationReport& Report);
     void RenderCurveInspectionPanel();
     void RenderRecentNotifySummary() const;
+    void RenderRecentFiredNotifyTab() const;
+    void RenderNotifyEventLogTab() const;
     void RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const;
     void RenderNotifyValidationIssues(
         const FAnimNotifyValidationReport& Report,

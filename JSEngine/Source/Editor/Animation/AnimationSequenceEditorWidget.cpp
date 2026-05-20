@@ -49,6 +49,32 @@ namespace
     constexpr float SequencerHeaderPadding = 8.0f;
     constexpr float PlaybackIconButtonSize = 14.0f;
     constexpr float PlaybackControlSpacing = 2.0f;
+    constexpr float NotifyPanelSectionSpacing = 10.0f;
+    constexpr float NotifyPanelSectionIndent = 6.0f;
+    constexpr float NotifyPanelToolbarSpacing = 6.0f;
+    constexpr float NotifyPanelFieldMinWidth = 220.0f;
+    constexpr float NotifyPanelFieldMaxWidth = 440.0f;
+
+    float GetNotifyPanelFieldWidth()
+    {
+        return std::clamp(
+            ImGui::GetContentRegionAvail().x * 0.72f,
+            NotifyPanelFieldMinWidth,
+            NotifyPanelFieldMaxWidth);
+    }
+
+    void SetNotifyPanelFieldWidth()
+    {
+        ImGui::SetNextItemWidth(GetNotifyPanelFieldWidth());
+    }
+
+    void DrawNotifyPanelSectionHeader(const char* Label)
+    {
+        ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.35f));
+        ImGui::TextDisabled("%s", Label);
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.25f));
+    }
 
     struct FTransportStripVerticalCenter
     {
@@ -2086,7 +2112,18 @@ void FAnimationSequenceEditorWidget::RenderPlaybackSpeedPopup()
 
 void FAnimationSequenceEditorWidget::RenderSelectionDetailsPane(float Height)
 {
+    RenderNotifyLowerPanel(Height);
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyLowerPanel(float Height)
+{
     ImGui::BeginChild("##AnimationSequenceSelectionDetails", ImVec2(0.0f, Height), true);
+    RenderNotifyLowerPanelSplit();
+    ImGui::EndChild();
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyLowerPanelSplit()
+{
     if (ImGui::BeginTable("##AnimationSequenceSelectionDetailsTable", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
     {
         ImGui::TableSetupColumn("Selection", ImGuiTableColumnFlags_WidthStretch, 0.55f);
@@ -2094,15 +2131,21 @@ void FAnimationSequenceEditorWidget::RenderSelectionDetailsPane(float Height)
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        RenderNotifyDetailsPanel();
-        RenderNotifyValidationBrowser();
-        RenderCurveInspectionPanel();
+        if (ImGui::BeginChild("##AnimationSequenceSelectionColumn", ImVec2(0.0f, 0.0f), false))
+        {
+            RenderSelectedNotifyEditorPanel();
+            RenderCurveInspectionPanel();
+        }
+        ImGui::EndChild();
 
         ImGui::TableSetColumnIndex(1);
-        RenderRecentNotifySummary();
+        if (ImGui::BeginChild("##AnimationSequenceNotifyDebugColumn", ImVec2(0.0f, 0.0f), false))
+        {
+            RenderNotifyDebugPanel();
+        }
+        ImGui::EndChild();
         ImGui::EndTable();
     }
-    ImGui::EndChild();
 }
 
 void FAnimationSequenceEditorWidget::RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight)
@@ -2446,6 +2489,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
             {
                 const FString CurrentValue = TargetBuffer->data();
                 const char* PreviewValue = CurrentValue.empty() ? "(None)" : CurrentValue.c_str();
+                SetNotifyPanelFieldWidth();
                 if (ImGui::BeginCombo(Field.Label.c_str(), PreviewValue))
                 {
                     const bool bIsNoneSelected = CurrentValue.empty();
@@ -2481,6 +2525,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
             }
             else
             {
+                SetNotifyPanelFieldWidth();
                 if (ImGui::InputText(Field.Label.c_str(), TargetBuffer->data(), TargetBuffer->size()))
                 {
                     const FString Value = TargetBuffer->data();
@@ -2501,6 +2546,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         case EAnimNotifyPayloadFieldType::Float:
         {
             float FieldValue = GetSchemaFloatValue(Payload, Field);
+            SetNotifyPanelFieldWidth();
             if (ImGui::DragFloat(Field.Label.c_str(), &FieldValue, 0.01f, 0.0f, 100.0f, "%.3f"))
             {
                 if (Document->SetSelectedNotifyPayloadFloatValue(Field.Key, FieldValue))
@@ -2514,6 +2560,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         case EAnimNotifyPayloadFieldType::Int:
         {
             int32 FieldValue = GetSchemaIntValue(Payload, Field);
+            SetNotifyPanelFieldWidth();
             if (ImGui::InputInt(Field.Label.c_str(), &FieldValue))
             {
                 FAnimNotifyPayloadParser UpdatedPayload = Document->GetSelectedNotifyPayloadParser();
@@ -2546,7 +2593,9 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
 
         if (!Field.HelpText.empty())
         {
+            ImGui::Indent(NotifyPanelSectionIndent);
             ImGui::TextDisabled("%s", Field.HelpText.c_str());
+            ImGui::Unindent(NotifyPanelSectionIndent);
         }
     }
 
@@ -2575,6 +2624,7 @@ void FAnimationSequenceEditorWidget::RenderRawNotifyPayloadEditor(
         return;
     }
 
+    SetNotifyPanelFieldWidth();
     if (ImGui::InputText("Payload", NotifyPayloadEditBuffer.data(), NotifyPayloadEditBuffer.size()))
     {
         Document->SetSelectedNotifyPayload(NotifyPayloadEditBuffer.data());
@@ -2595,7 +2645,13 @@ void FAnimationSequenceEditorWidget::RenderRawNotifyPayloadEditor(
 
 void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
 {
+    RenderSelectedNotifyEditorPanel();
+}
+
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyEditorPanel()
+{
     ImGui::TextDisabled("Selected Notify");
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.5f));
 
     if (!Document || !EditorState)
     {
@@ -2604,34 +2660,9 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     }
 
     const int32 DefaultTrackIndex = std::max(EditorState->SelectedNotifyTrackIndex, 0);
-    if (ImGui::Button("Add Notify"))
-    {
-        Document->AddNotifyAtTime(DefaultTrackIndex, EditorState->CurrentTime);
-    }
-
     const bool bHasSelection = Document->GetSelectedNotify() != nullptr;
-    ImGui::SameLine();
-    if (!bHasSelection) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Duplicate")) { Document->DuplicateSelectedNotify(); }
-    if (!bHasSelection) { ImGui::EndDisabled(); }
-
-    ImGui::SameLine();
-    if (!bHasSelection) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Copy")) { Document->CopySelectedNotify(); }
-    if (!bHasSelection) { ImGui::EndDisabled(); }
-
-    ImGui::SameLine();
-    if (!Document->CanPasteNotify()) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Paste"))
-    {
-        Document->PasteNotifyToTrackAtTime(DefaultTrackIndex, EditorState->CurrentTime);
-    }
-    if (!Document->CanPasteNotify()) { ImGui::EndDisabled(); }
-
-    ImGui::SameLine();
-    if (!bHasSelection) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Delete Selected")) { Document->DeleteSelectedNotify(); }
-    if (!bHasSelection) { ImGui::EndDisabled(); }
+    RenderSelectedNotifyToolbar(bHasSelection, DefaultTrackIndex);
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.5f));
 
     const FAnimNotifyEvent* SelectedNotify = Document->GetSelectedNotify();
     if (!SelectedNotify)
@@ -2647,10 +2678,61 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     const FAnimNotifyEvent NotifySnapshot = *SelectedNotify;
     SyncNotifyDetailsBuffers(NotifySnapshot);
     const FAnimNotifyValidationReport SelectedValidationReport = Document->BuildSelectedNotifyValidationReport();
-    RenderNotifyValidationSummary(SelectedValidationReport);
-    ImGui::Checkbox("Show Validation Details", &EditorState->bShowNotifyValidationDetails);
-    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::General);
+    RenderSelectedNotifyBasicSection(NotifySnapshot, SelectedValidationReport);
 
+    const FAnimNotifyEvent* CurrentNotify = Document->GetSelectedNotify();
+    const FString CurrentNotifyClassName =
+        CurrentNotify ? CurrentNotify->GetResolvedNotifyClassName() : NotifySnapshot.GetResolvedNotifyClassName();
+
+    RenderSelectedNotifyTimingSection(NotifySnapshot, SelectedValidationReport);
+    RenderSelectedNotifyPayloadSection(CurrentNotifyClassName, SelectedValidationReport);
+    RenderSelectedNotifyVisualSection(NotifySnapshot);
+    RenderSelectedNotifyInlineValidationSection(SelectedValidationReport);
+    RenderSelectedNotifyMetaFooter(NotifySnapshot);
+}
+
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyToolbar(bool bHasSelection, int32 DefaultTrackIndex)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(NotifyPanelToolbarSpacing, NotifyPanelToolbarSpacing));
+
+    if (ImGui::Button("Add Notify"))
+    {
+        Document->AddNotifyAtTime(DefaultTrackIndex, EditorState->CurrentTime);
+    }
+
+    ImGui::SameLine(0.0f, NotifyPanelToolbarSpacing);
+    if (!bHasSelection) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Duplicate")) { Document->DuplicateSelectedNotify(); }
+    if (!bHasSelection) { ImGui::EndDisabled(); }
+
+    ImGui::SameLine(0.0f, NotifyPanelToolbarSpacing);
+    if (!bHasSelection) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Copy")) { Document->CopySelectedNotify(); }
+    if (!bHasSelection) { ImGui::EndDisabled(); }
+
+    ImGui::SameLine(0.0f, NotifyPanelToolbarSpacing);
+    if (!Document->CanPasteNotify()) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Paste"))
+    {
+        Document->PasteNotifyToTrackAtTime(DefaultTrackIndex, EditorState->CurrentTime);
+    }
+    if (!Document->CanPasteNotify()) { ImGui::EndDisabled(); }
+
+    ImGui::SameLine(0.0f, NotifyPanelToolbarSpacing);
+    if (!bHasSelection) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Delete Selected")) { Document->DeleteSelectedNotify(); }
+    if (!bHasSelection) { ImGui::EndDisabled(); }
+
+    ImGui::PopStyleVar();
+}
+
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyBasicSection(
+    const FAnimNotifyEvent& NotifySnapshot,
+    const FAnimNotifyValidationReport& SelectedValidationReport)
+{
+    DrawNotifyPanelSectionHeader("Basic");
+
+    SetNotifyPanelFieldWidth();
     if (ImGui::InputText("Name", NotifyNameEditBuffer.data(), NotifyNameEditBuffer.size()))
     {
         Document->SetSelectedNotifyName(FName(NotifyNameEditBuffer.data()));
@@ -2659,6 +2741,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
 
     const char* NotifyTypeLabels[] = { "Notify", "Notify State" };
     int32 NotifyTypeIndex = NotifySnapshot.EventType == EAnimNotifyEventType::NotifyState ? 1 : 0;
+    SetNotifyPanelFieldWidth();
     if (ImGui::Combo("Type", &NotifyTypeIndex, NotifyTypeLabels, 2))
     {
         Document->SetSelectedNotifyType(
@@ -2679,6 +2762,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
             ? FString("<None>")
             : (bHasRegisteredNotifyClass ? CurrentNotifyClassName : CurrentNotifyClassName + " (missing)");
 
+    SetNotifyPanelFieldWidth();
     if (ImGui::BeginCombo("Notify Class", NotifyClassPreviewLabel.c_str()))
     {
         for (const FString& NotifyClassOption : NotifyClassOptions)
@@ -2705,11 +2789,44 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
 
     if (!NotifyClassOptions.empty())
     {
-        ImGui::TextDisabled(
-            "Test classes: %s / %s",
-            "UAnimNotifyLog",
-            "UAnimNotifyStateLog");
+        ImGui::Indent(NotifyPanelSectionIndent);
+        ImGui::TextDisabled("Test classes: %s / %s", "UAnimNotifyLog", "UAnimNotifyStateLog");
+        ImGui::Unindent(NotifyPanelSectionIndent);
     }
+}
+
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyTimingSection(
+    const FAnimNotifyEvent& NotifySnapshot,
+    const FAnimNotifyValidationReport& SelectedValidationReport)
+{
+    DrawNotifyPanelSectionHeader("Timing");
+
+    ImGui::Indent(NotifyPanelSectionIndent);
+    ImGui::LabelText("Track", "%d", EditorState->SelectedNotifyTrackIndex + 1);
+    ImGui::Unindent(NotifyPanelSectionIndent);
+
+    float NotifyTime = NotifySnapshot.Time;
+    const float MaxTime = std::max(EditorState->SequenceLength, 0.0f);
+    SetNotifyPanelFieldWidth();
+    if (ImGui::DragFloat("Time", &NotifyTime, 0.001f, 0.0f, MaxTime, "%.3f s"))
+    {
+        Document->SetSelectedNotifyTime(NotifyTime, EditorState->bSnapToFrames);
+    }
+
+    float NotifyDuration = NotifySnapshot.Duration;
+    SetNotifyPanelFieldWidth();
+    if (ImGui::DragFloat("Duration", &NotifyDuration, 0.001f, 0.0f, MaxTime, "%.3f s"))
+    {
+        Document->SetSelectedNotifyDuration(NotifyDuration);
+    }
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::Duration);
+}
+
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyPayloadSection(
+    const FString& CurrentNotifyClassName,
+    const FAnimNotifyValidationReport& SelectedValidationReport)
+{
+    DrawNotifyPanelSectionHeader("Payload");
 
     if (HasAnimNotifyPayloadSchema(CurrentNotifyClassName))
     {
@@ -2719,20 +2836,11 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
     {
         RenderRawNotifyPayloadEditor(CurrentNotifyClassName, SelectedValidationReport, true);
     }
+}
 
-    float NotifyTime = NotifySnapshot.Time;
-    const float MaxTime = std::max(EditorState->SequenceLength, 0.0f);
-    if (ImGui::DragFloat("Time", &NotifyTime, 0.001f, 0.0f, MaxTime, "%.3f s"))
-    {
-        Document->SetSelectedNotifyTime(NotifyTime, EditorState->bSnapToFrames);
-    }
-
-    float NotifyDuration = NotifySnapshot.Duration;
-    if (ImGui::DragFloat("Duration", &NotifyDuration, 0.001f, 0.0f, MaxTime, "%.3f s"))
-    {
-        Document->SetSelectedNotifyDuration(NotifyDuration);
-    }
-    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::Duration);
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyVisualSection(const FAnimNotifyEvent& NotifySnapshot)
+{
+    DrawNotifyPanelSectionHeader("Visual");
 
     float Color[4] =
     {
@@ -2741,6 +2849,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
         NotifySnapshot.Color.B,
         NotifySnapshot.Color.A
     };
+    SetNotifyPanelFieldWidth();
     if (ImGui::ColorEdit4("Color", Color))
     {
         Document->SetSelectedNotifyColor(FColor(
@@ -2749,7 +2858,22 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
             std::clamp(Color[2], 0.0f, 1.0f),
             std::clamp(Color[3], 0.0f, 1.0f)));
     }
+}
 
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyInlineValidationSection(
+    const FAnimNotifyValidationReport& SelectedValidationReport) const
+{
+    DrawNotifyPanelSectionHeader("Validation");
+    RenderNotifyValidationSummary(SelectedValidationReport);
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.25f));
+    ImGui::Checkbox("Show Validation Details", &EditorState->bShowNotifyValidationDetails);
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.25f));
+    RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::General);
+}
+
+void FAnimationSequenceEditorWidget::RenderSelectedNotifyMetaFooter(const FAnimNotifyEvent& NotifySnapshot) const
+{
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.6f));
     ImGui::TextDisabled(
         "Track %d  StableId %s",
         EditorState->SelectedNotifyTrackIndex + 1,
@@ -2758,9 +2882,46 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
 
 void FAnimationSequenceEditorWidget::RenderNotifyValidationBrowser()
 {
-    ImGui::Spacing();
-    ImGui::TextDisabled("Notify Validation");
+    RenderNotifyValidationTab();
+}
 
+void FAnimationSequenceEditorWidget::RenderNotifyDebugPanel()
+{
+    ImGui::TextDisabled("Notify Debug");
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.5f));
+    RenderNotifyDebugTabs();
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyDebugTabs()
+{
+    if (!ImGui::BeginTabBar("##NotifyDebugTabs"))
+    {
+        return;
+    }
+
+    if (ImGui::BeginTabItem("Validation"))
+    {
+        RenderNotifyValidationBrowser();
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Recent Fired"))
+    {
+        RenderRecentNotifySummary();
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Event Log"))
+    {
+        RenderNotifyEventLogTab();
+        ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyValidationTab()
+{
     if (!Document)
     {
         ImGui::TextDisabled("Validation browser is unavailable.");
@@ -2768,27 +2929,21 @@ void FAnimationSequenceEditorWidget::RenderNotifyValidationBrowser()
     }
 
     const FAnimNotifyValidationReport Report = Document->BuildDocumentNotifyValidationReport();
-    ImGui::TextDisabled(
-        "%d errors, %d warnings, %d info",
-        Report.ErrorCount,
-        Report.WarningCount,
-        Report.InfoCount);
+    RenderNotifyValidationSummaryBlock(Report);
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.4f));
+    RenderNotifyValidationFilters();
+    ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.5f));
+    RenderNotifyValidationMessageList(Report);
+}
 
-    auto MatchesSeverityFilter = [this](EAnimNotifyValidationSeverity Severity)
-    {
-        switch (ActiveNotifyValidationSeverityFilter)
-        {
-        case ENotifyValidationBrowserSeverityFilter::Errors:
-            return Severity == EAnimNotifyValidationSeverity::Error;
-        case ENotifyValidationBrowserSeverityFilter::Warnings:
-            return Severity == EAnimNotifyValidationSeverity::Warning;
-        case ENotifyValidationBrowserSeverityFilter::Info:
-            return Severity == EAnimNotifyValidationSeverity::Info;
-        case ENotifyValidationBrowserSeverityFilter::All:
-        default:
-            return true;
-        }
-    };
+void FAnimationSequenceEditorWidget::RenderNotifyValidationSummaryBlock(const FAnimNotifyValidationReport& Report) const
+{
+    ImGui::TextDisabled("%d errors, %d warnings, %d info", Report.ErrorCount, Report.WarningCount, Report.InfoCount);
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyValidationFilters()
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(NotifyPanelToolbarSpacing, NotifyPanelToolbarSpacing));
 
     auto DrawSeverityFilterButton = [this](const char* Label, ENotifyValidationBrowserSeverityFilter Filter)
     {
@@ -2817,6 +2972,27 @@ void FAnimationSequenceEditorWidget::RenderNotifyValidationBrowser()
     DrawSeverityFilterButton("Warnings", ENotifyValidationBrowserSeverityFilter::Warnings);
     ImGui::SameLine();
     DrawSeverityFilterButton("Info", ENotifyValidationBrowserSeverityFilter::Info);
+
+    ImGui::PopStyleVar();
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyValidationMessageList(const FAnimNotifyValidationReport& Report)
+{
+    auto MatchesSeverityFilter = [this](EAnimNotifyValidationSeverity Severity)
+    {
+        switch (ActiveNotifyValidationSeverityFilter)
+        {
+        case ENotifyValidationBrowserSeverityFilter::Errors:
+            return Severity == EAnimNotifyValidationSeverity::Error;
+        case ENotifyValidationBrowserSeverityFilter::Warnings:
+            return Severity == EAnimNotifyValidationSeverity::Warning;
+        case ENotifyValidationBrowserSeverityFilter::Info:
+            return Severity == EAnimNotifyValidationSeverity::Info;
+        case ENotifyValidationBrowserSeverityFilter::All:
+        default:
+            return true;
+        }
+    };
 
     TArray<const FAnimNotifyValidationIssue*> FilteredIssues;
     FilteredIssues.reserve(Report.Issues.size());
@@ -2853,15 +3029,15 @@ void FAnimationSequenceEditorWidget::RenderNotifyValidationBrowser()
         return;
     }
 
-    const float BrowserHeight = std::min(
-        240.0f,
-        std::max(
-            120.0f,
-            ImGui::GetContentRegionAvail().y - ImGui::GetTextLineHeightWithSpacing() * 2.0f));
-    if (ImGui::BeginChild("##NotifyValidationBrowser", ImVec2(0.0f, BrowserHeight), true))
+    if (ImGui::BeginChild("##NotifyValidationBrowser", ImVec2(0.0f, 0.0f), true))
     {
         for (int32 IssueIndex = 0; IssueIndex < static_cast<int32>(FilteredIssues.size()); ++IssueIndex)
         {
+            if (IssueIndex > 0)
+            {
+                ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.4f));
+            }
+
             const FAnimNotifyValidationIssue& Issue = *FilteredIssues[IssueIndex];
             FString TrackLabel = Issue.TrackIndex >= 0
                 ? ("Track " + std::to_string(Issue.TrackIndex + 1))
@@ -3044,8 +3220,11 @@ void FAnimationSequenceEditorWidget::RenderCurveInspectionPanel()
 
 void FAnimationSequenceEditorWidget::RenderRecentNotifySummary() const
 {
-    ImGui::TextDisabled("Recent Fired Notifies");
+    RenderRecentFiredNotifyTab();
+}
 
+void FAnimationSequenceEditorWidget::RenderRecentFiredNotifyTab() const
+{
     if (!PreviewController)
     {
         ImGui::TextDisabled("Preview controller is unavailable.");
@@ -3055,37 +3234,63 @@ void FAnimationSequenceEditorWidget::RenderRecentNotifySummary() const
     const TArray<FAnimNotifyEvent>& RecentNotifies = PreviewController->GetRecentFiredNotifyEvents();
     if (RecentNotifies.empty())
     {
-        ImGui::TextDisabled("No notify fired during the latest preview update.");
+        if (ImGui::BeginChild("##RecentFiredNotifyTabEmpty", ImVec2(0.0f, 0.0f), true))
+        {
+            ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing));
+            ImGui::TextDisabled("No notify fired during the latest preview update.");
+            ImGui::TextDisabled("Preview playback activity will appear here.");
+        }
+        ImGui::EndChild();
         return;
     }
 
-    constexpr int32 MaxVisibleEntries = 6;
-    const int32 VisibleCount = std::min(static_cast<int32>(RecentNotifies.size()), MaxVisibleEntries);
-    for (int32 Offset = 0; Offset < VisibleCount; ++Offset)
+    if (ImGui::BeginChild("##RecentFiredNotifyTab", ImVec2(0.0f, 0.0f), true))
     {
-        const int32 RecentIndex = static_cast<int32>(RecentNotifies.size()) - 1 - Offset;
-        const FAnimNotifyEvent& NotifyEvent = RecentNotifies[RecentIndex];
-        const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString("(Unnamed)");
-        const FString PhaseText = NotifyEvent.TriggerPhase == EAnimNotifyTriggerPhase::None
-            ? AnimNotifyEventTypeToString(NotifyEvent.EventType)
-            : AnimNotifyTriggerPhaseToString(NotifyEvent.TriggerPhase);
-        const FString NotifyClassName = NotifyEvent.GetResolvedNotifyClassName();
-        const FString TrackLabel = MakeRecentNotifyTrackLabel(NotifyEvent);
-        const FString SourceLabel = MakeRecentNotifySourceLabel(NotifyEvent);
-
-        ImGui::BulletText("%s [%s] @ %.3fs", NotifyName.c_str(), PhaseText.c_str(), NotifyEvent.Time);
-        ImGui::Indent();
-        ImGui::TextDisabled(
-            "Class: %s | Track: %s | Source: %s",
-            NotifyClassName.c_str(),
-            TrackLabel.c_str(),
-            SourceLabel.c_str());
-        if (!NotifyEvent.Payload.empty())
+        constexpr int32 MaxVisibleEntries = 6;
+        const int32 VisibleCount = std::min(static_cast<int32>(RecentNotifies.size()), MaxVisibleEntries);
+        for (int32 Offset = 0; Offset < VisibleCount; ++Offset)
         {
-            ImGui::PushTextWrapPos(0.0f);
-            ImGui::TextDisabled("Payload: %s", NotifyEvent.Payload.c_str());
-            ImGui::PopTextWrapPos();
+            if (Offset > 0)
+            {
+                ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing * 0.5f));
+            }
+
+            const int32 RecentIndex = static_cast<int32>(RecentNotifies.size()) - 1 - Offset;
+            const FAnimNotifyEvent& NotifyEvent = RecentNotifies[RecentIndex];
+            const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString("(Unnamed)");
+            const FString PhaseText = NotifyEvent.TriggerPhase == EAnimNotifyTriggerPhase::None
+                ? AnimNotifyEventTypeToString(NotifyEvent.EventType)
+                : AnimNotifyTriggerPhaseToString(NotifyEvent.TriggerPhase);
+            const FString NotifyClassName = NotifyEvent.GetResolvedNotifyClassName();
+            const FString TrackLabel = MakeRecentNotifyTrackLabel(NotifyEvent);
+            const FString SourceLabel = MakeRecentNotifySourceLabel(NotifyEvent);
+
+            ImGui::BulletText("%s [%s] @ %.3fs", NotifyName.c_str(), PhaseText.c_str(), NotifyEvent.Time);
+            ImGui::Indent();
+            ImGui::TextDisabled(
+                "Class: %s | Track: %s | Source: %s",
+                NotifyClassName.c_str(),
+                TrackLabel.c_str(),
+                SourceLabel.c_str());
+            if (!NotifyEvent.Payload.empty())
+            {
+                ImGui::PushTextWrapPos(0.0f);
+                ImGui::TextDisabled("Payload: %s", NotifyEvent.Payload.c_str());
+                ImGui::PopTextWrapPos();
+            }
+            ImGui::Unindent();
         }
-        ImGui::Unindent();
     }
+    ImGui::EndChild();
+}
+
+void FAnimationSequenceEditorWidget::RenderNotifyEventLogTab() const
+{
+    if (ImGui::BeginChild("##NotifyEventLogPlaceholder", ImVec2(0.0f, 0.0f), true))
+    {
+        ImGui::Dummy(ImVec2(0.0f, NotifyPanelSectionSpacing));
+        ImGui::TextDisabled("Notify event log is reserved for future debug output.");
+        ImGui::TextDisabled("Use Validation and Recent Fired for the current notify debug flow.");
+    }
+    ImGui::EndChild();
 }
