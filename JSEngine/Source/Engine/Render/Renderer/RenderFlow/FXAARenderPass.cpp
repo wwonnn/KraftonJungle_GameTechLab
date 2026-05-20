@@ -40,6 +40,8 @@ bool FFXAARenderPass::Begin(const FRenderPassContext* Context)
     Context->DeviceContext->OMSetRenderTargets(ARRAYSIZE(RTVs), RTVs, DSV);
     OutSRV = RenderTargets->SceneColorSRV;
     OutRTV = RenderTargets->SceneColorRTV;
+    ID3D11SamplerState* Sampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Linear);
+    Context->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
     Context->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

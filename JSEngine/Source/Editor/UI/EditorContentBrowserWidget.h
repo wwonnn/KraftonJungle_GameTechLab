@@ -23,6 +23,15 @@ public:
 
 	void Initialize(UEditorEngine* InEditorEngine) override;
 	void Render(float DeltaTime) override;
+	void Shutdown()
+	{
+		MaterialPreviewCache.clear();
+		MaterialPreviewMesh = nullptr;
+		ActiveDragPayloadType.clear();
+		ActiveDragPayloadPath.clear();
+		CachedSequenceMetadataPath.clear();
+		bCachedSequenceMetadataValid = false;
+	}
 	void Refresh();
 	void SetVisible(bool bInVisible) { bVisible = bInVisible; }
 	bool IsVisible() const { return bVisible; }

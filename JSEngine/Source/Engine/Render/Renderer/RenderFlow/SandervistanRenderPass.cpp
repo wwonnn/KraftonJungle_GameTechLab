@@ -35,6 +35,8 @@ bool FSandevistanRenderPass::Begin(const FRenderPassContext* Context)
     // ?? 안전: ping-pong 필요 (임시 RT)
     ID3D11RenderTargetView* RTVs[1] = { RT->SceneSandervistanRTV };
     Context->DeviceContext->OMSetRenderTargets(1, RTVs, nullptr);
+    ID3D11SamplerState* Sampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Linear);
+    Context->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
     OutRTV = RT->SceneSandervistanRTV;
     OutSRV = RT->SceneSandervistanSRV;

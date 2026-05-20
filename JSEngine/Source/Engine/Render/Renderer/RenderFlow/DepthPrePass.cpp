@@ -124,6 +124,7 @@ bool FDepthPrePass::DrawCommand(const FRenderPassContext* Context)
 		}
 
 		Program->Bind(Context->DeviceContext);
+        Context->DeviceContext->PSSetShader(nullptr, nullptr, 0);
         IVertexFactory* VertexFactory = FVertexFactoryRegistry::GetVertexFactory(Cmd.VertexFactoryType);
         VertexFactory->Bind(Cmd, Context->DeviceContext, Context->RenderResources);
         CheckOverrideViewMode(Context);  

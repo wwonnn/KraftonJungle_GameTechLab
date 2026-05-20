@@ -518,6 +518,16 @@ void FResourceManager::ReleaseGPUResources()
 	SkeletalMeshMap.clear();
 	SkeletalMeshMap.rehash(0);
 
+	for (auto& [Path, Asset] : AnimInstanceAssetMap)
+	{
+		if (Asset)
+		{
+			UObjectManager::Get().DestroyObject(Asset);
+		}
+	}
+	AnimInstanceAssetMap.clear();
+	AnimInstanceAssetMap.rehash(0);
+
 	DefaultWhiteTexture.Reset();
 	CachedDevice.Reset();
 }
@@ -534,6 +544,7 @@ void FResourceManager::Shutdown()
 	ClearAndShrinkArray(SkeletalMeshFilePaths);
 	ClearAndShrinkArray(CurveFilePaths);
 	ClearAndShrinkArray(AnimSequenceFilePaths);
+	ClearAndShrinkArray(AnimInstanceAssetFilePaths);
 }
 
 FVertexShader* FResourceManager::GetOrCreateVertexShader(

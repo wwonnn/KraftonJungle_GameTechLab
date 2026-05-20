@@ -1,4 +1,6 @@
-﻿#include "RenderTargetBuilder.h"
+#include "RenderTargetBuilder.h"
+
+#include "Render/Common/D3D11DebugUtils.h"
 
 FRenderTargetBuilder& FRenderTargetBuilder::SetSize(uint32 InWidth, uint32 InHeight)
 {
@@ -46,14 +48,17 @@ FRenderTarget FRenderTargetBuilder::Build(ID3D11Device* Device)
         Desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
 
     Device->CreateTexture2D(&Desc, nullptr, &RT.Texture);
+    D3D11Debug::SetDebugName(RT.Texture.Get(), "FRenderTarget.Texture");
 
     /** Desc 를 nullptr 로 두면 Texture 설정을 참고하여 자동으로 세팅함 */
     /** 현재는 문제 없는데, 특정 상황에선 직접 세팅해줘야 할 수 있음  */
     if (bCreateRTV)
         Device->CreateRenderTargetView(RT.Texture.Get(), nullptr, &RT.RTV);
+    D3D11Debug::SetDebugName(RT.RTV.Get(), "FRenderTarget.RTV");
 
     if (bCreateSRV)
         Device->CreateShaderResourceView(RT.Texture.Get(), nullptr, &RT.SRV);
+    D3D11Debug::SetDebugName(RT.SRV.Get(), "FRenderTarget.SRV");
 
     RT.Width = Width;
     RT.Height = Height;

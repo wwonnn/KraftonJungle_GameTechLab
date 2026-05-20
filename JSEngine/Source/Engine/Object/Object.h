@@ -133,12 +133,18 @@ public:
 
 	void Shutdown()
 	{
+		// 정상 종료 경로에서 캐시/월드가 먼저 대부분 정리되지만,
+		// 에디터 preview/editor 문서가 남긴 orphan UObject가 있을 수 있다.
+		// 남은 객체를 역순으로 정리해 VLD 종료 누수를 막는다.
+		while (!GUObjectArray.empty())
+		{
+			UObject* Obj = GUObjectArray.back();
+			delete Obj;
+		}
+
 		NameCounters.clear();
 		NameCounters.rehash(0);
-		if (GUObjectArray.empty())
-		{
-			GUObjectArray.shrink_to_fit();
-		}
+		GUObjectArray.shrink_to_fit();
 	}
 
 private:

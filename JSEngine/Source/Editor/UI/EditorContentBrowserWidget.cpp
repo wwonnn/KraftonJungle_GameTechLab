@@ -15,6 +15,7 @@
 #include "Core/ResourceManager.h"
 #include "Object/Object.h"
 #include "Runtime/Script/ScriptManager.h"
+#include "Render/Common/D3D11DebugUtils.h"
 #include "Render/Resource/Material.h"
 #include "Render/Renderer/Renderer.h"
 #include "ImGui/imgui.h"
@@ -2001,6 +2002,7 @@ bool FEditorContentBrowserWidget::CapturePreviewSnapshot(ID3D11ShaderResourceVie
 	{
 		return false;
 	}
+	D3D11Debug::SetDebugName(OutSnapshot.Texture.Get(), "EditorContentBrowser.MaterialPreviewSnapshotTexture");
 
 	Context->CopyResource(OutSnapshot.Texture.Get(), SourceTexture.Get());
 	if (FAILED(Device->CreateShaderResourceView(OutSnapshot.Texture.Get(), nullptr, OutSnapshot.SRV.GetAddressOf())))
@@ -2008,6 +2010,7 @@ bool FEditorContentBrowserWidget::CapturePreviewSnapshot(ID3D11ShaderResourceVie
 		OutSnapshot.Texture.Reset();
 		return false;
 	}
+	D3D11Debug::SetDebugName(OutSnapshot.SRV.Get(), "EditorContentBrowser.MaterialPreviewSnapshotSRV");
 
 	OutSnapshot.Width = Width;
 	OutSnapshot.Height = Height;

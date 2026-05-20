@@ -60,6 +60,8 @@ bool FFogRenderPass::Begin(const FRenderPassContext* Context)
 
     ID3D11BlendState* BlendState = FResourceManager::Get().GetOrCreateBlendState(EBlendType::Opaque);
     Context->DeviceContext->OMSetBlendState(BlendState, nullptr, 0xFFFFFFFF);
+    ID3D11SamplerState* Sampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Linear);
+    Context->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
     ID3D11RenderTargetView* RTVs[3] = { Context->RenderTargets->SceneFogRTV, nullptr, nullptr };
     Context->DeviceContext->OMSetRenderTargets(3, RTVs, nullptr);

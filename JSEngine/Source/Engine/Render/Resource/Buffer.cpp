@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <d3d11.h>
+#include "Render/Common/D3D11DebugUtils.h"
 
 #pragma region __FMESHBUFFER__
 
@@ -89,6 +90,7 @@ void FVertexBuffer::Create(ID3D11Device* InDevice, const TArray<FVertex>& InData
 		Stride = InStride;
 		return;
 	}
+	D3D11Debug::SetDebugName(Buffer.Get(), "FVertexBuffer.Immutable");
 
 	VertexCount = static_cast<uint32>(InData.size());
 	VertexCapacity = VertexCount;
@@ -124,6 +126,7 @@ void FVertexBuffer::CreateRaw(ID3D11Device* InDevice, const void* InData, uint32
 		Stride = InStride;
 		return;
 	}
+	D3D11Debug::SetDebugName(Buffer.Get(), bDynamic ? "FVertexBuffer.Dynamic" : "FVertexBuffer.Raw");
 
 	VertexCount = bDynamic ? 0 : InVertexCount;
 	VertexCapacity = InVertexCount;
@@ -188,6 +191,7 @@ void FConstantBuffer::Create(ID3D11Device* InDevice, uint32 InByteWidth)
 	ConstantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 	InDevice->CreateBuffer(&ConstantBufferDesc, nullptr, Buffer.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(Buffer.Get(), "FConstantBuffer");
 }
 
 void FConstantBuffer::Release()
@@ -240,6 +244,7 @@ void FIndexBuffer::Create(ID3D11Device* InDevice, const TArray<uint32>& InData, 
 		IndexCount = 0;
 		return;
 	}
+	D3D11Debug::SetDebugName(Buffer.Get(), "FIndexBuffer");
 
 	IndexCount = static_cast<uint32>(InData.size());
 }
@@ -294,6 +299,7 @@ void FStructuredBuffer::Create(ID3D11Device* InDevice, uint32 InElementSize, uin
 	}
 
 	InDevice->CreateBuffer(&Desc, nullptr, Buffer.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(Buffer.Get(), bEnableUAV ? "FStructuredBuffer.UAVBuffer" : "FStructuredBuffer.SRVBuffer");
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC SrvDesc = {};
 	SrvDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -301,6 +307,7 @@ void FStructuredBuffer::Create(ID3D11Device* InDevice, uint32 InElementSize, uin
 	SrvDesc.Buffer.FirstElement = 0;
 	SrvDesc.Buffer.NumElements = InMaxElements;
 	InDevice->CreateShaderResourceView(Buffer.Get(), &SrvDesc, SRV.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(SRV.Get(), "FStructuredBuffer.SRV");
 
 	if (bEnableUAV)
 	{

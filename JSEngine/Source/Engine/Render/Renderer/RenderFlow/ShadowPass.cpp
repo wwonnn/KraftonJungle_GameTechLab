@@ -141,6 +141,7 @@ void FShadowPass::RenderShadowDepth(
 		}
 
 		Program->Bind(DeviceContext);        
+        DeviceContext->PSSetShader(nullptr, nullptr, 0);
         {
             std::unique_ptr<FGPUScopedTimer> SkeletalTimer;
             if (Cmd.VertexFactoryType == EVertexFactoryType::SkeletalMesh && Cmd.VertexFactoryData)

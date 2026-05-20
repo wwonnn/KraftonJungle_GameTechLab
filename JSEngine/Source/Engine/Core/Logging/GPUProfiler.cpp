@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <d3d11.h>
+#include "Render/Common/D3D11DebugUtils.h"
 
 void FGPUProfiler::Initialize(ID3D11Device* InDevice, ID3D11DeviceContext* InContext)
 {
@@ -23,6 +24,7 @@ void FGPUProfiler::Initialize(ID3D11Device* InDevice, ID3D11DeviceContext* InCon
 	for (uint32 f = 0; f < FRAME_COUNT; ++f)
 	{
 		Device->CreateQuery(&disjointDesc, Frames[f].DisjointQuery.ReleaseAndGetAddressOf());
+		D3D11Debug::SetDebugName(Frames[f].DisjointQuery.Get(), "FGPUProfiler.DisjointQuery");
 		Frames[f].UsedCount = 0;
 		Frames[f].bSubmitted = false;
 
@@ -30,6 +32,8 @@ void FGPUProfiler::Initialize(ID3D11Device* InDevice, ID3D11DeviceContext* InCon
 		{
 			Device->CreateQuery(&timestampDesc, Frames[f].Timestamps[i].BeginQuery.ReleaseAndGetAddressOf());
 			Device->CreateQuery(&timestampDesc, Frames[f].Timestamps[i].EndQuery.ReleaseAndGetAddressOf());
+			D3D11Debug::SetDebugName(Frames[f].Timestamps[i].BeginQuery.Get(), "FGPUProfiler.TimestampBeginQuery");
+			D3D11Debug::SetDebugName(Frames[f].Timestamps[i].EndQuery.Get(), "FGPUProfiler.TimestampEndQuery");
 			Frames[f].Timestamps[i].Name = nullptr;
 		}
 	}

@@ -1,4 +1,6 @@
-﻿#include "DepthStencilBuilder.h"
+#include "DepthStencilBuilder.h"
+
+#include "Render/Common/D3D11DebugUtils.h"
 
 FDepthStencilBuilder& FDepthStencilBuilder::SetSize(uint32 InWidth, uint32 InHeight)
 {
@@ -44,6 +46,7 @@ FDepthStencilResource FDepthStencilBuilder::Build(ID3D11Device* Device)
 		DepthStencilDesc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
 
 	Device->CreateTexture2D(&DepthStencilDesc, nullptr, &DSR.Texture);
+    D3D11Debug::SetDebugName(DSR.Texture.Get(), "FDepthStencil.Texture");
     
 	D3D11_DEPTH_STENCIL_VIEW_DESC DsvDesc = {};
     DsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -52,6 +55,7 @@ FDepthStencilResource FDepthStencilBuilder::Build(ID3D11Device* Device)
     DsvDesc.Texture2D.MipSlice = 0;
 
 	Device->CreateDepthStencilView(DSR.Texture.Get(), &DsvDesc, &DSR.DSV);
+    D3D11Debug::SetDebugName(DSR.DSV.Get(), "FDepthStencil.DSV");
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC SrvDesc = {};
     SrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
@@ -60,6 +64,7 @@ FDepthStencilResource FDepthStencilBuilder::Build(ID3D11Device* Device)
     SrvDesc.Texture2D.MipLevels = 1;
 
 	Device->CreateShaderResourceView(DSR.Texture.Get(), &SrvDesc, &DSR.SRV);
+    D3D11Debug::SetDebugName(DSR.SRV.Get(), "FDepthStencil.SRV");
 
 	return DSR;
 }
