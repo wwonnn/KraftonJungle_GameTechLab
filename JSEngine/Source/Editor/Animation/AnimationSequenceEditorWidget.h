@@ -43,12 +43,15 @@ private:
         Info,
     };
 
+    // Preview area
     TArray<FString> BuildPreviewOverlayLines() const;
     void RenderPreviewPane(float PreviewHeight, const TArray<FString>& PreviewOverlayLines);
     void RenderPreviewImage(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines);
     void RenderPreviewFallback(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines) const;
     void SyncEmbeddedViewportRectAndFocus(const ImVec2& Min, const ImVec2& Max, bool bViewportClicked);
     void RenderPreviewToolbarOverlay(const ImVec2& Min, const ImVec2& Max) const;
+
+    // Sequencer area
     void RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight);
     void RenderSequencerSplitPane(
         float SplitPaneHeight,
@@ -70,12 +73,12 @@ private:
         const FAnimationSequenceTimelineGeometry& Geometry,
         const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
         float TimelineRowOriginY) const;
+
+    // Bottom control strip and playback controls
     void RenderBottomControlStrip(float Height, float LeftPaneWidth, float RightPaneWidth);
+    void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight);
     void RenderTimelineRangeControls(float StripHeight);
     void RenderPlaybackSpeedPopup();
-    void RenderSelectionDetailsPane(float Height);
-    void RenderNotifyLowerPanel(float Height);
-    void RenderNotifyLowerPanelSplit();
     void EnsurePlaybackControlIconsLoaded();
     bool DrawPlaybackControlButton(
         const char* ButtonId,
@@ -84,7 +87,13 @@ private:
         const char* Tooltip,
         const ImVec2& Size,
         bool bSelected = false) const;
-    void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight);
+
+    // Lower details/debug area orchestration
+    void RenderSelectionDetailsPane(float Height);
+    void RenderNotifyLowerPanel(float Height);
+    void RenderNotifyLowerPanelSplit();
+
+    // Selected notify details panel
     void RenderNotifyDetailsPanel();
     void RenderSelectedNotifyEditorPanel();
     void RenderSelectedNotifyToolbar(bool bHasSelection, int32 DefaultTrackIndex);
@@ -100,17 +109,8 @@ private:
     void RenderSelectedNotifyVisualSection(const FAnimNotifyEvent& NotifySnapshot);
     void RenderSelectedNotifyInlineValidationSection(const FAnimNotifyValidationReport& SelectedValidationReport) const;
     void RenderSelectedNotifyMetaFooter(const FAnimNotifyEvent& NotifySnapshot) const;
-    void RenderNotifyValidationBrowser();
-    void RenderNotifyDebugPanel();
-    void RenderNotifyDebugTabs();
-    void RenderNotifyValidationTab();
-    void RenderNotifyValidationSummaryBlock(const FAnimNotifyValidationReport& Report) const;
-    void RenderNotifyValidationFilters();
-    void RenderNotifyValidationMessageList(const FAnimNotifyValidationReport& Report);
-    void RenderCurveInspectionPanel();
-    void RenderRecentNotifySummary() const;
-    void RenderRecentFiredNotifyTab() const;
-    void RenderNotifyEventLogTab() const;
+
+    // Shared payload/selected validation helpers
     void RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const;
     void RenderNotifyValidationIssues(
         const FAnimNotifyValidationReport& Report,
@@ -122,6 +122,23 @@ private:
         const FString& NotifyClassName,
         const FAnimNotifyValidationReport& Report,
         bool bRenderValidation);
+
+    // Notify debug panel
+    void RenderNotifyValidationBrowser();
+    void RenderNotifyDebugPanel();
+    void RenderNotifyDebugTabs();
+    void RenderNotifyValidationTab();
+    void RenderNotifyValidationSummaryBlock(const FAnimNotifyValidationReport& Report) const;
+    void RenderNotifyValidationFilters();
+    void RenderNotifyValidationMessageList(const FAnimNotifyValidationReport& Report);
+    void RenderRecentNotifySummary() const;
+    void RenderRecentFiredNotifyTab() const;
+    void RenderNotifyEventLogTab() const;
+
+    // Curve inspection panel
+    void RenderCurveInspectionPanel();
+
+    // Notify editor buffers/state helpers
     void SyncNotifyDetailsBuffers(const FAnimNotifyEvent& NotifyEvent);
     void ResetNotifyPayloadFieldBuffers();
     void RefreshNotifyPayloadFieldBuffers(const FAnimNotifyPayloadParser& Payload);

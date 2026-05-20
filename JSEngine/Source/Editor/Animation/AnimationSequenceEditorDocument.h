@@ -41,20 +41,41 @@ public:
     FAnimationSequenceEditorState& GetEditorState() { return EditorState; }
     const FAnimationSequenceEditorState& GetEditorState() const { return EditorState; }
 
+    // Notify track queries
     int32 GetNotifyTrackCount() const;
     const FAnimNotifyTrack* GetNotifyTrack(int32 TrackIndex) const;
     FAnimNotifyTrack* GetNotifyTrack(int32 TrackIndex);
-    int32 AddNotifyTrack();
-    bool RenameNotifyTrack(int32 TrackIndex, const FName& NewName);
-    bool DeleteNotifyTrack(int32 TrackIndex);
-    bool MoveNotifyTrack(int32 FromIndex, int32 ToIndex);
+
+    // Selection queries
+    bool HasSelectedNotify() const;
     const FAnimNotifyEvent* GetSelectedNotify() const;
     FAnimNotifyEvent* GetSelectedNotify();
-    bool AddNotifyAtTime(int32 TrackIndex, float TimeSeconds);
+    bool TryGetSelectedNotifySnapshot(FAnimNotifyEvent& OutNotify) const;
+    FString GetSelectedNotifyResolvedClassName() const;
+    bool SelectNotifyByStableId(int32 TrackIndex, const FGuid& StableId);
+    void SelectNotify(int32 TrackIndex, int32 EventIndex);
+    void ClearNotifySelection();
+
+    // Validation queries
+    FAnimNotifyValidationReport BuildSelectedNotifyValidationReport() const;
+    FAnimNotifyValidationReport BuildDocumentNotifyValidationReport() const;
+    const FString& GetLastNotifyValidationStatusText() const { return LastNotifyValidationStatusText; }
+
+    // Payload queries
+    FAnimNotifyPayloadParser GetSelectedNotifyPayloadParser() const;
+
+    // Clipboard/edit commands
     bool DuplicateSelectedNotify();
     bool CopySelectedNotify();
     bool CanPasteNotify() const;
     bool PasteNotifyToTrackAtTime(int32 TrackIndex, float TimeSeconds);
+
+    // Mutation commands
+    int32 AddNotifyTrack();
+    bool RenameNotifyTrack(int32 TrackIndex, const FName& NewName);
+    bool DeleteNotifyTrack(int32 TrackIndex);
+    bool MoveNotifyTrack(int32 FromIndex, int32 ToIndex);
+    bool AddNotifyAtTime(int32 TrackIndex, float TimeSeconds);
     bool MoveSelectedNotifyToTrack(int32 TargetTrackIndex);
     bool DeleteSelectedNotify();
     bool SetSelectedNotifyTime(float TimeSeconds, bool bApplySnap);
@@ -65,20 +86,13 @@ public:
     bool SetSelectedNotifyType(EAnimNotifyEventType EventType);
     bool SetSelectedNotifyClassName(const FString& NotifyClassName);
     bool SetSelectedNotifyPayload(const FString& Payload);
-    FAnimNotifyPayloadParser GetSelectedNotifyPayloadParser() const;
     bool SetSelectedNotifyPayloadStringValue(const FString& Key, const FString& Value);
     bool SetSelectedNotifyPayloadNameValue(const FString& Key, const FName& Value);
     bool SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value);
     bool SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value);
     bool ClearSelectedNotifyPayloadValue(const FString& Key);
-    bool SelectNotifyByStableId(int32 TrackIndex, const FGuid& StableId);
-    void SelectNotify(int32 TrackIndex, int32 EventIndex);
-    void ClearNotifySelection();
     void MarkDirty();
     bool IsDirty() const { return bDirty; }
-    FAnimNotifyValidationReport BuildSelectedNotifyValidationReport() const;
-    FAnimNotifyValidationReport BuildDocumentNotifyValidationReport() const;
-    const FString& GetLastNotifyValidationStatusText() const { return LastNotifyValidationStatusText; }
 
 private:
     struct FNotifyClipboard

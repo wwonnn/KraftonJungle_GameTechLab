@@ -390,6 +390,11 @@ FAnimNotifyTrack* FAnimationSequenceEditorDocument::GetNotifyTrack(int32 TrackIn
     return &(*Tracks)[TrackIndex];
 }
 
+bool FAnimationSequenceEditorDocument::HasSelectedNotify() const
+{
+    return GetSelectedNotify() != nullptr;
+}
+
 int32 FAnimationSequenceEditorDocument::AddNotifyTrack()
 {
     TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
@@ -554,6 +559,24 @@ FAnimNotifyEvent* FAnimationSequenceEditorDocument::GetSelectedNotify()
     }
 
     return &Track->Events[EditorState.SelectedNotifyEventIndex];
+}
+
+bool FAnimationSequenceEditorDocument::TryGetSelectedNotifySnapshot(FAnimNotifyEvent& OutNotify) const
+{
+    const FAnimNotifyEvent* SelectedNotify = GetSelectedNotify();
+    if (!SelectedNotify)
+    {
+        return false;
+    }
+
+    OutNotify = *SelectedNotify;
+    return true;
+}
+
+FString FAnimationSequenceEditorDocument::GetSelectedNotifyResolvedClassName() const
+{
+    const FAnimNotifyEvent* SelectedNotify = GetSelectedNotify();
+    return SelectedNotify ? SelectedNotify->GetResolvedNotifyClassName() : FString();
 }
 
 bool FAnimationSequenceEditorDocument::AddNotifyAtTime(int32 TrackIndex, float TimeSeconds)

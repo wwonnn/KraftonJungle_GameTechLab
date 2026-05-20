@@ -437,6 +437,22 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerSequencerPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerBottomStrip.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
@@ -1069,6 +1085,7 @@
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorDocument.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePlaybackController.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.h" />

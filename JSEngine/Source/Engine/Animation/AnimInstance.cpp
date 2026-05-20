@@ -703,7 +703,7 @@ FQuat UAnimInstance::InterpolateKeys(const TArray<FQuat>& Keys, float Time, floa
 void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose)
 {
     SCOPE_STAT_ANIM("Pose Blend");
-    const int32 BoneCount = PoseA.LocalTransforms.size();
+    const int32 BoneCount = static_cast<int32>(PoseA.LocalTransforms.size());
     OutPose.LocalTransforms.resize(BoneCount);
 
     for (int32 i = 0; i < BoneCount; ++i)
