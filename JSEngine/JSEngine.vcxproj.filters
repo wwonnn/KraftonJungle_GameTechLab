@@ -1163,6 +1163,7 @@
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstanceAsset.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimData\AnimSequence.cpp" />
     <ClCompile Include="Source\Engine\Animation\Compression\AclCompression.cpp">
       <Filter>Source\Engine\Animation\Compression</Filter>
     </ClCompile>

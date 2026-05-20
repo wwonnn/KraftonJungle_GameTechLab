@@ -331,6 +331,7 @@
     <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadViews.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimData\AnimSequence.cpp" />
     <ClCompile Include="Source\Engine\Animation\Compression\AclCompression.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
