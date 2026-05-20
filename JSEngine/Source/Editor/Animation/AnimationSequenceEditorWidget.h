@@ -116,7 +116,6 @@ private:
     void RenderNotifyLowerPanelSplit();
 
     // Selected notify details panel
-    void RenderNotifyDetailsPanel();
     void RenderSelectedNotifyEditorPanel();
     void RenderSelectedNotifyToolbar(bool bHasSelection, int32 DefaultTrackIndex);
     void RenderSelectedNotifyBasicSection(
@@ -146,14 +145,12 @@ private:
         bool bRenderValidation);
 
     // Notify debug panel
-    void RenderNotifyValidationBrowser();
     void RenderNotifyDebugPanel();
     void RenderNotifyDebugTabs();
     void RenderNotifyValidationTab();
     void RenderNotifyValidationSummaryBlock(const FAnimNotifyValidationReport& Report) const;
     void RenderNotifyValidationFilters();
     void RenderNotifyValidationMessageList(const FAnimNotifyValidationReport& Report);
-    void RenderRecentNotifySummary() const;
     void RenderRecentFiredNotifyTab() const;
     void RenderNotifyEventLogTab() const;
 

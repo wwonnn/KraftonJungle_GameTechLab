@@ -243,10 +243,28 @@
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewPanel.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewSkeletonTree.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewToolbar.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewViewportHost.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerSequencerPanel.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerBottomStrip.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerNotifyDetailsPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerNotifyDebugPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerCurveInspectionPanel.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.cpp">
