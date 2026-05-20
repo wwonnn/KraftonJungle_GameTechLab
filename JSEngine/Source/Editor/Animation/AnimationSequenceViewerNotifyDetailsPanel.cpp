@@ -714,7 +714,7 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
                     ImGui::EndCombo();
                 }
 
-                ImGui::TextDisabled("Pick from the active preview context. Use Advanced Raw Payload for a manual override.");
+                ImGui::TextDisabled("Pick from the active preview attach targets. Use Advanced Raw Payload for a manual override.");
             }
             else
             {

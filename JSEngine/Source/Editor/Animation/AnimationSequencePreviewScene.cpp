@@ -172,6 +172,9 @@ const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewScene::GetRecentFiredNo
 
 bool FAnimationSequencePreviewScene::HasPreviewSocket(const FName& SocketName) const
 {
+    // Match runtime AnimNotify attach-target interpretation by delegating to
+    // the preview component's HasSocket path, which already treats bone names
+    // and socket names uniformly.
     return AnimationSequenceViewer::IsLiveObject(PreviewComponent) &&
         SocketName != FName::None &&
         PreviewComponent->HasSocket(SocketName);
@@ -191,6 +194,9 @@ TArray<FString> FAnimationSequencePreviewScene::GetPreviewSocketNames() const
         return SocketNames;
     }
 
+    // Keep picker candidates aligned with runtime attach-target resolution:
+    // sockets and bones are both valid when the preview component resolves
+    // them through HasSocket/GetSocketTransform.
     for (const FSkeletalMeshSocket& Socket : SkeletalMesh->GetSockets())
     {
         if (!Socket.Name.IsValid())

@@ -101,11 +101,15 @@ namespace
         return IsLiveActor(OwnerActor) ? OwnerActor : nullptr;
     }
 
-    FVector ResolvePlaybackLocation(USkeletalMeshComponent* MeshComponent, const FName& SocketName)
+    FVector ResolveAttachTargetLocation(USkeletalMeshComponent* MeshComponent, const FName& AttachTargetName)
     {
-        if (MeshComponent && SocketName != FName::None && MeshComponent->HasSocket(SocketName))
+        // Runtime attach-target resolution follows the skinned-mesh component's
+        // HasSocket/GetSocketTransform semantics, which already accept both
+        // authored socket names and bone names. Missing targets still fall back
+        // to the component world location exactly as before.
+        if (MeshComponent && AttachTargetName != FName::None && MeshComponent->HasSocket(AttachTargetName))
         {
-            return MeshComponent->GetSocketTransform(SocketName).GetLocation();
+            return MeshComponent->GetSocketTransform(AttachTargetName).GetLocation();
         }
 
         return MeshComponent ? MeshComponent->GetWorldLocation() : FVector::ZeroVector;
@@ -235,7 +239,7 @@ namespace
                 PayloadView.SoundCue,
                 false,
                 true,
-                ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
+                ResolveAttachTargetLocation(MeshComponent, PayloadView.SocketName),
                 Volume);
             return;
         }
@@ -250,7 +254,7 @@ namespace
             PayloadView.SoundCue,
             true,
             PayloadView.bSpatialized,
-            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
+            ResolveAttachTargetLocation(MeshComponent, PayloadView.SocketName),
             Volume);
     }
 
@@ -261,7 +265,7 @@ namespace
     {
         GEngine->GetAudioSystem().SetSoundPosition(
             ActiveHandle,
-            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName));
+            ResolveAttachTargetLocation(MeshComponent, PayloadView.SocketName));
     }
 
     void DispatchCameraShakeNotify(
@@ -379,7 +383,7 @@ namespace
         const FAnimNotifyEvent& NotifyEvent,
         const FFootstepSurfacePayload& Payload)
     {
-        const FVector TraceStartLocation = ResolvePlaybackLocation(MeshComponent, Payload.SocketName);
+        const FVector TraceStartLocation = ResolveAttachTargetLocation(MeshComponent, Payload.SocketName);
         FHitResult SurfaceHit;
         const bool bHasSurfaceHit = TryTraceDownwardSurfaceHit(
             MeshComponent,
@@ -409,7 +413,7 @@ namespace
             Animation,
             NotifyEvent,
             PayloadView.Effect,
-            ResolvePlaybackLocation(MeshComponent, PayloadView.SocketName),
+            ResolveAttachTargetLocation(MeshComponent, PayloadView.SocketName),
             PayloadView.SocketName,
             PayloadView.bAttached,
             PayloadView.Scale);
@@ -444,7 +448,7 @@ namespace
         const FAnimNotifyEvent& NotifyEvent,
         const FSpawnDecalPayload& Payload)
     {
-        const FVector SpawnOrigin = ResolvePlaybackLocation(MeshComponent, Payload.SocketName);
+        const FVector SpawnOrigin = ResolveAttachTargetLocation(MeshComponent, Payload.SocketName);
         FHitResult SurfaceHit;
         const bool bHasSurfaceHit = TryTraceDownwardSurfaceHit(
             MeshComponent,

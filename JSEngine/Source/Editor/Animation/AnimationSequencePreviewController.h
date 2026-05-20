@@ -59,6 +59,10 @@ public:
     bool HasSequence() const;
     bool HasValidPreview() const;
     const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
+    // These "socket" queries intentionally mirror runtime attach-target
+    // semantics used by AnimNotify playback. They accept/return any name that
+    // the preview skinned mesh component resolves through HasSocket /
+    // GetSocketTransform, which includes sockets and bone names.
     bool HasPreviewSocket(const FName& SocketName) const;
     TArray<FString> GetPreviewSocketNames() const;
     bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;

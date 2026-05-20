@@ -319,7 +319,7 @@ namespace
         AddMalformedPayloadIssues(Report, Schema, Payload, Location);
     }
 
-    void AddPreviewSocketIssues(
+    void AddPreviewAttachTargetIssues(
         FAnimNotifyValidationReport& Report,
         const FAnimNotifyPayloadSchema& Schema,
         const FAnimNotifyPayloadParser& Payload,
@@ -331,16 +331,16 @@ namespace
             return;
         }
 
-        FName SocketName = FName::None;
-        if (TryGetSchemaNameValue(Schema, Payload, EAnimNotifySemanticFieldId::SocketName, SocketName)
-            && SocketName != FName::None
-            && !Context.PreviewController->HasPreviewSocket(SocketName))
+        FName AttachTargetName = FName::None;
+        if (TryGetSchemaNameValue(Schema, Payload, EAnimNotifySemanticFieldId::SocketName, AttachTargetName)
+            && AttachTargetName != FName::None
+            && !Context.PreviewController->HasPreviewSocket(AttachTargetName))
         {
             Report.AddIssue(
                 EAnimNotifyValidationSeverity::Warning,
                 EAnimNotifyValidationField::Payload,
-                "Socket \"" + SocketName.ToString() + "\" is not present on the current preview mesh.",
-                "Verify the socket name or pick a different preview mesh.",
+                "Attach target \"" + AttachTargetName.ToString() + "\" is not present on the current preview mesh.",
+                "Verify the socket/bone name or pick a different preview mesh.",
                 Location.TrackIndex,
                 Location.EventIndex,
                 Location.StableId);
@@ -387,7 +387,7 @@ namespace
         const FAnimNotifyValidationContext& Context,
         const FAnimNotifyValidationLocation& Location)
     {
-        AddPreviewSocketIssues(Report, Schema, Payload, Context, Location);
+        AddPreviewAttachTargetIssues(Report, Schema, Payload, Context, Location);
         AddAttackWindowPreviewComponentIssues(Report, Schema, Payload, Context, Location);
     }
 
