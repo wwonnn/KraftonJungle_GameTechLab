@@ -14,6 +14,13 @@
 
 namespace
 {
+    struct FAnimNotifyValidationLocation
+    {
+        int32 TrackIndex = -1;
+        int32 EventIndex = -1;
+        FGuid StableId;
+    };
+
     bool HasNonWhitespaceValue(const FString& Value)
     {
         return std::any_of(
@@ -65,13 +72,159 @@ namespace
         return EventType == EAnimNotifyEventType::NotifyState ? "Notify State" : "Notify";
     }
 
+    const FAnimNotifyPayloadFieldDefinition* FindSchemaField(
+        const FAnimNotifyPayloadSchema& Schema,
+        EAnimNotifySemanticFieldId SemanticId)
+    {
+        return FindAnimNotifyPayloadFieldBySemanticId(Schema, SemanticId);
+    }
+
+    TArray<FString> GetSchemaFieldLookupKeys(
+        const FAnimNotifyPayloadSchema& Schema,
+        EAnimNotifySemanticFieldId SemanticId)
+    {
+        const FAnimNotifyPayloadFieldDefinition* Field = FindSchemaField(Schema, SemanticId);
+        return Field ? GetAnimNotifyPayloadFieldLookupKeys(*Field) : TArray<FString>();
+    }
+
+    bool TryGetSchemaFloatValue(
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        EAnimNotifySemanticFieldId SemanticId,
+        float& OutValue)
+    {
+        const TArray<FString> LookupKeys = GetSchemaFieldLookupKeys(Schema, SemanticId);
+        return !LookupKeys.empty() && Payload.HasAnyValue(LookupKeys) && Payload.TryGetFloatAny(LookupKeys, OutValue);
+    }
+
+    bool TryGetSchemaNameValue(
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        EAnimNotifySemanticFieldId SemanticId,
+        FName& OutValue)
+    {
+        const TArray<FString> LookupKeys = GetSchemaFieldLookupKeys(Schema, SemanticId);
+        if (LookupKeys.empty())
+        {
+            return false;
+        }
+
+        OutValue = Payload.GetNameAny(LookupKeys);
+        return true;
+    }
+
+    bool TryGetSchemaStringValue(
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        EAnimNotifySemanticFieldId SemanticId,
+        FString& OutValue)
+    {
+        const TArray<FString> LookupKeys = GetSchemaFieldLookupKeys(Schema, SemanticId);
+        if (LookupKeys.empty())
+        {
+            return false;
+        }
+
+        OutValue = Payload.GetStringAny(LookupKeys);
+        return true;
+    }
+
+    void AddNotifyClassIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& NotifyClassName,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        const UClass* NotifyClass = FindRegisteredClass(NotifyClassName);
+        if (!NotifyClass)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Error,
+                EAnimNotifyValidationField::NotifyClass,
+                "Notify Class is not registered: " + NotifyClassName,
+                "Choose a registered notify class from the dropdown.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+            return;
+        }
+
+        if (!IsNotifyClassCompatible(NotifyClass, NotifyEvent.EventType))
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Error,
+                EAnimNotifyValidationField::NotifyClass,
+                "Selected class does not match the " + GetNotifyTypeLabel(NotifyEvent.EventType) + " type.",
+                "Use a class derived from " + GetDefaultAnimNotifyClassName(NotifyEvent.EventType) + ".",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddNotifyTimingIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        if (NotifyEvent.EventType == EAnimNotifyEventType::NotifyState && NotifyEvent.Duration <= 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Duration,
+                "Notify State duration is zero or negative. Begin/End will fire at the same time.",
+                "Set a positive duration for state-style behavior.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+        else if (NotifyEvent.EventType == EAnimNotifyEventType::Notify && NotifyEvent.Duration > 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Info,
+                EAnimNotifyValidationField::Duration,
+                "Duration is ignored for one-shot notifies.",
+                "Use Notify State if you need a begin/end window.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddNotifyNameIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        if (!NotifyEvent.Name.IsValid() || NotifyEvent.Name.ToString().empty())
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Info,
+                EAnimNotifyValidationField::Name,
+                "Notify name is empty.",
+                "Set a name to make timeline markers and runtime logs easier to read.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddGenericEventIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& NotifyClassName,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        AddNotifyClassIssues(Report, NotifyEvent, NotifyClassName, Location);
+        AddNotifyTimingIssues(Report, NotifyEvent, Location);
+        AddNotifyNameIssues(Report, NotifyEvent, Location);
+    }
+
     void AddRequiredPayloadIssues(
         FAnimNotifyValidationReport& Report,
         const FAnimNotifyPayloadSchema& Schema,
         const FAnimNotifyPayloadParser& Payload,
-        int32 TrackIndex,
-        int32 EventIndex,
-        const FGuid& StableId)
+        const FAnimNotifyValidationLocation& Location)
     {
         const char* PayloadExample = GetAnimNotifyPayloadExample(Schema.NotifyClassName);
         const FString PayloadExampleHint = PayloadExample ? FString("Payload Example: ") + PayloadExample : FString();
@@ -90,9 +243,9 @@ namespace
                     EAnimNotifyValidationField::Payload,
                     Field.Label + " is required for " + Schema.NotifyClassName + ".",
                     PayloadExampleHint,
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
+                    Location.TrackIndex,
+                    Location.EventIndex,
+                    Location.StableId);
             }
         }
     }
@@ -101,9 +254,7 @@ namespace
         FAnimNotifyValidationReport& Report,
         const FAnimNotifyPayloadSchema& Schema,
         const FAnimNotifyPayloadParser& Payload,
-        int32 TrackIndex,
-        int32 EventIndex,
-        const FGuid& StableId)
+        const FAnimNotifyValidationLocation& Location)
     {
         const char* PayloadExample = GetAnimNotifyPayloadExample(Schema.NotifyClassName);
         const FString PayloadExampleHint = PayloadExample ? FString("Payload Example: ") + PayloadExample : FString();
@@ -120,9 +271,9 @@ namespace
                         EAnimNotifyValidationField::Payload,
                         Field.Label + " value is invalid. Expected a numeric value.",
                         PayloadExampleHint,
-                        TrackIndex,
-                        EventIndex,
-                        StableId);
+                        Location.TrackIndex,
+                        Location.EventIndex,
+                        Location.StableId);
                 }
             }
             else if (Field.Type == EAnimNotifyPayloadFieldType::Int)
@@ -135,9 +286,9 @@ namespace
                         EAnimNotifyValidationField::Payload,
                         Field.Label + " value is invalid. Expected an integer value.",
                         PayloadExampleHint,
-                        TrackIndex,
-                        EventIndex,
-                        StableId);
+                        Location.TrackIndex,
+                        Location.EventIndex,
+                        Location.StableId);
                 }
             }
             else if (Field.Type == EAnimNotifyPayloadFieldType::Bool)
@@ -150,11 +301,82 @@ namespace
                         EAnimNotifyValidationField::Payload,
                         Field.Label + " value is invalid. Expected true/false.",
                         PayloadExampleHint,
-                        TrackIndex,
-                        EventIndex,
-                        StableId);
+                        Location.TrackIndex,
+                        Location.EventIndex,
+                        Location.StableId);
                 }
             }
+        }
+    }
+
+    void AddGenericPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        AddRequiredPayloadIssues(Report, Schema, Payload, Location);
+        AddMalformedPayloadIssues(Report, Schema, Payload, Location);
+    }
+
+    void AddPreviewSocketIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationContext& Context,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        if (!Context.PreviewController || !Context.PreviewController->HasValidPreview())
+        {
+            return;
+        }
+
+        FName SocketName = FName::None;
+        if (TryGetSchemaNameValue(Schema, Payload, EAnimNotifySemanticFieldId::SocketName, SocketName)
+            && SocketName != FName::None
+            && !Context.PreviewController->HasPreviewSocket(SocketName))
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Socket \"" + SocketName.ToString() + "\" is not present on the current preview mesh.",
+                "Verify the socket name or pick a different preview mesh.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddAttackWindowPreviewComponentIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationContext& Context,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        if (!Context.PreviewController || !Context.PreviewController->HasValidPreview())
+        {
+            return;
+        }
+
+        if (Schema.NotifyClassName != "UAnimNotifyState_AttackWindow")
+        {
+            return;
+        }
+
+        FString ComponentName;
+        if (TryGetSchemaStringValue(Schema, Payload, EAnimNotifySemanticFieldId::ComponentName, ComponentName)
+            && !ComponentName.empty()
+            && !Context.PreviewController->HasPreviewPrimitiveComponent(ComponentName))
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Component \"" + ComponentName + "\" was not found on the current preview actor.",
+                "AttackWindow payloads target primitive components by name.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
         }
     }
 
@@ -163,176 +385,203 @@ namespace
         const FAnimNotifyPayloadSchema& Schema,
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationContext& Context,
-        int32 TrackIndex,
-        int32 EventIndex,
-        const FGuid& StableId)
+        const FAnimNotifyValidationLocation& Location)
     {
-        if (!Context.PreviewController || !Context.PreviewController->HasValidPreview())
-        {
-            return;
-        }
-
-        if (const FAnimNotifyPayloadFieldDefinition* SocketField =
-            FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::SocketName))
-        {
-            const FName SocketName = Payload.GetNameAny(GetAnimNotifyPayloadFieldLookupKeys(*SocketField));
-            if (SocketName != FName::None && !Context.PreviewController->HasPreviewSocket(SocketName))
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Socket \"" + SocketName.ToString() + "\" is not present on the current preview mesh.",
-                    "Verify the socket name or pick a different preview mesh.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
-        }
-
-        if (Schema.NotifyClassName == "UAnimNotifyState_AttackWindow")
-        {
-            const FAnimNotifyPayloadFieldDefinition* ComponentField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::ComponentName);
-            const FString ComponentName = ComponentField
-                ? Payload.GetStringAny(GetAnimNotifyPayloadFieldLookupKeys(*ComponentField))
-                : FString();
-            if (!ComponentName.empty() && !Context.PreviewController->HasPreviewPrimitiveComponent(ComponentName))
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Component \"" + ComponentName + "\" was not found on the current preview actor.",
-                    "AttackWindow payloads target primitive components by name.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
-        }
+        AddPreviewSocketIssues(Report, Schema, Payload, Context, Location);
+        AddAttackWindowPreviewComponentIssues(Report, Schema, Payload, Context, Location);
     }
 
-    void AddBuiltInSpecificPayloadIssues(
+    void AddCameraShakePayloadIssues(
         FAnimNotifyValidationReport& Report,
         const FAnimNotifyPayloadSchema& Schema,
         const FAnimNotifyPayloadParser& Payload,
-        int32 TrackIndex,
-        int32 EventIndex,
-        const FGuid& StableId)
+        const FAnimNotifyValidationLocation& Location)
     {
-        if (Schema.NotifyClassName == "UAnimNotify_CameraShake")
+        float Scale = 0.0f;
+        if (TryGetSchemaFloatValue(Schema, Payload, EAnimNotifySemanticFieldId::Scale, Scale) && Scale <= 0.0f)
         {
-            float Scale = 0.0f;
-            const FAnimNotifyPayloadFieldDefinition* ScaleField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Scale);
-            const TArray<FString> ScaleKeys = ScaleField
-                ? GetAnimNotifyPayloadFieldLookupKeys(*ScaleField)
-                : TArray<FString>();
-            if (!ScaleKeys.empty() && Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Scale should be greater than zero for camera shake playback.",
-                    "Use a positive scale such as 1.0 to preserve the authored shake strength.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Scale should be greater than zero for camera shake playback.",
+                "Use a positive scale such as 1.0 to preserve the authored shake strength.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddPlaySfxPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        (void)Report;
+        (void)Schema;
+        (void)Payload;
+        (void)Location;
+    }
+
+    void AddPlayVfxPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        float Scale = 0.0f;
+        if (TryGetSchemaFloatValue(Schema, Payload, EAnimNotifySemanticFieldId::Scale, Scale) && Scale <= 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Scale should be greater than zero for VFX playback.",
+                "Use a positive scale such as 1.0 to preserve the authored effect size.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddFootstepSurfacePayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        float TraceDistance = 0.0f;
+        if (TryGetSchemaFloatValue(Schema, Payload, EAnimNotifySemanticFieldId::TraceDistance, TraceDistance) && TraceDistance <= 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Trace Distance should be greater than zero for footstep surface resolution.",
+                "Use a positive downward trace distance such as 25.0.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddSpawnDecalPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        float TraceDistance = 0.0f;
+        if (TryGetSchemaFloatValue(Schema, Payload, EAnimNotifySemanticFieldId::TraceDistance, TraceDistance) && TraceDistance <= 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Trace Distance should be greater than zero for decal surface resolution.",
+                "Use a positive downward trace distance such as 50.0.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+
+        float Size = 0.0f;
+        if (TryGetSchemaFloatValue(Schema, Payload, EAnimNotifySemanticFieldId::Size, Size) && Size <= 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Size should be greater than zero for decal spawning.",
+                "Use a positive decal size such as 1.0.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+
+        float Lifetime = 0.0f;
+        if (TryGetSchemaFloatValue(Schema, Payload, EAnimNotifySemanticFieldId::Lifetime, Lifetime) && Lifetime < 0.0f)
+        {
+            Report.AddIssue(
+                EAnimNotifyValidationSeverity::Warning,
+                EAnimNotifyValidationField::Payload,
+                "Lifetime should not be negative for decal spawning.",
+                "Use zero for the default lifetime or a positive duration such as 2.0.",
+                Location.TrackIndex,
+                Location.EventIndex,
+                Location.StableId);
+        }
+    }
+
+    void AddAttackWindowPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        (void)Report;
+        (void)Schema;
+        (void)Payload;
+        (void)Location;
+    }
+
+    void AddGameplayEventPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        (void)Report;
+        (void)Schema;
+        (void)Payload;
+        (void)Location;
+    }
+
+    void AddGameplayEventWindowPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        (void)Report;
+        (void)Schema;
+        (void)Payload;
+        (void)Location;
+    }
+
+    void AddNotifySpecificPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        const FAnimNotifyValidationLocation& Location)
+    {
+        if (Schema.NotifyClassName == "UAnimNotify_PlaySFX")
+        {
+            AddPlaySfxPayloadIssues(Report, Schema, Payload, Location);
+        }
+        else if (Schema.NotifyClassName == "UAnimNotify_CameraShake")
+        {
+            AddCameraShakePayloadIssues(Report, Schema, Payload, Location);
         }
         else if (Schema.NotifyClassName == "UAnimNotify_PlayVFX")
         {
-            float Scale = 0.0f;
-            const FAnimNotifyPayloadFieldDefinition* ScaleField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Scale);
-            const TArray<FString> ScaleKeys = ScaleField
-                ? GetAnimNotifyPayloadFieldLookupKeys(*ScaleField)
-                : TArray<FString>();
-            if (!ScaleKeys.empty() && Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Scale should be greater than zero for VFX playback.",
-                    "Use a positive scale such as 1.0 to preserve the authored effect size.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
+            AddPlayVfxPayloadIssues(Report, Schema, Payload, Location);
+        }
+        else if (Schema.NotifyClassName == "UAnimNotify_GameplayEvent")
+        {
+            AddGameplayEventPayloadIssues(Report, Schema, Payload, Location);
+        }
+        else if (Schema.NotifyClassName == "UAnimNotifyState_GameplayEventWindow")
+        {
+            AddGameplayEventWindowPayloadIssues(Report, Schema, Payload, Location);
+        }
+        if (Schema.NotifyClassName == "UAnimNotifyState_AttackWindow")
+        {
+            AddAttackWindowPayloadIssues(Report, Schema, Payload, Location);
         }
         else if (Schema.NotifyClassName == "UAnimNotify_FootstepSurfaceEvent")
         {
-            float TraceDistance = 0.0f;
-            const FAnimNotifyPayloadFieldDefinition* TraceDistanceField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::TraceDistance);
-            const TArray<FString> LookupKeys = TraceDistanceField
-                ? GetAnimNotifyPayloadFieldLookupKeys(*TraceDistanceField)
-                : TArray<FString>();
-            if (!LookupKeys.empty() && Payload.HasAnyValue(LookupKeys) && Payload.TryGetFloatAny(LookupKeys, TraceDistance) && TraceDistance <= 0.0f)
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Trace Distance should be greater than zero for footstep surface resolution.",
-                    "Use a positive downward trace distance such as 25.0.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
+            AddFootstepSurfacePayloadIssues(Report, Schema, Payload, Location);
         }
         else if (Schema.NotifyClassName == "UAnimNotify_SpawnDecal")
         {
-            float TraceDistance = 0.0f;
-            const FAnimNotifyPayloadFieldDefinition* TraceDistanceField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::TraceDistance);
-            const TArray<FString> TraceDistanceKeys = TraceDistanceField
-                ? GetAnimNotifyPayloadFieldLookupKeys(*TraceDistanceField)
-                : TArray<FString>();
-            if (!TraceDistanceKeys.empty() && Payload.HasAnyValue(TraceDistanceKeys) && Payload.TryGetFloatAny(TraceDistanceKeys, TraceDistance) && TraceDistance <= 0.0f)
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Trace Distance should be greater than zero for decal surface resolution.",
-                    "Use a positive downward trace distance such as 50.0.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
-
-            float Size = 0.0f;
-            const FAnimNotifyPayloadFieldDefinition* SizeField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Size);
-            const TArray<FString> SizeKeys = SizeField
-                ? GetAnimNotifyPayloadFieldLookupKeys(*SizeField)
-                : TArray<FString>();
-            if (!SizeKeys.empty() && Payload.HasAnyValue(SizeKeys) && Payload.TryGetFloatAny(SizeKeys, Size) && Size <= 0.0f)
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Size should be greater than zero for decal spawning.",
-                    "Use a positive decal size such as 1.0.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
-
-            float Lifetime = 0.0f;
-            const FAnimNotifyPayloadFieldDefinition* LifetimeField =
-                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Lifetime);
-            const TArray<FString> LifetimeKeys = LifetimeField
-                ? GetAnimNotifyPayloadFieldLookupKeys(*LifetimeField)
-                : TArray<FString>();
-            if (!LifetimeKeys.empty() && Payload.HasAnyValue(LifetimeKeys) && Payload.TryGetFloatAny(LifetimeKeys, Lifetime) && Lifetime < 0.0f)
-            {
-                Report.AddIssue(
-                    EAnimNotifyValidationSeverity::Warning,
-                    EAnimNotifyValidationField::Payload,
-                    "Lifetime should not be negative for decal spawning.",
-                    "Use zero for the default lifetime or a positive duration such as 2.0.",
-                    TrackIndex,
-                    EventIndex,
-                    StableId);
-            }
+            AddSpawnDecalPayloadIssues(Report, Schema, Payload, Location);
         }
     }
 }
@@ -432,73 +681,16 @@ FAnimNotifyValidationReport ValidateAnimNotifyEvent(
     const FAnimNotifyValidationContext& Context)
 {
     FAnimNotifyValidationReport Report;
+    const FAnimNotifyValidationLocation Location = { TrackIndex, EventIndex, NotifyEvent.StableId };
     const FString NotifyClassName = NotifyEvent.GetResolvedNotifyClassName();
-    const UClass* NotifyClass = FindRegisteredClass(NotifyClassName);
-    if (!NotifyClass)
-    {
-        Report.AddIssue(
-            EAnimNotifyValidationSeverity::Error,
-            EAnimNotifyValidationField::NotifyClass,
-            "Notify Class is not registered: " + NotifyClassName,
-            "Choose a registered notify class from the dropdown.",
-            TrackIndex,
-            EventIndex,
-            NotifyEvent.StableId);
-    }
-    else if (!IsNotifyClassCompatible(NotifyClass, NotifyEvent.EventType))
-    {
-        Report.AddIssue(
-            EAnimNotifyValidationSeverity::Error,
-            EAnimNotifyValidationField::NotifyClass,
-            "Selected class does not match the " + GetNotifyTypeLabel(NotifyEvent.EventType) + " type.",
-            "Use a class derived from " + GetDefaultAnimNotifyClassName(NotifyEvent.EventType) + ".",
-            TrackIndex,
-            EventIndex,
-            NotifyEvent.StableId);
-    }
-
-    if (NotifyEvent.EventType == EAnimNotifyEventType::NotifyState && NotifyEvent.Duration <= 0.0f)
-    {
-        Report.AddIssue(
-            EAnimNotifyValidationSeverity::Warning,
-            EAnimNotifyValidationField::Duration,
-            "Notify State duration is zero or negative. Begin/End will fire at the same time.",
-            "Set a positive duration for state-style behavior.",
-            TrackIndex,
-            EventIndex,
-            NotifyEvent.StableId);
-    }
-    else if (NotifyEvent.EventType == EAnimNotifyEventType::Notify && NotifyEvent.Duration > 0.0f)
-    {
-        Report.AddIssue(
-            EAnimNotifyValidationSeverity::Info,
-            EAnimNotifyValidationField::Duration,
-            "Duration is ignored for one-shot notifies.",
-            "Use Notify State if you need a begin/end window.",
-            TrackIndex,
-            EventIndex,
-            NotifyEvent.StableId);
-    }
-
-    if (!NotifyEvent.Name.IsValid() || NotifyEvent.Name.ToString().empty())
-    {
-        Report.AddIssue(
-            EAnimNotifyValidationSeverity::Info,
-            EAnimNotifyValidationField::Name,
-            "Notify name is empty.",
-            "Set a name to make timeline markers and runtime logs easier to read.",
-            TrackIndex,
-            EventIndex,
-            NotifyEvent.StableId);
-    }
+    AddGenericEventIssues(Report, NotifyEvent, NotifyClassName, Location);
 
     if (const FAnimNotifyPayloadSchema* Schema = FindAnimNotifyPayloadSchema(NotifyClassName))
     {
         const FAnimNotifyPayloadParser Payload(NotifyEvent.Payload);
-        AddRequiredPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
-        AddMalformedPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
-        AddPreviewContextIssues(Report, *Schema, Payload, Context, TrackIndex, EventIndex, NotifyEvent.StableId);
-        AddBuiltInSpecificPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
+        AddGenericPayloadIssues(Report, *Schema, Payload, Location);
+        AddPreviewContextIssues(Report, *Schema, Payload, Context, Location);
+        AddNotifySpecificPayloadIssues(Report, *Schema, Payload, Location);
     }
 
     return Report;
