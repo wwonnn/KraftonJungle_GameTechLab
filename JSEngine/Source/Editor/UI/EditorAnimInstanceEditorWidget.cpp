@@ -319,6 +319,27 @@ void FEditorAnimInstanceEditorWidget::DrawToolbar()
     {
         AddTransition();
     }
+    ImGui::SameLine();
+    const bool bCanDeleteSelection = HasSelectedState() || HasSelectedTransition();
+    if (!bCanDeleteSelection)
+    {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Button("Delete Selected"))
+    {
+        if (HasSelectedState())
+        {
+            DeleteSelectedState();
+        }
+        else
+        {
+            DeleteSelectedTransition();
+        }
+    }
+    if (!bCanDeleteSelection)
+    {
+        ImGui::EndDisabled();
+    }
 
     ImGui::SameLine();
     ImGui::TextDisabled("Entry: %s", CurrentAsset && CurrentAsset->EntryState.IsValid() ? CurrentAsset->EntryState.ToString().c_str() : "<None>");
@@ -530,6 +551,12 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
             CurrentAsset->EntryState = State.Name;
             bChanged = true;
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Delete State"))
+        {
+            DeleteSelectedState();
+            return;
+        }
 
         if (bContextChanged)
         {
@@ -602,6 +629,11 @@ void FEditorAnimInstanceEditorWidget::DrawDetails()
 
         bChanged |= ImGui::DragFloat("Blend Speed", &Transition.BlendSpeed, 0.01f, 0.0f, 100.0f);
         bChanged |= ImGui::DragInt("Priority", &Transition.Priority, 1);
+        if (ImGui::Button("Delete Transition"))
+        {
+            DeleteSelectedTransition();
+            return;
+        }
         if (bChanged)
         {
             InvalidateSelectedStateSequenceContext();
@@ -651,6 +683,82 @@ void FEditorAnimInstanceEditorWidget::AddTransition()
     Transition.ExpectedInt = 1;
     CurrentAsset->Transitions.push_back(Transition);
     SelectedTransitionIndex = static_cast<int32>(CurrentAsset->Transitions.size()) - 1;
+    SelectedStateIndex = -1;
+    InvalidateSelectedStateSequenceContext();
+    MarkDirty();
+}
+
+bool FEditorAnimInstanceEditorWidget::HasSelectedState() const
+{
+    return CurrentAsset &&
+        SelectedStateIndex >= 0 &&
+        SelectedStateIndex < static_cast<int32>(CurrentAsset->States.size()) &&
+        SelectedTransitionIndex < 0;
+}
+
+bool FEditorAnimInstanceEditorWidget::HasSelectedTransition() const
+{
+    return CurrentAsset &&
+        SelectedTransitionIndex >= 0 &&
+        SelectedTransitionIndex < static_cast<int32>(CurrentAsset->Transitions.size());
+}
+
+void FEditorAnimInstanceEditorWidget::DeleteSelectedState()
+{
+    if (!HasSelectedState())
+    {
+        return;
+    }
+
+    const FName RemovedStateName = CurrentAsset->States[SelectedStateIndex].Name;
+    CurrentAsset->States.erase(CurrentAsset->States.begin() + SelectedStateIndex);
+
+    CurrentAsset->Transitions.erase(
+        std::remove_if(
+            CurrentAsset->Transitions.begin(),
+            CurrentAsset->Transitions.end(),
+            [&RemovedStateName](const FAnimInstanceTransitionAssetData& Transition)
+            {
+                return Transition.FromState == RemovedStateName || Transition.ToState == RemovedStateName;
+            }),
+        CurrentAsset->Transitions.end());
+
+    if (CurrentAsset->EntryState == RemovedStateName)
+    {
+        CurrentAsset->EntryState = CurrentAsset->States.empty() ? FName::None : CurrentAsset->States.front().Name;
+    }
+
+    if (CurrentAsset->States.empty())
+    {
+        SelectedStateIndex = -1;
+    }
+    else
+    {
+        SelectedStateIndex = std::min(SelectedStateIndex, static_cast<int32>(CurrentAsset->States.size()) - 1);
+    }
+
+    SelectedTransitionIndex = -1;
+    InvalidateSelectedStateSequenceContext();
+    MarkDirty();
+}
+
+void FEditorAnimInstanceEditorWidget::DeleteSelectedTransition()
+{
+    if (!HasSelectedTransition())
+    {
+        return;
+    }
+
+    CurrentAsset->Transitions.erase(CurrentAsset->Transitions.begin() + SelectedTransitionIndex);
+    if (CurrentAsset->Transitions.empty())
+    {
+        SelectedTransitionIndex = -1;
+    }
+    else
+    {
+        SelectedTransitionIndex = std::min(SelectedTransitionIndex, static_cast<int32>(CurrentAsset->Transitions.size()) - 1);
+    }
+
     SelectedStateIndex = -1;
     InvalidateSelectedStateSequenceContext();
     MarkDirty();
