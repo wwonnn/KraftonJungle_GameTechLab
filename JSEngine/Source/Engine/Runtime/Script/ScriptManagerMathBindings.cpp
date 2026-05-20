@@ -5,6 +5,7 @@
 #include "Geometry/Transform.h"
 #include "Math/Vector.h"
 #include "Object/Object.h"
+#include "Reflection/Class.h"
 #include "Runtime/Script/ScriptUtils.h"
 #include "ThirdParty/sol/sol.hpp"
 

@@ -11,6 +11,7 @@
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceViewerUiHelpers.h"
 #include "Object/ObjectFactory.h"
+#include "Reflection/Class.h"
 
 #include "ImGui/imgui.h"
 

@@ -4,7 +4,7 @@
 #undef CURRENT_FILE_ID
 #define CURRENT_FILE_ID Engine_Object_Object_h
 
-#define Engine_Object_Object_h_14_GENERATED_BODY \
+#define Engine_Object_Object_h_24_GENERATED_BODY \
 public: \
     friend const UClass* Z_Construct_UClass_UObject(); \
     using ThisClass = UObject; \
