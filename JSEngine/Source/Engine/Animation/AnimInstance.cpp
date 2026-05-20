@@ -42,6 +42,11 @@ namespace
         return (bIncludeStartBoundary ? NotifyTime <= StartTime : NotifyTime < StartTime) && NotifyTime >= EndTime;
     }
 
+    FString NormalizeSkeletonPathForComparison(const FString& Path)
+    {
+        return FPaths::Normalize(FPaths::ToProjectRelativePath(Path));
+    }
+
     float GetNotifyStateTriggerTime(
         const FAnimNotifyEvent& NotifyEvent,
         float SequenceLength,
@@ -217,11 +222,32 @@ bool UAnimInstance::PrepareSequenceForPlayback(UAnimSequence* Sequence)
         !SequenceSkeletonPath.empty() &&
         MeshSkeletonPath != SequenceSkeletonPath)
     {
-        UE_LOG_WARNING("[AnimInstance] Sequence skeleton mismatch | Sequence=%s | MeshSkeleton=%s | SequenceSkeleton=%s",
-            Sequence->GetName().c_str(),
-            MeshSkeletonPath.c_str(),
-            SequenceSkeletonPath.c_str());
-        return false;
+        if (!IsSkeletonPathCompatible(MeshSkeleton, MeshSkeletonPath, SequenceSkeletonPath))
+        {
+            SequenceBoneTrackRemaps.erase(Sequence);
+            UE_LOG_WARNING("[AnimInstance] Sequence skeleton mismatch | Sequence=%s | MeshSkeleton=%s | SequenceSkeleton=%s",
+                Sequence->GetName().c_str(),
+                MeshSkeletonPath.c_str(),
+                SequenceSkeletonPath.c_str());
+            return false;
+        }
+
+        TArray<int32> TrackToBoneIndex;
+        if (!BuildCompatibleSkeletonRemap(Sequence, MeshSkeleton, TrackToBoneIndex))
+        {
+            SequenceBoneTrackRemaps.erase(Sequence);
+            UE_LOG_WARNING("[AnimInstance] Failed to remap compatible skeleton sequence | Sequence=%s | MeshSkeleton=%s | SequenceSkeleton=%s",
+                Sequence->GetName().c_str(),
+                MeshSkeletonPath.c_str(),
+                SequenceSkeletonPath.c_str());
+            return false;
+        }
+
+        SequenceBoneTrackRemaps[Sequence] = TrackToBoneIndex;
+    }
+    else
+    {
+        SequenceBoneTrackRemaps.erase(Sequence);
     }
 
     Sequence->SetSkeleton(MeshSkeleton);
@@ -231,6 +257,79 @@ bool UAnimInstance::PrepareSequenceForPlayback(UAnimSequence* Sequence)
     }
 
     return true;
+}
+
+bool UAnimInstance::IsSkeletonPathCompatible(
+    const USkeleton* TargetSkeleton,
+    const FString& TargetSkeletonPath,
+    const FString& SourceSkeletonPath) const
+{
+    if (!TargetSkeleton || SourceSkeletonPath.empty())
+    {
+        return false;
+    }
+
+    const FString NormalizedTargetPath = NormalizeSkeletonPathForComparison(TargetSkeletonPath);
+    const FString NormalizedSourcePath = NormalizeSkeletonPathForComparison(SourceSkeletonPath);
+    if (NormalizedTargetPath.empty() || NormalizedSourcePath.empty())
+    {
+        return false;
+    }
+
+    if (NormalizedTargetPath == NormalizedSourcePath)
+    {
+        return true;
+    }
+
+    for (const FString& CompatibleSkeletonPath : TargetSkeleton->GetCompatibleSkeletons())
+    {
+        if (NormalizeSkeletonPathForComparison(CompatibleSkeletonPath) == NormalizedSourcePath)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool UAnimInstance::BuildCompatibleSkeletonRemap(
+    const UAnimSequence* Sequence,
+    const USkeleton* TargetSkeleton,
+    TArray<int32>& OutTrackToBoneIndex) const
+{
+    const UAnimDataModel* Model = GetValidAnimDataModel(Sequence);
+    if (!Model || !TargetSkeleton || !TargetSkeleton->HasValidSkeletonData())
+    {
+        return false;
+    }
+
+    OutTrackToBoneIndex.clear();
+    OutTrackToBoneIndex.reserve(Model->BoneAnimationTracks.size());
+
+    bool bMappedAnyTrack = false;
+    for (const FBoneAnimationTrack& Track : Model->BoneAnimationTracks)
+    {
+        if (!Track.Name.IsValid())
+        {
+            UE_LOG_WARNING("[AnimInstance] Compatible skeleton remap failed: invalid track bone name | Sequence=%s",
+                Sequence ? Sequence->GetName().c_str() : "<null>");
+            return false;
+        }
+
+        const int32 TargetBoneIndex = TargetSkeleton->FindBoneIndex(Track.Name);
+        if (TargetBoneIndex < 0)
+        {
+            UE_LOG_WARNING("[AnimInstance] Compatible skeleton remap failed: missing target bone | Sequence=%s | Bone=%s",
+                Sequence ? Sequence->GetName().c_str() : "<null>",
+                Track.Name.ToString().c_str());
+            return false;
+        }
+
+        OutTrackToBoneIndex.push_back(TargetBoneIndex);
+        bMappedAnyTrack = true;
+    }
+
+    return bMappedAnyTrack || Model->BoneAnimationTracks.empty();
 }
 
 bool UAnimInstance::BuildStateMachineFromAsset(UAnimInstanceAsset* Asset)
@@ -557,6 +656,12 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
         const FBoneAnimationTrack& Track = Model->BoneAnimationTracks[i];
         const FRawAnimSequenceTrack& RawTrack = Track.InternalTrackData;
         int32 BoneIndex = Track.BoneTreeIndex;
+        auto RemapIt = SequenceBoneTrackRemaps.find(Sequence);
+        if (RemapIt != SequenceBoneTrackRemaps.end() && i < static_cast<int32>(RemapIt->second.size()))
+        {
+            BoneIndex = RemapIt->second[i];
+        }
+
         if (BoneIndex < 0)
         {
             continue;
