@@ -62,7 +62,7 @@ protected:
     FPrimitiveRenderProxy* CreateRenderProxy() override;
 
 private:
-	UPROPERTY(EditAnywhere, DisplayName="Particle")
+	UPROPERTY(EditAnywhere, DisplayName="Texture")
 	FName TextureName;
 	UTexture* Texture = nullptr; // ResourceManager 소유, 여기선 참조만
 	FColor Color = FColor::White();
