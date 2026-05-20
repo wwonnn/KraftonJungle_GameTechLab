@@ -44,9 +44,14 @@ void FAnimationSequenceEditorState::Reset()
     DraggedNotifyEventIndex = -1;
     SelectedCurveIndex = -1;
     HoveredCurveIndex = -1;
+    bHasHoveredCurveSample = false;
+    HoveredCurveSampleTime = 0.0f;
+    HoveredCurveSampleValue = 0.0f;
+    HoveredCurveNearestKeyIndex = -1;
     HoveredSequencerRowId = FAnimationSequenceSequencerRowId();
     FocusedSequencerRowId = FAnimationSequenceSequencerRowId();
     bDraggingNotify = false;
+    ActiveNotifyDragMode = EAnimNotifyDragMode::None;
     DraggedNotifyGrabOffsetTime = 0.0f;
 }
 

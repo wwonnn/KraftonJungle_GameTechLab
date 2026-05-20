@@ -71,6 +71,78 @@ namespace AnimNotifySemanticFieldNames
         return Key;
     }
 
+    const FString& EventNameKey()
+    {
+        static const FString Key = "EventName";
+        return Key;
+    }
+
+    const FString& EndEventNameKey()
+    {
+        static const FString Key = "EndEventName";
+        return Key;
+    }
+
+    const FString& PayloadKey()
+    {
+        static const FString Key = "Payload";
+        return Key;
+    }
+
+    const FString& EffectKey()
+    {
+        static const FString Key = "Effect";
+        return Key;
+    }
+
+    const FString& DecalKey()
+    {
+        static const FString Key = "Decal";
+        return Key;
+    }
+
+    const FString& AttachedKey()
+    {
+        static const FString Key = "Attached";
+        return Key;
+    }
+
+    const FString& ShakeKey()
+    {
+        static const FString Key = "Shake";
+        return Key;
+    }
+
+    const FString& ScaleKey()
+    {
+        static const FString Key = "Scale";
+        return Key;
+    }
+
+    const FString& TraceDistanceKey()
+    {
+        static const FString Key = "TraceDistance";
+        return Key;
+    }
+
+    const FString& SizeKey()
+    {
+        static const FString Key = "Size";
+        return Key;
+    }
+
+    const FString& LifetimeKey()
+    {
+        static const FString Key = "Lifetime";
+        return Key;
+    }
+
+    const FString& AlignToHitNormalKey()
+    {
+        static const FString Key = "AlignToHitNormal";
+        return Key;
+    }
+
     const TArray<FString>& GetLegacyAliases(const FString& CanonicalKey)
     {
         static const TArray<FString> SoundCueAliases = { LegacySoundKey() };
@@ -109,6 +181,18 @@ namespace AnimNotifySemanticFieldNames
         static const TArray<FString> SpatializedKeys = { SpatializedKey() };
         static const TArray<FString> ComponentNameKeys = { ComponentNameKey(), LegacyComponentKey() };
         static const TArray<FString> AttackIdKeys = { AttackIdKey() };
+        static const TArray<FString> EventNameKeys = { EventNameKey() };
+        static const TArray<FString> EndEventNameKeys = { EndEventNameKey() };
+        static const TArray<FString> PayloadKeys = { PayloadKey() };
+        static const TArray<FString> EffectKeys = { EffectKey() };
+        static const TArray<FString> DecalKeys = { DecalKey() };
+        static const TArray<FString> AttachedKeys = { AttachedKey() };
+        static const TArray<FString> ShakeKeys = { ShakeKey() };
+        static const TArray<FString> ScaleKeys = { ScaleKey() };
+        static const TArray<FString> TraceDistanceKeys = { TraceDistanceKey() };
+        static const TArray<FString> SizeKeys = { SizeKey() };
+        static const TArray<FString> LifetimeKeys = { LifetimeKey() };
+        static const TArray<FString> AlignToHitNormalKeys = { AlignToHitNormalKey() };
 
         if (CanonicalKey == SoundCueKey())
         {
@@ -138,6 +222,66 @@ namespace AnimNotifySemanticFieldNames
         if (CanonicalKey == AttackIdKey())
         {
             return AttackIdKeys;
+        }
+
+        if (CanonicalKey == EventNameKey())
+        {
+            return EventNameKeys;
+        }
+
+        if (CanonicalKey == EndEventNameKey())
+        {
+            return EndEventNameKeys;
+        }
+
+        if (CanonicalKey == PayloadKey())
+        {
+            return PayloadKeys;
+        }
+
+        if (CanonicalKey == EffectKey())
+        {
+            return EffectKeys;
+        }
+
+        if (CanonicalKey == DecalKey())
+        {
+            return DecalKeys;
+        }
+
+        if (CanonicalKey == AttachedKey())
+        {
+            return AttachedKeys;
+        }
+
+        if (CanonicalKey == ShakeKey())
+        {
+            return ShakeKeys;
+        }
+
+        if (CanonicalKey == ScaleKey())
+        {
+            return ScaleKeys;
+        }
+
+        if (CanonicalKey == TraceDistanceKey())
+        {
+            return TraceDistanceKeys;
+        }
+
+        if (CanonicalKey == SizeKey())
+        {
+            return SizeKeys;
+        }
+
+        if (CanonicalKey == LifetimeKey())
+        {
+            return LifetimeKeys;
+        }
+
+        if (CanonicalKey == AlignToHitNormalKey())
+        {
+            return AlignToHitNormalKeys;
         }
 
         return EmptyKeys();

@@ -66,6 +66,66 @@ void ULuaAnimInstance::NativeAnimNotifyEnd(const UAnimSequence* Sequence, const 
     CallNamedLuaNotify("AnimNotifyEnd_", NotifyEvent);
 }
 
+void ULuaAnimInstance::NativeGameplayAnimNotifyEvent(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& EventName,
+    const FString& Payload)
+{
+    (void)Sequence;
+    CallLuaGameplayNotify("AnimGameplayEvent", EventName, Payload, NotifyEvent);
+}
+
+void ULuaAnimInstance::NativeCameraShakeAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& Shake,
+    float Scale)
+{
+    (void)Sequence;
+    CallLuaCameraShakeNotify("AnimCameraShake", Shake, Scale, NotifyEvent);
+}
+
+void ULuaAnimInstance::NativeFootstepSurfaceAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& EventName,
+    const FString& SurfaceName,
+    const FString& Payload,
+    const FVector& HitLocation)
+{
+    (void)Sequence;
+    CallLuaFootstepSurfaceNotify("AnimFootstepSurface", EventName, SurfaceName, Payload, HitLocation, NotifyEvent);
+}
+
+void ULuaAnimInstance::NativePlayVFXAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& Effect,
+    const FVector& Location,
+    const FName& SocketName,
+    bool bAttached,
+    float Scale)
+{
+    (void)Sequence;
+    CallLuaPlayVFXNotify("AnimPlayVFX", Effect, Location, SocketName.ToString(), bAttached, Scale, NotifyEvent);
+}
+
+void ULuaAnimInstance::NativeSpawnDecalAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& Decal,
+    const FVector& Location,
+    const FVector& Normal,
+    const FName& SocketName,
+    float Size,
+    float Lifetime,
+    bool bAlignToHitNormal)
+{
+    (void)Sequence;
+    CallLuaSpawnDecalNotify("AnimSpawnDecal", Decal, Location, Normal, SocketName.ToString(), Size, Lifetime, bAlignToHitNormal, NotifyEvent);
+}
+
 void ULuaAnimInstance::ClearLuaStateReferences()
 {
     ScriptEnv = sol::environment{};
@@ -250,6 +310,146 @@ void ULuaAnimInstance::CallLuaNotifyTick(const char* FunctionName, const FAnimNo
 
     sol::protected_function Func = FuncObj.as<sol::protected_function>();
     sol::protected_function_result Result = Func(ScriptInstance, NotifyEvent, DeltaTime);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallLuaGameplayNotify(
+    const char* FunctionName,
+    const FString& EventName,
+    const FString& Payload,
+    const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, EventName, Payload, NotifyEvent);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallLuaCameraShakeNotify(
+    const char* FunctionName,
+    const FString& Shake,
+    float Scale,
+    const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, Shake, Scale, NotifyEvent);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallLuaFootstepSurfaceNotify(
+    const char* FunctionName,
+    const FString& EventName,
+    const FString& SurfaceName,
+    const FString& Payload,
+    const FVector& HitLocation,
+    const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, EventName, SurfaceName, Payload, HitLocation, NotifyEvent);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallLuaPlayVFXNotify(
+    const char* FunctionName,
+    const FString& Effect,
+    const FVector& Location,
+    const FString& SocketName,
+    bool bAttached,
+    float Scale,
+    const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, Effect, Location, SocketName, bAttached, Scale, NotifyEvent);
+    if (!Result.valid())
+    {
+        sol::error Err = Result;
+        UE_LOG_ERROR("[LuaAnimInstance] Lua Error in %s: %s", FunctionName, Err.what());
+    }
+}
+
+void ULuaAnimInstance::CallLuaSpawnDecalNotify(
+    const char* FunctionName,
+    const FString& Decal,
+    const FVector& Location,
+    const FVector& Normal,
+    const FString& SocketName,
+    float Size,
+    float Lifetime,
+    bool bAlignToHitNormal,
+    const FAnimNotifyEvent& NotifyEvent)
+{
+    if (!ScriptInstance.valid())
+    {
+        return;
+    }
+
+    sol::object FuncObj = ScriptInstance[FunctionName];
+    if (!FuncObj.valid() || FuncObj.get_type() != sol::type::function)
+    {
+        return;
+    }
+
+    sol::protected_function Func = FuncObj.as<sol::protected_function>();
+    sol::protected_function_result Result = Func(ScriptInstance, Decal, Location, Normal, SocketName, Size, Lifetime, bAlignToHitNormal, NotifyEvent);
     if (!Result.valid())
     {
         sol::error Err = Result;

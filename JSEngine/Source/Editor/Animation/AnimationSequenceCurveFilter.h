@@ -29,6 +29,8 @@ namespace AnimationSequenceCurveFilter
 
     bool IsCurveTypeEnabled(const FAnimationSequenceEditorState& State, EAnimCurveType CurveType);
     void SetCurveTypeEnabled(FAnimationSequenceEditorState& State, EAnimCurveType CurveType, bool bEnabled);
+    void SetAllCurveTypesEnabled(FAnimationSequenceEditorState& State, bool bEnabled);
+    void SetExclusiveCurveTypeVisible(FAnimationSequenceEditorState& State, EAnimCurveType CurveType);
 
     TArray<FAnimationSequenceCurveViewGroup> BuildCurveViewGroups(
         const UAnimSequence* Sequence,

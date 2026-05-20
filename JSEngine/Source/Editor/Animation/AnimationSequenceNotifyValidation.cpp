@@ -2,6 +2,7 @@
 
 #include "Animation/AnimNotify.h"
 #include "Animation/AnimNotifyPayloadParser.h"
+#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceNotifyPayloadSchema.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -9,10 +10,22 @@
 #include "Object/ObjectFactory.h"
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 
 namespace
 {
+    bool HasNonWhitespaceValue(const FString& Value)
+    {
+        return std::any_of(
+            Value.begin(),
+            Value.end(),
+            [](char Character)
+            {
+                return !std::isspace(static_cast<unsigned char>(Character));
+            });
+    }
+
     const UClass* FindRegisteredClass(const FString& TypeName)
     {
         if (TypeName.empty())
@@ -71,7 +84,7 @@ namespace
             }
 
             const TArray<FString> LookupKeys = GetAnimNotifyPayloadFieldLookupKeys(Field);
-            if (!Payload.HasAnyValue(LookupKeys) || Payload.GetStringAny(LookupKeys).empty())
+            if (!Payload.HasAnyValue(LookupKeys) || !HasNonWhitespaceValue(Payload.GetStringAny(LookupKeys)))
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Error,
@@ -107,6 +120,21 @@ namespace
                         EAnimNotifyValidationSeverity::Warning,
                         EAnimNotifyValidationField::Payload,
                         Field.Label + " value is invalid. Expected a numeric value.",
+                        PayloadExampleHint,
+                        TrackIndex,
+                        EventIndex,
+                        StableId);
+                }
+            }
+            else if (Field.Type == EAnimNotifyPayloadFieldType::Int)
+            {
+                int32 ParsedValue = 0;
+                if (Payload.HasAnyValue(LookupKeys) && !Payload.TryGetIntAny(LookupKeys, ParsedValue))
+                {
+                    Report.AddIssue(
+                        EAnimNotifyValidationSeverity::Warning,
+                        EAnimNotifyValidationField::Payload,
+                        Field.Label + " value is invalid. Expected an integer value.",
                         PayloadExampleHint,
                         TrackIndex,
                         EventIndex,
@@ -176,6 +204,114 @@ namespace
                     EAnimNotifyValidationField::Payload,
                     "Component \"" + ComponentName + "\" was not found on the current preview actor.",
                     "AttackWindow payloads target primitive components by name.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
+        }
+    }
+
+    void AddBuiltInSpecificPayloadIssues(
+        FAnimNotifyValidationReport& Report,
+        const FAnimNotifyPayloadSchema& Schema,
+        const FAnimNotifyPayloadParser& Payload,
+        int32 TrackIndex,
+        int32 EventIndex,
+        const FGuid& StableId)
+    {
+        if (Schema.NotifyClassName == "UAnimNotify_CameraShake")
+        {
+            float Scale = 0.0f;
+            const TArray<FString> ScaleKeys =
+                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ScaleKey());
+            if (Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Scale should be greater than zero for camera shake playback.",
+                    "Use a positive scale such as 1.0 to preserve the authored shake strength.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
+        }
+        else if (Schema.NotifyClassName == "UAnimNotify_PlayVFX")
+        {
+            float Scale = 0.0f;
+            const TArray<FString> ScaleKeys =
+                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ScaleKey());
+            if (Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Scale should be greater than zero for VFX playback.",
+                    "Use a positive scale such as 1.0 to preserve the authored effect size.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
+        }
+        else if (Schema.NotifyClassName == "UAnimNotify_FootstepSurfaceEvent")
+        {
+            float TraceDistance = 0.0f;
+            const TArray<FString> LookupKeys =
+                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::TraceDistanceKey());
+            if (Payload.HasAnyValue(LookupKeys) && Payload.TryGetFloatAny(LookupKeys, TraceDistance) && TraceDistance <= 0.0f)
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Trace Distance should be greater than zero for footstep surface resolution.",
+                    "Use a positive downward trace distance such as 25.0.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
+        }
+        else if (Schema.NotifyClassName == "UAnimNotify_SpawnDecal")
+        {
+            float TraceDistance = 0.0f;
+            const TArray<FString> TraceDistanceKeys =
+                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::TraceDistanceKey());
+            if (Payload.HasAnyValue(TraceDistanceKeys) && Payload.TryGetFloatAny(TraceDistanceKeys, TraceDistance) && TraceDistance <= 0.0f)
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Trace Distance should be greater than zero for decal surface resolution.",
+                    "Use a positive downward trace distance such as 50.0.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
+
+            float Size = 0.0f;
+            const TArray<FString> SizeKeys =
+                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SizeKey());
+            if (Payload.HasAnyValue(SizeKeys) && Payload.TryGetFloatAny(SizeKeys, Size) && Size <= 0.0f)
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Size should be greater than zero for decal spawning.",
+                    "Use a positive decal size such as 1.0.",
+                    TrackIndex,
+                    EventIndex,
+                    StableId);
+            }
+
+            float Lifetime = 0.0f;
+            const TArray<FString> LifetimeKeys =
+                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::LifetimeKey());
+            if (Payload.HasAnyValue(LifetimeKeys) && Payload.TryGetFloatAny(LifetimeKeys, Lifetime) && Lifetime < 0.0f)
+            {
+                Report.AddIssue(
+                    EAnimNotifyValidationSeverity::Warning,
+                    EAnimNotifyValidationField::Payload,
+                    "Lifetime should not be negative for decal spawning.",
+                    "Use zero for the default lifetime or a positive duration such as 2.0.",
                     TrackIndex,
                     EventIndex,
                     StableId);
@@ -345,6 +481,7 @@ FAnimNotifyValidationReport ValidateAnimNotifyEvent(
         AddRequiredPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
         AddMalformedPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
         AddPreviewContextIssues(Report, *Schema, Payload, Context, TrackIndex, EventIndex, NotifyEvent.StableId);
+        AddBuiltInSpecificPayloadIssues(Report, *Schema, Payload, TrackIndex, EventIndex, NotifyEvent.StableId);
     }
 
     return Report;

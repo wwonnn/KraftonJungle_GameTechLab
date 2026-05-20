@@ -6,6 +6,13 @@
 
 class UAnimSequence;
 
+enum class EAnimNotifyDragMode : uint8
+{
+    None = 0,
+    Move,
+    ResizeEnd,
+};
+
 class FAnimationSequenceEditorState
 {
 public:
@@ -85,8 +92,13 @@ public:
     int32 DraggedNotifyEventIndex = -1;
     int32 SelectedCurveIndex = -1;
     int32 HoveredCurveIndex = -1;
+    bool bHasHoveredCurveSample = false;
+    float HoveredCurveSampleTime = 0.0f;
+    float HoveredCurveSampleValue = 0.0f;
+    int32 HoveredCurveNearestKeyIndex = -1;
     FAnimationSequenceSequencerRowId HoveredSequencerRowId;
     FAnimationSequenceSequencerRowId FocusedSequencerRowId;
     bool bDraggingNotify = false;
+    EAnimNotifyDragMode ActiveNotifyDragMode = EAnimNotifyDragMode::None;
     float DraggedNotifyGrabOffsetTime = 0.0f;
 };

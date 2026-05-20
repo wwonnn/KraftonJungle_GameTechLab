@@ -17,6 +17,61 @@ public:
 };
 
 UCLASS()
+class UAnimNotify_GameplayEvent : public UAnimNotify
+{
+public:
+    GENERATED_BODY()
+
+    void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+};
+
+UCLASS()
+class UAnimNotify_CameraShake : public UAnimNotify
+{
+public:
+    GENERATED_BODY()
+
+    void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+};
+
+UCLASS()
+class UAnimNotify_FootstepSurfaceEvent : public UAnimNotify
+{
+public:
+    GENERATED_BODY()
+
+    void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+};
+
+UCLASS()
+class UAnimNotify_PlayVFX : public UAnimNotify
+{
+public:
+    GENERATED_BODY()
+
+    void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+};
+
+UCLASS()
+class UAnimNotify_SpawnDecal : public UAnimNotify
+{
+public:
+    GENERATED_BODY()
+
+    void Notify(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+};
+
+UCLASS()
+class UAnimNotifyState_GameplayEventWindow : public UAnimNotifyState
+{
+public:
+    GENERATED_BODY()
+
+    void NotifyBegin(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+    void NotifyEnd(USkeletalMeshComponent* MeshComponent, UAnimSequence* Animation, const FAnimNotifyEvent& NotifyEvent) override;
+};
+
+UCLASS()
 class UAnimNotifyState_PlayLoopingSFX : public UAnimNotifyState
 {
 public:

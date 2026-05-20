@@ -472,6 +472,8 @@ bool FAnimationSequenceEditorDocument::DeleteNotifyTrack(int32 TrackIndex)
     {
         EditorState.DraggedNotifyEventIndex = -1;
         EditorState.bDraggingNotify = false;
+        EditorState.ActiveNotifyDragMode = EAnimNotifyDragMode::None;
+        EditorState.DraggedNotifyGrabOffsetTime = 0.0f;
     }
 
     RemapSequencerRowIdAfterDelete(EditorState.HoveredSequencerRowId, TrackIndex);
@@ -744,6 +746,22 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyTime(float TimeSeconds, 
     return NewEventIndex >= 0;
 }
 
+bool FAnimationSequenceEditorDocument::SetSelectedNotifyEndTime(float EndTimeSeconds, bool bApplySnap)
+{
+    FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
+    if (!NotifyEvent)
+    {
+        return false;
+    }
+
+    const float ClampedEndTime = bApplySnap
+        ? EditorState.ClampOrSnapTime(EndTimeSeconds)
+        : EditorState.ClampTime(EndTimeSeconds);
+    NotifyEvent->Duration = std::max(0.0f, ClampedEndTime - NotifyEvent->Time);
+    MarkDirty();
+    return true;
+}
+
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyDuration(float DurationSeconds)
 {
     FAnimNotifyEvent* NotifyEvent = GetSelectedNotify();
@@ -878,6 +896,24 @@ bool FAnimationSequenceEditorDocument::ClearSelectedNotifyPayloadValue(const FSt
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
 
+bool FAnimationSequenceEditorDocument::SelectNotifyByStableId(int32 TrackIndex, const FGuid& StableId)
+{
+    const FAnimNotifyTrack* Track = GetNotifyTrack(TrackIndex);
+    if (!Track)
+    {
+        return false;
+    }
+
+    const int32 EventIndex = FindNotifyEventIndexById(*Track, StableId);
+    if (EventIndex < 0)
+    {
+        return false;
+    }
+
+    SelectNotify(TrackIndex, EventIndex);
+    return true;
+}
+
 void FAnimationSequenceEditorDocument::SelectNotify(int32 TrackIndex, int32 EventIndex)
 {
     EditorState.SelectedCurveIndex = -1;
@@ -897,6 +933,8 @@ void FAnimationSequenceEditorDocument::ClearNotifySelection()
     EditorState.DraggedNotifyTrackIndex = -1;
     EditorState.DraggedNotifyEventIndex = -1;
     EditorState.bDraggingNotify = false;
+    EditorState.ActiveNotifyDragMode = EAnimNotifyDragMode::None;
+    EditorState.DraggedNotifyGrabOffsetTime = 0.0f;
 }
 
 void FAnimationSequenceEditorDocument::MarkDirty()
@@ -972,5 +1010,7 @@ void FAnimationSequenceEditorDocument::ValidateNotifySelection()
         EditorState.DraggedNotifyTrackIndex = -1;
         EditorState.DraggedNotifyEventIndex = -1;
         EditorState.bDraggingNotify = false;
+        EditorState.ActiveNotifyDragMode = EAnimNotifyDragMode::None;
+        EditorState.DraggedNotifyGrabOffsetTime = 0.0f;
     }
 }

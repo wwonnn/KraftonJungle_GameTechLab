@@ -89,6 +89,23 @@ namespace
         const float Alpha = (Value - Range.MinValue) / RangeSize;
         return std::clamp(RowBottom - Alpha * (RowBottom - RowTop), RowTop, RowBottom);
     }
+
+    int32 FindNearestCurveKeyIndex(const FFloatCurve& Curve, float Time)
+    {
+        int32 BestIndex = -1;
+        float BestDistance = FLT_MAX;
+        for (int32 KeyIndex = 0; KeyIndex < static_cast<int32>(Curve.Keys.size()); ++KeyIndex)
+        {
+            const float Distance = std::fabs(Curve.Keys[KeyIndex].Time - Time);
+            if (Distance < BestDistance)
+            {
+                BestDistance = Distance;
+                BestIndex = KeyIndex;
+            }
+        }
+
+        return BestIndex;
+    }
 }
 
 void FAnimationSequenceCurveTrackWidget::RenderRows(
@@ -120,6 +137,32 @@ void FAnimationSequenceCurveTrackWidget::RenderRows(
         {
             State.HoveredCurveIndex = Row.SourceIndex;
             State.SetHoveredSequencerRow(Row.Id);
+
+            const float HoveredTime = Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x));
+            State.bHasHoveredCurveSample = true;
+            State.HoveredCurveSampleTime = HoveredTime;
+            State.HoveredCurveSampleValue = Row.Curve->Evaluate(HoveredTime);
+            State.HoveredCurveNearestKeyIndex = FindNearestCurveKeyIndex(*Row.Curve, HoveredTime);
+
+            const FString CurveName = Row.Curve->CurveName.IsValid() ? Row.Curve->CurveName.ToString() : FString("(Unnamed Curve)");
+            if (ImGui::BeginTooltip())
+            {
+                ImGui::TextUnformatted(CurveName.c_str());
+                ImGui::Separator();
+                ImGui::Text("Time %.3fs", HoveredTime);
+                ImGui::Text("Value %.3f", State.HoveredCurveSampleValue);
+                if (State.HoveredCurveNearestKeyIndex >= 0 &&
+                    State.HoveredCurveNearestKeyIndex < static_cast<int32>(Row.Curve->Keys.size()))
+                {
+                    const FCurveKey& NearestKey = Row.Curve->Keys[State.HoveredCurveNearestKeyIndex];
+                    ImGui::Text(
+                        "Key %d  %.3fs  %.3f",
+                        State.HoveredCurveNearestKeyIndex,
+                        NearestKey.Time,
+                        NearestKey.Value);
+                }
+                ImGui::EndTooltip();
+            }
         }
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
         {

@@ -13,6 +13,8 @@
 
 namespace
 {
+    constexpr float NotifyStateResizeHandleWidth = 8.0f;
+
     ImU32 ToImGuiColor(const FColor& Color, float AlphaScale)
     {
         const float Alpha = std::clamp(Color.A * AlphaScale, 0.0f, 1.0f);
@@ -46,6 +48,7 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
     {
         State.bDraggingNotify = false;
+        State.ActiveNotifyDragMode = EAnimNotifyDragMode::None;
         State.DraggedNotifyTrackIndex = -1;
         State.DraggedNotifyEventIndex = -1;
         State.DraggedNotifyGrabOffsetTime = 0.0f;
@@ -93,12 +96,23 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 State.SelectedNotifyTrackIndex == Row.SourceIndex &&
                 State.SelectedNotifyEventIndex == EventIndex;
             const bool bHovered = ImGui::IsItemHovered();
+            const bool bCanResizeEnd = NotifyEvent.IsState();
+            const float ResizeHandleMinX = std::max(MarkerMin.x, MarkerMax.x - NotifyStateResizeHandleWidth);
+            const bool bHoveredResizeHandle =
+                bCanResizeEnd &&
+                bHovered &&
+                ImGui::GetIO().MousePos.x >= ResizeHandleMinX &&
+                ImGui::GetIO().MousePos.x <= MarkerMax.x;
             if (bHovered)
             {
                 bMouseOverMarker = true;
                 State.HoveredNotifyTrackIndex = Row.SourceIndex;
                 State.HoveredNotifyEventIndex = EventIndex;
                 State.SetHoveredSequencerRow(Row.Id);
+                if (bHoveredResizeHandle)
+                {
+                    ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+                }
             }
 
             if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && Document)
@@ -106,8 +120,11 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 State.SetFocusedSequencerRow(Row.Id);
                 State.SelectedCurveIndex = -1;
                 State.HoveredCurveIndex = -1;
-                State.DraggedNotifyGrabOffsetTime =
-                    Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - NotifyEvent.Time;
+                State.ActiveNotifyDragMode =
+                    bHoveredResizeHandle ? EAnimNotifyDragMode::ResizeEnd : EAnimNotifyDragMode::Move;
+                State.DraggedNotifyGrabOffsetTime = State.ActiveNotifyDragMode == EAnimNotifyDragMode::Move
+                    ? (Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - NotifyEvent.Time)
+                    : 0.0f;
                 Document->SelectNotify(Row.SourceIndex, EventIndex);
             }
 
@@ -117,6 +134,10 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 State.DraggedNotifyTrackIndex = Row.SourceIndex;
                 State.DraggedNotifyEventIndex = EventIndex;
                 State.SelectedCurveIndex = -1;
+                if (State.ActiveNotifyDragMode == EAnimNotifyDragMode::None)
+                {
+                    State.ActiveNotifyDragMode = EAnimNotifyDragMode::Move;
+                }
                 if (Document)
                 {
                     Document->SelectNotify(Row.SourceIndex, EventIndex);
@@ -210,9 +231,16 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
 
     if (State.bDraggingNotify && ImGui::IsMouseDown(ImGuiMouseButton_Left) && Document && Document->GetSelectedNotify())
     {
-        const float NewTime =
-            Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - State.DraggedNotifyGrabOffsetTime;
-        Document->SetSelectedNotifyTime(NewTime, State.bSnapToFrames);
+        const float MouseTime = Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x));
+        if (State.ActiveNotifyDragMode == EAnimNotifyDragMode::ResizeEnd)
+        {
+            Document->SetSelectedNotifyEndTime(MouseTime, State.bSnapToFrames);
+        }
+        else
+        {
+            const float NewTime = MouseTime - State.DraggedNotifyGrabOffsetTime;
+            Document->SetSelectedNotifyTime(NewTime, State.bSnapToFrames);
+        }
     }
 
     if (Document && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !bMouseOverMarker)

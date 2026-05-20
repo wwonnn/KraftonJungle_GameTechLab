@@ -54,6 +54,41 @@ public:
     float GetSequenceLength() const;
     bool HasValidSequence() const;
     const TArray<FAnimNotifyEvent>& GetRecentNotifyEvents() const { return RecentNotifyEvents; }
+    void DispatchGameplayAnimNotifyEvent(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& EventName,
+        const FString& Payload);
+    void DispatchCameraShakeAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& Shake,
+        float Scale);
+    void DispatchFootstepSurfaceAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& EventName,
+        const FString& SurfaceName,
+        const FString& Payload,
+        const FVector& HitLocation);
+    void DispatchPlayVFXAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& Effect,
+        const FVector& Location,
+        const FName& SocketName,
+        bool bAttached,
+        float Scale);
+    void DispatchSpawnDecalAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& Decal,
+        const FVector& Location,
+        const FVector& Normal,
+        const FName& SocketName,
+        float Size,
+        float Lifetime,
+        bool bAlignToHitNormal);
 
     virtual void UpdateAnimation(float DeltaTime);		// 재생 시간 관리
     virtual void EvaluatePose(FSkeletonPose& OutPose);	// 시간 t에서 Bone의 Pose 계산
@@ -65,6 +100,41 @@ protected:
     virtual void NativeAnimNotifyBegin(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent) {}
     virtual void NativeAnimNotifyTick(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent, float DeltaTime) {}
     virtual void NativeAnimNotifyEnd(const UAnimSequence* Sequence, const FAnimNotifyEvent& NotifyEvent) {}
+    virtual void NativeGameplayAnimNotifyEvent(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& EventName,
+        const FString& Payload) {}
+    virtual void NativeCameraShakeAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& Shake,
+        float Scale) {}
+    virtual void NativeFootstepSurfaceAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& EventName,
+        const FString& SurfaceName,
+        const FString& Payload,
+        const FVector& HitLocation) {}
+    virtual void NativePlayVFXAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& Effect,
+        const FVector& Location,
+        const FName& SocketName,
+        bool bAttached,
+        float Scale) {}
+    virtual void NativeSpawnDecalAnimNotify(
+        const UAnimSequence* Sequence,
+        const FAnimNotifyEvent& NotifyEvent,
+        const FString& Decal,
+        const FVector& Location,
+        const FVector& Normal,
+        const FName& SocketName,
+        float Size,
+        float Lifetime,
+        bool bAlignToHitNormal) {}
 
     void InitializeReferencePose(FSkeletonPose& OutPose);
     void EvaluatePoseAtTime(const UAnimSequence* Sequence, float CurrentTime, TArray<FTransform>& OutLocalTransforms);

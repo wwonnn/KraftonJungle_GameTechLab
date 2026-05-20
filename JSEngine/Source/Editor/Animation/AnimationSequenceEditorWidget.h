@@ -35,6 +35,14 @@ public:
         FAnimationSequenceEditorState* InEditorState);
 
 private:
+    enum class ENotifyValidationBrowserSeverityFilter : uint8
+    {
+        All = 0,
+        Errors,
+        Warnings,
+        Info,
+    };
+
     TArray<FString> BuildPreviewOverlayLines() const;
     void RenderPreviewPane(float PreviewHeight, const TArray<FString>& PreviewOverlayLines);
     void RenderPreviewImage(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines);
@@ -76,7 +84,8 @@ private:
         bool bSelected = false) const;
     void RenderTransportControls(bool bCanTimelineControl, bool bCanPlaybackControl, float StripHeight);
     void RenderNotifyDetailsPanel();
-    void RenderCurveInspectionPanel() const;
+    void RenderNotifyValidationBrowser();
+    void RenderCurveInspectionPanel();
     void RenderRecentNotifySummary() const;
     void RenderNotifyValidationSummary(const FAnimNotifyValidationReport& Report) const;
     void RenderNotifyValidationIssues(
@@ -125,9 +134,17 @@ private:
     std::array<char, 256> NotifySocketNameEditBuffer = {};
     std::array<char, 256> NotifyComponentNameEditBuffer = {};
     std::array<char, 256> NotifyAttackIdEditBuffer = {};
+    std::array<char, 256> NotifyGameplayEventNameEditBuffer = {};
+    std::array<char, 256> NotifyGameplayEndEventNameEditBuffer = {};
+    std::array<char, 256> NotifyGameplayPayloadValueEditBuffer = {};
+    std::array<char, 256> NotifyVFXEffectEditBuffer = {};
+    std::array<char, 256> NotifyDecalEditBuffer = {};
+    std::array<char, 256> NotifyCameraShakeEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
     std::array<char, 128> TrackFilterEditBuffer = {};
     std::array<char, 64> TimelineRangeEditBuffer = {};
     FString ActiveTimelineRangeEditPopupId;
+    ENotifyValidationBrowserSeverityFilter ActiveNotifyValidationSeverityFilter =
+        ENotifyValidationBrowserSeverityFilter::All;
     float PlaybackSpeedCustomValue = 1.0f;
 };

@@ -58,6 +58,7 @@ public:
     bool MoveSelectedNotifyToTrack(int32 TargetTrackIndex);
     bool DeleteSelectedNotify();
     bool SetSelectedNotifyTime(float TimeSeconds, bool bApplySnap);
+    bool SetSelectedNotifyEndTime(float EndTimeSeconds, bool bApplySnap);
     bool SetSelectedNotifyDuration(float DurationSeconds);
     bool SetSelectedNotifyName(const FName& Name);
     bool SetSelectedNotifyColor(const FColor& Color);
@@ -70,6 +71,7 @@ public:
     bool SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value);
     bool SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value);
     bool ClearSelectedNotifyPayloadValue(const FString& Key);
+    bool SelectNotifyByStableId(int32 TrackIndex, const FGuid& StableId);
     void SelectNotify(int32 TrackIndex, int32 EventIndex);
     void ClearNotifySelection();
     void MarkDirty();

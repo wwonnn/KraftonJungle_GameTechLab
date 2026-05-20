@@ -7,6 +7,7 @@ enum class EAnimNotifyPayloadFieldType : uint8
     String = 0,
     Name,
     Float,
+    Int,
     Bool,
 };
 
@@ -26,6 +27,12 @@ enum class EAnimNotifySemanticFieldId : uint8
     Spatialized,
     ComponentName,
     AttackId,
+    EventName,
+    EndEventName,
+    PayloadValue,
+    Effect,
+    Decal,
+    Shake,
 };
 
 struct FAnimNotifyPayloadFieldDefinition

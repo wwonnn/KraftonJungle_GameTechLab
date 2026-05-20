@@ -82,6 +82,12 @@ const UClass* Z_Construct_UClass_UAnimInstanceAsset();
 const UClass* Z_Construct_UClass_UAnimNotify();
 const UClass* Z_Construct_UClass_UAnimNotifyState();
 const UClass* Z_Construct_UClass_UAnimNotify_PlaySFX();
+const UClass* Z_Construct_UClass_UAnimNotify_GameplayEvent();
+const UClass* Z_Construct_UClass_UAnimNotify_CameraShake();
+const UClass* Z_Construct_UClass_UAnimNotify_FootstepSurfaceEvent();
+const UClass* Z_Construct_UClass_UAnimNotify_PlayVFX();
+const UClass* Z_Construct_UClass_UAnimNotify_SpawnDecal();
+const UClass* Z_Construct_UClass_UAnimNotifyState_GameplayEventWindow();
 const UClass* Z_Construct_UClass_UAnimNotifyState_PlayLoopingSFX();
 const UClass* Z_Construct_UClass_UAnimNotifyState_AttackWindow();
 const UClass* Z_Construct_UClass_UAnimNotifyLog();
@@ -268,6 +274,66 @@ const UClass* UAnimNotify_PlaySFX::StaticClass()
 const UClass* UAnimNotify_PlaySFX::GetClass() const
 {
     return UAnimNotify_PlaySFX::StaticClass();
+}
+
+const UClass* UAnimNotify_GameplayEvent::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify_GameplayEvent();
+}
+
+const UClass* UAnimNotify_GameplayEvent::GetClass() const
+{
+    return UAnimNotify_GameplayEvent::StaticClass();
+}
+
+const UClass* UAnimNotify_CameraShake::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify_CameraShake();
+}
+
+const UClass* UAnimNotify_CameraShake::GetClass() const
+{
+    return UAnimNotify_CameraShake::StaticClass();
+}
+
+const UClass* UAnimNotify_FootstepSurfaceEvent::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify_FootstepSurfaceEvent();
+}
+
+const UClass* UAnimNotify_FootstepSurfaceEvent::GetClass() const
+{
+    return UAnimNotify_FootstepSurfaceEvent::StaticClass();
+}
+
+const UClass* UAnimNotify_PlayVFX::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify_PlayVFX();
+}
+
+const UClass* UAnimNotify_PlayVFX::GetClass() const
+{
+    return UAnimNotify_PlayVFX::StaticClass();
+}
+
+const UClass* UAnimNotify_SpawnDecal::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotify_SpawnDecal();
+}
+
+const UClass* UAnimNotify_SpawnDecal::GetClass() const
+{
+    return UAnimNotify_SpawnDecal::StaticClass();
+}
+
+const UClass* UAnimNotifyState_GameplayEventWindow::StaticClass()
+{
+    return Z_Construct_UClass_UAnimNotifyState_GameplayEventWindow();
+}
+
+const UClass* UAnimNotifyState_GameplayEventWindow::GetClass() const
+{
+    return UAnimNotifyState_GameplayEventWindow::StaticClass();
 }
 
 const UClass* UAnimNotifyState_PlayLoopingSFX::StaticClass()
@@ -1323,6 +1389,84 @@ struct FAutoRegisterFactory_UAnimNotify_PlaySFX
 };
 
 FAutoRegisterFactory_UAnimNotify_PlaySFX GAutoRegisterFactory_UAnimNotify_PlaySFX;
+
+struct FAutoRegisterFactory_UAnimNotify_GameplayEvent
+{
+    FAutoRegisterFactory_UAnimNotify_GameplayEvent()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify_GameplayEvent",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_GameplayEvent>(); },
+            UAnimNotify_GameplayEvent::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify_GameplayEvent GAutoRegisterFactory_UAnimNotify_GameplayEvent;
+
+struct FAutoRegisterFactory_UAnimNotify_CameraShake
+{
+    FAutoRegisterFactory_UAnimNotify_CameraShake()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify_CameraShake",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_CameraShake>(); },
+            UAnimNotify_CameraShake::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify_CameraShake GAutoRegisterFactory_UAnimNotify_CameraShake;
+
+struct FAutoRegisterFactory_UAnimNotify_FootstepSurfaceEvent
+{
+    FAutoRegisterFactory_UAnimNotify_FootstepSurfaceEvent()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify_FootstepSurfaceEvent",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_FootstepSurfaceEvent>(); },
+            UAnimNotify_FootstepSurfaceEvent::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify_FootstepSurfaceEvent GAutoRegisterFactory_UAnimNotify_FootstepSurfaceEvent;
+
+struct FAutoRegisterFactory_UAnimNotify_PlayVFX
+{
+    FAutoRegisterFactory_UAnimNotify_PlayVFX()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify_PlayVFX",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_PlayVFX>(); },
+            UAnimNotify_PlayVFX::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify_PlayVFX GAutoRegisterFactory_UAnimNotify_PlayVFX;
+
+struct FAutoRegisterFactory_UAnimNotify_SpawnDecal
+{
+    FAutoRegisterFactory_UAnimNotify_SpawnDecal()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotify_SpawnDecal",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotify_SpawnDecal>(); },
+            UAnimNotify_SpawnDecal::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotify_SpawnDecal GAutoRegisterFactory_UAnimNotify_SpawnDecal;
+
+struct FAutoRegisterFactory_UAnimNotifyState_GameplayEventWindow
+{
+    FAutoRegisterFactory_UAnimNotifyState_GameplayEventWindow()
+    {
+        FObjectFactory::Get().Register(
+            "UAnimNotifyState_GameplayEventWindow",
+            []() -> UObject* { return UObjectManager::Get().CreateObject<UAnimNotifyState_GameplayEventWindow>(); },
+            UAnimNotifyState_GameplayEventWindow::StaticClass());
+    }
+};
+
+FAutoRegisterFactory_UAnimNotifyState_GameplayEventWindow GAutoRegisterFactory_UAnimNotifyState_GameplayEventWindow;
 
 struct FAutoRegisterFactory_UAnimNotifyState_PlayLoopingSFX
 {
@@ -2633,6 +2777,60 @@ const UClass* Z_Construct_UClass_UAnimNotify_PlaySFX()
     static const uint32 PropertyCount = 0;
 
     static const UClass ClassInfo("UAnimNotify_PlaySFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlaySFX), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify_GameplayEvent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify_GameplayEvent", UAnimNotify::StaticClass(), sizeof(UAnimNotify_GameplayEvent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify_CameraShake()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify_CameraShake", UAnimNotify::StaticClass(), sizeof(UAnimNotify_CameraShake), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify_FootstepSurfaceEvent()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify_FootstepSurfaceEvent", UAnimNotify::StaticClass(), sizeof(UAnimNotify_FootstepSurfaceEvent), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify_PlayVFX()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify_PlayVFX", UAnimNotify::StaticClass(), sizeof(UAnimNotify_PlayVFX), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotify_SpawnDecal()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotify_SpawnDecal", UAnimNotify::StaticClass(), sizeof(UAnimNotify_SpawnDecal), Properties, PropertyCount);
+    return &ClassInfo;
+}
+
+const UClass* Z_Construct_UClass_UAnimNotifyState_GameplayEventWindow()
+{
+    static const FProperty* const* Properties = nullptr;
+    static const uint32 PropertyCount = 0;
+
+    static const UClass ClassInfo("UAnimNotifyState_GameplayEventWindow", UAnimNotifyState::StaticClass(), sizeof(UAnimNotifyState_GameplayEventWindow), Properties, PropertyCount);
     return &ClassInfo;
 }
 
