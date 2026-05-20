@@ -85,6 +85,9 @@
     <Filter Include="Source\Engine\Animation">
       <UniqueIdentifier>{ec03551c-6f89-4b63-b715-98e8c0a38102}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\Animation\Compression">
+      <UniqueIdentifier>{798e8fbb-774d-4eb9-92a6-35a1c0f72ef8}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\Collision">
       <UniqueIdentifier>{b6e31b62-ff44-29dc-3a64-69f9805cba88}</UniqueIdentifier>
     </Filter>
@@ -1169,6 +1172,10 @@
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstanceAsset.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimData\AnimSequence.cpp" />
+    <ClCompile Include="Source\Engine\Animation\Compression\AclCompression.cpp">
+      <Filter>Source\Engine\Animation\Compression</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Asset\AnimInstanceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Asset\AnimSequenceAssetLoader.cpp" />
     <ClCompile Include="Source\Engine\Render\Resource\VertexFactoryTypes.cpp" />
@@ -2239,6 +2246,9 @@
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstanceAsset.h" />
+    <ClInclude Include="Source\Engine\Animation\Compression\AclCompression.h">
+      <Filter>Source\Engine\Animation\Compression</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Asset\AnimInstanceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Asset\AnimSequenceAssetLoader.h" />
     <ClInclude Include="Source\Engine\Animation\AnimData\AnimationAsset.h" />

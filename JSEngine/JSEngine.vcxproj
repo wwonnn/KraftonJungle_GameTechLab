@@ -113,35 +113,35 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;Source\Editor;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;Source\Editor;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;Source\Editor;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;Source\Editor;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;Source\Editor;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;Source\Editor;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;Source\Editor;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;Source\Editor;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ObjViewer|x64'">
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;Source\Editor;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;Source\Editor;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -149,7 +149,7 @@
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
     <TargetName>JSEngineGame</TargetName>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -157,7 +157,7 @@
     <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Build\$(Configuration)\</IntDir>
     <TargetName>JSEngineGame</TargetName>
-    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;.;$(IncludePath)</IncludePath>
+    <IncludePath>Source\Engine;Source;ThirdParty;ThirdParty\SoLoud\include;ThirdParty\RmlUi\Include;ThirdParty\ImGui;ThirdParty\ACL\includes;ThirdParty\ACL\external\rtm\includes;.;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -203,7 +203,7 @@
       <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty\ACL\includes;$(ProjectDir)ThirdParty\ACL\external\rtm\includes;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -224,7 +224,7 @@
       <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty\ACL\includes;$(ProjectDir)ThirdParty\ACL\external\rtm\includes;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -245,7 +245,7 @@
       <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty\ACL\includes;$(ProjectDir)ThirdParty\ACL\external\rtm\includes;$(ProjectDir)ThirdParty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -262,7 +262,7 @@
       <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Source\Editor;$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source\Editor;$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty\ACL\includes;$(ProjectDir)ThirdParty\ACL\external\rtm\includes;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -283,7 +283,7 @@
       <AdditionalOptions>/utf-8 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ExceptionHandling>Async</ExceptionHandling>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Source\Editor;$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source\Editor;$(ProjectDir)ThirdParty\luajit\src;$(ProjectDir)ThirdParty\SoLoud\include;$(ProjectDir)ThirdParty\RmlUi\Include;$(ProjectDir)ThirdParty\ACL\includes;$(ProjectDir)ThirdParty\ACL\external\rtm\includes;$(ProjectDir)ThirdParty;$(ProjectDir)ThirdParty\FBX\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -331,6 +331,8 @@
     <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadViews.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimData\AnimSequence.cpp" />
+    <ClCompile Include="Source\Engine\Animation\Compression\AclCompression.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
     <ClCompile Include="Source\Editor\UI\EditorViewerWindowWidget.cpp">
@@ -1053,6 +1055,7 @@
     <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadViews.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
+    <ClInclude Include="Source\Engine\Animation\Compression\AclCompression.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />
     <ClInclude Include="Source\Editor\UI\EditorViewerWindowWidget.h" />
