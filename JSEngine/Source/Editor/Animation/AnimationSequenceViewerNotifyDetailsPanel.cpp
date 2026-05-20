@@ -515,270 +515,315 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
         }
     };
 
-    ImGui::TextDisabled("%s Payload", Schema->SectionLabel.c_str());
-    for (const FAnimNotifyPayloadFieldDefinition& Field : Schema->Fields)
+    auto ApplyTextFieldValue = [this](const FAnimNotifyPayloadFieldDefinition& Field, const FString& Value)
     {
-        auto ApplyTextFieldValue = [&](const FString& Value)
-        {
-            return Field.Type == EAnimNotifyPayloadFieldType::Name
-                ? (Value.empty()
-                    ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
-                    : Document->SetSelectedNotifyPayloadNameValue(Field.Key, FName(Value)))
-                : (Value.empty()
-                    ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
-                    : Document->SetSelectedNotifyPayloadStringValue(Field.Key, Value));
-        };
+        return Field.Type == EAnimNotifyPayloadFieldType::Name
+            ? (Value.empty()
+                ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
+                : Document->SetSelectedNotifyPayloadNameValue(Field.Key, FName(Value)))
+            : (Value.empty()
+                ? Document->ClearSelectedNotifyPayloadValue(Field.Key)
+                : Document->SetSelectedNotifyPayloadStringValue(Field.Key, Value));
+    };
 
-        switch (Field.Type)
+    auto RenderAssetPickerField = [this, &RefreshPayloadBuffers, &ApplyTextFieldValue](
+        const FAnimNotifyPayloadFieldDefinition& Field,
+        std::array<char, 256>& TargetBuffer)
+    {
+        // Picker-first UX is editor sugar only. The stored payload value
+        // remains the same canonical string so serialization and runtime
+        // notify behavior stay unchanged.
+        const TArray<FNotifyAssetPickerEntry> PickerEntries =
+            BuildNotifyAssetPickerEntries(Field.AssetKind);
+        const FString CurrentValue = TargetBuffer.data();
+        const FString CurrentDisplay = ResolveNotifyAssetPickerDisplayName(
+            Field.AssetKind,
+            CurrentValue,
+            PickerEntries);
+        const FString PopupId = "##NotifyAssetPicker_" + Field.Key;
+
+        ImGui::Text("%s", Field.Label.c_str());
+        ImGui::Indent(NotifyPanelSectionIndent);
+        ImGui::TextWrapped(
+            "%s",
+            CurrentDisplay.empty() ? "(None)" : CurrentDisplay.c_str());
+        if (!CurrentValue.empty())
         {
-        case EAnimNotifyPayloadFieldType::String:
-        case EAnimNotifyPayloadFieldType::Name:
+            ImGui::TextDisabled("%s", CurrentValue.c_str());
+        }
+
+        const FString PickButtonId = "Pick##" + Field.Key;
+        const FString ClearButtonId = "Clear##" + Field.Key;
+        const bool bOpenPopup = ImGui::Button(PickButtonId.c_str());
+        ImGui::SameLine();
+        const bool bClearRequested = ImGui::Button(ClearButtonId.c_str());
+        if (bClearRequested && ApplyTextFieldValue(Field, FString()))
         {
-            std::array<char, 256>* TargetBuffer = GetNotifyTextFieldBuffer(Field.SemanticId);
-            if (!TargetBuffer)
+            RefreshPayloadBuffers();
+        }
+
+        if (bOpenPopup)
+        {
+            if (ActiveNotifyAssetPickerPopupId != PopupId)
             {
-                continue;
+                NotifyAssetPickerSearchBuffer.fill('\0');
+                ActiveNotifyAssetPickerPopupId = PopupId;
+            }
+            ImGui::OpenPopup(PopupId.c_str());
+        }
+
+        if (ImGui::BeginPopup(PopupId.c_str()))
+        {
+            if (bOpenPopup)
+            {
+                ImGui::SetKeyboardFocusHere();
             }
 
-            if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::AssetPicker)
+            ImGui::InputText(
+                "Search",
+                NotifyAssetPickerSearchBuffer.data(),
+                NotifyAssetPickerSearchBuffer.size());
+            ImGui::Separator();
+
+            const FString SearchFilter = NotifyAssetPickerSearchBuffer.data();
+            ImGui::BeginChild(
+                ("##NotifyAssetPickerList_" + Field.Key).c_str(),
+                ImVec2(0.0f, NotifyAssetPickerPopupHeight),
+                true);
+
+            bool bHasVisibleEntries = false;
+            if (ImGui::Selectable("(None)", CurrentValue.empty()))
             {
-                // Picker-first UX is editor sugar only. The stored payload value
-                // remains the same canonical string so serialization and runtime
-                // notify behavior stay unchanged.
-                const TArray<FNotifyAssetPickerEntry> PickerEntries =
-                    BuildNotifyAssetPickerEntries(Field.AssetKind);
-                const FString CurrentValue = TargetBuffer->data();
-                const FString CurrentDisplay = ResolveNotifyAssetPickerDisplayName(
-                    Field.AssetKind,
-                    CurrentValue,
-                    PickerEntries);
-                const FString PopupId = "##NotifyAssetPicker_" + Field.Key;
-
-                ImGui::Text("%s", Field.Label.c_str());
-                ImGui::Indent(NotifyPanelSectionIndent);
-                ImGui::TextWrapped(
-                    "%s",
-                    CurrentDisplay.empty() ? "(None)" : CurrentDisplay.c_str());
-                if (!CurrentValue.empty())
-                {
-                    ImGui::TextDisabled("%s", CurrentValue.c_str());
-                }
-
-                const FString PickButtonId = "Pick##" + Field.Key;
-                const FString ClearButtonId = "Clear##" + Field.Key;
-                const bool bOpenPopup = ImGui::Button(PickButtonId.c_str());
-                ImGui::SameLine();
-                const bool bClearRequested = ImGui::Button(ClearButtonId.c_str());
-                if (bClearRequested && ApplyTextFieldValue(FString()))
+                if (ApplyTextFieldValue(Field, FString()))
                 {
                     RefreshPayloadBuffers();
                 }
-
-                if (bOpenPopup)
-                {
-                    if (ActiveNotifyAssetPickerPopupId != PopupId)
-                    {
-                        NotifyAssetPickerSearchBuffer.fill('\0');
-                        ActiveNotifyAssetPickerPopupId = PopupId;
-                    }
-                    ImGui::OpenPopup(PopupId.c_str());
-                }
-
-                if (ImGui::BeginPopup(PopupId.c_str()))
-                {
-                    if (bOpenPopup)
-                    {
-                        ImGui::SetKeyboardFocusHere();
-                    }
-
-                    ImGui::InputText(
-                        "Search",
-                        NotifyAssetPickerSearchBuffer.data(),
-                        NotifyAssetPickerSearchBuffer.size());
-                    ImGui::Separator();
-
-                    const FString SearchFilter = NotifyAssetPickerSearchBuffer.data();
-                    ImGui::BeginChild(
-                        ("##NotifyAssetPickerList_" + Field.Key).c_str(),
-                        ImVec2(0.0f, NotifyAssetPickerPopupHeight),
-                        true);
-
-                    bool bHasVisibleEntries = false;
-                    if (ImGui::Selectable("(None)", CurrentValue.empty()))
-                    {
-                        if (ApplyTextFieldValue(FString()))
-                        {
-                            RefreshPayloadBuffers();
-                        }
-                        ImGui::CloseCurrentPopup();
-                    }
-
-                    for (const FNotifyAssetPickerEntry& Entry : PickerEntries)
-                    {
-                        if (!MatchesFilter(Entry.DisplayName, SearchFilter) &&
-                            !MatchesFilter(Entry.StoredValue, SearchFilter))
-                        {
-                            continue;
-                        }
-
-                        bHasVisibleEntries = true;
-                        const bool bIsSelected = CurrentValue == Entry.StoredValue;
-                        const FString SelectableLabel =
-                            Entry.DisplayName + "##" + Entry.StoredValue;
-                        if (ImGui::Selectable(SelectableLabel.c_str(), bIsSelected))
-                        {
-                            if (ApplyTextFieldValue(Entry.StoredValue))
-                            {
-                                RefreshPayloadBuffers();
-                            }
-                            ImGui::CloseCurrentPopup();
-                        }
-
-                        if (ImGui::IsItemHovered() && Entry.DisplayName != Entry.StoredValue)
-                        {
-                            ImGui::SetTooltip("%s", Entry.StoredValue.c_str());
-                        }
-
-                        if (bIsSelected)
-                        {
-                            ImGui::SetItemDefaultFocus();
-                        }
-                    }
-
-                    if (!bHasVisibleEntries && !PickerEntries.empty())
-                    {
-                        AnimationSequenceViewerUi::DrawCompactEmptyState(
-                            "No assets match the current search.");
-                    }
-                    else if (PickerEntries.empty())
-                    {
-                        AnimationSequenceViewerUi::DrawCompactEmptyState(
-                            GetNotifyAssetPickerEmptyMessage(Field.AssetKind));
-                    }
-
-                    ImGui::EndChild();
-                    ImGui::EndPopup();
-                }
-
-                ImGui::TextDisabled("%s", GetNotifyAssetPickerManualFallbackMessage(Field.AssetKind));
-                ImGui::Unindent(NotifyPanelSectionIndent);
-                break;
+                ImGui::CloseCurrentPopup();
             }
 
-            TArray<FString> PickerOptions;
-            if (PreviewController)
+            for (const FNotifyAssetPickerEntry& Entry : PickerEntries)
             {
-                if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::SocketPicker)
+                if (!MatchesFilter(Entry.DisplayName, SearchFilter) &&
+                    !MatchesFilter(Entry.StoredValue, SearchFilter))
                 {
-                    PickerOptions = PreviewController->GetPreviewSocketNames();
+                    continue;
                 }
-                else if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::ComponentPicker)
+
+                bHasVisibleEntries = true;
+                const bool bIsSelected = CurrentValue == Entry.StoredValue;
+                const FString SelectableLabel =
+                    Entry.DisplayName + "##" + Entry.StoredValue;
+                if (ImGui::Selectable(SelectableLabel.c_str(), bIsSelected))
                 {
-                    PickerOptions = PreviewController->GetPreviewPrimitiveComponentNames();
+                    if (ApplyTextFieldValue(Field, Entry.StoredValue))
+                    {
+                        RefreshPayloadBuffers();
+                    }
+                    ImGui::CloseCurrentPopup();
+                }
+
+                if (ImGui::IsItemHovered() && Entry.DisplayName != Entry.StoredValue)
+                {
+                    ImGui::SetTooltip("%s", Entry.StoredValue.c_str());
+                }
+
+                if (bIsSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
                 }
             }
 
-            if (!PickerOptions.empty())
+            if (!bHasVisibleEntries && !PickerEntries.empty())
             {
-                const FString CurrentValue = TargetBuffer->data();
-                const char* PreviewValue = CurrentValue.empty() ? "(None)" : CurrentValue.c_str();
-                SetNotifyPanelFieldWidth();
-                if (ImGui::BeginCombo(Field.Label.c_str(), PreviewValue))
-                {
-                    const bool bIsNoneSelected = CurrentValue.empty();
-                    if (ImGui::Selectable("(None)", bIsNoneSelected))
-                    {
-                        if (ApplyTextFieldValue(FString()))
-                        {
-                            RefreshPayloadBuffers();
-                        }
-                    }
-
-                    for (const FString& Option : PickerOptions)
-                    {
-                        const bool bIsSelected = CurrentValue == Option;
-                        if (ImGui::Selectable(Option.c_str(), bIsSelected))
-                        {
-                            if (ApplyTextFieldValue(Option))
-                            {
-                                RefreshPayloadBuffers();
-                            }
-                        }
-
-                        if (bIsSelected)
-                        {
-                            ImGui::SetItemDefaultFocus();
-                        }
-                    }
-
-                    ImGui::EndCombo();
-                }
-
-                ImGui::TextDisabled("Pick from the active preview attach targets. Use Advanced Raw Payload for a manual override.");
+                AnimationSequenceViewerUi::DrawCompactEmptyState(
+                    "No assets match the current search.");
             }
-            else
+            else if (PickerEntries.empty())
             {
-                SetNotifyPanelFieldWidth();
-                if (ImGui::InputText(Field.Label.c_str(), TargetBuffer->data(), TargetBuffer->size()))
+                AnimationSequenceViewerUi::DrawCompactEmptyState(
+                    GetNotifyAssetPickerEmptyMessage(Field.AssetKind));
+            }
+
+            ImGui::EndChild();
+            ImGui::EndPopup();
+        }
+
+        ImGui::TextDisabled("%s", GetNotifyAssetPickerManualFallbackMessage(Field.AssetKind));
+        ImGui::Unindent(NotifyPanelSectionIndent);
+    };
+
+    auto CollectPreviewPickerOptions = [this](const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        if (!PreviewController)
+        {
+            return TArray<FString>();
+        }
+
+        if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::SocketPicker)
+        {
+            return PreviewController->GetPreviewSocketNames();
+        }
+
+        if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::ComponentPicker)
+        {
+            return PreviewController->GetPreviewPrimitiveComponentNames();
+        }
+
+        return TArray<FString>();
+    };
+
+    auto RenderPreviewPickerField = [this, &RefreshPayloadBuffers, &ApplyTextFieldValue, &CollectPreviewPickerOptions](
+        const FAnimNotifyPayloadFieldDefinition& Field,
+        std::array<char, 256>& TargetBuffer)
+    {
+        const TArray<FString> PickerOptions = CollectPreviewPickerOptions(Field);
+        if (PickerOptions.empty())
+        {
+            return false;
+        }
+
+        const FString CurrentValue = TargetBuffer.data();
+        const char* PreviewValue = CurrentValue.empty() ? "(None)" : CurrentValue.c_str();
+        SetNotifyPanelFieldWidth();
+        if (ImGui::BeginCombo(Field.Label.c_str(), PreviewValue))
+        {
+            if (ImGui::Selectable("(None)", CurrentValue.empty()))
+            {
+                if (ApplyTextFieldValue(Field, FString()))
                 {
-                    const FString Value = TargetBuffer->data();
-                    if (ApplyTextFieldValue(Value))
+                    RefreshPayloadBuffers();
+                }
+            }
+
+            for (const FString& Option : PickerOptions)
+            {
+                const bool bIsSelected = CurrentValue == Option;
+                if (ImGui::Selectable(Option.c_str(), bIsSelected))
+                {
+                    if (ApplyTextFieldValue(Field, Option))
                     {
                         RefreshPayloadBuffers();
                     }
                 }
 
-                if (const char* UnavailableMessage = GetPickerUnavailableMessage(Field.EditorHint))
+                if (bIsSelected)
                 {
-                    ImGui::TextDisabled("%s", UnavailableMessage);
+                    ImGui::SetItemDefaultFocus();
                 }
             }
-            break;
+
+            ImGui::EndCombo();
         }
+
+        const char* PickerHelpText =
+            Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::ComponentPicker
+                ? "Pick from the active preview primitive components. Use Advanced Raw Payload for a manual override."
+                : "Pick from the active preview attach targets. Use Advanced Raw Payload for a manual override.";
+        ImGui::TextDisabled("%s", PickerHelpText);
+        return true;
+    };
+
+    auto RenderTextPayloadField = [this, &RefreshPayloadBuffers, &ApplyTextFieldValue, &RenderAssetPickerField, &RenderPreviewPickerField](
+        const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        std::array<char, 256>* TargetBuffer = GetNotifyTextFieldBuffer(Field.SemanticId);
+        if (!TargetBuffer)
+        {
+            return;
+        }
+
+        if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::AssetPicker)
+        {
+            RenderAssetPickerField(Field, *TargetBuffer);
+            return;
+        }
+
+        if (RenderPreviewPickerField(Field, *TargetBuffer))
+        {
+            return;
+        }
+
+        SetNotifyPanelFieldWidth();
+        if (ImGui::InputText(Field.Label.c_str(), TargetBuffer->data(), TargetBuffer->size()))
+        {
+            const FString Value = TargetBuffer->data();
+            if (ApplyTextFieldValue(Field, Value))
+            {
+                RefreshPayloadBuffers();
+            }
+        }
+
+        if (const char* UnavailableMessage = GetPickerUnavailableMessage(Field.EditorHint))
+        {
+            ImGui::TextDisabled("%s", UnavailableMessage);
+        }
+    };
+
+    auto RenderFloatPayloadField = [this, &Payload, &RefreshPayloadBuffers](
+        const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        float FieldValue = GetSchemaFloatValue(Payload, Field);
+        SetNotifyPanelFieldWidth();
+        if (ImGui::DragFloat(Field.Label.c_str(), &FieldValue, 0.01f, 0.0f, 100.0f, "%.3f"))
+        {
+            if (Document->SetSelectedNotifyPayloadFloatValue(Field.Key, FieldValue))
+            {
+                RefreshPayloadBuffers();
+            }
+        }
+    };
+
+    auto RenderIntPayloadField = [this, &Payload, &RefreshPayloadBuffers](
+        const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        int32 FieldValue = GetSchemaIntValue(Payload, Field);
+        SetNotifyPanelFieldWidth();
+        if (ImGui::InputInt(Field.Label.c_str(), &FieldValue))
+        {
+            FAnimNotifyPayloadParser UpdatedPayload = Document->GetSelectedNotifyPayloadParser();
+            UpdatedPayload.RemoveAny(Field.LegacyKeys);
+            UpdatedPayload.SetInt(Field.Key, FieldValue);
+            if (Document->SetSelectedNotifyPayload(UpdatedPayload.SerializeCanonical()))
+            {
+                RefreshPayloadBuffers();
+            }
+        }
+    };
+
+    auto RenderBoolPayloadField = [this, &Payload, &RefreshPayloadBuffers](
+        const FAnimNotifyPayloadFieldDefinition& Field)
+    {
+        bool FieldValue = GetSchemaBoolValue(Payload, Field);
+        if (ImGui::Checkbox(Field.Label.c_str(), &FieldValue))
+        {
+            if (Document->SetSelectedNotifyPayloadBoolValue(Field.Key, FieldValue))
+            {
+                RefreshPayloadBuffers();
+            }
+        }
+    };
+
+    ImGui::TextDisabled("%s Payload", Schema->SectionLabel.c_str());
+    for (const FAnimNotifyPayloadFieldDefinition& Field : Schema->Fields)
+    {
+        switch (Field.Type)
+        {
+        case EAnimNotifyPayloadFieldType::String:
+        case EAnimNotifyPayloadFieldType::Name:
+            RenderTextPayloadField(Field);
+            break;
 
         case EAnimNotifyPayloadFieldType::Float:
-        {
-            float FieldValue = GetSchemaFloatValue(Payload, Field);
-            SetNotifyPanelFieldWidth();
-            if (ImGui::DragFloat(Field.Label.c_str(), &FieldValue, 0.01f, 0.0f, 100.0f, "%.3f"))
-            {
-                if (Document->SetSelectedNotifyPayloadFloatValue(Field.Key, FieldValue))
-                {
-                    RefreshPayloadBuffers();
-                }
-            }
+            RenderFloatPayloadField(Field);
             break;
-        }
 
         case EAnimNotifyPayloadFieldType::Int:
-        {
-            int32 FieldValue = GetSchemaIntValue(Payload, Field);
-            SetNotifyPanelFieldWidth();
-            if (ImGui::InputInt(Field.Label.c_str(), &FieldValue))
-            {
-                FAnimNotifyPayloadParser UpdatedPayload = Document->GetSelectedNotifyPayloadParser();
-                UpdatedPayload.RemoveAny(Field.LegacyKeys);
-                UpdatedPayload.SetInt(Field.Key, FieldValue);
-                if (Document->SetSelectedNotifyPayload(UpdatedPayload.SerializeCanonical()))
-                {
-                    RefreshPayloadBuffers();
-                }
-            }
+            RenderIntPayloadField(Field);
             break;
-        }
 
         case EAnimNotifyPayloadFieldType::Bool:
-        {
-            bool FieldValue = GetSchemaBoolValue(Payload, Field);
-            if (ImGui::Checkbox(Field.Label.c_str(), &FieldValue))
-            {
-                if (Document->SetSelectedNotifyPayloadBoolValue(Field.Key, FieldValue))
-                {
-                    RefreshPayloadBuffers();
-                }
-            }
+            RenderBoolPayloadField(Field);
             break;
-        }
 
         default:
             break;
