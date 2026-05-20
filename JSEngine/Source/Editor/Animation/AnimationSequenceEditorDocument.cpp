@@ -146,6 +146,8 @@ namespace
     }
 }
 
+FAnimationSequenceEditorDocument::FAnimationSequenceEditorDocument() = default;
+
 FAnimationSequenceEditorDocument::~FAnimationSequenceEditorDocument()
 {
     Widget.reset();

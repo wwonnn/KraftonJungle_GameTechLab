@@ -581,6 +581,10 @@ bool FEditorViewportClient::WantsAbsoluteMouseClip(const FViewportInputContext& 
 	{
 		return false;
 	}
+	if (TransformMode == ETransformMode::Translate)
+	{
+		return false;
+	}
 
 	const FViewportRect& ViewportRect = Viewport->GetRect();
 	if (ViewportRect.Width <= 0 || ViewportRect.Height <= 0)

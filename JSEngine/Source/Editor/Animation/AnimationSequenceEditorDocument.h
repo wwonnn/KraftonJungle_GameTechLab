@@ -16,7 +16,7 @@ class FAnimationSequencePreviewController;
 class FAnimationSequenceEditorDocument : public FEditorDocument
 {
 public:
-    FAnimationSequenceEditorDocument() = default;
+    FAnimationSequenceEditorDocument();
     ~FAnimationSequenceEditorDocument() override;
 
     bool Initialize(UEditorEngine* InEditorEngine, const FString& InSequencePath, UAnimSequence* InSequence);
