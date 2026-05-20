@@ -1881,8 +1881,11 @@ void FFbxImporter::ProcessSkeletalMesh(
             const int32 NewBoneIndex = static_cast<int32>(Bones->size());
             BoneNodeToIndex[BoneNode] = NewBoneIndex;
 
+            const FString BoneName = BoneNode->GetName() ? FString(BoneNode->GetName()) : FString();
+
             FBoneInfo Bone = {};
-            Bone.Name = FString(BoneNode->GetName());
+            Bone.Name = FName(BoneName);
+            Bone.ExportName = BoneName;
             Bone.ParentIndex = -1;
 
             Bone.GlobalBindTransform = ToFMatrix(LinkBindGlobal);

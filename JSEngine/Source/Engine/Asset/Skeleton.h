@@ -23,7 +23,10 @@ public:
     const TArray<FSkeletonBone>& GetBones() const;
     const TArray<FSkeletonSocket>& GetSockets() const;
     const TArray<FSkeletonCurveMetaData>& GetCurveMetaData() const;
+    const TArray<FString>& GetCompatibleSkeletons() const;
+    TArray<FString>* GetMutableCompatibleSkeletons();
 
+    int32 FindBoneIndex(const FName& BoneName) const;
     int32 FindBoneIndex(const FString& BoneName) const;
     const FSkeletonBone* GetBoneInfo(int32 BoneIndex) const;
 

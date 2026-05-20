@@ -6,7 +6,8 @@
 
 struct FSkeletonBone
 {
-    FString Name;
+    FName Name;
+    FString ExportName;
     int32 ParentIndex = -1;
 
     FMatrix LocalBindTransform = FMatrix::Identity;
@@ -43,6 +44,7 @@ struct FSkeletonData
     TArray<FSkeletonBone> Bones;
     TArray<FSkeletonSocket> Sockets;
     TArray<FSkeletonCurveMetaData> CurveMetaData;
+    TArray<FString> CompatibleSkeletons;
 
     void Clear();
     bool HasValidBoneData() const;
