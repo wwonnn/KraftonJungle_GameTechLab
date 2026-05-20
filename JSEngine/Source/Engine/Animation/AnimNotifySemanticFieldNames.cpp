@@ -1,4 +1,4 @@
-#include "Animation/AnimNotifySemanticFieldNames.h"
+﻿#include "Animation/AnimNotifySemanticFieldNames.h"
 
 namespace
 {
@@ -6,6 +6,12 @@ namespace
     {
         static const TArray<FString> Keys;
         return Keys;
+    }
+
+    const FString& EmptyKey()
+    {
+        static const FString Key;
+        return Key;
     }
 }
 
@@ -143,37 +149,185 @@ namespace AnimNotifySemanticFieldNames
         return Key;
     }
 
-    const TArray<FString>& GetLegacyAliases(const FString& CanonicalKey)
+    EAnimNotifySemanticFieldId GetSemanticFieldId(const FString& CanonicalKey)
+    {
+        if (CanonicalKey == SoundCueKey())
+        {
+            return EAnimNotifySemanticFieldId::SoundCue;
+        }
+
+        if (CanonicalKey == SocketNameKey())
+        {
+            return EAnimNotifySemanticFieldId::SocketName;
+        }
+
+        if (CanonicalKey == VolumeMultiplierKey())
+        {
+            return EAnimNotifySemanticFieldId::VolumeMultiplier;
+        }
+
+        if (CanonicalKey == SpatializedKey())
+        {
+            return EAnimNotifySemanticFieldId::Spatialized;
+        }
+
+        if (CanonicalKey == ComponentNameKey())
+        {
+            return EAnimNotifySemanticFieldId::ComponentName;
+        }
+
+        if (CanonicalKey == AttackIdKey())
+        {
+            return EAnimNotifySemanticFieldId::AttackId;
+        }
+
+        if (CanonicalKey == EventNameKey())
+        {
+            return EAnimNotifySemanticFieldId::EventName;
+        }
+
+        if (CanonicalKey == EndEventNameKey())
+        {
+            return EAnimNotifySemanticFieldId::EndEventName;
+        }
+
+        if (CanonicalKey == PayloadKey())
+        {
+            return EAnimNotifySemanticFieldId::PayloadValue;
+        }
+
+        if (CanonicalKey == EffectKey())
+        {
+            return EAnimNotifySemanticFieldId::Effect;
+        }
+
+        if (CanonicalKey == DecalKey())
+        {
+            return EAnimNotifySemanticFieldId::Decal;
+        }
+
+        if (CanonicalKey == AttachedKey())
+        {
+            return EAnimNotifySemanticFieldId::Attached;
+        }
+
+        if (CanonicalKey == ShakeKey())
+        {
+            return EAnimNotifySemanticFieldId::Shake;
+        }
+
+        if (CanonicalKey == ScaleKey())
+        {
+            return EAnimNotifySemanticFieldId::Scale;
+        }
+
+        if (CanonicalKey == TraceDistanceKey())
+        {
+            return EAnimNotifySemanticFieldId::TraceDistance;
+        }
+
+        if (CanonicalKey == SizeKey())
+        {
+            return EAnimNotifySemanticFieldId::Size;
+        }
+
+        if (CanonicalKey == LifetimeKey())
+        {
+            return EAnimNotifySemanticFieldId::Lifetime;
+        }
+
+        if (CanonicalKey == AlignToHitNormalKey())
+        {
+            return EAnimNotifySemanticFieldId::AlignToHitNormal;
+        }
+
+        return EAnimNotifySemanticFieldId::None;
+    }
+
+    const FString& GetCanonicalKey(EAnimNotifySemanticFieldId SemanticId)
+    {
+        switch (SemanticId)
+        {
+        case EAnimNotifySemanticFieldId::SoundCue:
+            return SoundCueKey();
+        case EAnimNotifySemanticFieldId::SocketName:
+            return SocketNameKey();
+        case EAnimNotifySemanticFieldId::VolumeMultiplier:
+            return VolumeMultiplierKey();
+        case EAnimNotifySemanticFieldId::Spatialized:
+            return SpatializedKey();
+        case EAnimNotifySemanticFieldId::ComponentName:
+            return ComponentNameKey();
+        case EAnimNotifySemanticFieldId::AttackId:
+            return AttackIdKey();
+        case EAnimNotifySemanticFieldId::EventName:
+            return EventNameKey();
+        case EAnimNotifySemanticFieldId::EndEventName:
+            return EndEventNameKey();
+        case EAnimNotifySemanticFieldId::PayloadValue:
+            return PayloadKey();
+        case EAnimNotifySemanticFieldId::Effect:
+            return EffectKey();
+        case EAnimNotifySemanticFieldId::Decal:
+            return DecalKey();
+        case EAnimNotifySemanticFieldId::Attached:
+            return AttachedKey();
+        case EAnimNotifySemanticFieldId::Shake:
+            return ShakeKey();
+        case EAnimNotifySemanticFieldId::Scale:
+            return ScaleKey();
+        case EAnimNotifySemanticFieldId::TraceDistance:
+            return TraceDistanceKey();
+        case EAnimNotifySemanticFieldId::Size:
+            return SizeKey();
+        case EAnimNotifySemanticFieldId::Lifetime:
+            return LifetimeKey();
+        case EAnimNotifySemanticFieldId::AlignToHitNormal:
+            return AlignToHitNormalKey();
+        case EAnimNotifySemanticFieldId::None:
+        default:
+            return EmptyKey();
+        }
+    }
+
+    const TArray<FString>& GetLegacyAliases(EAnimNotifySemanticFieldId SemanticId)
     {
         static const TArray<FString> SoundCueAliases = { LegacySoundKey() };
         static const TArray<FString> SocketNameAliases = { LegacySocketKey() };
         static const TArray<FString> VolumeMultiplierAliases = { LegacyVolumeKey() };
         static const TArray<FString> ComponentNameAliases = { LegacyComponentKey() };
 
-        if (CanonicalKey == SoundCueKey())
+        switch (SemanticId)
         {
+        case EAnimNotifySemanticFieldId::SoundCue:
             return SoundCueAliases;
-        }
-
-        if (CanonicalKey == SocketNameKey())
-        {
+        case EAnimNotifySemanticFieldId::SocketName:
             return SocketNameAliases;
-        }
-
-        if (CanonicalKey == VolumeMultiplierKey())
-        {
+        case EAnimNotifySemanticFieldId::VolumeMultiplier:
             return VolumeMultiplierAliases;
-        }
-
-        if (CanonicalKey == ComponentNameKey())
-        {
+        case EAnimNotifySemanticFieldId::ComponentName:
             return ComponentNameAliases;
+        case EAnimNotifySemanticFieldId::None:
+        case EAnimNotifySemanticFieldId::Spatialized:
+        case EAnimNotifySemanticFieldId::AttackId:
+        case EAnimNotifySemanticFieldId::EventName:
+        case EAnimNotifySemanticFieldId::EndEventName:
+        case EAnimNotifySemanticFieldId::PayloadValue:
+        case EAnimNotifySemanticFieldId::Effect:
+        case EAnimNotifySemanticFieldId::Decal:
+        case EAnimNotifySemanticFieldId::Attached:
+        case EAnimNotifySemanticFieldId::Shake:
+        case EAnimNotifySemanticFieldId::Scale:
+        case EAnimNotifySemanticFieldId::TraceDistance:
+        case EAnimNotifySemanticFieldId::Size:
+        case EAnimNotifySemanticFieldId::Lifetime:
+        case EAnimNotifySemanticFieldId::AlignToHitNormal:
+        default:
+            return EmptyKeys();
         }
-
-        return EmptyKeys();
     }
 
-    const TArray<FString>& GetLookupKeys(const FString& CanonicalKey)
+    const TArray<FString>& GetLookupKeys(EAnimNotifySemanticFieldId SemanticId)
     {
         static const TArray<FString> SoundCueKeys = { SoundCueKey(), LegacySoundKey() };
         static const TArray<FString> SocketNameKeys = { SocketNameKey(), LegacySocketKey() };
@@ -194,96 +348,57 @@ namespace AnimNotifySemanticFieldNames
         static const TArray<FString> LifetimeKeys = { LifetimeKey() };
         static const TArray<FString> AlignToHitNormalKeys = { AlignToHitNormalKey() };
 
-        if (CanonicalKey == SoundCueKey())
+        switch (SemanticId)
         {
+        case EAnimNotifySemanticFieldId::SoundCue:
             return SoundCueKeys;
-        }
-
-        if (CanonicalKey == SocketNameKey())
-        {
+        case EAnimNotifySemanticFieldId::SocketName:
             return SocketNameKeys;
-        }
-
-        if (CanonicalKey == VolumeMultiplierKey())
-        {
+        case EAnimNotifySemanticFieldId::VolumeMultiplier:
             return VolumeMultiplierKeys;
-        }
-
-        if (CanonicalKey == SpatializedKey())
-        {
+        case EAnimNotifySemanticFieldId::Spatialized:
             return SpatializedKeys;
-        }
-
-        if (CanonicalKey == ComponentNameKey())
-        {
+        case EAnimNotifySemanticFieldId::ComponentName:
             return ComponentNameKeys;
-        }
-
-        if (CanonicalKey == AttackIdKey())
-        {
+        case EAnimNotifySemanticFieldId::AttackId:
             return AttackIdKeys;
-        }
-
-        if (CanonicalKey == EventNameKey())
-        {
+        case EAnimNotifySemanticFieldId::EventName:
             return EventNameKeys;
-        }
-
-        if (CanonicalKey == EndEventNameKey())
-        {
+        case EAnimNotifySemanticFieldId::EndEventName:
             return EndEventNameKeys;
-        }
-
-        if (CanonicalKey == PayloadKey())
-        {
+        case EAnimNotifySemanticFieldId::PayloadValue:
             return PayloadKeys;
-        }
-
-        if (CanonicalKey == EffectKey())
-        {
+        case EAnimNotifySemanticFieldId::Effect:
             return EffectKeys;
-        }
-
-        if (CanonicalKey == DecalKey())
-        {
+        case EAnimNotifySemanticFieldId::Decal:
             return DecalKeys;
-        }
-
-        if (CanonicalKey == AttachedKey())
-        {
+        case EAnimNotifySemanticFieldId::Attached:
             return AttachedKeys;
-        }
-
-        if (CanonicalKey == ShakeKey())
-        {
+        case EAnimNotifySemanticFieldId::Shake:
             return ShakeKeys;
-        }
-
-        if (CanonicalKey == ScaleKey())
-        {
+        case EAnimNotifySemanticFieldId::Scale:
             return ScaleKeys;
-        }
-
-        if (CanonicalKey == TraceDistanceKey())
-        {
+        case EAnimNotifySemanticFieldId::TraceDistance:
             return TraceDistanceKeys;
-        }
-
-        if (CanonicalKey == SizeKey())
-        {
+        case EAnimNotifySemanticFieldId::Size:
             return SizeKeys;
-        }
-
-        if (CanonicalKey == LifetimeKey())
-        {
+        case EAnimNotifySemanticFieldId::Lifetime:
             return LifetimeKeys;
-        }
-
-        if (CanonicalKey == AlignToHitNormalKey())
-        {
+        case EAnimNotifySemanticFieldId::AlignToHitNormal:
             return AlignToHitNormalKeys;
+        case EAnimNotifySemanticFieldId::None:
+        default:
+            return EmptyKeys();
         }
+    }
 
-        return EmptyKeys();
+    const TArray<FString>& GetLegacyAliases(const FString& CanonicalKey)
+    {
+        return GetLegacyAliases(GetSemanticFieldId(CanonicalKey));
+    }
+
+    const TArray<FString>& GetLookupKeys(const FString& CanonicalKey)
+    {
+        return GetLookupKeys(GetSemanticFieldId(CanonicalKey));
     }
 }

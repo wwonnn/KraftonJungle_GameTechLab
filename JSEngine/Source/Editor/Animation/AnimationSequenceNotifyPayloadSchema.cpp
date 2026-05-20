@@ -32,20 +32,39 @@ namespace
         return Field;
     }
 
-    FAnimNotifyPayloadFieldDefinition MakeStringField(
-        const FString& Key,
+    FAnimNotifyPayloadFieldDefinition MakeSemanticField(
         EAnimNotifySemanticFieldId SemanticId,
-        const TArray<FString>& LegacyKeys,
+        const FString& Label,
+        EAnimNotifyPayloadFieldType Type,
+        EAnimNotifyPayloadFieldEditorHint EditorHint,
+        EAnimNotifyPayloadAssetKind AssetKind,
+        bool bRequired,
+        const FString& DefaultValue,
+        const FString& HelpText)
+    {
+        return MakeField(
+            AnimNotifySemanticFieldNames::GetCanonicalKey(SemanticId),
+            SemanticId,
+            AnimNotifySemanticFieldNames::GetLegacyAliases(SemanticId),
+            Label,
+            Type,
+            EditorHint,
+            AssetKind,
+            bRequired,
+            DefaultValue,
+            HelpText);
+    }
+
+    FAnimNotifyPayloadFieldDefinition MakeStringField(
+        EAnimNotifySemanticFieldId SemanticId,
         const FString& Label,
         bool bRequired,
         const FString& DefaultValue,
         const FString& HelpText,
         EAnimNotifyPayloadFieldEditorHint EditorHint = EAnimNotifyPayloadFieldEditorHint::Default)
     {
-        return MakeField(
-            Key,
+        return MakeSemanticField(
             SemanticId,
-            LegacyKeys,
             Label,
             EAnimNotifyPayloadFieldType::String,
             EditorHint,
@@ -56,19 +75,15 @@ namespace
     }
 
     FAnimNotifyPayloadFieldDefinition MakeAssetPickerStringField(
-        const FString& Key,
         EAnimNotifySemanticFieldId SemanticId,
-        const TArray<FString>& LegacyKeys,
         const FString& Label,
         bool bRequired,
         const FString& DefaultValue,
         const FString& HelpText,
         EAnimNotifyPayloadAssetKind AssetKind)
     {
-        return MakeField(
-            Key,
+        return MakeSemanticField(
             SemanticId,
-            LegacyKeys,
             Label,
             EAnimNotifyPayloadFieldType::String,
             EAnimNotifyPayloadFieldEditorHint::AssetPicker,
@@ -79,19 +94,15 @@ namespace
     }
 
     FAnimNotifyPayloadFieldDefinition MakeNameField(
-        const FString& Key,
         EAnimNotifySemanticFieldId SemanticId,
-        const TArray<FString>& LegacyKeys,
         const FString& Label,
         bool bRequired,
         const FString& DefaultValue,
         const FString& HelpText,
         EAnimNotifyPayloadFieldEditorHint EditorHint = EAnimNotifyPayloadFieldEditorHint::Default)
     {
-        return MakeField(
-            Key,
+        return MakeSemanticField(
             SemanticId,
-            LegacyKeys,
             Label,
             EAnimNotifyPayloadFieldType::Name,
             EditorHint,
@@ -102,18 +113,14 @@ namespace
     }
 
     FAnimNotifyPayloadFieldDefinition MakeFloatField(
-        const FString& Key,
         EAnimNotifySemanticFieldId SemanticId,
-        const TArray<FString>& LegacyKeys,
         const FString& Label,
         bool bRequired,
         const FString& DefaultValue,
         const FString& HelpText)
     {
-        return MakeField(
-            Key,
+        return MakeSemanticField(
             SemanticId,
-            LegacyKeys,
             Label,
             EAnimNotifyPayloadFieldType::Float,
             EAnimNotifyPayloadFieldEditorHint::Default,
@@ -146,18 +153,14 @@ namespace
     }
 
     FAnimNotifyPayloadFieldDefinition MakeBoolField(
-        const FString& Key,
         EAnimNotifySemanticFieldId SemanticId,
-        const TArray<FString>& LegacyKeys,
         const FString& Label,
         bool bRequired,
         const FString& DefaultValue,
         const FString& HelpText)
     {
-        return MakeField(
-            Key,
+        return MakeSemanticField(
             SemanticId,
-            LegacyKeys,
             Label,
             EAnimNotifyPayloadFieldType::Bool,
             EAnimNotifyPayloadFieldEditorHint::Default,
@@ -176,10 +179,10 @@ namespace
                 "Audio",
                 "SoundCue=Footstep_Stone;SocketName=foot_l;VolumeMultiplier=0.9;Spatialized=true",
                 {
-                    MakeAssetPickerStringField(AnimNotifySemanticFieldNames::SoundCueKey(), EAnimNotifySemanticFieldId::SoundCue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey()), "Sound Cue", true, FString(), "Required audio event or asset key.", EAnimNotifyPayloadAssetKind::SoundCue),
-                    MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", false, FString(), "Optional playback socket on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
-                    MakeFloatField(AnimNotifySemanticFieldNames::VolumeMultiplierKey(), EAnimNotifySemanticFieldId::VolumeMultiplier, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), "Volume Multiplier", false, "1.0", "Optional volume multiplier."),
-                    MakeBoolField(AnimNotifySemanticFieldNames::SpatializedKey(), EAnimNotifySemanticFieldId::Spatialized, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SpatializedKey()), "Spatialized", false, "false", "Play in 3D using the socket or mesh location.")
+                    MakeAssetPickerStringField(EAnimNotifySemanticFieldId::SoundCue, "Sound Cue", true, FString(), "Required audio event or asset key.", EAnimNotifyPayloadAssetKind::SoundCue),
+                    MakeNameField(EAnimNotifySemanticFieldId::SocketName, "Socket Name", false, FString(), "Optional playback socket on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
+                    MakeFloatField(EAnimNotifySemanticFieldId::VolumeMultiplier, "Volume Multiplier", false, "1.0", "Optional volume multiplier."),
+                    MakeBoolField(EAnimNotifySemanticFieldId::Spatialized, "Spatialized", false, "false", "Play in 3D using the socket or mesh location.")
                 }
             },
             {
@@ -187,8 +190,8 @@ namespace
                 "Gameplay Event",
                 "EventName=Combo.Open;Payload=Light1",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::EventNameKey(), EAnimNotifySemanticFieldId::EventName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EventNameKey()), "Event Name", true, FString(), "Required gameplay event name dispatched when the notify fires."),
-                    MakeStringField(AnimNotifySemanticFieldNames::PayloadKey(), EAnimNotifySemanticFieldId::PayloadValue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::PayloadKey()), "Payload", false, FString(), "Optional raw text payload forwarded unchanged to runtime and script consumers.")
+                    MakeStringField(EAnimNotifySemanticFieldId::EventName, "Event Name", true, FString(), "Required gameplay event name dispatched when the notify fires."),
+                    MakeStringField(EAnimNotifySemanticFieldId::PayloadValue, "Payload", false, FString(), "Optional raw text payload forwarded unchanged to runtime and script consumers.")
                 }
             },
             {
@@ -196,9 +199,9 @@ namespace
                 "Gameplay Event Window",
                 "EventName=InvulnWindow;EndEventName=InvulnWindowEnd;Payload=Short",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::EventNameKey(), EAnimNotifySemanticFieldId::EventName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EventNameKey()), "Event Name", true, FString(), "Required gameplay event name dispatched when the state begins. Scripts should inspect notifyEvent.TriggerPhase to distinguish begin/end when names are reused."),
-                    MakeStringField(AnimNotifySemanticFieldNames::EndEventNameKey(), EAnimNotifySemanticFieldId::EndEventName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EndEventNameKey()), "End Event Name", false, FString(), "Optional gameplay event name dispatched when the state ends. If left empty, Event Name is reused and scripts should branch on notifyEvent.TriggerPhase."),
-                    MakeStringField(AnimNotifySemanticFieldNames::PayloadKey(), EAnimNotifySemanticFieldId::PayloadValue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::PayloadKey()), "Payload", false, FString(), "Optional event payload forwarded as raw text on both begin and end dispatches.")
+                    MakeStringField(EAnimNotifySemanticFieldId::EventName, "Event Name", true, FString(), "Required gameplay event name dispatched when the state begins. Scripts should inspect notifyEvent.TriggerPhase to distinguish begin/end when names are reused."),
+                    MakeStringField(EAnimNotifySemanticFieldId::EndEventName, "End Event Name", false, FString(), "Optional gameplay event name dispatched when the state ends. If left empty, Event Name is reused and scripts should branch on notifyEvent.TriggerPhase."),
+                    MakeStringField(EAnimNotifySemanticFieldId::PayloadValue, "Payload", false, FString(), "Optional event payload forwarded as raw text on both begin and end dispatches.")
                 }
             },
             {
@@ -206,8 +209,8 @@ namespace
                 "Camera Shake",
                 "Shake=HeavyHit;Scale=0.75",
                 {
-                    MakeAssetPickerStringField(AnimNotifySemanticFieldNames::ShakeKey(), EAnimNotifySemanticFieldId::Shake, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ShakeKey()), "Shake", true, FString(), "Required camera shake key or preset name.", EAnimNotifyPayloadAssetKind::CameraShake),
-                    MakeFloatField(AnimNotifySemanticFieldNames::ScaleKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ScaleKey()), "Scale", false, "1.0", "Optional camera shake intensity multiplier. The default value of 1.0 uses the authored shake strength.")
+                    MakeAssetPickerStringField(EAnimNotifySemanticFieldId::Shake, "Shake", true, FString(), "Required camera shake key or preset name.", EAnimNotifyPayloadAssetKind::CameraShake),
+                    MakeFloatField(EAnimNotifySemanticFieldId::Scale, "Scale", false, "1.0", "Optional camera shake intensity multiplier. The default value of 1.0 uses the authored shake strength.")
                 }
             },
             {
@@ -215,10 +218,10 @@ namespace
                 "VFX",
                 "Effect=SlashArc;SocketName=weapon_tip;Attached=true;Scale=1.0",
                 {
-                    MakeAssetPickerStringField(AnimNotifySemanticFieldNames::EffectKey(), EAnimNotifySemanticFieldId::Effect, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EffectKey()), "Effect", true, FString(), "Required VFX key or preset name.", EAnimNotifyPayloadAssetKind::Vfx),
-                    MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", false, FString(), "Optional playback socket on the preview mesh. If omitted, the mesh or world location is used instead.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
-                    MakeBoolField(AnimNotifySemanticFieldNames::AttachedKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::AttachedKey()), "Attached", false, "false", "Whether the spawned effect should stay attached to the socket or mesh after it is triggered."),
-                    MakeFloatField(AnimNotifySemanticFieldNames::ScaleKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ScaleKey()), "Scale", false, "1.0", "Optional VFX scale multiplier. The default value of 1.0 uses the authored effect size.")
+                    MakeAssetPickerStringField(EAnimNotifySemanticFieldId::Effect, "Effect", true, FString(), "Required VFX key or preset name.", EAnimNotifyPayloadAssetKind::Vfx),
+                    MakeNameField(EAnimNotifySemanticFieldId::SocketName, "Socket Name", false, FString(), "Optional playback socket on the preview mesh. If omitted, the mesh or world location is used instead.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
+                    MakeBoolField(EAnimNotifySemanticFieldId::Attached, "Attached", false, "false", "Whether the spawned effect should stay attached to the socket or mesh after it is triggered."),
+                    MakeFloatField(EAnimNotifySemanticFieldId::Scale, "Scale", false, "1.0", "Optional VFX scale multiplier. The default value of 1.0 uses the authored effect size.")
                 }
             },
             {
@@ -226,12 +229,12 @@ namespace
                 "Decal",
                 "Decal=FootDust;SocketName=foot_l;TraceDistance=50.0;Size=1.0;Lifetime=2.0;AlignToHitNormal=true",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::DecalKey(), EAnimNotifySemanticFieldId::Decal, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::DecalKey()), "Decal", true, FString(), "Required decal key or preset name."),
-                    MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", false, FString(), "Optional socket used as the decal spawn origin on the preview mesh. If omitted, the mesh or world location is used instead.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
-                    MakeFloatField(AnimNotifySemanticFieldNames::TraceDistanceKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::TraceDistanceKey()), "Trace Distance", false, "50.0", "Optional downward trace distance used to find a placement surface. If the trace misses, spawning falls back to the origin location."),
-                    MakeFloatField(AnimNotifySemanticFieldNames::SizeKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SizeKey()), "Size", false, "1.0", "Optional decal size multiplier. The default value of 1.0 uses the authored decal size."),
-                    MakeFloatField(AnimNotifySemanticFieldNames::LifetimeKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::LifetimeKey()), "Lifetime", false, "0.0", "Optional decal lifetime in seconds. A value of 0.0 leaves lifetime handling to the runtime consumer."),
-                    MakeBoolField(AnimNotifySemanticFieldNames::AlignToHitNormalKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::AlignToHitNormalKey()), "Align To Hit Normal", false, "true", "Whether the decal orientation should align to the traced surface normal. If disabled or no hit is found, the runtime uses a stable fallback orientation.")
+                    MakeStringField(EAnimNotifySemanticFieldId::Decal, "Decal", true, FString(), "Required decal key or preset name."),
+                    MakeNameField(EAnimNotifySemanticFieldId::SocketName, "Socket Name", false, FString(), "Optional socket used as the decal spawn origin on the preview mesh. If omitted, the mesh or world location is used instead.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
+                    MakeFloatField(EAnimNotifySemanticFieldId::TraceDistance, "Trace Distance", false, "50.0", "Optional downward trace distance used to find a placement surface. If the trace misses, spawning falls back to the origin location."),
+                    MakeFloatField(EAnimNotifySemanticFieldId::Size, "Size", false, "1.0", "Optional decal size multiplier. The default value of 1.0 uses the authored decal size."),
+                    MakeFloatField(EAnimNotifySemanticFieldId::Lifetime, "Lifetime", false, "0.0", "Optional decal lifetime in seconds. A value of 0.0 leaves lifetime handling to the runtime consumer."),
+                    MakeBoolField(EAnimNotifySemanticFieldId::AlignToHitNormal, "Align To Hit Normal", false, "true", "Whether the decal orientation should align to the traced surface normal. If disabled or no hit is found, the runtime uses a stable fallback orientation.")
                 }
             },
             {
@@ -239,10 +242,10 @@ namespace
                 "Footstep Surface",
                 "EventName=Footstep;SocketName=foot_l;TraceDistance=25.0;Payload=Run",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::EventNameKey(), EAnimNotifySemanticFieldId::EventName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EventNameKey()), "Event Name", true, FString(), "Required footstep event name to dispatch."),
-                    MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", true, FString(), "Required socket used as the footstep trace origin on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
-                    MakeFloatField(AnimNotifySemanticFieldNames::TraceDistanceKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::TraceDistanceKey()), "Trace Distance", false, "25.0", "Optional downward trace distance used to resolve the surface beneath the socket. If the trace misses, runtime falls back to the Default surface."),
-                    MakeStringField(AnimNotifySemanticFieldNames::PayloadKey(), EAnimNotifySemanticFieldId::PayloadValue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::PayloadKey()), "Payload", false, FString(), "Optional raw payload forwarded with the footstep event.")
+                    MakeStringField(EAnimNotifySemanticFieldId::EventName, "Event Name", true, FString(), "Required footstep event name to dispatch."),
+                    MakeNameField(EAnimNotifySemanticFieldId::SocketName, "Socket Name", true, FString(), "Required socket used as the footstep trace origin on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
+                    MakeFloatField(EAnimNotifySemanticFieldId::TraceDistance, "Trace Distance", false, "25.0", "Optional downward trace distance used to resolve the surface beneath the socket. If the trace misses, runtime falls back to the Default surface."),
+                    MakeStringField(EAnimNotifySemanticFieldId::PayloadValue, "Payload", false, FString(), "Optional raw payload forwarded with the footstep event.")
                 }
             },
             {
@@ -250,10 +253,10 @@ namespace
                 "Audio",
                 "SoundCue=SwordHum;SocketName=weapon_tip;VolumeMultiplier=1.0;Spatialized=true",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::SoundCueKey(), EAnimNotifySemanticFieldId::SoundCue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey()), "Sound Cue", true, FString(), "Required looping audio event or asset key."),
-                    MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", false, FString(), "Optional playback socket on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
-                    MakeFloatField(AnimNotifySemanticFieldNames::VolumeMultiplierKey(), EAnimNotifySemanticFieldId::VolumeMultiplier, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), "Volume Multiplier", false, "1.0", "Optional volume multiplier."),
-                    MakeBoolField(AnimNotifySemanticFieldNames::SpatializedKey(), EAnimNotifySemanticFieldId::Spatialized, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SpatializedKey()), "Spatialized", false, "false", "Track the socket or mesh location while the state is active.")
+                    MakeStringField(EAnimNotifySemanticFieldId::SoundCue, "Sound Cue", true, FString(), "Required looping audio event or asset key."),
+                    MakeNameField(EAnimNotifySemanticFieldId::SocketName, "Socket Name", false, FString(), "Optional playback socket on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
+                    MakeFloatField(EAnimNotifySemanticFieldId::VolumeMultiplier, "Volume Multiplier", false, "1.0", "Optional volume multiplier."),
+                    MakeBoolField(EAnimNotifySemanticFieldId::Spatialized, "Spatialized", false, "false", "Track the socket or mesh location while the state is active.")
                 }
             },
             {
@@ -261,8 +264,8 @@ namespace
                 "Collision Window",
                 "ComponentName=WeaponHitbox;AttackId=Light1;Priority=1",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::ComponentNameKey(), EAnimNotifySemanticFieldId::ComponentName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ComponentNameKey()), "Component Name", true, FString(), "Primitive component name to toggle overlap events on.", EAnimNotifyPayloadFieldEditorHint::ComponentPicker),
-                    MakeStringField(AnimNotifySemanticFieldNames::AttackIdKey(), EAnimNotifySemanticFieldId::AttackId, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::AttackIdKey()), "AttackId", false, FString(), "Optional attack tag suffix applied as AttackId:<value>."),
+                    MakeStringField(EAnimNotifySemanticFieldId::ComponentName, "Component Name", true, FString(), "Primitive component name to toggle overlap events on.", EAnimNotifyPayloadFieldEditorHint::ComponentPicker),
+                    MakeStringField(EAnimNotifySemanticFieldId::AttackId, "AttackId", false, FString(), "Optional attack tag suffix applied as AttackId:<value>."),
                     MakeIntField("Priority", EAnimNotifySemanticFieldId::None, {}, "Priority", false, "0", "Optional editor-facing integer field for ordering or custom tooling.")
                 }
             }
@@ -297,6 +300,12 @@ const char* GetAnimNotifyPayloadExample(const FString& NotifyClassName)
 
 TArray<FString> GetAnimNotifyPayloadFieldLookupKeys(const FAnimNotifyPayloadFieldDefinition& Field)
 {
+    if (Field.SemanticId != EAnimNotifySemanticFieldId::None)
+    {
+        const TArray<FString>& SemanticLookupKeys = AnimNotifySemanticFieldNames::GetLookupKeys(Field.SemanticId);
+        return TArray<FString>(SemanticLookupKeys.begin(), SemanticLookupKeys.end());
+    }
+
     TArray<FString> Keys;
     if (!Field.Key.empty())
     {

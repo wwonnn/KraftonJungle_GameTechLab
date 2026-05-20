@@ -2,7 +2,6 @@
 
 #include "Animation/AnimNotify.h"
 #include "Animation/AnimNotifyPayloadParser.h"
-#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceNotifyPayloadSchema.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
@@ -222,9 +221,12 @@ namespace
         if (Schema.NotifyClassName == "UAnimNotify_CameraShake")
         {
             float Scale = 0.0f;
-            const TArray<FString> ScaleKeys =
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ScaleKey());
-            if (Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
+            const FAnimNotifyPayloadFieldDefinition* ScaleField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Scale);
+            const TArray<FString> ScaleKeys = ScaleField
+                ? GetAnimNotifyPayloadFieldLookupKeys(*ScaleField)
+                : TArray<FString>();
+            if (!ScaleKeys.empty() && Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Warning,
@@ -239,9 +241,12 @@ namespace
         else if (Schema.NotifyClassName == "UAnimNotify_PlayVFX")
         {
             float Scale = 0.0f;
-            const TArray<FString> ScaleKeys =
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::ScaleKey());
-            if (Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
+            const FAnimNotifyPayloadFieldDefinition* ScaleField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Scale);
+            const TArray<FString> ScaleKeys = ScaleField
+                ? GetAnimNotifyPayloadFieldLookupKeys(*ScaleField)
+                : TArray<FString>();
+            if (!ScaleKeys.empty() && Payload.HasAnyValue(ScaleKeys) && Payload.TryGetFloatAny(ScaleKeys, Scale) && Scale <= 0.0f)
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Warning,
@@ -256,9 +261,12 @@ namespace
         else if (Schema.NotifyClassName == "UAnimNotify_FootstepSurfaceEvent")
         {
             float TraceDistance = 0.0f;
-            const TArray<FString> LookupKeys =
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::TraceDistanceKey());
-            if (Payload.HasAnyValue(LookupKeys) && Payload.TryGetFloatAny(LookupKeys, TraceDistance) && TraceDistance <= 0.0f)
+            const FAnimNotifyPayloadFieldDefinition* TraceDistanceField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::TraceDistance);
+            const TArray<FString> LookupKeys = TraceDistanceField
+                ? GetAnimNotifyPayloadFieldLookupKeys(*TraceDistanceField)
+                : TArray<FString>();
+            if (!LookupKeys.empty() && Payload.HasAnyValue(LookupKeys) && Payload.TryGetFloatAny(LookupKeys, TraceDistance) && TraceDistance <= 0.0f)
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Warning,
@@ -273,9 +281,12 @@ namespace
         else if (Schema.NotifyClassName == "UAnimNotify_SpawnDecal")
         {
             float TraceDistance = 0.0f;
-            const TArray<FString> TraceDistanceKeys =
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::TraceDistanceKey());
-            if (Payload.HasAnyValue(TraceDistanceKeys) && Payload.TryGetFloatAny(TraceDistanceKeys, TraceDistance) && TraceDistance <= 0.0f)
+            const FAnimNotifyPayloadFieldDefinition* TraceDistanceField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::TraceDistance);
+            const TArray<FString> TraceDistanceKeys = TraceDistanceField
+                ? GetAnimNotifyPayloadFieldLookupKeys(*TraceDistanceField)
+                : TArray<FString>();
+            if (!TraceDistanceKeys.empty() && Payload.HasAnyValue(TraceDistanceKeys) && Payload.TryGetFloatAny(TraceDistanceKeys, TraceDistance) && TraceDistance <= 0.0f)
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Warning,
@@ -288,9 +299,12 @@ namespace
             }
 
             float Size = 0.0f;
-            const TArray<FString> SizeKeys =
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::SizeKey());
-            if (Payload.HasAnyValue(SizeKeys) && Payload.TryGetFloatAny(SizeKeys, Size) && Size <= 0.0f)
+            const FAnimNotifyPayloadFieldDefinition* SizeField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Size);
+            const TArray<FString> SizeKeys = SizeField
+                ? GetAnimNotifyPayloadFieldLookupKeys(*SizeField)
+                : TArray<FString>();
+            if (!SizeKeys.empty() && Payload.HasAnyValue(SizeKeys) && Payload.TryGetFloatAny(SizeKeys, Size) && Size <= 0.0f)
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Warning,
@@ -303,9 +317,12 @@ namespace
             }
 
             float Lifetime = 0.0f;
-            const TArray<FString> LifetimeKeys =
-                AnimNotifySemanticFieldNames::GetLookupKeys(AnimNotifySemanticFieldNames::LifetimeKey());
-            if (Payload.HasAnyValue(LifetimeKeys) && Payload.TryGetFloatAny(LifetimeKeys, Lifetime) && Lifetime < 0.0f)
+            const FAnimNotifyPayloadFieldDefinition* LifetimeField =
+                FindAnimNotifyPayloadFieldBySemanticId(Schema, EAnimNotifySemanticFieldId::Lifetime);
+            const TArray<FString> LifetimeKeys = LifetimeField
+                ? GetAnimNotifyPayloadFieldLookupKeys(*LifetimeField)
+                : TArray<FString>();
+            if (!LifetimeKeys.empty() && Payload.HasAnyValue(LifetimeKeys) && Payload.TryGetFloatAny(LifetimeKeys, Lifetime) && Lifetime < 0.0f)
             {
                 Report.AddIssue(
                     EAnimNotifyValidationSeverity::Warning,

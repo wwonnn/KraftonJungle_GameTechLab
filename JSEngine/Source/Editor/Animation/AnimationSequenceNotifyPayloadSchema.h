@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/CoreMinimal.h"
+#include "Animation/AnimNotifySemanticFieldNames.h"
 
 enum class EAnimNotifyPayloadFieldType : uint8
 {
@@ -25,23 +26,6 @@ enum class EAnimNotifyPayloadAssetKind : uint8
     SoundCue,
     Vfx,
     CameraShake,
-};
-
-enum class EAnimNotifySemanticFieldId : uint8
-{
-    None = 0,
-    SoundCue,
-    SocketName,
-    VolumeMultiplier,
-    Spatialized,
-    ComponentName,
-    AttackId,
-    EventName,
-    EndEventName,
-    PayloadValue,
-    Effect,
-    Decal,
-    Shake,
 };
 
 struct FAnimNotifyPayloadFieldDefinition

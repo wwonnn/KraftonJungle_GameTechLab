@@ -1,6 +1,29 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/CoreMinimal.h"
+
+enum class EAnimNotifySemanticFieldId : uint8
+{
+    None = 0,
+    SoundCue,
+    SocketName,
+    VolumeMultiplier,
+    Spatialized,
+    ComponentName,
+    AttackId,
+    EventName,
+    EndEventName,
+    PayloadValue,
+    Effect,
+    Decal,
+    Attached,
+    Shake,
+    Scale,
+    TraceDistance,
+    Size,
+    Lifetime,
+    AlignToHitNormal,
+};
 
 namespace AnimNotifySemanticFieldNames
 {
@@ -31,6 +54,11 @@ namespace AnimNotifySemanticFieldNames
     const FString& SizeKey();
     const FString& LifetimeKey();
     const FString& AlignToHitNormalKey();
+
+    EAnimNotifySemanticFieldId GetSemanticFieldId(const FString& CanonicalKey);
+    const FString& GetCanonicalKey(EAnimNotifySemanticFieldId SemanticId);
+    const TArray<FString>& GetLegacyAliases(EAnimNotifySemanticFieldId SemanticId);
+    const TArray<FString>& GetLookupKeys(EAnimNotifySemanticFieldId SemanticId);
 
     const TArray<FString>& GetLegacyAliases(const FString& CanonicalKey);
     const TArray<FString>& GetLookupKeys(const FString& CanonicalKey);

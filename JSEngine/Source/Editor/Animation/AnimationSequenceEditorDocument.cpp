@@ -935,7 +935,15 @@ FAnimNotifyPayloadParser FAnimationSequenceEditorDocument::GetSelectedNotifyPayl
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadStringValue(const FString& Key, const FString& Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
-    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
+    const TArray<FString>& LookupKeys = AnimNotifySemanticFieldNames::GetLookupKeys(Key);
+    if (!LookupKeys.empty())
+    {
+        Payload.RemoveAny(LookupKeys);
+    }
+    else
+    {
+        Payload.RemoveValue(Key);
+    }
     Payload.SetString(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -943,7 +951,15 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadStringValue(const
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadNameValue(const FString& Key, const FName& Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
-    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
+    const TArray<FString>& LookupKeys = AnimNotifySemanticFieldNames::GetLookupKeys(Key);
+    if (!LookupKeys.empty())
+    {
+        Payload.RemoveAny(LookupKeys);
+    }
+    else
+    {
+        Payload.RemoveValue(Key);
+    }
     Payload.SetName(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -951,7 +967,15 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadNameValue(const F
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadFloatValue(const FString& Key, float Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
-    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
+    const TArray<FString>& LookupKeys = AnimNotifySemanticFieldNames::GetLookupKeys(Key);
+    if (!LookupKeys.empty())
+    {
+        Payload.RemoveAny(LookupKeys);
+    }
+    else
+    {
+        Payload.RemoveValue(Key);
+    }
     Payload.SetFloat(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -959,7 +983,15 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadFloatValue(const 
 bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadBoolValue(const FString& Key, bool Value)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
-    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
+    const TArray<FString>& LookupKeys = AnimNotifySemanticFieldNames::GetLookupKeys(Key);
+    if (!LookupKeys.empty())
+    {
+        Payload.RemoveAny(LookupKeys);
+    }
+    else
+    {
+        Payload.RemoveValue(Key);
+    }
     Payload.SetBool(Key, Value);
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
@@ -967,8 +999,15 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyPayloadBoolValue(const F
 bool FAnimationSequenceEditorDocument::ClearSelectedNotifyPayloadValue(const FString& Key)
 {
     FAnimNotifyPayloadParser Payload = GetSelectedNotifyPayloadParser();
-    Payload.RemoveAny(AnimNotifySemanticFieldNames::GetLegacyAliases(Key));
-    Payload.RemoveValue(Key);
+    const TArray<FString>& LookupKeys = AnimNotifySemanticFieldNames::GetLookupKeys(Key);
+    if (!LookupKeys.empty())
+    {
+        Payload.RemoveAny(LookupKeys);
+    }
+    else
+    {
+        Payload.RemoveValue(Key);
+    }
     return SetSelectedNotifyPayload(Payload.SerializeCanonical());
 }
 
