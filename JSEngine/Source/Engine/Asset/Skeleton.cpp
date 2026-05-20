@@ -13,6 +13,7 @@ void FSkeletonData::Clear()
     Bones.clear();
     Sockets.clear();
     CurveMetaData.clear();
+    CompatibleSkeletons.clear();
 }
 
 bool FSkeletonData::HasValidBoneData() const
@@ -69,6 +70,17 @@ const TArray<FSkeletonCurveMetaData>& USkeleton::GetCurveMetaData() const
 {
     static const TArray<FSkeletonCurveMetaData> Empty = {};
     return SkeletonData ? SkeletonData->CurveMetaData : Empty;
+}
+
+const TArray<FString>& USkeleton::GetCompatibleSkeletons() const
+{
+    static const TArray<FString> Empty = {};
+    return SkeletonData ? SkeletonData->CompatibleSkeletons : Empty;
+}
+
+TArray<FString>* USkeleton::GetMutableCompatibleSkeletons()
+{
+    return SkeletonData ? &SkeletonData->CompatibleSkeletons : nullptr;
 }
 
 int32 USkeleton::FindBoneIndex(const FName& BoneName) const

@@ -46,7 +46,7 @@ constexpr uint32 SKELETAL_MESH_BINARY_MAGIC   = 0x534D4B53; // 'SKMS'
 constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 4;          // v4: Skeleton/Animation/PhysicsAsset 분리
 
 constexpr uint32 SKELETON_BINARY_MAGIC = 0x4C454B53;        // 'SKEL'
-constexpr uint32 SKELETON_BINARY_VERSION = 3;
+constexpr uint32 SKELETON_BINARY_VERSION = 4;
 
 constexpr uint32 PHYSICS_ASSET_BINARY_MAGIC = 0x53594850;   // 'PHYS'
 constexpr uint32 PHYSICS_ASSET_BINARY_VERSION = 1;
@@ -71,6 +71,7 @@ constexpr uint32 MAX_ANIMATION_KEY_COUNT           = 1'000'000;
 constexpr uint32 MAX_SKELETON_BONE_COUNT           = 65'536;
 constexpr uint32 MAX_SKELETON_SOCKET_COUNT         = 1024;
 constexpr uint32 MAX_SKELETON_CURVE_METADATA_COUNT = 4096;
+constexpr uint32 MAX_COMPATIBLE_SKELETON_COUNT     = 4096;
 
 constexpr uint32 MAX_PHYSICS_BODY_COUNT            = 65'536;
 constexpr uint32 MAX_PHYSICS_CONSTRAINT_COUNT      = 65'536;
@@ -188,6 +189,11 @@ static bool IsValidSkeletonHeader(const FSkeletonBinaryHeader& Header)
 	}
 
 	if (Header.CurveMetaDataCount > MAX_SKELETON_CURVE_METADATA_COUNT)
+	{
+		return false;
+	}
+
+	if (Header.CompatibleSkeletonCount > MAX_COMPATIBLE_SKELETON_COUNT)
 	{
 		return false;
 	}
@@ -838,17 +844,30 @@ void FBinarySerializer::WriteSkeletonHeader(std::ofstream& Out, const FSkeletonB
 	WriteUInt32LE(Out, Header.BoneCount);
 	WriteUInt32LE(Out, Header.SocketCount);
 	WriteUInt32LE(Out, Header.CurveMetaDataCount);
+	if (Header.Version >= 4)
+	{
+		WriteUInt32LE(Out, Header.CompatibleSkeletonCount);
+	}
 	WriteUInt64LE(Out, Header.SourceFileWriteTime);
 }
 
 bool FBinarySerializer::ReadSkeletonHeader(std::ifstream& In, FSkeletonBinaryHeader& OutHeader) const
 {
-	return ReadUInt32LE(In, OutHeader.MagicNumber)
-		&& ReadUInt32LE(In, OutHeader.Version)
-		&& ReadUInt32LE(In, OutHeader.BoneCount)
-		&& ReadUInt32LE(In, OutHeader.SocketCount)
-		&& ReadUInt32LE(In, OutHeader.CurveMetaDataCount)
-		&& ReadUInt64LE(In, OutHeader.SourceFileWriteTime);
+	if (!ReadUInt32LE(In, OutHeader.MagicNumber) ||
+		!ReadUInt32LE(In, OutHeader.Version) ||
+		!ReadUInt32LE(In, OutHeader.BoneCount) ||
+		!ReadUInt32LE(In, OutHeader.SocketCount) ||
+		!ReadUInt32LE(In, OutHeader.CurveMetaDataCount))
+	{
+		return false;
+	}
+
+	if (OutHeader.Version >= 4 && !ReadUInt32LE(In, OutHeader.CompatibleSkeletonCount))
+	{
+		return false;
+	}
+
+	return ReadUInt64LE(In, OutHeader.SourceFileWriteTime);
 }
 
 void FBinarySerializer::WritePhysicsAssetHeader(std::ofstream& Out, const FPhysicsAssetBinaryHeader& Header)
@@ -953,6 +972,12 @@ void FBinarySerializer::WriteSkeletonData(std::ofstream& Out, const FSkeletonDat
 {
 	WriteString(Out, ToStoredAssetPath(Data.PathFileName));
 
+	WriteUInt32LE(Out, static_cast<uint32>(Data.CompatibleSkeletons.size()));
+	for (const FString& CompatibleSkeleton : Data.CompatibleSkeletons)
+	{
+		WriteString(Out, ToStoredAssetPath(CompatibleSkeleton));
+	}
+
 	WriteUInt32LE(Out, static_cast<uint32>(Data.Bones.size()));
 	for (const FSkeletonBone& Bone : Data.Bones)
 	{
@@ -1007,6 +1032,29 @@ bool FBinarySerializer::ReadSkeletonData(std::ifstream& In, FSkeletonData& OutDa
 		return false;
 	}
 	OutData.PathFileName = ToStoredAssetPath(OutData.PathFileName);
+
+	OutData.CompatibleSkeletons.clear();
+	if (Header.Version >= 4)
+	{
+		uint32 CompatibleSkeletonCount = 0;
+		if (!ReadUInt32LE(In, CompatibleSkeletonCount) ||
+			CompatibleSkeletonCount != Header.CompatibleSkeletonCount ||
+			CompatibleSkeletonCount > MAX_COMPATIBLE_SKELETON_COUNT)
+		{
+			In.setstate(std::ios::failbit);
+			return false;
+		}
+
+		OutData.CompatibleSkeletons.resize(CompatibleSkeletonCount);
+		for (FString& CompatibleSkeleton : OutData.CompatibleSkeletons)
+		{
+			if (!ReadString(In, CompatibleSkeleton))
+			{
+				return false;
+			}
+			CompatibleSkeleton = ToStoredAssetPath(CompatibleSkeleton);
+		}
+	}
 
 	uint32 BoneCount = 0;
 	if (!ReadUInt32LE(In, BoneCount) || BoneCount != Header.BoneCount || BoneCount > MAX_SKELETON_BONE_COUNT)
@@ -1138,6 +1186,7 @@ bool FBinarySerializer::SaveSkeleton(const FString& BinaryPath, const FString& S
 	Header.BoneCount = static_cast<uint32>(SkeletonData->Bones.size());
 	Header.SocketCount = static_cast<uint32>(SkeletonData->Sockets.size());
 	Header.CurveMetaDataCount = static_cast<uint32>(SkeletonData->CurveMetaData.size());
+	Header.CompatibleSkeletonCount = static_cast<uint32>(SkeletonData->CompatibleSkeletons.size());
 	Header.SourceFileWriteTime = GetFileWriteTimeTicks(SourcePath);
 
 	if (!IsValidSkeletonHeader(Header))
@@ -1174,7 +1223,8 @@ bool FBinarySerializer::LoadSkeleton(const FString& BinaryPath, USkeleton& OutDa
 	if (!In.good() ||
 		SkeletonData->Bones.size() != Header.BoneCount ||
 		SkeletonData->Sockets.size() != Header.SocketCount ||
-		SkeletonData->CurveMetaData.size() != Header.CurveMetaDataCount)
+		SkeletonData->CurveMetaData.size() != Header.CurveMetaDataCount ||
+		SkeletonData->CompatibleSkeletons.size() != Header.CompatibleSkeletonCount)
 	{
 		delete SkeletonData;
 		return false;

@@ -44,6 +44,7 @@ struct FSkeletonData
     TArray<FSkeletonBone> Bones;
     TArray<FSkeletonSocket> Sockets;
     TArray<FSkeletonCurveMetaData> CurveMetaData;
+    TArray<FString> CompatibleSkeletons;
 
     void Clear();
     bool HasValidBoneData() const;

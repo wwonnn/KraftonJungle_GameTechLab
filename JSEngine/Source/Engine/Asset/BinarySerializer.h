@@ -48,10 +48,11 @@ struct FSkeletalMeshBinaryHeader
 struct FSkeletonBinaryHeader
 {
 	uint32 MagicNumber = 0x4C454B53;		// 'SKEL'
-	uint32 Version = 3;					// v3: bone ExportName added
+	uint32 Version = 4;					// v4: compatible skeleton list added
 	uint32 BoneCount = 0;
 	uint32 SocketCount = 0;
 	uint32 CurveMetaDataCount = 0;
+	uint32 CompatibleSkeletonCount = 0;
 
 	uint64 SourceFileWriteTime = 0;
 };
