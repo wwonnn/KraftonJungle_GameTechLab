@@ -371,6 +371,15 @@ void FEditorMainPanel::HandleContentBrowserViewportDrop()
     }
     FEditorViewportLayout& Layout = EditorEngine->GetViewportLayout();
     const int32 FocusedViewportIndex = Layout.GetLastFocusedViewportIndex();
+    const FString FbxInspectPath =
+        (PayloadType == "ObjectContentItem") ? ResolveFbxDropInspectPath(PayloadPath) : FString{};
+    const bool bIsDroppedFbx = !FbxInspectPath.empty();
+    FFbxMeshContentInfo FbxContentInfo;
+    if (bIsDroppedFbx)
+    {
+        FbxContentInfo = FResourceManager::Get().InspectFbxMeshContent(FbxInspectPath);
+    }
+
     auto TryDropOnViewport = [&](int32 ViewportIndex) -> bool
     {
         FEditorViewportClient* Client = Layout.GetViewportClient(ViewportIndex);
@@ -406,6 +415,29 @@ void FEditorMainPanel::HandleContentBrowserViewportDrop()
         {
             return SpawnPrefabFromContentPath(PayloadPath, ViewportIndex, LocalX, LocalY);
         }
+        if (bIsDroppedFbx)
+        {
+            if (FbxContentInfo.bHasSkeletalMesh)
+            {
+                if (SpawnSkeletalMeshFromContentPath(PayloadPath, ViewportIndex, LocalX, LocalY))
+                {
+                    return true;
+                }
+
+                PushFooterLog("Failed to place skeletal FBX");
+                PushFooterLog("Dropped FBX is classified as skeletal; static fallback suppressed");
+                return false;
+            }
+
+            if (!FbxContentInfo.bHasStaticMesh)
+            {
+                PushFooterLog("Unsupported FBX drop");
+                return false;
+            }
+
+            return SpawnStaticMeshFromContentPath(PayloadPath, ViewportIndex, LocalX, LocalY);
+        }
+
         if (SpawnSkeletalMeshFromContentPath(PayloadPath, ViewportIndex, LocalX, LocalY))
         {
             return true;
