@@ -46,7 +46,7 @@ constexpr uint32 SKELETAL_MESH_BINARY_MAGIC   = 0x534D4B53; // 'SKMS'
 constexpr uint32 SKELETAL_MESH_BINARY_VERSION = 4;          // v4: Skeleton/Animation/PhysicsAsset 분리
 
 constexpr uint32 SKELETON_BINARY_MAGIC = 0x4C454B53;        // 'SKEL'
-constexpr uint32 SKELETON_BINARY_VERSION = 2;
+constexpr uint32 SKELETON_BINARY_VERSION = 3;
 
 constexpr uint32 PHYSICS_ASSET_BINARY_MAGIC = 0x53594850;   // 'PHYS'
 constexpr uint32 PHYSICS_ASSET_BINARY_VERSION = 1;
@@ -956,7 +956,9 @@ void FBinarySerializer::WriteSkeletonData(std::ofstream& Out, const FSkeletonDat
 	WriteUInt32LE(Out, static_cast<uint32>(Data.Bones.size()));
 	for (const FSkeletonBone& Bone : Data.Bones)
 	{
-		WriteString(Out, Bone.Name);
+		const FString BoneName = Bone.Name.ToString();
+		WriteString(Out, BoneName);
+		WriteString(Out, Bone.ExportName.empty() ? BoneName : Bone.ExportName);
 		WriteInt32LE(Out, Bone.ParentIndex);
 		WriteMatrix4x4(Out, Bone.LocalBindTransform);
 		WriteMatrix4x4(Out, Bone.GlobalBindTransform);
@@ -1016,8 +1018,26 @@ bool FBinarySerializer::ReadSkeletonData(std::ifstream& In, FSkeletonData& OutDa
 	OutData.Bones.resize(BoneCount);
 	for (FSkeletonBone& Bone : OutData.Bones)
 	{
-		if (!ReadString(In, Bone.Name) ||
-			!ReadInt32LE(In, Bone.ParentIndex) ||
+		FString BoneName;
+		if (!ReadString(In, BoneName))
+		{
+			return false;
+		}
+
+		Bone.Name = FName(BoneName);
+		if (Header.Version >= 3)
+		{
+			if (!ReadString(In, Bone.ExportName))
+			{
+				return false;
+			}
+		}
+		else
+		{
+			Bone.ExportName = BoneName;
+		}
+
+		if (!ReadInt32LE(In, Bone.ParentIndex) ||
 			!ReadMatrix4x4(In, Bone.LocalBindTransform) ||
 			!ReadMatrix4x4(In, Bone.GlobalBindTransform) ||
 			!ReadMatrix4x4(In, Bone.InverseBindPose))
@@ -1336,7 +1356,7 @@ void FBinarySerializer::WriteBones(std::ofstream& Out, const FSkeletalMesh& Data
 
 	for (const FBoneInfo& Bone : Bones)
 	{
-		WriteString(Out, Bone.Name);
+		WriteString(Out, Bone.Name.ToString());
 		WriteInt32LE(Out, Bone.ParentIndex);
 		WriteMatrix4x4(Out, Bone.LocalBindTransform);
 		WriteMatrix4x4(Out, Bone.GlobalBindTransform);
@@ -1379,10 +1399,14 @@ bool FBinarySerializer::ReadBones(std::ifstream& In, FSkeletalMesh& OutData, uin
 
 	for (FBoneInfo& Bone : *Bones)
 	{
-		if (!ReadString(In, Bone.Name))
+		FString BoneName;
+		if (!ReadString(In, BoneName))
 		{
 			return false;
 		}
+
+		Bone.Name = FName(BoneName);
+		Bone.ExportName = BoneName;
 
 		if (!ReadInt32LE(In, Bone.ParentIndex))
 		{

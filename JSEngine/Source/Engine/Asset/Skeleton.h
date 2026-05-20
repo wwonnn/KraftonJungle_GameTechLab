@@ -24,6 +24,7 @@ public:
     const TArray<FSkeletonSocket>& GetSockets() const;
     const TArray<FSkeletonCurveMetaData>& GetCurveMetaData() const;
 
+    int32 FindBoneIndex(const FName& BoneName) const;
     int32 FindBoneIndex(const FString& BoneName) const;
     const FSkeletonBone* GetBoneInfo(int32 BoneIndex) const;
 

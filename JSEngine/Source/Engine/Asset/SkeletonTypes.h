@@ -6,7 +6,8 @@
 
 struct FSkeletonBone
 {
-    FString Name;
+    FName Name;
+    FString ExportName;
     int32 ParentIndex = -1;
 
     FMatrix LocalBindTransform = FMatrix::Identity;
