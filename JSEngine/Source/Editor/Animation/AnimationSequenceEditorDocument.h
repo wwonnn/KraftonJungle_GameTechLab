@@ -51,6 +51,11 @@ public:
     const FAnimNotifyEvent* GetSelectedNotify() const;
     FAnimNotifyEvent* GetSelectedNotify();
     bool AddNotifyAtTime(int32 TrackIndex, float TimeSeconds);
+    bool DuplicateSelectedNotify();
+    bool CopySelectedNotify();
+    bool CanPasteNotify() const;
+    bool PasteNotifyToTrackAtTime(int32 TrackIndex, float TimeSeconds);
+    bool MoveSelectedNotifyToTrack(int32 TargetTrackIndex);
     bool DeleteSelectedNotify();
     bool SetSelectedNotifyTime(float TimeSeconds, bool bApplySnap);
     bool SetSelectedNotifyDuration(float DurationSeconds);
@@ -74,6 +79,19 @@ public:
     const FString& GetLastNotifyValidationStatusText() const { return LastNotifyValidationStatusText; }
 
 private:
+    struct FNotifyClipboard
+    {
+        bool bValid = false;
+        EAnimNotifyEventType EventType = EAnimNotifyEventType::Notify;
+        FName Name;
+        float Time = 0.0f;
+        float Duration = 0.0f;
+        FColor Color;
+        FString NotifyClassName;
+        FString Payload;
+        int32 SourceTrackIndex = -1;
+    };
+
     void SyncEditorState();
     void ValidateNotifySelection();
 
@@ -86,6 +104,7 @@ private:
     FAnimationSequenceEditorState EditorState;
     std::unique_ptr<FAnimationSequenceEditorWidget> Widget;
     std::unique_ptr<FAnimationSequencePreviewController> PreviewController;
+    FNotifyClipboard NotifyClipboard;
     bool bDirty = false;
     FString LastNotifyValidationStatusText;
 };

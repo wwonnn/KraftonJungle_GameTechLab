@@ -18,6 +18,15 @@ namespace
         const float Alpha = std::clamp(Color.A * AlphaScale, 0.0f, 1.0f);
         return ImGui::GetColorU32(ImVec4(Color.R, Color.G, Color.B, Alpha));
     }
+
+    enum class EPendingNotifyContextAction : uint8
+    {
+        None,
+        Duplicate,
+        Copy,
+        Delete,
+        MoveToTrack
+    };
 }
 
 void FAnimationSequenceNotifyLaneWidget::RenderRows(
@@ -27,6 +36,11 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
     const FAnimationSequenceSequencerVisibleLayout& VisibleLayout,
     float TimelineRowOriginY)
 {
+    static int32 PendingLaneContextTrackIndex = -1;
+    static float PendingLaneContextTime = 0.0f;
+    EPendingNotifyContextAction PendingContextAction = EPendingNotifyContextAction::None;
+    int32 PendingMoveTargetTrackIndex = -1;
+
     State.HoveredNotifyTrackIndex = -1;
     State.HoveredNotifyEventIndex = -1;
     if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
@@ -109,6 +123,50 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
                 }
             }
 
+            if (ImGui::IsItemClicked(ImGuiMouseButton_Right) && Document)
+            {
+                State.SetFocusedSequencerRow(Row.Id);
+                Document->SelectNotify(Row.SourceIndex, EventIndex);
+            }
+
+            if (Document && ImGui::BeginPopupContextItem("##AnimNotifyEventContext"))
+            {
+                if (ImGui::MenuItem("Duplicate"))
+                {
+                    PendingContextAction = EPendingNotifyContextAction::Duplicate;
+                }
+                if (ImGui::MenuItem("Copy"))
+                {
+                    PendingContextAction = EPendingNotifyContextAction::Copy;
+                }
+                if (ImGui::MenuItem("Delete"))
+                {
+                    PendingContextAction = EPendingNotifyContextAction::Delete;
+                }
+
+                if (ImGui::BeginMenu("Move To Track"))
+                {
+                    const int32 TrackCount = Document->GetNotifyTrackCount();
+                    for (int32 TrackIndex = 0; TrackIndex < TrackCount; ++TrackIndex)
+                    {
+                        const FAnimNotifyTrack* TargetTrack = Document->GetNotifyTrack(TrackIndex);
+                        const FString TrackLabel =
+                            (TargetTrack && TargetTrack->TrackName.IsValid())
+                                ? TargetTrack->TrackName.ToString()
+                                : ("Track " + std::to_string(TrackIndex + 1));
+                        const bool bIsCurrentTrack = TrackIndex == Row.SourceIndex;
+                        if (ImGui::MenuItem(TrackLabel.c_str(), nullptr, false, !bIsCurrentTrack))
+                        {
+                            PendingContextAction = EPendingNotifyContextAction::MoveToTrack;
+                            PendingMoveTargetTrackIndex = TrackIndex;
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+
+                ImGui::EndPopup();
+            }
+
             const ImU32 MarkerColor = bSelected
                 ? ToImGuiColor(NotifyEvent.Color, 1.0f)
                 : ToImGuiColor(NotifyEvent.Color, bHovered ? 0.95f : 0.78f);
@@ -122,11 +180,78 @@ void FAnimationSequenceNotifyLaneWidget::RenderRows(
         }
     }
 
+    if (Document)
+    {
+        switch (PendingContextAction)
+        {
+        case EPendingNotifyContextAction::Duplicate:
+            Document->DuplicateSelectedNotify();
+            break;
+        case EPendingNotifyContextAction::Copy:
+            Document->CopySelectedNotify();
+            break;
+        case EPendingNotifyContextAction::Delete:
+            Document->DeleteSelectedNotify();
+            break;
+        case EPendingNotifyContextAction::MoveToTrack:
+            if (Document->MoveSelectedNotifyToTrack(PendingMoveTargetTrackIndex))
+            {
+                State.SetFocusedSequencerRow(
+                    MakeAnimationSequenceSequencerRowId(
+                        EAnimationSequenceSequencerVisibleRowType::NotifyTrack,
+                        PendingMoveTargetTrackIndex));
+            }
+            break;
+        case EPendingNotifyContextAction::None:
+        default:
+            break;
+        }
+    }
+
     if (State.bDraggingNotify && ImGui::IsMouseDown(ImGuiMouseButton_Left) && Document && Document->GetSelectedNotify())
     {
         const float NewTime =
             Geometry.XToTime(State, Geometry.ClampX(ImGui::GetIO().MousePos.x)) - State.DraggedNotifyGrabOffsetTime;
         Document->SetSelectedNotifyTime(NewTime, State.bSnapToFrames);
+    }
+
+    if (Document && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !bMouseOverMarker)
+    {
+        const ImVec2 MousePos = ImGui::GetIO().MousePos;
+        for (const FAnimationSequenceSequencerVisibleRow& Row : VisibleLayout.Rows)
+        {
+            if (Row.Type != EAnimationSequenceSequencerVisibleRowType::NotifyTrack)
+            {
+                continue;
+            }
+
+            const float RowTop = TimelineRowOriginY + Row.OffsetY;
+            const float RowBottom = RowTop + Row.Height;
+            if (MousePos.y >= RowTop && MousePos.y <= RowBottom &&
+                MousePos.x >= Geometry.TimelineMinX && MousePos.x <= Geometry.TimelineMaxX)
+            {
+                PendingLaneContextTrackIndex = Row.SourceIndex;
+                PendingLaneContextTime = Geometry.XToTime(State, Geometry.ClampX(MousePos.x));
+                State.SetFocusedSequencerRow(Row.Id);
+                ImGui::OpenPopup("##AnimNotifyLaneContext");
+                break;
+            }
+        }
+    }
+
+    if (Document && ImGui::BeginPopup("##AnimNotifyLaneContext"))
+    {
+        if (ImGui::MenuItem("Add Notify Here", nullptr, false, PendingLaneContextTrackIndex >= 0))
+        {
+            Document->AddNotifyAtTime(PendingLaneContextTrackIndex, PendingLaneContextTime);
+        }
+
+        if (ImGui::MenuItem("Paste Notify Here", nullptr, false, PendingLaneContextTrackIndex >= 0 && Document->CanPasteNotify()))
+        {
+            Document->PasteNotifyToTrackAtTime(PendingLaneContextTrackIndex, PendingLaneContextTime);
+        }
+
+        ImGui::EndPopup();
     }
 
     if (Document && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && !bMouseOverMarker)

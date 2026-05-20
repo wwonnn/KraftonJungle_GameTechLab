@@ -58,6 +58,37 @@ namespace
             });
     }
 
+    float GetNotifyDuplicateTimeOffset(const FAnimationSequenceEditorState& State)
+    {
+        const double FrameRate = State.DisplayFrameRate.AsDecimal();
+        if (FrameRate > 0.0)
+        {
+            return static_cast<float>(1.0 / FrameRate);
+        }
+
+        return 1.0f / 30.0f;
+    }
+
+    void EnsureTrackExists(TArray<FAnimNotifyTrack>& Tracks, int32 TrackIndex)
+    {
+        while (TrackIndex >= static_cast<int32>(Tracks.size()))
+        {
+            Tracks.push_back(MakeDefaultNotifyTrack(static_cast<int32>(Tracks.size())));
+        }
+
+        if (TrackIndex >= 0 && !Tracks[TrackIndex].TrackName.IsValid())
+        {
+            Tracks[TrackIndex].TrackName = MakeDefaultNotifyTrack(TrackIndex).TrackName;
+        }
+    }
+
+    int32 InsertNotifyEventSorted(FAnimNotifyTrack& Track, const FAnimNotifyEvent& Event)
+    {
+        Track.Events.push_back(Event);
+        SortNotifyTrackEvents(Track);
+        return FindNotifyEventIndexById(Track, Event.StableId);
+    }
+
     void RemapTrackIndexAfterMove(int32& TrackIndex, int32 FromIndex, int32 ToIndex)
     {
         if (TrackIndex < 0 || FromIndex == ToIndex)
@@ -211,6 +242,43 @@ void FAnimationSequenceEditorDocument::BuildCommandList(FEditorCommandList& OutC
         [this]()
         {
             return GetSelectedNotify() != nullptr;
+        });
+
+    OutCommands.MapAction(
+        EEditorCommandId::DuplicateSelection,
+        { static_cast<int32>(ImGuiKey_D), true, false, false },
+        [this]()
+        {
+            DuplicateSelectedNotify();
+        },
+        [this]()
+        {
+            return GetSelectedNotify() != nullptr;
+        });
+
+    OutCommands.MapAction(
+        EEditorCommandId::CopySelection,
+        { static_cast<int32>(ImGuiKey_C), true, false, false },
+        [this]()
+        {
+            CopySelectedNotify();
+        },
+        [this]()
+        {
+            return GetSelectedNotify() != nullptr;
+        });
+
+    OutCommands.MapAction(
+        EEditorCommandId::PasteSelection,
+        { static_cast<int32>(ImGuiKey_V), true, false, false },
+        [this]()
+        {
+            const int32 TargetTrackIndex = EditorState.SelectedNotifyTrackIndex >= 0 ? EditorState.SelectedNotifyTrackIndex : 0;
+            PasteNotifyToTrackAtTime(TargetTrackIndex, EditorState.CurrentTime);
+        },
+        [this]()
+        {
+            return CanPasteNotify();
         });
 }
 
@@ -494,16 +562,9 @@ bool FAnimationSequenceEditorDocument::AddNotifyAtTime(int32 TrackIndex, float T
         return false;
     }
 
-    while (TrackIndex >= static_cast<int32>(Tracks->size()))
-    {
-        Tracks->push_back(MakeDefaultNotifyTrack(static_cast<int32>(Tracks->size())));
-    }
+    EnsureTrackExists(*Tracks, TrackIndex);
 
     FAnimNotifyTrack& Track = (*Tracks)[TrackIndex];
-    if (!Track.TrackName.IsValid())
-    {
-        Track.TrackName = MakeDefaultNotifyTrack(TrackIndex).TrackName;
-    }
 
     FAnimNotifyEvent NotifyEvent;
     NotifyEvent.StableId = FGuid::NewGuid();
@@ -519,6 +580,118 @@ bool FAnimationSequenceEditorDocument::AddNotifyAtTime(int32 TrackIndex, float T
 
     const int32 NewEventIndex = FindNotifyEventIndexById(Track, NotifyEvent.StableId);
     SelectNotify(TrackIndex, NewEventIndex);
+    MarkDirty();
+    return NewEventIndex >= 0;
+}
+
+bool FAnimationSequenceEditorDocument::DuplicateSelectedNotify()
+{
+    FAnimNotifyTrack* Track = GetNotifyTrack(EditorState.SelectedNotifyTrackIndex);
+    const FAnimNotifyEvent* SelectedNotify = GetSelectedNotify();
+    if (!Track || !SelectedNotify)
+    {
+        return false;
+    }
+
+    FAnimNotifyEvent DuplicatedNotify = *SelectedNotify;
+    DuplicatedNotify.StableId = FGuid::NewGuid();
+    DuplicatedNotify.Time =
+        EditorState.ClampOrSnapTime(SelectedNotify->Time + GetNotifyDuplicateTimeOffset(EditorState));
+
+    const int32 NewEventIndex = InsertNotifyEventSorted(*Track, DuplicatedNotify);
+    SelectNotify(EditorState.SelectedNotifyTrackIndex, NewEventIndex);
+    MarkDirty();
+    return NewEventIndex >= 0;
+}
+
+bool FAnimationSequenceEditorDocument::CopySelectedNotify()
+{
+    const FAnimNotifyEvent* SelectedNotify = GetSelectedNotify();
+    if (!SelectedNotify)
+    {
+        NotifyClipboard = FNotifyClipboard();
+        return false;
+    }
+
+    NotifyClipboard.bValid = true;
+    NotifyClipboard.EventType = SelectedNotify->EventType;
+    NotifyClipboard.Name = SelectedNotify->Name;
+    NotifyClipboard.Time = SelectedNotify->Time;
+    NotifyClipboard.Duration = SelectedNotify->Duration;
+    NotifyClipboard.Color = SelectedNotify->Color;
+    NotifyClipboard.NotifyClassName = SelectedNotify->NotifyClassName;
+    NotifyClipboard.Payload = SelectedNotify->Payload;
+    NotifyClipboard.SourceTrackIndex = EditorState.SelectedNotifyTrackIndex;
+    return true;
+}
+
+bool FAnimationSequenceEditorDocument::CanPasteNotify() const
+{
+    return NotifyClipboard.bValid;
+}
+
+bool FAnimationSequenceEditorDocument::PasteNotifyToTrackAtTime(int32 TrackIndex, float TimeSeconds)
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || TrackIndex < 0 || !NotifyClipboard.bValid)
+    {
+        return false;
+    }
+
+    EnsureTrackExists(*Tracks, TrackIndex);
+    FAnimNotifyTrack& Track = (*Tracks)[TrackIndex];
+
+    FAnimNotifyEvent PastedNotify;
+    PastedNotify.StableId = FGuid::NewGuid();
+    PastedNotify.Name = NotifyClipboard.Name;
+    PastedNotify.Time = EditorState.ClampOrSnapTime(TimeSeconds);
+    PastedNotify.Duration = std::max(0.0f, NotifyClipboard.Duration);
+    PastedNotify.Color = NotifyClipboard.Color;
+    PastedNotify.EventType = NotifyClipboard.EventType;
+    PastedNotify.NotifyClassName = NotifyClipboard.NotifyClassName.empty()
+        ? GetDefaultAnimNotifyClassName(NotifyClipboard.EventType)
+        : NotifyClipboard.NotifyClassName;
+    PastedNotify.Payload = NotifyClipboard.Payload;
+
+    const int32 NewEventIndex = InsertNotifyEventSorted(Track, PastedNotify);
+    SelectNotify(TrackIndex, NewEventIndex);
+    MarkDirty();
+    return NewEventIndex >= 0;
+}
+
+bool FAnimationSequenceEditorDocument::MoveSelectedNotifyToTrack(int32 TargetTrackIndex)
+{
+    TArray<FAnimNotifyTrack>* Tracks = AnimationSequenceViewer::GetSequenceNotifyTracks(Sequence);
+    if (!Tracks || TargetTrackIndex < 0)
+    {
+        return false;
+    }
+
+    const int32 SourceTrackIndex = EditorState.SelectedNotifyTrackIndex;
+    EnsureTrackExists(*Tracks, TargetTrackIndex);
+    FAnimNotifyTrack* SourceTrack = GetNotifyTrack(SourceTrackIndex);
+    const FAnimNotifyEvent* SelectedNotify = GetSelectedNotify();
+    if (!SourceTrack || !SelectedNotify)
+    {
+        return false;
+    }
+
+    if (TargetTrackIndex == SourceTrackIndex)
+    {
+        return true;
+    }
+
+    const int32 SourceEventIndex = EditorState.SelectedNotifyEventIndex;
+    if (SourceEventIndex < 0 || SourceEventIndex >= static_cast<int32>(SourceTrack->Events.size()))
+    {
+        return false;
+    }
+
+    const FAnimNotifyEvent MovedNotify = *SelectedNotify;
+    SourceTrack->Events.erase(SourceTrack->Events.begin() + SourceEventIndex);
+    FAnimNotifyTrack& TargetTrack = (*Tracks)[TargetTrackIndex];
+    const int32 NewEventIndex = InsertNotifyEventSorted(TargetTrack, MovedNotify);
+    SelectNotify(TargetTrackIndex, NewEventIndex);
     MarkDirty();
     return NewEventIndex >= 0;
 }

@@ -2401,18 +2401,27 @@ void FAnimationSequenceEditorWidget::RenderNotifyDetailsPanel()
 
     const bool bHasSelection = Document->GetSelectedNotify() != nullptr;
     ImGui::SameLine();
-    if (!bHasSelection)
+    if (!bHasSelection) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Duplicate")) { Document->DuplicateSelectedNotify(); }
+    if (!bHasSelection) { ImGui::EndDisabled(); }
+
+    ImGui::SameLine();
+    if (!bHasSelection) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Copy")) { Document->CopySelectedNotify(); }
+    if (!bHasSelection) { ImGui::EndDisabled(); }
+
+    ImGui::SameLine();
+    if (!Document->CanPasteNotify()) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Paste"))
     {
-        ImGui::BeginDisabled();
+        Document->PasteNotifyToTrackAtTime(DefaultTrackIndex, EditorState->CurrentTime);
     }
-    if (ImGui::Button("Delete Selected"))
-    {
-        Document->DeleteSelectedNotify();
-    }
-    if (!bHasSelection)
-    {
-        ImGui::EndDisabled();
-    }
+    if (!Document->CanPasteNotify()) { ImGui::EndDisabled(); }
+
+    ImGui::SameLine();
+    if (!bHasSelection) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Delete Selected")) { Document->DeleteSelectedNotify(); }
+    if (!bHasSelection) { ImGui::EndDisabled(); }
 
     const FAnimNotifyEvent* SelectedNotify = Document->GetSelectedNotify();
     if (!SelectedNotify)

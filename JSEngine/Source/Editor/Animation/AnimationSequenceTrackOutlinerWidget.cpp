@@ -289,6 +289,26 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
                     OpenRenameNotifyTrackPopup(Row.SourceIndex, Row.Label);
                 }
 
+                const bool bCanPasteNotify = Document->CanPasteNotify();
+                if (ImGui::MenuItem("Paste Notify Here", nullptr, false, bCanPasteNotify))
+                {
+                    if (Document->PasteNotifyToTrackAtTime(Row.SourceIndex, State.CurrentTime))
+                    {
+                        State.SetFocusedSequencerRow(Row.Id);
+                    }
+                }
+
+                const bool bCanMoveSelectedNotify =
+                    State.HasSelectedNotify() &&
+                    State.SelectedNotifyTrackIndex != Row.SourceIndex;
+                if (ImGui::MenuItem("Move Selected Notify Here", nullptr, false, bCanMoveSelectedNotify))
+                {
+                    if (Document->MoveSelectedNotifyToTrack(Row.SourceIndex))
+                    {
+                        State.SetFocusedSequencerRow(Row.Id);
+                    }
+                }
+
                 const bool bCanMoveUp = Row.SourceIndex > 0;
                 if (ImGui::MenuItem("Move Up", nullptr, false, bCanMoveUp))
                 {

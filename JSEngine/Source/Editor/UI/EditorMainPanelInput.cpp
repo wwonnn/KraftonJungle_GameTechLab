@@ -344,7 +344,38 @@ void FEditorMainPanel::Update()
         FocusLayout.GetViewportClient(FocusedIdx)->FocusSelection();
     }
 
+    bool bHandledActiveCtrlShortcut = false;
     if (!IO.WantTextInput &&
+        !bAnyUIItemActive &&
+        !bAnyPopupOpen &&
+        !bAnyDragDropActive &&
+        !bMouseOverContentBrowser &&
+        IO.KeyCtrl)
+    {
+        auto TryExecuteCtrlShortcut = [&](ImGuiKey Key)
+        {
+            if (!ImGui::IsKeyPressed(Key, false))
+            {
+                return false;
+            }
+
+            return ExecuteActiveEditorShortcut(
+                {
+                    static_cast<int32>(Key),
+                    true,
+                    IO.KeyShift,
+                    IO.KeyAlt
+                });
+        };
+
+        bHandledActiveCtrlShortcut =
+            TryExecuteCtrlShortcut(ImGuiKey_C) ||
+            TryExecuteCtrlShortcut(ImGuiKey_D) ||
+            TryExecuteCtrlShortcut(ImGuiKey_V);
+    }
+
+    if (!bHandledActiveCtrlShortcut &&
+        !IO.WantTextInput &&
         !bAnyUIItemActive &&
         !bAnyPopupOpen &&
         !bAnyDragDropActive &&
