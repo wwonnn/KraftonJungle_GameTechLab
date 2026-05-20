@@ -2,24 +2,31 @@
 
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Asset/SkeletalMesh.h"
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
+#include "Editor/UI/EditorMainPanelViewportToolbarHelpers.h"
+#include "Editor/Viewport/SkeletalMeshViewportClient.h"
 #include "Editor/Viewport/EditorViewportClient.h"
 #include "Editor/Viewport/FSceneViewport.h"
+#include "Editor/Viewport/ViewportLayout.h"
 #include "Engine/Runtime/WindowsWindow.h"
 #include "Render/Common/RenderTypes.h"
 
 #include "ImGui/imgui.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 
 namespace
 {
+    constexpr float PreviewSkeletonSplitterWidth = 4.0f;
     constexpr float PreviewOverlayMargin = 10.0f;
     constexpr float PreviewOverlayPadding = 8.0f;
     constexpr float PreviewOverlayLineSpacing = 2.0f;
+    constexpr float PreviewToolbarPaddingX = 8.0f;
 
     bool UsesAbsoluteImGuiCoordinates()
     {
@@ -142,18 +149,290 @@ void FAnimationSequenceEditorWidget::RenderPreviewPane(
     PreviewSize.y = std::max(PreviewSize.y, 1.0f);
 
     ImGui::BeginChild("AnimSequencePreviewViewport", PreviewSize, true, ImGuiWindowFlags_NoScrollbar);
-    if (PreviewController)
-    {
-        PreviewController->SetViewportSize(static_cast<int32>(PreviewSize.x), static_cast<int32>(PreviewSize.y));
-    }
 
-    if (PreviewController && PreviewController->HasValidPreview() && PreviewController->GetPreviewSRV())
+    const USkeletalMesh* PreviewMesh = PreviewController ? PreviewController->GetPreviewMesh() : nullptr;
+    const FSkeletalMesh* PreviewMeshData = PreviewMesh ? PreviewMesh->GetMeshData() : nullptr;
+    if (PreviewMeshData)
     {
-        RenderPreviewImage(PreviewSize, PreviewOverlayLines);
+        PreviewSkeletonTreeWidth = std::clamp(
+            PreviewSkeletonTreeWidth,
+            180.0f,
+            std::max(180.0f, PreviewSize.x * 0.4f));
+
+        const float ViewportWidth = std::max(
+            PreviewSize.x - PreviewSkeletonTreeWidth - PreviewSkeletonSplitterWidth,
+            160.0f);
+        const float ViewportToolbarHeight = static_cast<float>(FEditorViewportLayout::DefaultViewportToolbarHeight);
+        const float ViewportContentHeight = std::max(PreviewSize.y - ViewportToolbarHeight, 80.0f);
+
+        RenderPreviewSkeletonTree(PreviewSize.y);
+
+        ImGui::SameLine(0.0f, 0.0f);
+        ImGui::InvisibleButton(
+            "##AnimSequencePreviewSkeletonSplitter",
+            ImVec2(PreviewSkeletonSplitterWidth, PreviewSize.y));
+        if (ImGui::IsItemHovered() || ImGui::IsItemActive())
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+        }
+        ImGui::GetWindowDrawList()->AddRectFilled(
+            ImGui::GetItemRectMin(),
+            ImGui::GetItemRectMax(),
+            ImGui::GetColorU32(
+                ImGui::IsItemActive()
+                    ? ImGuiCol_SeparatorActive
+                    : (ImGui::IsItemHovered() ? ImGuiCol_SeparatorHovered : ImGuiCol_Separator)),
+            2.0f);
+        if (ImGui::IsItemActive())
+        {
+            PreviewSkeletonTreeWidth = std::clamp(
+                PreviewSkeletonTreeWidth + ImGui::GetIO().MouseDelta.x,
+                180.0f,
+                std::max(180.0f, PreviewSize.x * 0.4f));
+        }
+
+        ImGui::SameLine(0.0f, 0.0f);
+        ImGui::BeginChild("##AnimSequencePreviewViewportPane", ImVec2(ViewportWidth, PreviewSize.y), false, ImGuiWindowFlags_NoScrollbar);
+        RenderPreviewViewportToolbar();
+
+        ImGui::BeginChild(
+            "##AnimSequencePreviewViewportContent",
+            ImVec2(0.0f, ViewportContentHeight),
+            false,
+            ImGuiWindowFlags_NoScrollbar);
+        if (PreviewController)
+        {
+            PreviewController->SetViewportSize(static_cast<int32>(ViewportWidth), static_cast<int32>(ViewportContentHeight));
+        }
+
+        if (PreviewController && PreviewController->HasValidPreview() && PreviewController->GetPreviewSRV())
+        {
+            RenderPreviewImage(ImVec2(ViewportWidth, ViewportContentHeight), PreviewOverlayLines);
+        }
+        else
+        {
+            RenderPreviewFallback(ImVec2(ViewportWidth, ViewportContentHeight), PreviewOverlayLines);
+        }
+        ImGui::EndChild();
+        ImGui::EndChild();
     }
     else
     {
-        RenderPreviewFallback(PreviewSize, PreviewOverlayLines);
+        PreviewSkeletonTreeCachedMesh = nullptr;
+        PreviewSkeletonTreeChildren.clear();
+        PreviewSkeletonTreeSelectedBoneIndex = -1;
+        PendingPreviewBoneTreeOpenStateRoot = -1;
+        if (PreviewController)
+        {
+            PreviewController->ClearPreviewSelection();
+        }
+        if (PreviewController)
+        {
+            PreviewController->SetViewportSize(static_cast<int32>(PreviewSize.x), static_cast<int32>(PreviewSize.y));
+        }
+
+        if (PreviewController && PreviewController->HasValidPreview() && PreviewController->GetPreviewSRV())
+        {
+            RenderPreviewImage(PreviewSize, PreviewOverlayLines);
+        }
+        else
+        {
+            RenderPreviewFallback(PreviewSize, PreviewOverlayLines);
+        }
+    }
+
+    ImGui::EndChild();
+}
+
+void FAnimationSequenceEditorWidget::RenderPreviewViewportToolbar()
+{
+    constexpr ImGuiWindowFlags ToolbarFlags =
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse;
+    constexpr float ToolbarHeight = static_cast<float>(FEditorViewportLayout::DefaultViewportToolbarHeight);
+
+    ImGui::BeginChild("##AnimSequencePreviewViewportToolbar", ImVec2(0.0f, ToolbarHeight), false, ToolbarFlags);
+    ImGui::SetCursorPosY(std::max(0.0f, (ToolbarHeight - ImGui::GetFrameHeight()) * 0.5f));
+    ImGui::SetCursorPosX(PreviewToolbarPaddingX);
+
+    FSceneViewport* SceneViewport = PreviewController ? PreviewController->GetSceneViewport() : nullptr;
+    FEditorViewportClient* Client = SceneViewport ? SceneViewport->GetClient() : nullptr;
+    FEditorViewportState* ViewportState = SceneViewport ? &SceneViewport->GetState() : nullptr;
+    FSkeletalMeshViewportClient* SkeletalViewportClient = Client ? static_cast<FSkeletalMeshViewportClient*>(Client) : nullptr;
+
+    if (!(Client && ViewportState))
+    {
+        ImGui::TextDisabled("Viewport controls are available after preview initialization.");
+        ImGui::EndChild();
+        return;
+    }
+
+    char ViewportTypeLabel[64] = {};
+    snprintf(
+        ViewportTypeLabel,
+        sizeof(ViewportTypeLabel),
+        "%s v",
+        FEditorMainPanelViewportToolbarHelpers::GetViewportTypeName(Client->GetViewportType()));
+    if (ImGui::Button(ViewportTypeLabel))
+    {
+        ImGui::OpenPopup("##AnimSequencePreviewViewportTypePopup");
+    }
+    if (ImGui::BeginPopup("##AnimSequencePreviewViewportTypePopup"))
+    {
+        static constexpr EEditorViewportType ViewportTypes[] = {
+            EVT_Perspective,
+            EVT_OrthoTop,
+            EVT_OrthoBottom,
+            EVT_OrthoFront,
+            EVT_OrthoBack,
+            EVT_OrthoLeft,
+            EVT_OrthoRight,
+        };
+        for (EEditorViewportType Type : ViewportTypes)
+        {
+            if (ImGui::MenuItem(
+                FEditorMainPanelViewportToolbarHelpers::GetViewportTypeName(Type),
+                nullptr,
+                Client->GetViewportType() == Type))
+            {
+                Client->SetViewportType(Type);
+                Client->ApplyCameraMode();
+            }
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::SameLine();
+    char CameraSpeedLabel[48] = {};
+    snprintf(
+        CameraSpeedLabel,
+        sizeof(CameraSpeedLabel),
+        "Cam %.1fx v",
+        FEditorMainPanelViewportToolbarHelpers::GetCameraSpeedMultiplier(Client));
+    if (ImGui::Button(CameraSpeedLabel))
+    {
+        ImGui::OpenPopup("##AnimSequencePreviewCameraSpeedPopup");
+    }
+    if (ImGui::BeginPopup("##AnimSequencePreviewCameraSpeedPopup"))
+    {
+        float SpeedMultiplier = FEditorMainPanelViewportToolbarHelpers::GetCameraSpeedMultiplier(Client);
+        if (ImGui::SliderFloat(
+            "Speed",
+            &SpeedMultiplier,
+            0.01f,
+            FEditorMainPanelViewportToolbarHelpers::MaxCameraSpeedMultiplier,
+            "%.2fx"))
+        {
+            FEditorMainPanelViewportToolbarHelpers::SetCameraSpeedMultiplier(Client, SpeedMultiplier);
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::SameLine();
+    char ViewModeLabel[96] = {};
+    snprintf(
+        ViewModeLabel,
+        sizeof(ViewModeLabel),
+        "%s v",
+        FEditorMainPanelViewportToolbarHelpers::GetViewModeName(ViewportState->ViewMode));
+    if (ImGui::Button(ViewModeLabel))
+    {
+        ImGui::OpenPopup("##AnimSequencePreviewViewModePopup");
+    }
+    if (ImGui::BeginPopup("##AnimSequencePreviewViewModePopup"))
+    {
+        static constexpr EViewMode ViewModes[] = {
+            EViewMode::Lit_Gouraud,
+            EViewMode::Lit_Lambert,
+            EViewMode::Lit_BlinnPhong,
+            EViewMode::Unlit,
+            EViewMode::Heatmap,
+            EViewMode::Wireframe,
+            EViewMode::Depth,
+            EViewMode::Normal,
+            EViewMode::IdBuffer,
+        };
+        for (EViewMode Mode : ViewModes)
+        {
+            if (ImGui::MenuItem(
+                FEditorMainPanelViewportToolbarHelpers::GetViewModeName(Mode),
+                nullptr,
+                ViewportState->ViewMode == Mode))
+            {
+                ViewportState->ViewMode = Mode;
+            }
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Show v"))
+    {
+        ImGui::OpenPopup("##AnimSequencePreviewShowPopup");
+    }
+    if (ImGui::BeginPopup("##AnimSequencePreviewShowPopup"))
+    {
+        if (SkeletalViewportClient)
+        {
+            FSkeletalViewerShowFlags& ShowFlags = SkeletalViewportClient->GetShowFlags();
+            ImGui::MenuItem("Bones", nullptr, &ShowFlags.bShowBones);
+        }
+        else
+        {
+            ImGui::TextDisabled("Show flags are unavailable.");
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+}
+
+void FAnimationSequenceEditorWidget::RenderPreviewSkeletonTree(float Height)
+{
+    ImGui::BeginChild("##AnimSequencePreviewSkeletonTree", ImVec2(PreviewSkeletonTreeWidth, Height), false);
+    ImGui::TextDisabled("Skeleton Tree");
+    ImGui::Separator();
+
+    const USkeletalMesh* PreviewMesh = PreviewController ? PreviewController->GetPreviewMesh() : nullptr;
+    const FSkeletalMesh* MeshData = PreviewMesh ? PreviewMesh->GetMeshData() : nullptr;
+    if (!MeshData)
+    {
+        PreviewSkeletonTreeCachedMesh = nullptr;
+        PreviewSkeletonTreeChildren.clear();
+        PreviewSkeletonTreeSelectedBoneIndex = -1;
+        PendingPreviewBoneTreeOpenStateRoot = -1;
+        ImGui::TextDisabled("Preview mesh is unavailable.");
+        ImGui::EndChild();
+        return;
+    }
+
+    if (PreviewSkeletonTreeCachedMesh != MeshData)
+    {
+        PreviewSkeletonTreeCachedMesh = MeshData;
+        PreviewSkeletonTreeSelectedBoneIndex = -1;
+        if (PreviewController)
+        {
+            PreviewController->ClearPreviewSelection();
+        }
+        RebuildPreviewSkeletonTreeCaches(MeshData);
+    }
+
+    ApplyPendingPreviewBoneTreeOpenState(MeshData);
+    const TArray<FBoneInfo>& Bones = MeshData->GetBones();
+    for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(Bones.size()); ++BoneIndex)
+    {
+        if (Bones[BoneIndex].ParentIndex == -1)
+        {
+            DrawPreviewSkeletonBoneNode(BoneIndex, Bones, PreviewSkeletonTreeChildren);
+        }
+    }
+
+    if (PreviewSkeletonTreeSelectedBoneIndex >= 0 &&
+        PreviewSkeletonTreeSelectedBoneIndex < static_cast<int32>(Bones.size()))
+    {
+        ImGui::Separator();
+        ImGui::TextDisabled("Selected Bone");
+        ImGui::Text("%s", Bones[PreviewSkeletonTreeSelectedBoneIndex].Name.c_str());
     }
 
     ImGui::EndChild();
@@ -270,5 +549,149 @@ void FAnimationSequenceEditorWidget::SyncEmbeddedViewportRectAndFocus(
     if (bViewportClicked && EditorEngine)
     {
         EditorEngine->FocusViewportInput(SceneViewport);
+    }
+}
+
+void FAnimationSequenceEditorWidget::DrawPreviewSkeletonBoneNode(
+    int32 BoneIndex,
+    const TArray<FBoneInfo>& Bones,
+    const TArray<TArray<int32>>& Children)
+{
+    if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(Bones.size()))
+    {
+        return;
+    }
+
+    const FBoneInfo& Bone = Bones[BoneIndex];
+    const bool bHasChildren =
+        BoneIndex >= 0 &&
+        BoneIndex < static_cast<int32>(Children.size()) &&
+        !Children[BoneIndex].empty();
+
+    ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (!bHasChildren)
+    {
+        Flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+    if (PreviewSkeletonTreeSelectedBoneIndex == BoneIndex)
+    {
+        Flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    const bool bOpen = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<intptr_t>(BoneIndex)), Flags, "%s", Bone.Name.c_str());
+    if (ImGui::IsItemClicked())
+    {
+        PreviewSkeletonTreeSelectedBoneIndex = BoneIndex;
+        if (PreviewController)
+        {
+            PreviewController->SelectPreviewBone(BoneIndex);
+        }
+        if (FSceneViewport* SceneViewport = PreviewController ? PreviewController->GetSceneViewport() : nullptr)
+        {
+            if (FSkeletalMeshViewportClient* Client = static_cast<FSkeletalMeshViewportClient*>(SceneViewport->GetClient()))
+            {
+                Client->GetShowFlags().bShowBones = true;
+            }
+        }
+    }
+
+    if (ImGui::BeginPopupContextItem())
+    {
+        if (ImGui::MenuItem("Expand Children", nullptr, false, bHasChildren))
+        {
+            QueuePreviewBoneSubtreeOpenState(BoneIndex, true);
+        }
+        if (ImGui::MenuItem("Collapse Children", nullptr, false, bHasChildren))
+        {
+            QueuePreviewBoneSubtreeOpenState(BoneIndex, false);
+        }
+        ImGui::EndPopup();
+    }
+
+    if (!bOpen)
+    {
+        return;
+    }
+
+    for (int32 ChildIndex : Children[BoneIndex])
+    {
+        DrawPreviewSkeletonBoneNode(ChildIndex, Bones, Children);
+    }
+    ImGui::TreePop();
+}
+
+void FAnimationSequenceEditorWidget::RebuildPreviewSkeletonTreeCaches(const FSkeletalMesh* MeshData)
+{
+    PreviewSkeletonTreeChildren.clear();
+    if (!MeshData)
+    {
+        return;
+    }
+
+    const TArray<FBoneInfo>& Bones = MeshData->GetBones();
+    PreviewSkeletonTreeChildren.resize(Bones.size());
+    for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(Bones.size()); ++BoneIndex)
+    {
+        const int32 ParentIndex = Bones[BoneIndex].ParentIndex;
+        if (ParentIndex >= 0 && ParentIndex < static_cast<int32>(PreviewSkeletonTreeChildren.size()))
+        {
+            PreviewSkeletonTreeChildren[ParentIndex].push_back(BoneIndex);
+        }
+    }
+}
+
+void FAnimationSequenceEditorWidget::QueuePreviewBoneSubtreeOpenState(int32 BoneIndex, bool bOpen)
+{
+    PendingPreviewBoneTreeOpenStateRoot = BoneIndex;
+    bPendingPreviewBoneTreeOpenStateValue = bOpen;
+}
+
+void FAnimationSequenceEditorWidget::ApplyPendingPreviewBoneTreeOpenState(const FSkeletalMesh* MeshData)
+{
+    if (!MeshData || PendingPreviewBoneTreeOpenStateRoot < 0)
+    {
+        return;
+    }
+
+    SetPreviewBoneSubtreeOpenState(
+        PendingPreviewBoneTreeOpenStateRoot,
+        PreviewSkeletonTreeChildren,
+        bPendingPreviewBoneTreeOpenStateValue);
+    PendingPreviewBoneTreeOpenStateRoot = -1;
+}
+
+void FAnimationSequenceEditorWidget::SetPreviewBoneSubtreeOpenState(
+    int32 BoneIndex,
+    const TArray<TArray<int32>>& Children,
+    bool bOpen)
+{
+    if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(Children.size()))
+    {
+        return;
+    }
+
+    ImGuiStorage* Storage = ImGui::GetStateStorage();
+    if (!Storage)
+    {
+        return;
+    }
+
+    const void* NodePointer = reinterpret_cast<void*>(static_cast<intptr_t>(BoneIndex));
+    const ImGuiID NodeId = ImGui::GetID(NodePointer);
+    if (bOpen)
+    {
+        Storage->SetInt(NodeId, 1);
+    }
+
+    ImGui::PushID(NodePointer);
+    for (int32 ChildIndex : Children[BoneIndex])
+    {
+        SetPreviewBoneSubtreeOpenState(ChildIndex, Children, bOpen);
+    }
+    ImGui::PopID();
+
+    if (!bOpen)
+    {
+        Storage->SetInt(NodeId, 0);
     }
 }

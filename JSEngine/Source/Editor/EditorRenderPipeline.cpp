@@ -465,7 +465,7 @@ void FEditorRenderPipeline::RenderActiveDocumentViewport(FRenderer& Renderer, fl
     ShowFlags.bSkeletalMesh = true;
     ShowFlags.bGrid = false;
     ShowFlags.bAxis = false;
-    ShowFlags.bGizmo = false;
+    ShowFlags.bGizmo = true;
     ShowFlags.bBillboardText = false;
     ShowFlags.bBoundingVolume = false;
     ShowFlags.bBVHBoundingVolume = false;
@@ -474,6 +474,15 @@ void FEditorRenderPipeline::RenderActiveDocumentViewport(FRenderer& Renderer, fl
     ShowFlags.bFog = false;
     ShowFlags.bShadow = false;
     ShowFlags.bGammaCorrection = false;
+
+    FEditorSkeletalPreviewDebugSettings SkeletalPreviewDebugSettings;
+    const bool bHasSkeletalPreviewDebugSettings =
+        ActiveDocument->GetSkeletalPreviewDebugSettings(SkeletalPreviewDebugSettings);
+    if (bHasSkeletalPreviewDebugSettings)
+    {
+        ShowFlags.bShowSelectedBoneWeight = SkeletalPreviewDebugSettings.bShowSelectedBoneWeight;
+        ShowFlags.SelectedBoneIndex = SkeletalPreviewDebugSettings.SelectedBoneIndex;
+    }
 
     const FViewportCamera* Camera = VC->GetRenderCamera();
     if (!Camera)
@@ -496,6 +505,45 @@ void FEditorRenderPipeline::RenderActiveDocumentViewport(FRenderer& Renderer, fl
 
     const FFrustum& ViewFrustum = SceneView.CameraFrustum;
     Collector.CollectWorld(World, ShowFlags, EViewMode::Lit_BlinnPhong, Bus, &ViewFrustum, false);
+
+    if (UGizmoComponent* Gizmo = VC->GetGizmo())
+    {
+        if (SceneView.bOrthographic)
+        {
+            Gizmo->ApplyScreenSpaceScalingOrtho(SceneView.CameraOrthoHeight);
+        }
+        else
+        {
+            Gizmo->ApplyScreenSpaceScaling(SceneView.CameraPosition);
+        }
+    }
+
+    Collector.CollectGizmo(
+        VC->GetGizmo(),
+        ShowFlags,
+        Bus,
+        VC->GetViewportState() ? VC->GetViewportState()->bHovered : false);
+
+    if (bHasSkeletalPreviewDebugSettings &&
+        SkeletalPreviewDebugSettings.bShowBones &&
+        SkeletalPreviewDebugSettings.SkeletalMeshComponent)
+    {
+        SkeletalPreviewDebugSettings.SkeletalMeshComponent->EnsureSkinningUpdated();
+        if (SkeletalPreviewDebugSettings.bShowOnlySelectedBone)
+        {
+            if (SkeletalPreviewDebugSettings.SelectedBoneIndex >= 0)
+            {
+                Collector.CollectSingleBone(
+                    SkeletalPreviewDebugSettings.SkeletalMeshComponent,
+                    SkeletalPreviewDebugSettings.SelectedBoneIndex,
+                    Bus);
+            }
+        }
+        else
+        {
+            Collector.CollectSkeletonBones(SkeletalPreviewDebugSettings.SkeletalMeshComponent, Bus);
+        }
+    }
 
     Renderer.PrepareBatchers(Bus);
     Renderer.Render(Bus);

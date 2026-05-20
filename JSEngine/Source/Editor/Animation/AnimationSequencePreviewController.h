@@ -15,6 +15,8 @@
 
 class UEditorEngine;
 class UAnimSequence;
+class USkeletalMesh;
+class USkeletalMeshComponent;
 class FSceneViewport;
 struct ID3D11ShaderResourceView;
 
@@ -61,6 +63,10 @@ public:
     TArray<FString> GetPreviewSocketNames() const;
     bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
     TArray<FString> GetPreviewPrimitiveComponentNames() const;
+    const USkeletalMesh* GetPreviewMesh() const;
+    USkeletalMeshComponent* GetPreviewComponent() const;
+    bool SelectPreviewBone(int32 BoneIndex);
+    void ClearPreviewSelection();
 
     const FString& GetPreviewStatusText() const { return PreviewStatusText; }
     const FString& GetTimelineStatusText() const { return TimelineStatusText; }

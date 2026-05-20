@@ -442,6 +442,12 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     ActiveTimelineRangeEditPopupId.clear();
     ActiveNotifyValidationSeverityFilter = ENotifyValidationBrowserSeverityFilter::All;
     PlaybackSpeedCustomValue = InPreviewController ? std::fabs(InPreviewController->GetPlayRate()) : 1.0f;
+    PreviewSkeletonTreeChildren.clear();
+    PreviewSkeletonTreeCachedMesh = nullptr;
+    PreviewSkeletonTreeSelectedBoneIndex = -1;
+    PendingPreviewBoneTreeOpenStateRoot = -1;
+    bPendingPreviewBoneTreeOpenStateValue = false;
+    PreviewSkeletonTreeWidth = 240.0f;
 }
 
 //----------------------------------------------------------------------------

@@ -3,9 +3,11 @@
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/SkeletalMesh.h"
 #include "Component/ActorComponent.h"
+#include "Component/GizmoComponent.h"
 #include "Component/PostProcess/Light/AmbientLightComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/SkeletalMeshComponent.h"
+#include "Component/TransformProxy.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
@@ -254,6 +256,51 @@ TArray<FString> FAnimationSequencePreviewScene::GetPreviewPrimitiveComponentName
     return ComponentNames;
 }
 
+bool FAnimationSequencePreviewScene::SelectPreviewBone(int32 BoneIndex)
+{
+    if (!(AnimationSequenceViewer::IsLiveObject(PreviewActor) &&
+        AnimationSequenceViewer::IsLiveObject(PreviewComponent) &&
+        AnimationSequenceViewer::IsLiveObject(PreviewMesh)))
+    {
+        return false;
+    }
+
+    const FSkeletalMesh* MeshData = PreviewMesh->GetMeshData();
+    if (!MeshData || BoneIndex < 0 || BoneIndex >= static_cast<int32>(MeshData->GetBones().size()))
+    {
+        return false;
+    }
+
+    PreviewComponent->EnsureSkinningUpdated();
+
+    if (FSelectionManager* SelectionManager = PreviewViewportClient.GetSelectionManager())
+    {
+        SelectionManager->Select(PreviewActor);
+    }
+
+    if (UGizmoComponent* Gizmo = PreviewViewportClient.GetGizmo())
+    {
+        Gizmo->SetProxy(std::make_shared<FBoneTransformProxy>(PreviewComponent, BoneIndex));
+        Gizmo->SetSelectedActors(nullptr);
+    }
+
+    return true;
+}
+
+void FAnimationSequencePreviewScene::ClearPreviewSelection()
+{
+    if (FSelectionManager* SelectionManager = PreviewViewportClient.GetSelectionManager())
+    {
+        SelectionManager->ClearSelection();
+        return;
+    }
+
+    if (UGizmoComponent* Gizmo = PreviewViewportClient.GetGizmo())
+    {
+        Gizmo->Deactivate();
+    }
+}
+
 void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
 {
     if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
@@ -311,9 +358,11 @@ void FAnimationSequencePreviewScene::SetViewportSize(int32 InWidth, int32 InHeig
 
     // The preview scene owns the offscreen viewer resource. The embedded ImGui
     // panel only mirrors this rect; it does not own the render target lifecycle.
+    // Use a separate index range from standalone skeletal mesh viewers so
+    // opening a viewer for the same mesh cannot steal this preview render target.
     if (PreviewResourceIndex == InvalidPreviewResourceIndex)
     {
-        PreviewResourceIndex = NextPreviewResourceIndex++;
+        PreviewResourceIndex = FirstEmbeddedPreviewResourceIndex + NextPreviewResourceIndex++;
     }
 
     FViewportRenderResource& Resource =

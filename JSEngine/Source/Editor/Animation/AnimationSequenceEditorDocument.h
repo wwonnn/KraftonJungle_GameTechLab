@@ -30,6 +30,7 @@ public:
     void BuildCommandList(FEditorCommandList& OutCommands) override;
     FSceneViewport* GetSceneViewport() override;
     const FSceneViewport* GetSceneViewport() const override;
+    bool GetSkeletalPreviewDebugSettings(FEditorSkeletalPreviewDebugSettings& OutSettings) const override;
 
     bool CanSave() const override;
     bool Save() override;

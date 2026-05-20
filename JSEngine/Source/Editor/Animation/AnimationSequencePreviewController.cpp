@@ -299,6 +299,29 @@ bool FAnimationSequencePreviewController::HasValidPreview() const
     return PreviewScene && PreviewScene->HasValidPreview();
 }
 
+const USkeletalMesh* FAnimationSequencePreviewController::GetPreviewMesh() const
+{
+    return PreviewScene ? PreviewScene->GetPreviewMesh() : nullptr;
+}
+
+USkeletalMeshComponent* FAnimationSequencePreviewController::GetPreviewComponent() const
+{
+    return PreviewScene ? PreviewScene->GetPreviewComponent() : nullptr;
+}
+
+bool FAnimationSequencePreviewController::SelectPreviewBone(int32 BoneIndex)
+{
+    return PreviewScene && PreviewScene->SelectPreviewBone(BoneIndex);
+}
+
+void FAnimationSequencePreviewController::ClearPreviewSelection()
+{
+    if (PreviewScene)
+    {
+        PreviewScene->ClearPreviewSelection();
+    }
+}
+
 const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewController::GetRecentFiredNotifyEvents() const
 {
     static const TArray<FAnimNotifyEvent> EmptyEvents = {};

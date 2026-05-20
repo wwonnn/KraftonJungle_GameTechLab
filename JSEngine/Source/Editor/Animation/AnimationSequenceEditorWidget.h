@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Asset/SkeletalMeshTypes.h"
 #include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceCurveTrackWidget.h"
 #include "Editor/Animation/AnimationSequenceCurveFilter.h"
@@ -26,6 +27,7 @@ class FAnimationSequenceEditorWidget : public FEditorWidget
 {
 public:
     void Render(float DeltaTime) override;
+    int32 GetSelectedPreviewBoneIndex() const { return PreviewSkeletonTreeSelectedBoneIndex; }
 
     void BindDocumentContext(
         FAnimationSequenceEditorDocument* InDocument,
@@ -46,10 +48,23 @@ private:
     // Preview area
     TArray<FString> BuildPreviewOverlayLines() const;
     void RenderPreviewPane(float PreviewHeight, const TArray<FString>& PreviewOverlayLines);
+    void RenderPreviewSkeletonTree(float Height);
+    void RenderPreviewViewportToolbar();
     void RenderPreviewImage(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines);
     void RenderPreviewFallback(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines) const;
     void SyncEmbeddedViewportRectAndFocus(const ImVec2& Min, const ImVec2& Max, bool bViewportClicked);
     void RenderPreviewToolbarOverlay(const ImVec2& Min, const ImVec2& Max) const;
+    void DrawPreviewSkeletonBoneNode(
+        int32 BoneIndex,
+        const TArray<FBoneInfo>& Bones,
+        const TArray<TArray<int32>>& Children);
+    void RebuildPreviewSkeletonTreeCaches(const FSkeletalMesh* MeshData);
+    void QueuePreviewBoneSubtreeOpenState(int32 BoneIndex, bool bOpen);
+    void ApplyPendingPreviewBoneTreeOpenState(const FSkeletalMesh* MeshData);
+    void SetPreviewBoneSubtreeOpenState(
+        int32 BoneIndex,
+        const TArray<TArray<int32>>& Children,
+        bool bOpen);
 
     // Sequencer area
     void RenderSequencerRegion(float SequencerHeight, float MaxPreviewHeight);
@@ -188,4 +203,10 @@ private:
     ENotifyValidationBrowserSeverityFilter ActiveNotifyValidationSeverityFilter =
         ENotifyValidationBrowserSeverityFilter::All;
     float PlaybackSpeedCustomValue = 1.0f;
+    TArray<TArray<int32>> PreviewSkeletonTreeChildren;
+    const FSkeletalMesh* PreviewSkeletonTreeCachedMesh = nullptr;
+    int32 PreviewSkeletonTreeSelectedBoneIndex = -1;
+    int32 PendingPreviewBoneTreeOpenStateRoot = -1;
+    bool bPendingPreviewBoneTreeOpenStateValue = false;
+    float PreviewSkeletonTreeWidth = 240.0f;
 };

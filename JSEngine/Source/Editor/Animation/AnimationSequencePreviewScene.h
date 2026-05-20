@@ -32,6 +32,8 @@ public:
 
     bool HasValidPreview() const;
     const FString& GetPreviewMeshPath() const { return PreviewMeshPath; }
+    const USkeletalMesh* GetPreviewMesh() const { return HasValidPreview() ? PreviewMesh : nullptr; }
+    USkeletalMeshComponent* GetPreviewComponent() const { return HasValidPreview() ? PreviewComponent : nullptr; }
 
     void TickViewportClient(float DeltaTime);
     void ApplyPlaybackSettings(bool bLooping, float PlayRate, bool bPlaying);
@@ -43,6 +45,8 @@ public:
     TArray<FString> GetPreviewSocketNames() const;
     bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
     TArray<FString> GetPreviewPrimitiveComponentNames() const;
+    bool SelectPreviewBone(int32 BoneIndex);
+    void ClearPreviewSelection();
     void RefreshPreviewPose(float DeltaTime);
     void AdvancePreviewPlayback(float InTime, float DeltaTime, bool bWrapped, float RangeStart, float RangeEnd);
 
@@ -64,6 +68,7 @@ private:
 
 private:
     static constexpr uint32 InvalidPreviewResourceIndex = ~0u;
+    static constexpr uint32 FirstEmbeddedPreviewResourceIndex = 1024u;
     inline static uint32 NextPreviewResourceIndex = 0;
     static constexpr int32 MaxRecentNotifyHistoryCount = 16;
 

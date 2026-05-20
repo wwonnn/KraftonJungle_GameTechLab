@@ -10,6 +10,7 @@
 #include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
+#include "Editor/Viewport/SkeletalMeshViewportClient.h"
 
 #include "ImGui/imgui.h"
 
@@ -290,6 +291,25 @@ FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport()
 const FSceneViewport* FAnimationSequenceEditorDocument::GetSceneViewport() const
 {
     return PreviewController ? PreviewController->GetSceneViewport() : nullptr;
+}
+
+bool FAnimationSequenceEditorDocument::GetSkeletalPreviewDebugSettings(FEditorSkeletalPreviewDebugSettings& OutSettings) const
+{
+    FSceneViewport* SceneViewport = PreviewController ? PreviewController->GetSceneViewport() : nullptr;
+    FSkeletalMeshViewportClient* Client = SceneViewport ? static_cast<FSkeletalMeshViewportClient*>(SceneViewport->GetClient()) : nullptr;
+    USkeletalMeshComponent* PreviewComponent = PreviewController ? PreviewController->GetPreviewComponent() : nullptr;
+    if (!(Client && PreviewComponent && Widget))
+    {
+        return false;
+    }
+
+    const FSkeletalViewerShowFlags& ShowFlags = Client->GetShowFlags();
+    OutSettings.SkeletalMeshComponent = PreviewComponent;
+    OutSettings.bShowBones = ShowFlags.bShowBones;
+    OutSettings.bShowOnlySelectedBone = ShowFlags.bShowOnlySelectedBone;
+    OutSettings.bShowSelectedBoneWeight = ShowFlags.bShowSelectedBoneWeight;
+    OutSettings.SelectedBoneIndex = Widget->GetSelectedPreviewBoneIndex();
+    return true;
 }
 
 bool FAnimationSequenceEditorDocument::CanSave() const
