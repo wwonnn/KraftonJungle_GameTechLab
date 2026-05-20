@@ -2,7 +2,6 @@
 
 #include "Animation/AnimNotify.h"
 #include "Animation/AnimNotifyPayloadParser.h"
-#include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
 #include "Editor/Animation/AnimationSequenceNotifyAssetPickerHelpers.h"

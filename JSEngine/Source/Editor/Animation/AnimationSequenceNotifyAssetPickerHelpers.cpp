@@ -15,12 +15,6 @@
 
 namespace
 {
-    enum class ENotifyAssetDisplayMode : uint8
-    {
-        FriendlyLabel,
-        RawStoredValue,
-    };
-
     // Generic asset-picker support helpers
     FString ToLowerAscii(FString Value)
     {
@@ -209,31 +203,20 @@ namespace
     }
 
     // Asset-kind display and fallback label helpers
-    FString BuildSoundCueDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
+    FString BuildSoundCueDisplayLabel(const FString& StoredValue)
     {
-        if (DisplayMode == ENotifyAssetDisplayMode::RawStoredValue)
-        {
-            return StoredValue;
-        }
-
         const std::filesystem::path AssetPath(FPaths::ToWide(StoredValue));
         const FString Stem = FPaths::ToUtf8(AssetPath.stem().wstring());
         return Stem.empty() ? StoredValue : Stem;
     }
 
-    FString BuildVfxDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
+    FString BuildVfxDisplayLabel(const FString& StoredValue)
     {
-        (void)DisplayMode;
         return StoredValue;
     }
 
-    FString BuildCameraShakeDisplayLabel(const FString& StoredValue, ENotifyAssetDisplayMode DisplayMode)
+    FString BuildCameraShakeDisplayLabel(const FString& StoredValue)
     {
-        if (DisplayMode == ENotifyAssetDisplayMode::RawStoredValue)
-        {
-            return StoredValue;
-        }
-
         if (!StoredValue.empty() && StoredValue.front() == 'U')
         {
             return StoredValue.substr(1);
@@ -242,22 +225,19 @@ namespace
         return StoredValue;
     }
 
-    FString BuildNotifyAssetDisplayLabel(
-        EAnimNotifyPayloadAssetKind AssetKind,
-        const FString& StoredValue,
-        ENotifyAssetDisplayMode DisplayMode)
+    FString BuildNotifyAssetDisplayLabel(EAnimNotifyPayloadAssetKind AssetKind, const FString& StoredValue)
     {
         // If the stored value does not match the current picker inventory (for
         // example after a rename or a custom manual override), keep showing a
-        // readable label instead of hiding the raw serialized value completely.
+        // readable fallback label instead of hiding the serialized value.
         switch (AssetKind)
         {
         case EAnimNotifyPayloadAssetKind::SoundCue:
-            return BuildSoundCueDisplayLabel(StoredValue, DisplayMode);
+            return BuildSoundCueDisplayLabel(StoredValue);
         case EAnimNotifyPayloadAssetKind::CameraShake:
-            return BuildCameraShakeDisplayLabel(StoredValue, DisplayMode);
+            return BuildCameraShakeDisplayLabel(StoredValue);
         case EAnimNotifyPayloadAssetKind::Vfx:
-            return BuildVfxDisplayLabel(StoredValue, DisplayMode);
+            return BuildVfxDisplayLabel(StoredValue);
         case EAnimNotifyPayloadAssetKind::None:
         default:
             return StoredValue;
@@ -307,10 +287,7 @@ FString ResolveNotifyAssetPickerDisplayName(
         }
     }
 
-    return BuildNotifyAssetDisplayLabel(
-        AssetKind,
-        StoredValue,
-        ENotifyAssetDisplayMode::FriendlyLabel);
+    return BuildNotifyAssetDisplayLabel(AssetKind, StoredValue);
 }
 
 const char* GetNotifyAssetPickerEmptyMessage(EAnimNotifyPayloadAssetKind AssetKind)

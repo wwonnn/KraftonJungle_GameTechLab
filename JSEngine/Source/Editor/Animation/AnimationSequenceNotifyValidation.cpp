@@ -420,9 +420,8 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
-        // PlaySFX currently relies on generic required/type checks plus the
-        // shared attach-target preview validation path. Keep this hook in the
-        // built-in-specific section so future audio-only rules have an obvious home.
+        // PlaySFX adds no built-in-specific warnings today. Keep this hook so
+        // future audio-only checks still have an obvious home in this section.
         (void)Report;
         (void)Schema;
         (void)Payload;
@@ -522,8 +521,8 @@ namespace
         const FAnimNotifyValidationLocation& Location)
     {
         // AttackWindow-specific editor checks currently live in the preview-aware
-        // component validation path. This placeholder keeps file ownership explicit
-        // without widening the current warning semantics.
+        // component validation path. Keep this hook so the built-in-specific
+        // section still makes ownership explicit without widening warning scope.
         (void)Report;
         (void)Schema;
         (void)Payload;
@@ -536,8 +535,7 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
-        // GameplayEvent currently adds no built-in-only warnings beyond the
-        // generic schema/required validation path.
+        // GameplayEvent adds no built-in-specific warnings today.
         (void)Report;
         (void)Schema;
         (void)Payload;
@@ -550,8 +548,7 @@ namespace
         const FAnimNotifyPayloadParser& Payload,
         const FAnimNotifyValidationLocation& Location)
     {
-        // GameplayEventWindow currently adds no built-in-only warnings beyond
-        // the generic schema/required validation path.
+        // GameplayEventWindow adds no built-in-specific warnings today.
         (void)Report;
         (void)Schema;
         (void)Payload;
