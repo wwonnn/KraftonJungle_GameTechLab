@@ -93,6 +93,11 @@ namespace
         return std::find(Options.begin(), Options.end(), Value) != Options.end();
     }
 
+    const char* GetNotifyTypeLabel(EAnimNotifyEventType EventType)
+    {
+        return EventType == EAnimNotifyEventType::NotifyState ? "UAnimNotifyState" : "UAnimNotify";
+    }
+
     ImVec4 GetValidationSeverityColor(EAnimNotifyValidationSeverity Severity)
     {
         switch (Severity)
@@ -261,6 +266,35 @@ void FAnimationSequenceEditorWidget::RenderSelectedNotifyBasicSection(
         Document->SetSelectedNotifyName(FName(NotifyNameEditBuffer.data()));
     }
     RenderNotifyValidationIssues(SelectedValidationReport, EAnimNotifyValidationField::Name);
+
+    const EAnimNotifyEventType CurrentNotifyType = NotifySnapshot.EventType;
+    const char* NotifyTypePreviewLabel = GetNotifyTypeLabel(CurrentNotifyType);
+    SetNotifyPanelFieldWidth();
+    if (ImGui::BeginCombo("Notify Type", NotifyTypePreviewLabel))
+    {
+        const EAnimNotifyEventType NotifyTypeOptions[] =
+        {
+            EAnimNotifyEventType::Notify,
+            EAnimNotifyEventType::NotifyState
+        };
+
+        for (const EAnimNotifyEventType NotifyTypeOption : NotifyTypeOptions)
+        {
+            const bool bSelected = NotifyTypeOption == CurrentNotifyType;
+            if (ImGui::Selectable(GetNotifyTypeLabel(NotifyTypeOption), bSelected))
+            {
+                Document->SetSelectedNotifyType(NotifyTypeOption);
+                NotifyDetailsBoundStableId.clear();
+            }
+
+            if (bSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
 
     const TArray<FString> NotifyClassOptions = CollectNotifyClassOptions(NotifySnapshot.EventType);
     const FString CurrentNotifyClassName = Document ? Document->GetSelectedNotifyResolvedClassName() : FString();

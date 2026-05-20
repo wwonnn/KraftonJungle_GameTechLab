@@ -1,5 +1,6 @@
 ﻿#include "Editor/Animation/AnimationSequenceEditorDocument.h"
 
+#include "Animation/AnimNotify.h"
 #include "Animation/AnimNotifySemanticFieldNames.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
@@ -11,6 +12,7 @@
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/SkeletalMeshViewportClient.h"
+#include "Object/ObjectFactory.h"
 
 #include "ImGui/imgui.h"
 
@@ -18,6 +20,26 @@
 
 namespace
 {
+    const UClass* FindRegisteredClassByName(const FString& ClassName)
+    {
+        if (ClassName.empty())
+        {
+            return nullptr;
+        }
+
+        TArray<const UClass*> RegisteredClasses;
+        FObjectFactory::Get().GetRegisteredClasses(RegisteredClasses);
+        for (const UClass* RegisteredClass : RegisteredClasses)
+        {
+            if (RegisteredClass && RegisteredClass->GetName() == ClassName)
+            {
+                return RegisteredClass;
+            }
+        }
+
+        return nullptr;
+    }
+
     FAnimNotifyTrack MakeDefaultNotifyTrack(int32 TrackIndex)
     {
         FAnimNotifyTrack Track;
@@ -856,9 +878,18 @@ bool FAnimationSequenceEditorDocument::SetSelectedNotifyType(EAnimNotifyEventTyp
 
     NotifyEvent->EventType = EventType;
     const FString DefaultClassName = GetDefaultAnimNotifyClassName(EventType);
+    const UClass* SelectedClass = FindRegisteredClassByName(NotifyEvent->NotifyClassName);
+    const bool bRequiresStateClass = EventType == EAnimNotifyEventType::NotifyState;
+    const bool bSelectedClassMatchesType =
+        SelectedClass &&
+        (bRequiresStateClass
+            ? SelectedClass->IsA(UAnimNotifyState::StaticClass())
+            : (SelectedClass->IsA(UAnimNotify::StaticClass()) && !SelectedClass->IsA(UAnimNotifyState::StaticClass())));
+
     if (NotifyEvent->NotifyClassName.empty() ||
         NotifyEvent->NotifyClassName == "UAnimNotify" ||
-        NotifyEvent->NotifyClassName == "UAnimNotifyState")
+        NotifyEvent->NotifyClassName == "UAnimNotifyState" ||
+        !bSelectedClassMatchesType)
     {
         NotifyEvent->NotifyClassName = DefaultClassName;
     }
