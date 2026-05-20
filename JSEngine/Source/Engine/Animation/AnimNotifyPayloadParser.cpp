@@ -1,9 +1,11 @@
 #include "Animation/AnimNotifyPayloadParser.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cctype>
 #include <cstdlib>
 #include <cstdio>
+#include <limits>
 #include <utility>
 
 namespace
@@ -173,6 +175,66 @@ float FAnimNotifyPayloadParser::GetFloatAny(const TArray<FString>& Keys, float D
     return TryGetFloatAny(Keys, ParsedValue) ? ParsedValue : DefaultValue;
 }
 
+bool FAnimNotifyPayloadParser::TryGetInt(const FString& Key, int32& OutValue) const
+{
+    const FString Value = GetString(Key);
+    if (Value.empty())
+    {
+        return false;
+    }
+
+    errno = 0;
+    char* ParseEnd = nullptr;
+    const long ParsedValue = std::strtol(Value.c_str(), &ParseEnd, 10);
+    if (ParseEnd == Value.c_str() || errno == ERANGE)
+    {
+        return false;
+    }
+
+    while (ParseEnd && *ParseEnd != '\0')
+    {
+        if (!std::isspace(static_cast<unsigned char>(*ParseEnd)))
+        {
+            return false;
+        }
+        ++ParseEnd;
+    }
+
+    if (ParsedValue < static_cast<long>(std::numeric_limits<int32>::min()) ||
+        ParsedValue > static_cast<long>(std::numeric_limits<int32>::max()))
+    {
+        return false;
+    }
+
+    OutValue = static_cast<int32>(ParsedValue);
+    return true;
+}
+
+bool FAnimNotifyPayloadParser::TryGetIntAny(const TArray<FString>& Keys, int32& OutValue) const
+{
+    for (const FString& Key : Keys)
+    {
+        if (TryGetInt(Key, OutValue))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int32 FAnimNotifyPayloadParser::GetInt(const FString& Key, int32 DefaultValue) const
+{
+    int32 ParsedValue = DefaultValue;
+    return TryGetInt(Key, ParsedValue) ? ParsedValue : DefaultValue;
+}
+
+int32 FAnimNotifyPayloadParser::GetIntAny(const TArray<FString>& Keys, int32 DefaultValue) const
+{
+    int32 ParsedValue = DefaultValue;
+    return TryGetIntAny(Keys, ParsedValue) ? ParsedValue : DefaultValue;
+}
+
 bool FAnimNotifyPayloadParser::TryGetBool(const FString& Key, bool& OutValue) const
 {
     const FString Value = ToLowerAscii(GetString(Key));
@@ -249,6 +311,11 @@ void FAnimNotifyPayloadParser::SetName(const FString& Key, const FName& Value)
 void FAnimNotifyPayloadParser::SetFloat(const FString& Key, float Value)
 {
     SetString(Key, FormatFloatCanonical(Value));
+}
+
+void FAnimNotifyPayloadParser::SetInt(const FString& Key, int32 Value)
+{
+    SetString(Key, std::to_string(Value));
 }
 
 void FAnimNotifyPayloadParser::SetBool(const FString& Key, bool Value)

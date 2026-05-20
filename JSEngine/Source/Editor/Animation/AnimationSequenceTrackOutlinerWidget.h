@@ -21,6 +21,7 @@ private:
     void RenderRenameNotifyTrackPopup(FAnimationSequenceEditorDocument* Document);
 
 private:
+    bool bOpenRenameNotifyTrackPopupPending = false;
     int32 RenameNotifyTrackIndex = -1;
     std::array<char, 128> RenameNotifyTrackBuffer = {};
 };

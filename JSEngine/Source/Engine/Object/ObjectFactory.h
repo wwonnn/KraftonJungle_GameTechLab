@@ -8,7 +8,7 @@
 struct FObjectFactoryEntry
 {
 	std::function<UObject*()> Spawner;
-	const UClass* Class = nullptr;
+	std::function<const UClass*()> ClassGetter;
 };
 
 // Different from UFactory class
@@ -17,8 +17,12 @@ class FObjectFactory : public TSingleton<FObjectFactory>
 	friend class TSingleton<FObjectFactory>;
 
 public:
-	void Register(const char* TypeName, std::function<UObject*()> Spawner, const UClass* Class = nullptr) {
-		Registry[TypeName] = FObjectFactoryEntry{ std::move(Spawner), Class };
+	void Register(
+		const char* TypeName,
+		std::function<UObject*()> Spawner,
+		std::function<const UClass*()> ClassGetter = nullptr)
+	{
+		Registry[TypeName] = FObjectFactoryEntry{ std::move(Spawner), std::move(ClassGetter) };
 	}
 
 	UObject* Create(const std::string& TypeName) {
@@ -29,9 +33,9 @@ public:
 	void GetRegisteredClasses(TArray<const UClass*>& OutClasses) const {
 		for (const auto& [TypeName, Entry] : Registry)
 		{
-			if (Entry.Class)
+			if (Entry.ClassGetter)
 			{
-				OutClasses.push_back(Entry.Class);
+				OutClasses.push_back(Entry.ClassGetter());
 			}
 		}
 	}

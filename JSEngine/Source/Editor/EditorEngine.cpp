@@ -1250,10 +1250,14 @@ FWorldContext* UEditorEngine::GetFocusedWorldContext()
 
 EViewportPlayState UEditorEngine::GetEditorState() const
 {
-    const int32 StateViewportIndex =
-        PIESession.ResolveActiveViewportIndex(ViewportLayout.GetLastFocusedViewportIndex());
-
 	const FEditorViewportClient* FocusedClient = static_cast<FEditorViewportClient*>(EditorInputRouter.GetFocusedClient());
+
+    if (!FocusedClient)
+    {
+        const int32 StateViewportIndex =
+            PIESession.ResolveActiveViewportIndex(ViewportLayout.GetLastFocusedViewportIndex());
+        FocusedClient = ViewportLayout.GetViewportClient(StateViewportIndex);
+    }
 
     return FocusedClient ? FocusedClient->GetPlayState() : EViewportPlayState::Editing;
 }
@@ -1390,7 +1394,10 @@ void UEditorEngine::HandleActorDestroyed(AActor* Actor)
 {
 	UWorld* World = Actor->GetFocusedWorld();
     const FWorldContext* Ctx = GetWorldContextFromWorld(World);
-    Ctx->SelectionManager->OnActorDestroyed(Actor);
+	if (Ctx && Ctx->SelectionManager)
+	{
+		Ctx->SelectionManager->OnActorDestroyed(Actor);
+	}
 
     MainPanel.GetPropertyWidget().OnActorDestroyed(Actor);
     MainPanel.GetMaterialWidget().OnActorDestroyed(Actor);

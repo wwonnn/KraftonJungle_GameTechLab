@@ -12,6 +12,7 @@
 #include "Core/ResourceManager.h"
 
 #include "GameFramework/PrimitiveActors.h"
+#include "GameFramework/Character.h"
 
 #define SEPARATOR(); ImGui::Spacing(); ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing(); ImGui::Spacing();
 
@@ -81,6 +82,7 @@ bool FEditorControlWidget::DrawPlaceActorMenu(const FVector& SpawnPoint, bool bC
 	DrawSpawnItem(15, "Destructible");
 	DrawSpawnItem(16, "BondingBox");
 	DrawSpawnItem(17, "Main Scene Destructible");
+    DrawSpawnItem(19, "Character");
 	ImGui::Separator();
 	DrawSpawnItem(8, "Ambient Light");
 	DrawSpawnItem(9, "Directional Light");
@@ -253,7 +255,13 @@ bool FEditorControlWidget::SpawnPrimitive(int32 PrimitiveType, const FVector& Sp
 			Actor->SetActorLocation(SpawnPoint);
 			break;
 		}
-
+        case 19:
+		{
+			ACharacter* Character = World->SpawnActor<ACharacter>();
+			Character->InitDefaultComponents();
+			Character->SetActorLocation(SpawnPoint);
+			break;
+		}
 		default:
 			return false;
 		}

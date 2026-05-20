@@ -271,16 +271,19 @@ void FEditorMainPanel::RenderEditorTabStrip()
 			const ImVec2 TextMax(
 				Tab.bCanClose ? CloseMin.x - 5.0f : TabMax.x - 10.0f,
 				TabMax.y - 5.0f);
-			ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
-			ImGui::RenderTextEllipsis(
-				DrawList,
-				TextMin,
-				TextMax,
-				TextMax.x,
-				Label.c_str(),
-				nullptr,
-				nullptr);
-			ImGui::PopStyleColor();
+			if (TextMax.x > TextMin.x + 6.0f)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
+				ImGui::RenderTextEllipsis(
+					DrawList,
+					TextMin,
+					TextMax,
+					TextMax.x,
+					Label.c_str(),
+					nullptr,
+					nullptr);
+				ImGui::PopStyleColor();
+			}
 
 			if (Tab.bCanClose)
 			{

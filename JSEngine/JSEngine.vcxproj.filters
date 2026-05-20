@@ -240,6 +240,39 @@
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorWidget.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewSkeletonTree.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewToolbar.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewViewportHost.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerSequencerPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerBottomStrip.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerNotifyDetailsPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerNotifyDebugPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerCurveInspectionPanel.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyAssetPickerHelpers.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
@@ -1122,6 +1155,7 @@
     <ClCompile Include="Source\Engine\Animation\AnimNotifyLog.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadParser.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadViews.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Source\Engine\Animation\LuaAnimInstance.cpp" />
@@ -1166,6 +1200,12 @@
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyAssetPickerHelpers.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h">
@@ -2185,6 +2225,7 @@
     <ClInclude Include="Source\Engine\Animation\AnimNotifyLog.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadParser.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadViews.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Source\Engine\Animation\LuaAnimInstance.h" />

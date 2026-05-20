@@ -11,6 +11,7 @@ public:
     GENERATED_BODY()
 
 public:
+    void AdvancePreviewPlayback(float InNewTime, float DeltaTime, bool bWrapped, float RangeStart, float RangeEnd);
     void UpdateAnimation(float DeltaTime) override;
     void EvaluatePose(FSkeletonPose& OutPose) override;
 };

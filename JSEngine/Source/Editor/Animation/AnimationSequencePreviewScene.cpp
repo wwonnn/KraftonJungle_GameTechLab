@@ -3,9 +3,11 @@
 #include "Animation/AnimData/AnimSequence.h"
 #include "Asset/SkeletalMesh.h"
 #include "Component/ActorComponent.h"
+#include "Component/GizmoComponent.h"
 #include "Component/PostProcess/Light/AmbientLightComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/SkeletalMeshComponent.h"
+#include "Component/TransformProxy.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
 #include "Editor/Animation/AnimationSequenceViewerUtils.h"
@@ -170,6 +172,9 @@ const TArray<FAnimNotifyEvent>& FAnimationSequencePreviewScene::GetRecentFiredNo
 
 bool FAnimationSequencePreviewScene::HasPreviewSocket(const FName& SocketName) const
 {
+    // Match runtime AnimNotify attach-target interpretation by delegating to
+    // the preview component's HasSocket path, which already treats bone names
+    // and socket names uniformly.
     return AnimationSequenceViewer::IsLiveObject(PreviewComponent) &&
         SocketName != FName::None &&
         PreviewComponent->HasSocket(SocketName);
@@ -189,6 +194,9 @@ TArray<FString> FAnimationSequencePreviewScene::GetPreviewSocketNames() const
         return SocketNames;
     }
 
+    // Keep picker candidates aligned with runtime attach-target resolution:
+    // sockets and bones are both valid when the preview component resolves
+    // them through HasSocket/GetSocketTransform.
     for (const FSkeletalMeshSocket& Socket : SkeletalMesh->GetSockets())
     {
         if (!Socket.Name.IsValid())
@@ -200,6 +208,20 @@ TArray<FString> FAnimationSequencePreviewScene::GetPreviewSocketNames() const
         if (!SocketName.empty())
         {
             SocketNames.push_back(SocketName);
+        }
+    }
+
+    for (const FBoneInfo& Bone : SkeletalMesh->GetBones())
+    {
+        if (!Bone.Name.IsValid())
+        {
+            continue;
+        }
+
+        const FString BoneName = Bone.Name.ToString();
+        if (!BoneName.empty())
+        {
+            SocketNames.push_back(BoneName);
         }
     }
 
@@ -254,6 +276,51 @@ TArray<FString> FAnimationSequencePreviewScene::GetPreviewPrimitiveComponentName
     return ComponentNames;
 }
 
+bool FAnimationSequencePreviewScene::SelectPreviewBone(int32 BoneIndex)
+{
+    if (!(AnimationSequenceViewer::IsLiveObject(PreviewActor) &&
+        AnimationSequenceViewer::IsLiveObject(PreviewComponent) &&
+        AnimationSequenceViewer::IsLiveObject(PreviewMesh)))
+    {
+        return false;
+    }
+
+    const FSkeletalMesh* MeshData = PreviewMesh->GetMeshData();
+    if (!MeshData || BoneIndex < 0 || BoneIndex >= static_cast<int32>(MeshData->GetBones().size()))
+    {
+        return false;
+    }
+
+    PreviewComponent->EnsureSkinningUpdated();
+
+    if (FSelectionManager* SelectionManager = PreviewViewportClient.GetSelectionManager())
+    {
+        SelectionManager->Select(PreviewActor);
+    }
+
+    if (UGizmoComponent* Gizmo = PreviewViewportClient.GetGizmo())
+    {
+        Gizmo->SetProxy(std::make_shared<FBoneTransformProxy>(PreviewComponent, BoneIndex));
+        Gizmo->SetSelectedActors(nullptr);
+    }
+
+    return true;
+}
+
+void FAnimationSequencePreviewScene::ClearPreviewSelection()
+{
+    if (FSelectionManager* SelectionManager = PreviewViewportClient.GetSelectionManager())
+    {
+        SelectionManager->ClearSelection();
+        return;
+    }
+
+    if (UGizmoComponent* Gizmo = PreviewViewportClient.GetGizmo())
+    {
+        Gizmo->Deactivate();
+    }
+}
+
 void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
 {
     if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
@@ -262,6 +329,26 @@ void FAnimationSequencePreviewScene::RefreshPreviewPose(float DeltaTime)
     }
 
     PreviewComponent->TickPreviewAnimation(DeltaTime);
+    CaptureRecentNotifyEvents();
+    if (PreviewWorld)
+    {
+        PreviewWorld->SyncSpatialIndex();
+    }
+}
+
+void FAnimationSequencePreviewScene::AdvancePreviewPlayback(
+    float InTime,
+    float DeltaTime,
+    bool bWrapped,
+    float RangeStart,
+    float RangeEnd)
+{
+    if (!AnimationSequenceViewer::IsLiveObject(PreviewComponent))
+    {
+        return;
+    }
+
+    PreviewComponent->AdvancePreviewAnimation(InTime, DeltaTime, bWrapped, RangeStart, RangeEnd);
     CaptureRecentNotifyEvents();
     if (PreviewWorld)
     {
@@ -291,9 +378,11 @@ void FAnimationSequencePreviewScene::SetViewportSize(int32 InWidth, int32 InHeig
 
     // The preview scene owns the offscreen viewer resource. The embedded ImGui
     // panel only mirrors this rect; it does not own the render target lifecycle.
+    // Use a separate index range from standalone skeletal mesh viewers so
+    // opening a viewer for the same mesh cannot steal this preview render target.
     if (PreviewResourceIndex == InvalidPreviewResourceIndex)
     {
-        PreviewResourceIndex = NextPreviewResourceIndex++;
+        PreviewResourceIndex = FirstEmbeddedPreviewResourceIndex + NextPreviewResourceIndex++;
     }
 
     FViewportRenderResource& Resource =
@@ -481,7 +570,10 @@ void FAnimationSequencePreviewScene::ConfigurePreviewCamera()
 
     Camera->SetLookAt(Center);
     Camera->SetLocation(Center + FVector(Distance, Distance * 0.35f, Radius * 0.75f));
-    Camera->SetNearPlane(1.0f);
+    // Keep the embedded animation preview near clip consistent with the
+    // regular skeletal mesh viewer so close-up inspection does not clip away
+    // the front surface and reveal occluded bones/meshes behind it.
+    Camera->SetNearPlane(0.1f);
     Camera->SetFarPlane(std::max(5000.0f, Distance * 8.0f));
     Camera->SetFOV(60.0f * DegreesToRadians);
 }

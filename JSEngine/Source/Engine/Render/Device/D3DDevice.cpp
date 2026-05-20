@@ -2,6 +2,7 @@
 
 #include <d3d11sdklayers.h>
 #include "Core/Logging/Log.h"
+#include "Render/Common/D3D11DebugUtils.h"
 #include "Render/Renderer/RenderTarget/RenderTargetFactory.h"
 #include "Render/Renderer/RenderTarget/DepthStencilFactory.h"
 
@@ -23,9 +24,8 @@ void FD3DDevice::Release()
 
 	ReleaseDepthStencilBuffer();
 	ReleaseFrameBuffer();
-
-	ReportLiveObjects();
 	ReleaseDeviceAndSwapChain();
+	ReportLiveObjects();
 }
 
 void FD3DDevice::BeginFrame()
@@ -212,8 +212,8 @@ void FD3DDevice::ReleaseDeviceAndSwapChain()
 	}
 
 	SwapChain.Reset();
-	Device.Reset();
 	DeviceContext.Reset();
+	Device.Reset();
 }
 
 void FD3DDevice::CreateFrameBuffer()
@@ -227,6 +227,7 @@ void FD3DDevice::CreateFrameBuffer()
 
 	Device->CreateRenderTargetView(FrameBuffer.Get(), &frameBufferRTVDesc,
 		FrameBufferRTV.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(FrameBufferRTV.Get(), "FD3DDevice.FrameBufferRTV");
 
 	D3D11_TEXTURE2D_DESC selectionMaskDesc = {};
 	selectionMaskDesc.Width = static_cast<uint32>(ViewportInfo.Width);
@@ -239,12 +240,14 @@ void FD3DDevice::CreateFrameBuffer()
 	selectionMaskDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	Device->CreateTexture2D(&selectionMaskDesc, nullptr,
 		SelectionMaskBuffer.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(SelectionMaskBuffer.Get(), "FD3DDevice.SelectionMaskTexture");
 
 	D3D11_RENDER_TARGET_VIEW_DESC selectionMaskRTVDesc = {};
 	selectionMaskRTVDesc.Format = DXGI_FORMAT_R8_UNORM;
 	selectionMaskRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	Device->CreateRenderTargetView(SelectionMaskBuffer.Get(), &selectionMaskRTVDesc,
 		SelectionMaskRTV.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(SelectionMaskRTV.Get(), "FD3DDevice.SelectionMaskRTV");
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC selectionMaskSRVDesc = {};
 	selectionMaskSRVDesc.Format = DXGI_FORMAT_R8_UNORM;
@@ -253,6 +256,7 @@ void FD3DDevice::CreateFrameBuffer()
 	selectionMaskSRVDesc.Texture2D.MipLevels = 1;
 	Device->CreateShaderResourceView(SelectionMaskBuffer.Get(), &selectionMaskSRVDesc,
 		SelectionMaskSRV.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(SelectionMaskSRV.Get(), "FD3DDevice.SelectionMaskSRV");
 }
 
 void FD3DDevice::ReleaseFrameBuffer()
@@ -278,8 +282,10 @@ void FD3DDevice::CreateDepthStencilBuffer()
 
 	Device->CreateTexture2D(&depthStencilDesc, nullptr,
 		DepthStencilBuffer.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(DepthStencilBuffer.Get(), "FD3DDevice.DepthStencilTexture");
 	Device->CreateDepthStencilView(DepthStencilBuffer.Get(), nullptr,
 		DepthStencilView.ReleaseAndGetAddressOf());
+	D3D11Debug::SetDebugName(DepthStencilView.Get(), "FD3DDevice.DepthStencilView");
 }
 
 void FD3DDevice::ReleaseDepthStencilBuffer()

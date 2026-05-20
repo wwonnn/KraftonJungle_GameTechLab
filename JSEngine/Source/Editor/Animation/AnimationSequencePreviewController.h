@@ -15,6 +15,8 @@
 
 class UEditorEngine;
 class UAnimSequence;
+class USkeletalMesh;
+class USkeletalMeshComponent;
 class FSceneViewport;
 struct ID3D11ShaderResourceView;
 
@@ -46,6 +48,10 @@ public:
     void SetLooping(bool bInLooping);
     bool IsLooping() const;
 
+    void SetPlaybackRange(float InStartTime, float InEndTime);
+    float GetPlaybackRangeStart() const;
+    float GetPlaybackRangeEnd() const;
+
     void SetPlayRate(float InPlayRate);
     float GetPlayRate() const;
 
@@ -53,10 +59,18 @@ public:
     bool HasSequence() const;
     bool HasValidPreview() const;
     const TArray<FAnimNotifyEvent>& GetRecentFiredNotifyEvents() const;
+    // These "socket" queries intentionally mirror runtime attach-target
+    // semantics used by AnimNotify playback. They accept/return any name that
+    // the preview skinned mesh component resolves through HasSocket /
+    // GetSocketTransform, which includes sockets and bone names.
     bool HasPreviewSocket(const FName& SocketName) const;
     TArray<FString> GetPreviewSocketNames() const;
     bool HasPreviewPrimitiveComponent(const FString& ComponentName) const;
     TArray<FString> GetPreviewPrimitiveComponentNames() const;
+    const USkeletalMesh* GetPreviewMesh() const;
+    USkeletalMeshComponent* GetPreviewComponent() const;
+    bool SelectPreviewBone(int32 BoneIndex);
+    void ClearPreviewSelection();
 
     const FString& GetPreviewStatusText() const { return PreviewStatusText; }
     const FString& GetTimelineStatusText() const { return TimelineStatusText; }

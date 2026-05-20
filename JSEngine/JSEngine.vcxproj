@@ -328,6 +328,7 @@
     <ClCompile Include="Source\Engine\Animation\AnimNotifyLog.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadParser.cpp" />
+    <ClCompile Include="Source\Engine\Animation\AnimNotifyPayloadViews.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimSingleNodeInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Source\Engine\Animation\AnimationStateMachine.cpp" />
@@ -349,6 +350,9 @@
     <ClCompile Include="Source\Engine\Asset\Skeleton.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SequenceCameraShakePattern.cpp" />
     <ClCompile Include="Source\Engine\Camera\ShakePattern\SinusoidalCameraShakePattern.cpp" />
+    <None Include="Asset\Script\Player.lua">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="Shaders\Common\Skinning.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </None>
@@ -362,6 +366,7 @@
     <ClCompile Include="Source\Engine\Component\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\SkinnedMeshComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\Random\EngineRandom.cpp" />
+    <ClCompile Include="Source\Engine\GameFramework\Character.cpp" />
     <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.cpp" />
     <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactoryData.cpp" />
     <ClCompile Include="Source\Engine\Render\Mesh\VertexFactory\StaticVertexFactory.cpp" />
@@ -434,6 +439,50 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorWidget.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewSkeletonTree.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewToolbar.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerPreviewViewportHost.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerSequencerPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerBottomStrip.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerNotifyDetailsPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerNotifyDebugPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerCurveInspectionPanel.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyAssetPickerHelpers.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientDebug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='GameClientRelease|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -998,6 +1047,7 @@
     <ClInclude Include="Source\Engine\Animation\AnimNotifyLog.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifySemanticFieldNames.h" />
     <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadParser.h" />
+    <ClInclude Include="Source\Engine\Animation\AnimNotifyPayloadViews.h" />
     <ClInclude Include="Source\Engine\Animation\AnimSingleNodeInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Source\Engine\Animation\AnimationStateMachine.h" />
@@ -1028,10 +1078,13 @@
     <ClInclude Include="Source\Engine\Component\SkeletalMeshComponent.h" />
     <ClInclude Include="Source\Engine\Component\SkinnedMeshComponent.h" />
     <ClInclude Include="Source\Engine\Core\Logging\MemoryLeakDetection.h" />
+    <ClInclude Include="Source\Engine\GameFramework\Character.h" />
     <ClInclude Include="Source\Engine\Reflection\Enum.h" />
+    <ClInclude Include="Source\Engine\Reflection\FField.h" />
     <ClInclude Include="Source\Engine\Reflection\Field.h" />
     <ClInclude Include="Source\Engine\Reflection\Class.h" />
     <ClInclude Include="Source\Engine\Reflection\Property.h" />
+    <ClInclude Include="Source\Engine\Reflection\ReflectionMacros.h" />
     <ClInclude Include="Source\Engine\Reflection\Reflection.h" />
     <ClInclude Include="Source\Engine\Reflection\Struct.h" />
     <ClInclude Include="Source\Engine\Render\Mesh\VertexFactory\SkeletalVertexFactory.h" />
@@ -1069,6 +1122,8 @@
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorDocument.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequencePlaybackController.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorWidget.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.h" />
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyAssetPickerHelpers.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyValidation.h" />
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyPayloadSchema.h" />

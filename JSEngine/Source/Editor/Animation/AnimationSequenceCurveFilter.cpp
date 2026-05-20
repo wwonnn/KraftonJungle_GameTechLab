@@ -90,6 +90,20 @@ void AnimationSequenceCurveFilter::SetCurveTypeEnabled(
     }
 }
 
+void AnimationSequenceCurveFilter::SetAllCurveTypesEnabled(FAnimationSequenceEditorState& State, bool bEnabled)
+{
+    State.bShowMorphTargetCurves = bEnabled;
+    State.bShowMaterialCurves = bEnabled;
+    State.bShowAttributeCurves = bEnabled;
+    State.bShowUnknownCurves = bEnabled;
+}
+
+void AnimationSequenceCurveFilter::SetExclusiveCurveTypeVisible(FAnimationSequenceEditorState& State, EAnimCurveType CurveType)
+{
+    SetAllCurveTypesEnabled(State, false);
+    SetCurveTypeEnabled(State, CurveType, true);
+}
+
 TArray<FAnimationSequenceCurveViewGroup> AnimationSequenceCurveFilter::BuildCurveViewGroups(
     const UAnimSequence* Sequence,
     const FAnimationSequenceEditorState& State)

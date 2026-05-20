@@ -19,6 +19,9 @@ enum class EEditorCommandId : uint8
 	AddTrack,
 	AddKey,
 	DeleteSelection,
+	DuplicateSelection,
+	CopySelection,
+	PasteSelection,
 
 	ResetPreviewCamera,
 	ResetPose,

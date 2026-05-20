@@ -3,8 +3,18 @@
 #include "EngineStatics.h"
 #include "Object/FName.h"
 #include "Core/Singleton.h"
-#include "Reflection/Reflection.h"
+#include "Core/Containers/Array.h"
+#include "Reflection/ReflectionMacros.h"
 #include "Serialization/Archive.h"
+
+#include <type_traits>
+
+class UClass;
+struct FPropertyDescriptor;
+struct FPropertyChangedEvent;
+
+const char* GetUClassName(const UClass* Class);
+
 #include "Generated/Object.generated.h"
 
 UCLASS()
@@ -50,8 +60,10 @@ public:
 
 	FObjectNameProxy GetName() const { return FObjectNameProxy(ObjectName.ToString()); }
 
+	bool IsA(const UClass* Other) const;
+
 	template<typename T>
-	bool IsA() const { return GetClass()->IsA(T::StaticClass()); }
+	bool IsA() const { return IsA(T::StaticClass()); }
 
 	bool IsValidLowLevel() const { return this != nullptr; }
 
@@ -67,7 +79,7 @@ public:
 	void AppendReflectedProperties(TArray<FPropertyDescriptor>& OutProps);
 	void GetAllEditableProperties(TArray<FPropertyDescriptor>& OutProps);
 	void SerializeReflectedProperties(FArchive& Ar);
-	virtual void PostEditChangeProperty(const FPropertyChangedEvent& Event) { PostEditProperty(Event.PropertyName); }
+	virtual void PostEditChangeProperty(const FPropertyChangedEvent& Event);
 	virtual void PostEditProperty(const char* PropertyName) {}
 	void CopyPropertiesFrom(UObject* Src);
 
@@ -114,7 +126,7 @@ public:
 		static_assert(std::is_base_of<UObject, T>::value, "T must derive from UObject");
 		T* Obj = new T();
 
-		const char* ClassName = T::StaticClass()->GetName();
+		const char* ClassName = GetUClassName(T::StaticClass());
 		uint32& Counter = NameCounters[ClassName];
 		FString Name = FString(ClassName) + "_" + std::to_string(Counter++);
 		Obj->SetFName(FName(Name));
@@ -133,12 +145,18 @@ public:
 
 	void Shutdown()
 	{
+		// 정상 종료 경로에서 캐시/월드가 먼저 대부분 정리되지만,
+		// 에디터 preview/editor 문서가 남긴 orphan UObject가 있을 수 있다.
+		// 남은 객체를 역순으로 정리해 VLD 종료 누수를 막는다.
+		while (!GUObjectArray.empty())
+		{
+			UObject* Obj = GUObjectArray.back();
+			delete Obj;
+		}
+
 		NameCounters.clear();
 		NameCounters.rehash(0);
-		if (GUObjectArray.empty())
-		{
-			GUObjectArray.shrink_to_fit();
-		}
+		GUObjectArray.shrink_to_fit();
 	}
 
 private:

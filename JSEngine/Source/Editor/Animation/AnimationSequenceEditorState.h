@@ -6,6 +6,13 @@
 
 class UAnimSequence;
 
+enum class EAnimNotifyDragMode : uint8
+{
+    None = 0,
+    Move,
+    ResizeEnd,
+};
+
 class FAnimationSequenceEditorState
 {
 public:
@@ -19,6 +26,9 @@ public:
     float GetVisibleRange() const;
     float GetTimelineRangeStart() const { return TimelineRangeStart; }
     float GetTimelineRangeEnd() const { return TimelineRangeEnd; }
+    float GetPlaybackRangeStart() const { return PlaybackRangeStart; }
+    float GetPlaybackRangeEnd() const { return PlaybackRangeEnd; }
+    float GetPlaybackRangeLength() const;
 
     float ClampTime(float InTime) const;
     float SnapTimeToFrame(float InTime) const;
@@ -29,6 +39,7 @@ public:
 
     void SetCurrentTime(float InTime, bool bApplySnap);
     void SetTimelineRange(float InStartTime, float InEndTime);
+    void SetPlaybackRange(float InStartTime, float InEndTime);
     void SetVisibleRange(float InStartTime, float InEndTime);
     void PanVisibleRange(float DeltaTime);
     void ZoomVisibleRange(float AnchorTime, float ZoomFactor);
@@ -58,6 +69,8 @@ public:
     float VisibleTimeEnd = 1.0f;
     float TimelineRangeStart = 0.0f;
     float TimelineRangeEnd = 1.0f;
+    float PlaybackRangeStart = 0.0f;
+    float PlaybackRangeEnd = 1.0f;
     float PreviewPaneHeight = 0.0f;
     float SequencerDetailsPaneHeight = 0.0f;
     float TrackOutlinerWidth = 0.0f;
@@ -79,8 +92,13 @@ public:
     int32 DraggedNotifyEventIndex = -1;
     int32 SelectedCurveIndex = -1;
     int32 HoveredCurveIndex = -1;
+    bool bHasHoveredCurveSample = false;
+    float HoveredCurveSampleTime = 0.0f;
+    float HoveredCurveSampleValue = 0.0f;
+    int32 HoveredCurveNearestKeyIndex = -1;
     FAnimationSequenceSequencerRowId HoveredSequencerRowId;
     FAnimationSequenceSequencerRowId FocusedSequencerRowId;
     bool bDraggingNotify = false;
+    EAnimNotifyDragMode ActiveNotifyDragMode = EAnimNotifyDragMode::None;
     float DraggedNotifyGrabOffsetTime = 0.0f;
 };

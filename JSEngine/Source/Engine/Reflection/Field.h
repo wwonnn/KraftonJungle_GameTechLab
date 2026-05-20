@@ -1,6 +1,8 @@
 #pragma once
 
-class UField
+#include "Object/Object.h"
+
+class UField : public UObject
 {
 public:
     UField() = default;

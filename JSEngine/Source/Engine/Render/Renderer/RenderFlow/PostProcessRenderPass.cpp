@@ -45,6 +45,8 @@ bool FPostProcessRenderPass::Begin(const FRenderPassContext* Context)
 
 	ID3D11RenderTargetView* RTVs[1] = { Context->RenderTargets->ScenePostProcessRTV };
     Context->DeviceContext->OMSetRenderTargets(1, RTVs, nullptr);
+    ID3D11SamplerState* Sampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Linear);
+    Context->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
     // 이전 패스 결과 입력
     ID3D11ShaderResourceView* srvs[] = { PrevPassSRV };

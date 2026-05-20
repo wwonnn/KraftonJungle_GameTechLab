@@ -35,6 +35,10 @@ public:
     void SetLooping(bool bInLooping) { bLooping = bInLooping; }
     bool IsLooping() const { return bLooping; }
 
+    void SetPlaybackRange(float InStartTime, float InEndTime);
+    float GetPlaybackRangeStart() const { return PlaybackRangeStart; }
+    float GetPlaybackRangeEnd() const { return PlaybackRangeEnd; }
+
     void SetPlayRate(float InPlayRate) { PlayRate = InPlayRate; }
     float GetPlayRate() const { return PlayRate; }
 
@@ -45,12 +49,15 @@ public:
 
 private:
     float ClampCurrentTime(float InTime) const;
+    float GetPlaybackRangeLength() const;
     void AdvanceWithoutPreview(float DeltaTime);
 
 private:
     UAnimSequence* Sequence = nullptr;
     float CurrentTime = 0.0f;
     float PlayRate = 1.0f;
+    float PlaybackRangeStart = 0.0f;
+    float PlaybackRangeEnd = 0.0f;
     bool bPlaying = false;
     bool bLooping = true;
     bool bPoseDirty = false;

@@ -1,12 +1,14 @@
 #pragma once
 
 #include "Core/CoreMinimal.h"
+#include "Animation/AnimNotifySemanticFieldNames.h"
 
 enum class EAnimNotifyPayloadFieldType : uint8
 {
     String = 0,
     Name,
     Float,
+    Int,
     Bool,
 };
 
@@ -15,17 +17,15 @@ enum class EAnimNotifyPayloadFieldEditorHint : uint8
     Default = 0,
     SocketPicker,
     ComponentPicker,
+    AssetPicker,
 };
 
-enum class EAnimNotifySemanticFieldId : uint8
+enum class EAnimNotifyPayloadAssetKind : uint8
 {
     None = 0,
     SoundCue,
-    SocketName,
-    VolumeMultiplier,
-    Spatialized,
-    ComponentName,
-    AttackId,
+    Vfx,
+    CameraShake,
 };
 
 struct FAnimNotifyPayloadFieldDefinition
@@ -36,6 +36,7 @@ struct FAnimNotifyPayloadFieldDefinition
     FString Label;
     EAnimNotifyPayloadFieldType Type = EAnimNotifyPayloadFieldType::String;
     EAnimNotifyPayloadFieldEditorHint EditorHint = EAnimNotifyPayloadFieldEditorHint::Default;
+    EAnimNotifyPayloadAssetKind AssetKind = EAnimNotifyPayloadAssetKind::None;
     bool bRequired = false;
     FString DefaultValue;
     FString HelpText;

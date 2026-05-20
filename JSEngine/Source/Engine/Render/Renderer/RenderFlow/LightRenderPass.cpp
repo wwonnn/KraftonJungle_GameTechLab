@@ -85,6 +85,8 @@ bool FLightRenderPass::Begin(const FRenderPassContext* Context)
         Context->RenderResources->AtlasShadowBuffer.GetSRV(),
     };
     Context->DeviceContext->PSSetShaderResources(14, 2, ShadowInfoSRVs);
+    ID3D11SamplerState* Sampler = FResourceManager::Get().GetOrCreateSamplerState(ESamplerType::EST_Linear);
+    Context->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
     FShaderProgram* LightPassProgram = GetLightPassProgram();
     if (!LightPassProgram)

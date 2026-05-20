@@ -176,6 +176,86 @@ bool UAnimInstance::HasValidSequence() const
     return GetValidAnimDataModel(CurrentSequence) != nullptr;
 }
 
+void UAnimInstance::DispatchGameplayAnimNotifyEvent(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& EventName,
+    const FString& Payload)
+{
+    if (EventName.empty())
+    {
+        return;
+    }
+
+    NativeGameplayAnimNotifyEvent(Sequence, NotifyEvent, EventName, Payload);
+}
+
+void UAnimInstance::DispatchCameraShakeAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& Shake,
+    float Scale)
+{
+    if (Shake.empty())
+    {
+        return;
+    }
+
+    NativeCameraShakeAnimNotify(Sequence, NotifyEvent, Shake, Scale);
+}
+
+void UAnimInstance::DispatchFootstepSurfaceAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& EventName,
+    const FString& SurfaceName,
+    const FString& Payload,
+    const FVector& HitLocation)
+{
+    if (EventName.empty())
+    {
+        return;
+    }
+
+    NativeFootstepSurfaceAnimNotify(Sequence, NotifyEvent, EventName, SurfaceName, Payload, HitLocation);
+}
+
+void UAnimInstance::DispatchPlayVFXAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& Effect,
+    const FVector& Location,
+    const FName& SocketName,
+    bool bAttached,
+    float Scale)
+{
+    if (Effect.empty())
+    {
+        return;
+    }
+
+    NativePlayVFXAnimNotify(Sequence, NotifyEvent, Effect, Location, SocketName, bAttached, Scale);
+}
+
+void UAnimInstance::DispatchSpawnDecalAnimNotify(
+    const UAnimSequence* Sequence,
+    const FAnimNotifyEvent& NotifyEvent,
+    const FString& Decal,
+    const FVector& Location,
+    const FVector& Normal,
+    const FName& SocketName,
+    float Size,
+    float Lifetime,
+    bool bAlignToHitNormal)
+{
+    if (Decal.empty())
+    {
+        return;
+    }
+
+    NativeSpawnDecalAnimNotify(Sequence, NotifyEvent, Decal, Location, Normal, SocketName, Size, Lifetime, bAlignToHitNormal);
+}
+
 void UAnimInstance::SetStateMachine(UAnimationStateMachine* InStateMachine)
 {
     StateMachine = InStateMachine;
@@ -744,7 +824,7 @@ FQuat UAnimInstance::InterpolateKeys(const TArray<FQuat>& Keys, float Time, floa
 void UAnimInstance::BlendPoses(const FSkeletonPose& PoseA, const FSkeletonPose& PoseB, float BlendFactor, FSkeletonPose& OutPose)
 {
     SCOPE_STAT_ANIM("Pose Blend");
-    const int32 BoneCount = PoseA.LocalTransforms.size();
+    const int32 BoneCount = static_cast<int32>(PoseA.LocalTransforms.size());
     OutPose.LocalTransforms.resize(BoneCount);
 
     for (int32 i = 0; i < BoneCount; ++i)

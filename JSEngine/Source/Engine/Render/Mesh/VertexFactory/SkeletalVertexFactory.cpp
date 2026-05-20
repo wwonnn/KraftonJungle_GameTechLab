@@ -13,7 +13,7 @@ void FSkeletalVertexFactory::Bind(const FRenderCommand& Cmd, ID3D11DeviceContext
 
         if (VFData)
         {
-            RenderResources->SkinningBuffer.Update(Context, VFData->SkinningMatrices->data(), VFData->SkinningMatrices->size());
+            RenderResources->SkinningBuffer.Update(Context, VFData->SkinningMatrices->data(), static_cast<uint32>(VFData->SkinningMatrices->size()));
             ID3D11ShaderResourceView* SkinningSRV = RenderResources->SkinningBuffer.GetSRV();
             Context->VSSetShaderResources(16, 1, &SkinningSRV);
         }

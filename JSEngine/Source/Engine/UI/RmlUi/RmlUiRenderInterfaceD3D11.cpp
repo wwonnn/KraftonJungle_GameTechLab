@@ -3,6 +3,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
 #include "Core/ResourceManager.h"
+#include "Render/Common/D3D11DebugUtils.h"
 #include "Render/Resource/Texture.h"
 
 #include <algorithm>
@@ -222,6 +223,7 @@ Rml::CompiledGeometryHandle FRmlUiRenderInterfaceD3D11::CompileGeometry(Rml::Spa
         UE_LOG_ERROR("[RmlUi] Failed to create geometry vertex buffer.");
         return 0;
     }
+    D3D11Debug::SetDebugName(Geometry.VertexBuffer.Get(), "RmlUi.CompiledGeometryVB");
 
     std::vector<uint32> D3DIndices;
     D3DIndices.reserve(Indices.size());
@@ -242,6 +244,7 @@ Rml::CompiledGeometryHandle FRmlUiRenderInterfaceD3D11::CompileGeometry(Rml::Spa
         UE_LOG_ERROR("[RmlUi] Failed to create geometry index buffer.");
         return 0;
     }
+    D3D11Debug::SetDebugName(Geometry.IndexBuffer.Get(), "RmlUi.CompiledGeometryIB");
 
     Geometry.IndexCount = static_cast<uint32>(D3DIndices.size());
 
@@ -356,6 +359,7 @@ Rml::TextureHandle FRmlUiRenderInterfaceD3D11::GenerateTexture(Rml::Span<const R
         UE_LOG_ERROR("[RmlUi] Failed to generate texture.");
         return 0;
     }
+    D3D11Debug::SetDebugName(Generated.Texture.Get(), "RmlUi.GeneratedTexture");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
     SRVDesc.Format = Desc.Format;
@@ -367,6 +371,7 @@ Rml::TextureHandle FRmlUiRenderInterfaceD3D11::GenerateTexture(Rml::Span<const R
         UE_LOG_ERROR("[RmlUi] Failed to create generated texture SRV.");
         return 0;
     }
+    D3D11Debug::SetDebugName(Generated.SRV.Get(), "RmlUi.GeneratedTextureSRV");
 
     return MakeGeneratedTextureHandle(Generated.SRV.Get());
 }
@@ -441,6 +446,7 @@ bool FRmlUiRenderInterfaceD3D11::CreateShaders()
         UE_LOG_ERROR("[RmlUi] Failed to create constant buffer.");
         return false;
     }
+    D3D11Debug::SetDebugName(ConstantBuffer.Get(), "RmlUi.FrameConstantBuffer");
 
     return true;
 }
@@ -457,6 +463,7 @@ bool FRmlUiRenderInterfaceD3D11::CreateStates()
     {
         return false;
     }
+    D3D11Debug::SetDebugName(SamplerState.Get(), "RmlUi.SamplerState");
 
     D3D11_BLEND_DESC BlendDesc = {};
     BlendDesc.RenderTarget[0].BlendEnable = TRUE;
@@ -471,6 +478,7 @@ bool FRmlUiRenderInterfaceD3D11::CreateStates()
     {
         return false;
     }
+    D3D11Debug::SetDebugName(BlendState.Get(), "RmlUi.BlendState");
 
     D3D11_DEPTH_STENCIL_DESC DepthDesc = {};
     DepthDesc.DepthEnable = FALSE;
@@ -480,6 +488,7 @@ bool FRmlUiRenderInterfaceD3D11::CreateStates()
     {
         return false;
     }
+    D3D11Debug::SetDebugName(DepthStencilState.Get(), "RmlUi.DepthStencilState");
 
     D3D11_RASTERIZER_DESC RasterDesc = {};
     RasterDesc.FillMode = D3D11_FILL_SOLID;
@@ -490,12 +499,14 @@ bool FRmlUiRenderInterfaceD3D11::CreateStates()
     {
         return false;
     }
+    D3D11Debug::SetDebugName(RasterizerState.Get(), "RmlUi.RasterizerState");
 
     RasterDesc.ScissorEnable = TRUE;
     if (FAILED(Device->CreateRasterizerState(&RasterDesc, ScissorRasterizerState.ReleaseAndGetAddressOf())))
     {
         return false;
     }
+    D3D11Debug::SetDebugName(ScissorRasterizerState.Get(), "RmlUi.ScissorRasterizerState");
 
     return true;
 }
@@ -511,11 +522,8 @@ void FRmlUiRenderInterfaceD3D11::BindPipeline(bool bUseTexture)
     Context->VSSetShader(VertexShader.Get(), nullptr, 0);
     Context->PSSetShader(PixelShader.Get(), nullptr, 0);
 
-    if (bUseTexture)
-    {
-        ID3D11SamplerState* Sampler = SamplerState.Get();
-        Context->PSSetSamplers(0, 1, &Sampler);
-    }
+    ID3D11SamplerState* Sampler = SamplerState.Get();
+    Context->PSSetSamplers(0, 1, &Sampler);
 }
 
 void FRmlUiRenderInterfaceD3D11::ApplyScissorState()

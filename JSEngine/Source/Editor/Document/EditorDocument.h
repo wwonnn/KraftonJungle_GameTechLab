@@ -4,6 +4,16 @@
 #include "Editor/UI/EditorTabManager.h"
 
 class FSceneViewport;
+class USkeletalMeshComponent;
+
+struct FEditorSkeletalPreviewDebugSettings
+{
+    USkeletalMeshComponent* SkeletalMeshComponent = nullptr;
+    bool bShowBones = false;
+    bool bShowOnlySelectedBone = false;
+    bool bShowSelectedBoneWeight = false;
+    int32 SelectedBoneIndex = -1;
+};
 
 class FEditorDocument
 {
@@ -19,6 +29,11 @@ public:
     virtual void BuildCommandList(FEditorCommandList& OutCommands) = 0;
     virtual FSceneViewport* GetSceneViewport() { return nullptr; }
     virtual const FSceneViewport* GetSceneViewport() const { return nullptr; }
+    virtual bool GetSkeletalPreviewDebugSettings(FEditorSkeletalPreviewDebugSettings& OutSettings) const
+    {
+        (void)OutSettings;
+        return false;
+    }
 
     virtual bool CanSave() const { return false; }
     virtual bool Save() { return false; }

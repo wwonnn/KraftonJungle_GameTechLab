@@ -357,6 +357,7 @@ void FRenderer::Release()
 	Resources.LightTileBuffer.Release();
     Resources.MPLightStructuredBuffer.Release();
 	Resources.DecalStructuredBuffer.Release();
+    Resources.SkinningBuffer.Release();
 
     Resources.FogPassConstantBuffer.Release();
     Resources.SandevistanCB.Release();
@@ -388,7 +389,6 @@ void FRenderer::Release()
 	FontBatcher.Release();
 	SubUVBatcher.Release();
 
-    // Device::ReportLiveObjects 이전에 ResourceManager가 잡고 있던 D3D 객체를 먼저 해제한다.
     FShadowAtlasManager::Get().Release();
     FResourceManager::Get().ReleaseGPUResources();
 

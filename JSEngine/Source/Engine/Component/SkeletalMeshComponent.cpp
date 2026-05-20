@@ -181,6 +181,24 @@ void USkeletalMeshComponent::TickPreviewAnimation(float DeltaTime)
     EnsureSkinningUpdated();
 }
 
+void USkeletalMeshComponent::AdvancePreviewAnimation(
+    float InTime,
+    float DeltaTime,
+    bool bWrapped,
+    float RangeStart,
+    float RangeEnd)
+{
+    UAnimSingleNodeInstance* PreviewInstance = GetPreviewAnimInstance();
+    if (!PreviewInstance)
+    {
+        return;
+    }
+
+    PreviewInstance->AdvancePreviewPlayback(InTime, DeltaTime, bWrapped, RangeStart, RangeEnd);
+    ApplyAnimationPoseFromInstance(PreviewInstance, 0.0f, false);
+    EnsureSkinningUpdated();
+}
+
 void USkeletalMeshComponent::SetBoneLocalTransform(int32 BoneIndex, const FMatrix& NewLocalTransform)
 {
     if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(CurrentLocalPose.size()))
