@@ -204,6 +204,121 @@ namespace
         return Best;
     }
 
+    ImVec2 Add(const ImVec2& A, const ImVec2& B)
+    {
+        return ImVec2(A.x + B.x, A.y + B.y);
+    }
+
+    ImVec2 Sub(const ImVec2& A, const ImVec2& B)
+    {
+        return ImVec2(A.x - B.x, A.y - B.y);
+    }
+
+    ImVec2 Mul(const ImVec2& V, float Scalar)
+    {
+        return ImVec2(V.x * Scalar, V.y * Scalar);
+    }
+
+    float Length(const ImVec2& V)
+    {
+        return std::sqrt(V.x * V.x + V.y * V.y);
+    }
+
+    ImVec2 Normalize(const ImVec2& V)
+    {
+        const float L = Length(V);
+        return L > 0.0001f ? ImVec2(V.x / L, V.y / L) : ImVec2(1.0f, 0.0f);
+    }
+
+    ImVec2 Perp(const ImVec2& V)
+    {
+        return ImVec2(-V.y, V.x);
+    }
+
+    ImVec2 RectCenter(const ImVec2& Min, const ImVec2& Max)
+    {
+        return ImVec2((Min.x + Max.x) * 0.5f, (Min.y + Max.y) * 0.5f);
+    }
+
+    ImVec2 RectEdgePointToward(const ImVec2& RectMin, const ImVec2& RectMax, const ImVec2& Target)
+    {
+        const ImVec2 Center = RectCenter(RectMin, RectMax);
+        const ImVec2 Direction = Sub(Target, Center);
+        if (std::abs(Direction.x) <= 0.0001f && std::abs(Direction.y) <= 0.0001f)
+        {
+            return ImVec2(RectMax.x, Center.y);
+        }
+
+        float BestT = FLT_MAX;
+        if (std::abs(Direction.x) > 0.0001f)
+        {
+            const float TargetX = Direction.x > 0.0f ? RectMax.x : RectMin.x;
+            const float T = (TargetX - Center.x) / Direction.x;
+            if (T > 0.0f)
+            {
+                BestT = std::min(BestT, T);
+            }
+        }
+        if (std::abs(Direction.y) > 0.0001f)
+        {
+            const float TargetY = Direction.y > 0.0f ? RectMax.y : RectMin.y;
+            const float T = (TargetY - Center.y) / Direction.y;
+            if (T > 0.0f)
+            {
+                BestT = std::min(BestT, T);
+            }
+        }
+
+        if (BestT == FLT_MAX)
+        {
+            BestT = 0.0f;
+        }
+
+        return Add(Center, Mul(Direction, BestT));
+    }
+
+    int32 CountParallelTransitions(const UAnimInstanceAsset* Asset, const FName& A, const FName& B)
+    {
+        int32 Count = 0;
+        for (const FAnimInstanceTransitionAssetData& Transition : Asset->Transitions)
+        {
+            if ((Transition.FromState == A && Transition.ToState == B) ||
+                (Transition.FromState == B && Transition.ToState == A))
+            {
+                ++Count;
+            }
+        }
+        return Count;
+    }
+
+    int32 GetParallelTransitionOrdinal(const UAnimInstanceAsset* Asset, int32 TransitionIndex)
+    {
+        const FAnimInstanceTransitionAssetData& Target = Asset->Transitions[TransitionIndex];
+        int32 Ordinal = 0;
+        for (int32 Index = 0; Index < TransitionIndex; ++Index)
+        {
+            const FAnimInstanceTransitionAssetData& Transition = Asset->Transitions[Index];
+            if ((Transition.FromState == Target.FromState && Transition.ToState == Target.ToState) ||
+                (Transition.FromState == Target.ToState && Transition.ToState == Target.FromState))
+            {
+                ++Ordinal;
+            }
+        }
+        return Ordinal;
+    }
+
+    void DrawArrowHead(ImDrawList* DrawList, const ImVec2& Tip, const ImVec2& Direction, ImU32 Color, float Size)
+    {
+        const ImVec2 Dir = Normalize(Direction);
+        const ImVec2 Side = Perp(Dir);
+        const ImVec2 Base = Sub(Tip, Mul(Dir, Size));
+        DrawList->AddTriangleFilled(
+            Tip,
+            Add(Base, Mul(Side, Size * 0.55f)),
+            Sub(Base, Mul(Side, Size * 0.55f)),
+            Color);
+    }
+
     float ComputeFramesPerSecond(int32 Numerator, int32 Denominator)
     {
         if (Numerator <= 0 || Denominator <= 0)
@@ -390,19 +505,52 @@ void FEditorAnimInstanceEditorWidget::DrawGraph()
 
         const FVector2& FromPos = CurrentAsset->States[FromIndex].EditorNodePosition;
         const FVector2& ToPos = CurrentAsset->States[ToIndex].EditorNodePosition;
-        ImVec2 Start(CanvasMin.x + FromPos.X + NodeSize.x, CanvasMin.y + FromPos.Y + NodeSize.y * 0.5f);
-        ImVec2 End(CanvasMin.x + ToPos.X, CanvasMin.y + ToPos.Y + NodeSize.y * 0.5f);
-        const ImVec2 ControlOffset(std::max(40.0f, std::abs(End.x - Start.x) * 0.45f), 0.0f);
-        const ImVec2 ControlA(Start.x + ControlOffset.x, Start.y);
-        const ImVec2 ControlB(End.x - ControlOffset.x, End.y);
+        const ImVec2 FromMin(CanvasMin.x + FromPos.X, CanvasMin.y + FromPos.Y);
+        const ImVec2 FromMax(FromMin.x + NodeSize.x, FromMin.y + NodeSize.y);
+        const ImVec2 ToMin(CanvasMin.x + ToPos.X, CanvasMin.y + ToPos.Y);
+        const ImVec2 ToMax(ToMin.x + NodeSize.x, ToMin.y + NodeSize.y);
         const bool bSelected = SelectedTransitionIndex == TransitionIndex;
-        DrawList->AddBezierCubic(
-            Start,
-            ControlA,
-            ControlB,
-            End,
-            ImGui::GetColorU32(bSelected ? ImVec4(1.0f, 0.86f, 0.42f, 1.0f) : ImVec4(0.83f, 0.72f, 0.45f, 1.0f)),
-            bSelected ? 4.0f : 2.0f);
+        const ImU32 LineColor = ImGui::GetColorU32(bSelected ? ImVec4(1.0f, 0.86f, 0.42f, 1.0f) : ImVec4(0.78f, 0.78f, 0.76f, 0.92f));
+        const float LineThickness = bSelected ? 3.4f : 2.0f;
+
+        ImVec2 Start;
+        ImVec2 End;
+        ImVec2 ControlA;
+        ImVec2 ControlB;
+
+        if (FromIndex == ToIndex)
+        {
+            Start = ImVec2(FromMin.x, FromMin.y + NodeSize.y * 0.45f);
+            End = ImVec2(FromMin.x, FromMin.y + NodeSize.y * 0.72f);
+            const float LoopWidth = 40.0f + 8.0f * GetParallelTransitionOrdinal(CurrentAsset, TransitionIndex);
+            ControlA = ImVec2(Start.x - LoopWidth, Start.y - 28.0f);
+            ControlB = ImVec2(End.x - LoopWidth, End.y + 28.0f);
+        }
+        else
+        {
+            const ImVec2 FromCenter = RectCenter(FromMin, FromMax);
+            const ImVec2 ToCenter = RectCenter(ToMin, ToMax);
+            const ImVec2 Direction = Normalize(Sub(ToCenter, FromCenter));
+            const bool bCanonicalOrder = FromIndex < ToIndex;
+            const ImVec2 CanonicalDirection = bCanonicalOrder ? Direction : Mul(Direction, -1.0f);
+            const ImVec2 Normal = Perp(CanonicalDirection);
+            const int32 ParallelCount = CountParallelTransitions(CurrentAsset, Transition.FromState, Transition.ToState);
+            const int32 ParallelOrdinal = GetParallelTransitionOrdinal(CurrentAsset, TransitionIndex);
+            const float Offset = (static_cast<float>(ParallelOrdinal) - (static_cast<float>(ParallelCount) - 1.0f) * 0.5f) * 24.0f;
+            const ImVec2 OffsetVector = Mul(Normal, Offset);
+            Start = Add(RectEdgePointToward(FromMin, FromMax, ToCenter), OffsetVector);
+            End = Add(RectEdgePointToward(ToMin, ToMax, FromCenter), OffsetVector);
+            const float Distance = Length(Sub(End, Start));
+            const float ControlLength = std::clamp(Distance * 0.22f, 36.0f, 110.0f);
+            ControlA = Add(Start, Mul(Direction, ControlLength));
+            ControlB = Sub(End, Mul(Direction, ControlLength));
+        }
+
+        DrawList->AddBezierCubic(Start, ControlA, ControlB, End, LineColor, LineThickness);
+
+        const ImVec2 ArrowTip = CubicBezierPoint(Start, ControlA, ControlB, End, 0.86f);
+        const ImVec2 ArrowPrev = CubicBezierPoint(Start, ControlA, ControlB, End, 0.80f);
+        DrawArrowHead(DrawList, ArrowTip, Sub(ArrowTip, ArrowPrev), LineColor, bSelected ? 10.0f : 8.0f);
 
         if (bCanvasHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
