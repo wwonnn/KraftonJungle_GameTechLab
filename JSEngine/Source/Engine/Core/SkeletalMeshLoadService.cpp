@@ -422,7 +422,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSkeletalMeshAssetFile(const FString
 		ResourceManager.LoadMaterial(ResolvePath, EMaterialShaderType::SurfaceLit);
 	}
 
-	LoadedMeshData->PathFileName = NormalizedPath;
+	LoadedMeshData->PathFileName = ResolvePath.empty() ? NormalizedPath : ResolvePath;
 	USkeletalMesh* LoadedMesh = FinalizeLoadedMesh(
 		LoadedMeshData,
 		ResolvePath,
@@ -487,7 +487,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 
 		if (LoadedMeshData)
 		{
-			LoadedMeshData->PathFileName = CachedManifest.SkeletalMeshAssetPath;
+			LoadedMeshData->PathFileName = NormalizedPath;
 			bLoadedFromImportManifest = true;
 			UE_LOG("[SkeletalMeshLoad] Source=ImportManifest | Path=%s | BinarySec=%.6f | Manifest=%s",
 			       NormalizedPath.c_str(), BinaryLoadSec, ImportManifestPath.c_str());
@@ -536,7 +536,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 				bSplitCacheReadyForManifest = bSaveConvertedMeshOk;
 				if (bSaveConvertedMeshOk)
 				{
-					LoadedMeshData->PathFileName = SkeletalMeshAssetPath;
+					LoadedMeshData->PathFileName = NormalizedPath;
 					UE_LOG("[SkeletalMeshLoad] Legacy skeletal cache converted | Path=%s | Skeleton=%s | Mesh=%s | Animations=%zu",
 					       NormalizedPath.c_str(),
 					       SkeletonAssetPath.c_str(),
@@ -634,7 +634,7 @@ USkeletalMesh* FSkeletalMeshLoadService::LoadSourceOrCachedBinary(const FString&
 		bSplitCacheReadyForManifest = bSaveSkeletonOk && bSaveBinaryOk && (!ImportedPhysicsAsset || bSavePhysicsAssetOk);
 		if (bSaveBinaryOk)
 		{
-			LoadedMeshData->PathFileName = SkeletalMeshAssetPath;
+			LoadedMeshData->PathFileName = NormalizedPath;
 			UE_LOG("[SkeletalMeshLoad] Source=FBX | Path=%s | FbxSec=%.6f | BinarySave=OK | BinaryPath=%s",
 			       NormalizedPath.c_str(), SourceLoadSec, SkeletalMeshAssetPath.c_str());
 		}
