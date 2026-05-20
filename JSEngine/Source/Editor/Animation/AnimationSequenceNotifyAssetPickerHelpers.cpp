@@ -63,6 +63,8 @@ namespace
 
     void AddSoundCueEntries(TArray<FNotifyAssetPickerEntry>& OutEntries)
     {
+        // The picker enumerates editor-visible assets only; the notify payload
+        // still stores the same project-relative string that runtime lookup uses.
         const std::filesystem::path AudioRoot =
             (std::filesystem::path(FPaths::RootDir()) / L"Asset" / L"Audio").lexically_normal();
         if (!std::filesystem::exists(AudioRoot))
@@ -193,6 +195,9 @@ namespace
 
     FString MakeFriendlyFallbackLabel(EAnimNotifyPayloadAssetKind AssetKind, const FString& StoredValue)
     {
+        // If the stored value does not match the current picker inventory (for
+        // example after a rename or a custom manual override), keep showing a
+        // readable label instead of hiding the raw serialized value completely.
         switch (AssetKind)
         {
         case EAnimNotifyPayloadAssetKind::SoundCue:

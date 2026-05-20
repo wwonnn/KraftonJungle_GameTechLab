@@ -4,14 +4,14 @@
 #include "Animation/AnimNotifyPayloadParser.h"
 #include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
-#include "Editor/Animation/AnimationSequenceEditorWidget.h"
-#include "Editor/Animation/AnimationSequencePreviewController.h"
 #include "Editor/Document/EditorDocument.h"
 
 #include <memory>
 
 class UEditorEngine;
 class UAnimSequence;
+class FAnimationSequenceEditorWidget;
+class FAnimationSequencePreviewController;
 
 class FAnimationSequenceEditorDocument : public FEditorDocument
 {

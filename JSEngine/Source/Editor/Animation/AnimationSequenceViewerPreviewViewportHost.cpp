@@ -7,8 +7,6 @@
 #include "Editor/Viewport/FSceneViewport.h"
 #include "Engine/Runtime/WindowsWindow.h"
 
-#include "Render/Common/RenderTypes.h"
-
 #include "ImGui/imgui.h"
 
 #include <algorithm>
@@ -194,10 +192,15 @@ void FAnimationSequenceEditorWidget::SyncEmbeddedViewportRectAndFocus(
     FViewportRect NewRect = {};
     if (bBlockViewportInputThisFrame)
     {
+        // Clear the embedded scene-viewport rect for one frame after splitter
+        // interaction. This prevents the same mouse gesture from being consumed
+        // as camera input by the preview viewport.
         SceneViewport->SetRect(NewRect);
         return;
     }
 
+    // The embedded scene viewport needs the live ImGui rectangle every frame so
+    // hit-testing and camera focus line up with the panel's current layout.
     const POINT ClientMin = ImGuiScreenToClientPoint(EditorEngine ? EditorEngine->GetWindow() : nullptr, Min);
     NewRect.X = static_cast<int32>(ClientMin.x);
     NewRect.Y = static_cast<int32>(ClientMin.y);

@@ -185,6 +185,8 @@ namespace
         const FAnimationSequencePreviewController* PreviewController,
         const FAnimationSequenceEditorState* EditorState)
     {
+        // Snapshot the playback-facing state once before rendering buttons so
+        // reverse/play/pause decisions all use the same frame's state.
         const float PlaybackRateMagnitude = std::max(std::fabs(EditorState ? EditorState->PlayRate : 1.0f), 0.0001f);
         const bool bIsPlaying = PreviewController && PreviewController->IsPlaying();
         const bool bIsReversePlaying = bIsPlaying && EditorState && EditorState->PlayRate < 0.0f;
@@ -261,6 +263,9 @@ namespace
         float CurrentValue,
         TApplyEditedTime&& ApplyEditedTime)
     {
+        // All inline range editors share a single text buffer. Track the popup
+        // that currently owns it so stale input is cleared deterministically
+        // when focus moves to a different range label.
         if (ImGui::BeginPopup(PopupId))
         {
             const bool bFirstPopupFrame = ActivePopupId != PopupId;
@@ -365,6 +370,8 @@ namespace
 
 void FAnimationSequenceEditorWidget::RenderBottomControlStrip(float Height, float LeftPaneWidth, float RightPaneWidth)
 {
+    // The strip is split into transport and timeline-range panes. Each pane
+    // owns its detailed controls so this function stays focused on layout.
     const FBottomStripAvailability Availability = BuildBottomStripAvailability(PreviewController, EditorState);
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));

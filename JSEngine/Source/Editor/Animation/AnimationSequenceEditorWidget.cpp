@@ -79,6 +79,9 @@ void FAnimationSequenceEditorWidget::Render(float DeltaTime)
 {
     (void)DeltaTime;
 
+    // Keep the main widget focused on orchestration only. Preview, sequencer,
+    // bottom strip, and lower details own their own implementation units; this
+    // entrypoint just resolves the current layout and delegates to them.
     const TArray<FString> PreviewOverlayLines = BuildPreviewOverlayLines();
     const float AvailableHeight = std::max(ImGui::GetContentRegionAvail().y, 300.0f);
     const float MinLayoutHeight =
@@ -160,6 +163,7 @@ void FAnimationSequenceEditorWidget::RenderNotifyLowerPanelSplit()
     }
 }
 
+//----------------------------------------------------------------------------
 // Shared viewer helpers and notify editor buffer sync
 //----------------------------------------------------------------------------
 
@@ -289,6 +293,9 @@ void FAnimationSequenceEditorWidget::SyncNotifyDetailsBuffers(const FAnimNotifyE
         return;
     }
 
+    // Rebind the editable ImGui buffers only when the selected notify identity
+    // changes. This avoids clobbering in-progress typing every frame while still
+    // refreshing correctly when selection moves to a different notify.
     NotifyDetailsBoundStableId = StableId;
     const FString NotifyName = NotifyEvent.Name.IsValid() ? NotifyEvent.Name.ToString() : FString();
     CopyStringToBuffer(NotifyName, NotifyNameEditBuffer);

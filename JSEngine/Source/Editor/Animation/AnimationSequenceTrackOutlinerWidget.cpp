@@ -3,7 +3,6 @@
 #include "Editor/Animation/AnimationSequenceCurveFilter.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
-#include "Editor/Animation/AnimationSequenceSequencerLayout.h"
 #include "Editor/Animation/AnimationSequenceTimelineGeometry.h"
 
 #include "ImGui/imgui.h"
@@ -121,6 +120,175 @@ namespace
         return Interaction;
     }
 
+    struct FOutlinerRowGeometry
+    {
+        ImVec2 Min;
+        ImVec2 Max;
+    };
+
+    struct FNotifyTrackContextResult
+    {
+        bool bRequestRename = false;
+    };
+
+    FOutlinerRowGeometry BuildOutlinerRowGeometry(
+        const ImVec2& CanvasPos,
+        const ImVec2& CanvasEnd,
+        float RowTop,
+        float RowBottom,
+        float LeftInset,
+        float RightInset)
+    {
+        // Keep row geometry construction separate from row interaction so
+        // hit-target changes can be made without rewriting the draw helpers.
+        return
+        {
+            ImVec2(CanvasPos.x + LeftInset, RowTop),
+            ImVec2(CanvasEnd.x - RightInset, RowBottom)
+        };
+    }
+
+    void ApplyRowHoverState(
+        FAnimationSequenceEditorState& State,
+        const FAnimationSequenceSequencerVisibleRow& Row,
+        const FRowInteraction& Interaction)
+    {
+        if (Interaction.bHovered)
+        {
+            State.SetHoveredSequencerRow(Row.Id);
+        }
+    }
+
+    void ApplyRowFocusState(
+        FAnimationSequenceEditorState& State,
+        const FAnimationSequenceSequencerVisibleRow& Row,
+        const FRowInteraction& Interaction)
+    {
+        if (Interaction.bClicked)
+        {
+            State.SetFocusedSequencerRow(Row.Id);
+        }
+    }
+
+    FNotifyTrackContextResult HandleNotifyTrackContextMenu(
+        FAnimationSequenceEditorState& State,
+        FAnimationSequenceEditorDocument* Document,
+        const FAnimationSequenceSequencerVisibleRow& Row)
+    {
+        FNotifyTrackContextResult Result;
+        const FString NotifyTrackContextPopupId = "##NotifyTrackContext" + std::to_string(Row.SourceIndex);
+        if (!(Document && ImGui::BeginPopupContextItem(NotifyTrackContextPopupId.c_str())))
+        {
+            return Result;
+        }
+
+        if (ImGui::MenuItem("Rename Track"))
+        {
+            // Return intent to the widget instead of opening the popup here so
+            // popup state stays owned by the outliner widget instance.
+            Result.bRequestRename = true;
+        }
+
+        const bool bCanPasteNotify = Document->CanPasteNotify();
+        if (ImGui::MenuItem("Paste Notify Here", nullptr, false, bCanPasteNotify))
+        {
+            if (Document->PasteNotifyToTrackAtTime(Row.SourceIndex, State.CurrentTime))
+            {
+                State.SetFocusedSequencerRow(Row.Id);
+            }
+        }
+
+        const bool bCanMoveSelectedNotify =
+            State.HasSelectedNotify() &&
+            State.SelectedNotifyTrackIndex != Row.SourceIndex;
+        if (ImGui::MenuItem("Move Selected Notify Here", nullptr, false, bCanMoveSelectedNotify))
+        {
+            if (Document->MoveSelectedNotifyToTrack(Row.SourceIndex))
+            {
+                State.SetFocusedSequencerRow(Row.Id);
+            }
+        }
+
+        const bool bCanMoveUp = Row.SourceIndex > 0;
+        if (ImGui::MenuItem("Move Up", nullptr, false, bCanMoveUp))
+        {
+            Document->MoveNotifyTrack(Row.SourceIndex, Row.SourceIndex - 1);
+        }
+
+        const bool bCanMoveDown = Row.SourceIndex + 1 < Document->GetNotifyTrackCount();
+        if (ImGui::MenuItem("Move Down", nullptr, false, bCanMoveDown))
+        {
+            Document->MoveNotifyTrack(Row.SourceIndex, Row.SourceIndex + 1);
+        }
+
+        const FAnimNotifyTrack* Track = Document->GetNotifyTrack(Row.SourceIndex);
+        const bool bCanDelete = Track && Track->Events.empty();
+        if (ImGui::MenuItem("Delete Empty Track", nullptr, false, bCanDelete))
+        {
+            Document->DeleteNotifyTrack(Row.SourceIndex);
+        }
+
+        ImGui::EndPopup();
+        return Result;
+    }
+
+    void HandleNotifyTrackSelection(
+        FAnimationSequenceEditorState& State,
+        FAnimationSequenceEditorDocument* Document,
+        const FAnimationSequenceSequencerVisibleRow& Row,
+        const FRowInteraction& Interaction)
+    {
+        ApplyRowHoverState(State, Row, Interaction);
+        if (!Interaction.bClicked)
+        {
+            return;
+        }
+
+        State.SetFocusedSequencerRow(Row.Id);
+        State.SelectedCurveIndex = -1;
+        State.HoveredCurveIndex = -1;
+        const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(Row.SourceIndex) : nullptr;
+        if (Track && !Track->Events.empty())
+        {
+            const int32 EventIndex = std::clamp(State.SelectedNotifyEventIndex, 0, static_cast<int32>(Track->Events.size()) - 1);
+            Document->SelectNotify(Row.SourceIndex, EventIndex);
+        }
+    }
+
+    void HandleCurveGroupInteraction(
+        FAnimationSequenceEditorState& State,
+        const FAnimationSequenceSequencerVisibleRow& Row,
+        const FRowInteraction& Interaction)
+    {
+        ApplyRowHoverState(State, Row, Interaction);
+        if (Interaction.bClicked)
+        {
+            State.SetFocusedSequencerRow(Row.Id);
+            AnimationSequenceCurveFilter::SetCurveTypeEnabled(State, Row.CurveType, !Row.bToggleChecked);
+        }
+    }
+
+    void HandleCurveEntryInteraction(
+        FAnimationSequenceEditorState& State,
+        FAnimationSequenceEditorDocument* Document,
+        const FAnimationSequenceSequencerVisibleRow& Row,
+        const FRowInteraction& Interaction)
+    {
+        ApplyRowHoverState(State, Row, Interaction);
+        if (!Interaction.bClicked)
+        {
+            return;
+        }
+
+        State.SetFocusedSequencerRow(Row.Id);
+        State.SelectedCurveIndex = Row.SourceIndex;
+        State.HoveredCurveIndex = Row.SourceIndex;
+        if (Document)
+        {
+            Document->ClearNotifySelection();
+        }
+    }
+
     FRowInteraction DrawCurveGroupRow(
         int32 UniqueId,
         const FAnimationSequenceSequencerVisibleRow& Row,
@@ -220,22 +388,18 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
         {
         case EAnimationSequenceSequencerVisibleRowType::NotifyHeader:
         {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 4.0f, 4.0f);
             const FRowInteraction Interaction = DrawSectionRow(
                 "NotifySection",
                 Row.Label,
                 Row.bCanExpand,
                 State.bNotifiesExpanded,
                 bRowFocused,
-                ImVec2(CanvasPos.x + 4.0f, RowTop),
-                ImVec2(CanvasEnd.x - 4.0f, RowBottom));
-            if (Interaction.bHovered)
-            {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-            }
+                RowGeometry.Min,
+                RowGeometry.Max);
+            ApplyRowHoverState(State, Row, Interaction);
+            ApplyRowFocusState(State, Row, Interaction);
             if (Document && ImGui::BeginPopupContextItem("##NotifySectionContext"))
             {
                 if (ImGui::MenuItem("Add Track"))
@@ -257,200 +421,118 @@ void FAnimationSequenceTrackOutlinerWidget::Render(
 
         case EAnimationSequenceSequencerVisibleRowType::NotifyTrack:
         {
-            const FString NotifyTrackContextPopupId = "##NotifyTrackContext" + std::to_string(Row.SourceIndex);
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 8.0f, 8.0f);
             const FRowInteraction Interaction = DrawSelectableRow(
                     1000 + Row.SourceIndex,
                     Row.Label,
                     Row.SecondaryLabel,
                     Row.bSelected,
                     bRowFocused,
-                    ImVec2(CanvasPos.x + 8.0f, RowTop),
-                    ImVec2(CanvasEnd.x - 8.0f, RowBottom));
-            if (Interaction.bHovered)
+                    RowGeometry.Min,
+                    RowGeometry.Max);
+            HandleNotifyTrackSelection(State, Document, Row, Interaction);
+            const FNotifyTrackContextResult ContextResult = HandleNotifyTrackContextMenu(State, Document, Row);
+            if (ContextResult.bRequestRename)
             {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-                State.SelectedCurveIndex = -1;
-                State.HoveredCurveIndex = -1;
-                const FAnimNotifyTrack* Track = Document ? Document->GetNotifyTrack(Row.SourceIndex) : nullptr;
-                if (Track && !Track->Events.empty())
-                {
-                    const int32 EventIndex = std::clamp(State.SelectedNotifyEventIndex, 0, static_cast<int32>(Track->Events.size()) - 1);
-                    Document->SelectNotify(Row.SourceIndex, EventIndex);
-                }
-            }
-            if (Document && ImGui::BeginPopupContextItem(NotifyTrackContextPopupId.c_str()))
-            {
-                if (ImGui::MenuItem("Rename Track"))
-                {
-                    OpenRenameNotifyTrackPopup(Row.SourceIndex, Row.Label);
-                }
-
-                const bool bCanPasteNotify = Document->CanPasteNotify();
-                if (ImGui::MenuItem("Paste Notify Here", nullptr, false, bCanPasteNotify))
-                {
-                    if (Document->PasteNotifyToTrackAtTime(Row.SourceIndex, State.CurrentTime))
-                    {
-                        State.SetFocusedSequencerRow(Row.Id);
-                    }
-                }
-
-                const bool bCanMoveSelectedNotify =
-                    State.HasSelectedNotify() &&
-                    State.SelectedNotifyTrackIndex != Row.SourceIndex;
-                if (ImGui::MenuItem("Move Selected Notify Here", nullptr, false, bCanMoveSelectedNotify))
-                {
-                    if (Document->MoveSelectedNotifyToTrack(Row.SourceIndex))
-                    {
-                        State.SetFocusedSequencerRow(Row.Id);
-                    }
-                }
-
-                const bool bCanMoveUp = Row.SourceIndex > 0;
-                if (ImGui::MenuItem("Move Up", nullptr, false, bCanMoveUp))
-                {
-                    Document->MoveNotifyTrack(Row.SourceIndex, Row.SourceIndex - 1);
-                }
-
-                const bool bCanMoveDown = Row.SourceIndex + 1 < Document->GetNotifyTrackCount();
-                if (ImGui::MenuItem("Move Down", nullptr, false, bCanMoveDown))
-                {
-                    Document->MoveNotifyTrack(Row.SourceIndex, Row.SourceIndex + 1);
-                }
-
-                const FAnimNotifyTrack* Track = Document->GetNotifyTrack(Row.SourceIndex);
-                const bool bCanDelete = Track && Track->Events.empty();
-                if (ImGui::MenuItem("Delete Empty Track", nullptr, false, bCanDelete))
-                {
-                    Document->DeleteNotifyTrack(Row.SourceIndex);
-                }
-
-                ImGui::EndPopup();
+                OpenRenameNotifyTrackPopup(Row.SourceIndex, Row.Label);
             }
             break;
         }
 
         case EAnimationSequenceSequencerVisibleRowType::CurveHeader:
         {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 4.0f, 4.0f);
             const FRowInteraction Interaction = DrawSectionRow(
                 "CurveSection",
                 Row.Label,
                 Row.bCanExpand,
                 State.bCurvesExpanded,
                 bRowFocused,
-                ImVec2(CanvasPos.x + 4.0f, RowTop),
-                ImVec2(CanvasEnd.x - 4.0f, RowBottom));
-            if (Interaction.bHovered)
-            {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-            }
+                RowGeometry.Min,
+                RowGeometry.Max);
+            ApplyRowHoverState(State, Row, Interaction);
+            ApplyRowFocusState(State, Row, Interaction);
             break;
         }
 
         case EAnimationSequenceSequencerVisibleRowType::CurveGroup:
         case EAnimationSequenceSequencerVisibleRowType::AttributeGroup:
         {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 8.0f, 8.0f);
             const FRowInteraction Interaction = DrawCurveGroupRow(
                     3000 + Row.GroupIndex + (Row.Type == EAnimationSequenceSequencerVisibleRowType::AttributeGroup ? 2000 : 0),
                     Row,
                     bRowFocused,
-                    ImVec2(CanvasPos.x + 8.0f, RowTop),
-                    ImVec2(CanvasEnd.x - 8.0f, RowBottom));
-            if (Interaction.bHovered)
-            {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-                AnimationSequenceCurveFilter::SetCurveTypeEnabled(State, Row.CurveType, !Row.bToggleChecked);
-            }
+                    RowGeometry.Min,
+                    RowGeometry.Max);
+            HandleCurveGroupInteraction(State, Row, Interaction);
             break;
         }
 
         case EAnimationSequenceSequencerVisibleRowType::CurveEntry:
         case EAnimationSequenceSequencerVisibleRowType::AttributeEntry:
         {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 18.0f, 8.0f);
             const FRowInteraction Interaction = DrawSelectableRow(
                     4000 + Row.SourceIndex + (Row.Type == EAnimationSequenceSequencerVisibleRowType::AttributeEntry ? 2000 : 0),
                     Row.Label,
                     Row.SecondaryLabel,
                     Row.bSelected,
                     bRowFocused,
-                    ImVec2(CanvasPos.x + 18.0f, RowTop),
-                    ImVec2(CanvasEnd.x - 8.0f, RowBottom));
-            if (Interaction.bHovered)
-            {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-                State.SelectedCurveIndex = Row.SourceIndex;
-                State.HoveredCurveIndex = Row.SourceIndex;
-                if (Document)
-                {
-                    Document->ClearNotifySelection();
-                }
-            }
+                    RowGeometry.Min,
+                    RowGeometry.Max);
+            HandleCurveEntryInteraction(State, Document, Row, Interaction);
             break;
         }
 
         case EAnimationSequenceSequencerVisibleRowType::AdditiveHeader:
         {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 4.0f, 4.0f);
             const FRowInteraction Interaction = DrawSectionRow(
                 "AdditiveLayerSection",
                 Row.Label,
                 Row.bCanExpand,
                 State.bAdditiveLayerTracksExpanded,
                 bRowFocused,
-                ImVec2(CanvasPos.x + 4.0f, RowTop),
-                ImVec2(CanvasEnd.x - 4.0f, RowBottom));
-            if (Interaction.bHovered)
-            {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-            }
+                RowGeometry.Min,
+                RowGeometry.Max);
+            ApplyRowHoverState(State, Row, Interaction);
+            ApplyRowFocusState(State, Row, Interaction);
             break;
         }
 
         case EAnimationSequenceSequencerVisibleRowType::AdditiveEmpty:
         case EAnimationSequenceSequencerVisibleRowType::AttributeEmpty:
+        {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 8.0f, 8.0f);
             DrawInfoRow(
                 Row.Label,
                 bRowFocused,
-                ImVec2(CanvasPos.x + 8.0f, RowTop),
-                ImVec2(CanvasEnd.x - 8.0f, RowBottom));
+                RowGeometry.Min,
+                RowGeometry.Max);
             break;
+        }
 
         case EAnimationSequenceSequencerVisibleRowType::AttributeHeader:
         {
+            const FOutlinerRowGeometry RowGeometry =
+                BuildOutlinerRowGeometry(CanvasPos, CanvasEnd, RowTop, RowBottom, 4.0f, 4.0f);
             const FRowInteraction Interaction = DrawSectionRow(
                 "AttributeSection",
                 Row.Label,
                 Row.bCanExpand,
                 State.bAttributesExpanded,
                 bRowFocused,
-                ImVec2(CanvasPos.x + 4.0f, RowTop),
-                ImVec2(CanvasEnd.x - 4.0f, RowBottom));
-            if (Interaction.bHovered)
-            {
-                State.SetHoveredSequencerRow(Row.Id);
-            }
-            if (Interaction.bClicked)
-            {
-                State.SetFocusedSequencerRow(Row.Id);
-            }
+                RowGeometry.Min,
+                RowGeometry.Max);
+            ApplyRowHoverState(State, Row, Interaction);
+            ApplyRowFocusState(State, Row, Interaction);
             break;
         }
         }

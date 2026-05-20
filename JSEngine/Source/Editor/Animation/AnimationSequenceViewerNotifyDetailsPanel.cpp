@@ -209,6 +209,9 @@ void FAnimationSequenceEditorWidget::RenderSelectedNotifyEditorPanel()
 
     const FAnimNotifyEvent& NotifySnapshot = Context.NotifySnapshot;
     const FAnimNotifyValidationReport& SelectedValidationReport = Context.ValidationReport;
+    // The details panel edits shared text buffers, not the snapshot directly.
+    // Refresh those buffers from the stable selected notify before rendering any
+    // payload/name fields so loaded .sequence data shows up immediately.
     SyncNotifyDetailsBuffers(NotifySnapshot);
 
     RenderSelectedNotifyBasicSection(NotifySnapshot, SelectedValidationReport);
@@ -467,6 +470,9 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
 
     auto RefreshPayloadBuffers = [this]()
     {
+        // Structured field editors still serialize back into the canonical raw
+        // payload string. After any mutation, refresh both the raw payload text
+        // buffer and the per-field edit buffers from the document's current value.
         if (const FAnimNotifyEvent* UpdatedNotify = Document ? Document->GetSelectedNotify() : nullptr)
         {
             CopyStringToBuffer(UpdatedNotify->Payload, NotifyPayloadEditBuffer);
@@ -502,6 +508,9 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
 
             if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::AssetPicker)
             {
+                // Picker-first UX is editor sugar only. The stored payload value
+                // remains the same canonical string so serialization and runtime
+                // notify behavior stay unchanged.
                 const TArray<FNotifyAssetPickerEntry> PickerEntries =
                     BuildNotifyAssetPickerEntries(Field.AssetKind);
                 const FString CurrentValue = TargetBuffer->data();
@@ -777,6 +786,9 @@ void FAnimationSequenceEditorWidget::RenderRawNotifyPayloadEditor(
     SetNotifyPanelFieldWidth();
     if (ImGui::InputText("Payload", NotifyPayloadEditBuffer.data(), NotifyPayloadEditBuffer.size()))
     {
+        // Raw payload editing is the source of truth fallback. Keep the
+        // structured field buffers synchronized so both editing paths stay
+        // consistent when a user overrides the payload manually.
         Document->SetSelectedNotifyPayload(NotifyPayloadEditBuffer.data());
         const FAnimNotifyPayloadParser Payload(NotifyPayloadEditBuffer.data());
         RefreshNotifyPayloadFieldBuffers(Payload);

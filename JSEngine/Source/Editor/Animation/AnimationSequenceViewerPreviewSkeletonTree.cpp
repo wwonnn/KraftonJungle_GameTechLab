@@ -164,6 +164,9 @@ void FAnimationSequenceEditorWidget::ApplyPendingPreviewBoneTreeOpenState(const 
         return;
     }
 
+    // Expand/collapse requests are queued and replayed after the tree cache is
+    // valid for the current preview mesh. That keeps subtree operations stable
+    // even when selection changes trigger a mesh/cache refresh first.
     SetPreviewBoneSubtreeOpenState(
         PendingPreviewBoneTreeOpenStateRoot,
         PreviewSkeletonTreeChildren,
