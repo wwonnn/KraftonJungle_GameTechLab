@@ -30,6 +30,8 @@ enum class EAnimNotifySemanticFieldId : uint8
 
 namespace AnimNotifySemanticFieldNames
 {
+    // Canonical key accessors are the source of truth used when new payload text
+    // is written back out. Legacy aliases are only for tolerant reads.
     const FString& SoundCueKey();
     const FString& LegacySoundKey();
 
@@ -58,11 +60,15 @@ namespace AnimNotifySemanticFieldNames
     const FString& LifetimeKey();
     const FString& AlignToHitNormalKey();
 
+    // Semantic-id lookup stays keyed by canonical field names only. Callers that
+    // need tolerant reads should use GetLookupKeys(...), not this mapping.
     EAnimNotifySemanticFieldId GetSemanticFieldId(const FString& CanonicalKey);
     const FString& GetCanonicalKey(EAnimNotifySemanticFieldId SemanticId);
     const TArray<FString>& GetLegacyAliases(EAnimNotifySemanticFieldId SemanticId);
     const TArray<FString>& GetLookupKeys(EAnimNotifySemanticFieldId SemanticId);
 
+    // String-key overloads are convenience helpers for schema/editor code that
+    // already starts from a canonical field name instead of a semantic id.
     const TArray<FString>& GetLegacyAliases(const FString& CanonicalKey);
     const TArray<FString>& GetLookupKeys(const FString& CanonicalKey);
 }

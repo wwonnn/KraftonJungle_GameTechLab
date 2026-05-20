@@ -124,6 +124,10 @@ namespace
         float TraceDistance,
         FHitResult& OutHit)
     {
+        // Surface/decal notifies trace downward from an authored attach target,
+        // but they must preserve the old fallback behavior when tracing is not
+        // possible: the caller keeps using StartLocation instead of inventing a
+        // different default origin here.
         OutHit.Reset();
 
         if (!MeshComponent || TraceDistance <= 0.0f)
@@ -393,6 +397,9 @@ namespace
             TraceStartLocation,
             Payload.TraceDistance,
             SurfaceHit);
+        // Misses intentionally degrade to a generic "Default" surface and the
+        // original trace start location so existing content still fires an event
+        // even when preview/runtime geometry does not provide a hit.
         const FString SurfaceName = bHasSurfaceHit ? ResolveFootstepSurfaceName(SurfaceHit) : FString("Default");
         const FVector HitLocation = bHasSurfaceHit ? SurfaceHit.Location : TraceStartLocation;
 
@@ -458,6 +465,9 @@ namespace
             SpawnOrigin,
             Payload.TraceDistance,
             SurfaceHit);
+        // Decal spawning follows the same fallback rule as footstep tracing:
+        // keep the authored origin when no surface is found, and only use the
+        // hit normal when the trace produced a valid surface.
         const FVector SpawnLocation = bHasSurfaceHit ? SurfaceHit.Location : SpawnOrigin;
         const FVector SpawnNormal = bHasSurfaceHit
             ? ResolveDecalSurfaceNormal(SurfaceHit, Payload.bAlignToHitNormal)
@@ -530,6 +540,9 @@ namespace
         FAttackWindowComponentState& State = GAttackWindowComponentStates[PrimitiveComponent];
         if (State.RefCount == 0)
         {
+            // AttackWindow temporarily forces overlap generation on while at
+            // least one notify window is active, but the original component
+            // setting must be restored exactly when the last reference leaves.
             State.bOriginalGenerateOverlapEvents = PrimitiveComponent->ShouldGenerateOverlapEvents();
             PrimitiveComponent->SetGenerateOverlapEvents(true);
         }
@@ -573,6 +586,8 @@ namespace
         FAttackWindowTagState& State = GAttackWindowTagStates[StateKey];
         if (State.RefCount == 0)
         {
+            // Only remove the tag again if this notify system added it first.
+            // Pre-authored actor tags must survive the notify lifetime intact.
             State.bOwnedByNotifySystem = !OwnerActor->HasTag(AttackTag);
             if (State.bOwnedByNotifySystem)
             {
@@ -649,6 +664,8 @@ namespace
             return Result;
         }
 
+        // Acquire component overlap state before optional attack-tag state so
+        // NotifyEnd can release them in the exact reverse ownership order.
         Result.bWindowAcquired = AcquireAttackWindow(Result.PrimitiveComponent);
         Result.AttackTag = BuildAttackIdTag(Payload.AttackId);
         if (!Result.AttackTag.empty())

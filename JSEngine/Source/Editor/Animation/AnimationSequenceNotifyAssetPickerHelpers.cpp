@@ -162,6 +162,9 @@ namespace
 
     void FinalizeEntries(TArray<FNotifyAssetPickerEntry>& Entries)
     {
+        // Sorting and duplicate-label disambiguation happen after each asset kind
+        // contributes raw entries so the picker presents one stable list while
+        // still preserving the original serialized value for selection.
         std::stable_sort(
             Entries.begin(),
             Entries.end(),
@@ -205,6 +208,8 @@ namespace
     // Asset-kind display and fallback label helpers
     FString BuildSoundCueDisplayLabel(const FString& StoredValue)
     {
+        // Friendly labels are editor-only sugar. The payload still stores the
+        // full project-relative path even when we render just the filename stem.
         const std::filesystem::path AssetPath(FPaths::ToWide(StoredValue));
         const FString Stem = FPaths::ToUtf8(AssetPath.stem().wstring());
         return Stem.empty() ? StoredValue : Stem;
@@ -217,6 +222,8 @@ namespace
 
     FString BuildCameraShakeDisplayLabel(const FString& StoredValue)
     {
+        // Camera shake classes keep the registered type name in payload text.
+        // Only the leading 'U' is trimmed for a friendlier picker label.
         if (!StoredValue.empty() && StoredValue.front() == 'U')
         {
             return StoredValue.substr(1);

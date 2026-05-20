@@ -329,6 +329,9 @@ namespace
         const FAnimNotifyValidationContext& Context,
         const FAnimNotifyValidationLocation& Location)
     {
+        // Preview-aware checks are intentionally warnings only. They help authors
+        // catch mismatches against the current preview mesh, but they must not
+        // reject payloads that are still valid against a different runtime mesh.
         if (!Context.PreviewController || !Context.PreviewController->HasValidPreview())
         {
             return;
@@ -357,6 +360,9 @@ namespace
         const FAnimNotifyValidationContext& Context,
         const FAnimNotifyValidationLocation& Location)
     {
+        // AttackWindow is the one built-in whose component name is resolved
+        // against actor primitive components rather than attach targets, so its
+        // preview check stays separate from generic attach-target validation.
         if (!Context.PreviewController || !Context.PreviewController->HasValidPreview())
         {
             return;
