@@ -851,7 +851,10 @@
     <ClCompile Include="Source\Engine\Component\SphereComponent.cpp" />
     <ClCompile Include="Source\Engine\Core\AtlasResourceCache.cpp" />
     <ClCompile Include="Source\Engine\Core\AssetPathPolicy.cpp" />
-    <ClCompile Include="Source\Engine\Core\CrashDump.cpp" />
+    <ClCompile Include="Source\Engine\Core\CrashDumpArtifacts.cpp" />
+    <ClCompile Include="Source\Engine\Core\CrashDumpCapture.cpp" />
+    <ClCompile Include="Source\Engine\Core\CrashDumpFormatting.cpp" />
+    <ClCompile Include="Source\Engine\Core\CrashDumpRuntime.cpp" />
     <ClCompile Include="Source\Engine\Core\CurveResourceCache.cpp" />
     <ClCompile Include="Source\Engine\Core\Delegates\Delegate.cpp" />
     <ClCompile Include="Source\Engine\Core\EngineTypes.cpp" />

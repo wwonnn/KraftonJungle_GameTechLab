@@ -71,7 +71,12 @@ private:
 	void CmdStat(const TArray<FString>& Args);
 	void CmdShadow(const TArray<FString>& Args);
 	void CmdSkinning(const TArray<FString>& Args);
-	void PrintHistoryStats();	void PrintCommandList(const FString& Prefix = "");
+	void CmdCauseCrash(const TArray<FString>& Args);
+	void CmdDumpCurrentThread(const TArray<FString>& Args);
+	void CmdDumpCapturedThread(const TArray<FString>& Args);
+	void CmdListThreads(const TArray<FString>& Args);
+	void PrintHistoryStats();
+	void PrintCommandList(const FString& Prefix = "");
 	FString FindClosestCommand(const FString& Query) const;
 	TArray<FString> BuildCommandSuggestions(const FString& Query) const;
 	void RenderCommandSuggestions(const char* Id, const ImVec2& InputMin, const ImVec2& InputSize);

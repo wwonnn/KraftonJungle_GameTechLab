@@ -657,7 +657,16 @@
     <ClCompile Include="Source\Engine\Core\AssetPathPolicy.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Core\CrashDump.cpp">
+    <ClCompile Include="Source\Engine\Core\CrashDumpArtifacts.cpp">
+      <Filter>Source\Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Core\CrashDumpCapture.cpp">
+      <Filter>Source\Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Core\CrashDumpFormatting.cpp">
+      <Filter>Source\Engine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Core\CrashDumpRuntime.cpp">
       <Filter>Source\Engine\Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Core\CurveResourceCache.cpp">

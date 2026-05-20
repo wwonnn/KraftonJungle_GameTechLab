@@ -4,11 +4,13 @@
 
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/ViewportLayout.h"
+#include "Engine/Core/CrashDump.h"
 #include "Engine/Component/SkinnedMeshComponent.h"
 #include "Engine/Object/FName.h"
 #include "Engine/Object/Object.h"
 
 #include <cctype>
+#include <cerrno>
 #include <cstring>
 #include <limits>
 #include <mutex>
@@ -134,6 +136,12 @@ ImVec4 GetConsoleLogColor(const char* Text, ELogVerbosity Verbosity, bool& bOutH
 }
 
 std::mutex GConsoleLogMutex;
+
+void LogCrashArtifactResult(const char* Title, const FCrashArtifactResult& Result)
+{
+	const std::string Summary = BuildCrashArtifactConsoleSummary(Result, true);
+	FEditorConsoleWidget::AddLog("%s\n%s", Title, Summary.c_str());
+}
 }
 
 // 콘솔 초기화 시점에 입력될 명령어를 등록한다.
@@ -162,6 +170,14 @@ FEditorConsoleWidget::FEditorConsoleWidget()
 
 	RegisterCommand("shadow", "Set shadow options. Usage: shadow filter <pcf|vsm>", [this](const TArray<FString>& Args){ CmdShadow(Args); });
 	RegisterCommand("skinning.cpu", "Set skinning mode. Usage: skinning.cpu <0|1>", [this](const TArray<FString>& Args){ CmdSkinning(Args); });
+	RegisterCommand("causecrash", "Force a crash to validate mini dump generation.", [this](const TArray<FString>& Args) { CmdCauseCrash(Args); });
+	RegisterCommand("crash", "Alias for causecrash.", [this](const TArray<FString>& Args) { CmdCauseCrash(Args); });
+	RegisterCommand("dumpcurrentthread", "Write a non-destructive dump/log snapshot for the current thread.", [this](const TArray<FString>& Args) { CmdDumpCurrentThread(Args); });
+	RegisterCommand("dumpthread", "Alias for dumpcurrentthread.", [this](const TArray<FString>& Args) { CmdDumpCurrentThread(Args); });
+	RegisterCommand("dumpcapturedthread", "Write a non-destructive dump/log snapshot for another thread. Usage: dumpcapturedthread <threadId>", [this](const TArray<FString>& Args) { CmdDumpCapturedThread(Args); });
+	RegisterCommand("dumpthreadid", "Alias for dumpcapturedthread.", [this](const TArray<FString>& Args) { CmdDumpCapturedThread(Args); });
+	RegisterCommand("listthreads", "List threads owned by the current process.", [this](const TArray<FString>& Args) { CmdListThreads(Args); });
+	RegisterCommand("threads", "Alias for listthreads.", [this](const TArray<FString>& Args) { CmdListThreads(Args); });
 }
 
 FEditorConsoleWidget::~FEditorConsoleWidget() 
@@ -577,6 +593,26 @@ void FEditorConsoleWidget::CmdSuggest(const TArray<FString>& Args)
 		AddLog("  skinning.cpu 1        Use CPU skinning\n");
 		bPrinted = true;
 	}
+	if (Prefix.empty() || FString("causecrash").find(Prefix) == 0 || FString("crash").find(Prefix) == 0)
+	{
+		AddLog("  causecrash            Trigger a manual crash and write MiniDump output\n");
+		bPrinted = true;
+	}
+	if (Prefix.empty() || FString("dumpcurrentthread").find(Prefix) == 0 || FString("dumpthread").find(Prefix) == 0)
+	{
+		AddLog("  dumpcurrentthread     Write a current-thread snapshot without crashing\n");
+		bPrinted = true;
+	}
+	if (Prefix.empty() || FString("dumpcapturedthread").find(Prefix) == 0 || FString("dumpthreadid").find(Prefix) == 0)
+	{
+		AddLog("  dumpcapturedthread 42 Write a snapshot for another thread id\n");
+		bPrinted = true;
+	}
+	if (Prefix.empty() || FString("listthreads").find(Prefix) == 0 || FString("threads").find(Prefix) == 0)
+	{
+		AddLog("  listthreads          List process threads for dumpcapturedthread\n");
+		bPrinted = true;
+	}
 	if (Prefix.empty() || FString("help").find(Prefix) == 0 || FString("commands").find(Prefix) == 0)
 	{
 		AddLog("  commands              List every command\n");
@@ -651,12 +687,16 @@ TArray<FString> FEditorConsoleWidget::BuildCommandSuggestions(const FString& Que
 		"stat cascadevis",
 		"stat nametable list",
 		"stat none",
-        "stat gpu",
-        "stat anim",
-        "stat skeletalmesh",
+		"stat gpu",
+		"stat anim",
+		"stat skeletalmesh",
 		"shadow filter pcf",
 		"shadow filter vsm",
-        "skinning.cpu"
+		"skinning.cpu",
+		"causecrash",
+		"dumpcurrentthread",
+		"dumpcapturedthread",
+		"listthreads"
 	};
 
 	if (Normalized == "help" || Normalized == "?")
@@ -932,6 +972,91 @@ void FEditorConsoleWidget::CmdSkinning(const TArray<FString>& Args)
 	}
 
 	AddLog("Skinning mode changed to: %s\n", bEnableCPU ? "CPU" : "GPU");
+}
+
+void FEditorConsoleWidget::CmdCauseCrash(const TArray<FString>& Args)
+{
+	(void)Args;
+	AddLog("[WARN] Triggering a manual crash to generate MiniDump output.\n");
+	CauseCrash();
+}
+
+void FEditorConsoleWidget::CmdDumpCurrentThread(const TArray<FString>& Args)
+{
+	(void)Args;
+
+	const FCrashArtifactResult Result = WriteCurrentThreadSnapshot("Manual snapshot requested from editor console.");
+	LogCrashArtifactResult(
+		Result.IsSuccess()
+			? "Current-thread snapshot written:"
+			: "[ERROR] Current-thread snapshot artifact generation was incomplete.",
+		Result);
+}
+
+void FEditorConsoleWidget::CmdDumpCapturedThread(const TArray<FString>& Args)
+{
+	if (Args.size() < 2)
+	{
+		AddLog("[WARN] Usage: dumpcapturedthread <threadId>\n");
+		return;
+	}
+
+	errno = 0;
+	char* EndPtr = nullptr;
+	const unsigned long ParsedThreadId = std::strtoul(Args[1].c_str(), &EndPtr, 10);
+	if (errno != 0 || EndPtr == Args[1].c_str() || (EndPtr && *EndPtr != '\0') || ParsedThreadId == 0 || ParsedThreadId > std::numeric_limits<DWORD>::max())
+	{
+		AddLog("[ERROR] Invalid thread id: %s\n", Args[1].c_str());
+		return;
+	}
+
+	const DWORD ThreadId = static_cast<DWORD>(ParsedThreadId);
+	if (ThreadId == GetCurrentThreadId())
+	{
+		AddLog("[WARN] Thread %lu is the current thread. Use 'dumpcurrentthread' instead.\n", static_cast<unsigned long>(ThreadId));
+		return;
+	}
+
+	char Message[256];
+	snprintf(Message, sizeof(Message), "Manual snapshot requested for thread %lu from editor console.", static_cast<unsigned long>(ThreadId));
+
+	const FCrashArtifactResult Result = WriteCapturedThreadSnapshot(ThreadId, Message);
+	char Title[256];
+	snprintf(
+		Title,
+		sizeof(Title),
+		Result.IsSuccess()
+			? "Captured-thread snapshot written for thread %lu:"
+			: "[ERROR] Snapshot artifact generation was incomplete for thread %lu.",
+		static_cast<unsigned long>(ThreadId));
+	LogCrashArtifactResult(Title, Result);
+}
+
+void FEditorConsoleWidget::CmdListThreads(const TArray<FString>& Args)
+{
+	(void)Args;
+
+	std::vector<FThreadSnapshotInfo> Threads;
+	if (!EnumerateProcessThreads(Threads))
+	{
+		AddLog("[ERROR] Failed to enumerate process threads.\n");
+		return;
+	}
+
+	if (Threads.empty())
+	{
+		AddLog("[WARN] No threads were found for the current process.\n");
+		return;
+	}
+
+	AddLog("Process threads:\n");
+	for (const FThreadSnapshotInfo& ThreadInfo : Threads)
+	{
+		AddLog("  %lu%s\n",
+			static_cast<unsigned long>(ThreadInfo.ThreadId),
+			ThreadInfo.bIsCurrentThread ? " (current)" : "");
+	}
+	AddLog("Use 'dumpcapturedthread <threadId>' to capture another thread.\n");
 }
 
 ImVector<char*> FEditorConsoleWidget::Messages;
