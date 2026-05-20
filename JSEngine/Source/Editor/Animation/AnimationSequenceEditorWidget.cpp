@@ -6,6 +6,7 @@
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
 #include "Editor/Animation/AnimationSequenceEditorDocument.h"
+#include "Editor/Animation/AnimationSequenceNotifyAssetPickerHelpers.h"
 #include "Editor/Animation/AnimationSequenceNotifyPayloadSchema.h"
 #include "Editor/Animation/AnimationSequenceNotifyValidation.h"
 #include "Editor/Animation/AnimationSequenceEditorState.h"
@@ -37,6 +38,30 @@ namespace
     constexpr float NotifyPanelToolbarSpacing = 6.0f;
     constexpr float NotifyPanelFieldMinWidth = 220.0f;
     constexpr float NotifyPanelFieldMaxWidth = 440.0f;
+    constexpr float NotifyAssetPickerPopupHeight = 280.0f;
+
+    FString ToLowerAscii(FString Value)
+    {
+        std::transform(
+            Value.begin(),
+            Value.end(),
+            Value.begin(),
+            [](unsigned char Ch)
+            {
+                return static_cast<char>(std::tolower(Ch));
+            });
+        return Value;
+    }
+
+    bool MatchesFilter(const FString& Candidate, const FString& Filter)
+    {
+        if (Filter.empty())
+        {
+            return true;
+        }
+
+        return ToLowerAscii(Candidate).find(ToLowerAscii(Filter)) != FString::npos;
+    }
 
     void SetNotifyPanelFieldWidth()
     {
@@ -158,6 +183,8 @@ namespace
             return "No preview sockets available. Enter a manual value.";
         case EAnimNotifyPayloadFieldEditorHint::ComponentPicker:
             return "No preview primitive components available. Enter a manual value.";
+        case EAnimNotifyPayloadFieldEditorHint::AssetPicker:
+            return "No picker entries are available. Use Advanced Raw Payload for a manual override.";
         case EAnimNotifyPayloadFieldEditorHint::Default:
         default:
             return nullptr;
@@ -448,6 +475,7 @@ void FAnimationSequenceEditorWidget::BindDocumentContext(
     PendingPreviewBoneTreeOpenStateRoot = -1;
     bPendingPreviewBoneTreeOpenStateValue = false;
     PreviewSkeletonTreeWidth = 240.0f;
+    bSuppressEmbeddedPreviewViewportInput = false;
 }
 
 //----------------------------------------------------------------------------
@@ -886,6 +914,128 @@ void FAnimationSequenceEditorWidget::RenderStructuredNotifyPayloadEditor(
             if (!TargetBuffer)
             {
                 continue;
+            }
+
+            if (Field.EditorHint == EAnimNotifyPayloadFieldEditorHint::AssetPicker)
+            {
+                const TArray<FNotifyAssetPickerEntry> PickerEntries =
+                    BuildNotifyAssetPickerEntries(Field.AssetKind);
+                const FString CurrentValue = TargetBuffer->data();
+                const FString CurrentDisplay = ResolveNotifyAssetPickerDisplayName(
+                    Field.AssetKind,
+                    CurrentValue,
+                    PickerEntries);
+                const FString PopupId = "##NotifyAssetPicker_" + Field.Key;
+
+                ImGui::Text("%s", Field.Label.c_str());
+                ImGui::Indent(NotifyPanelSectionIndent);
+                ImGui::TextWrapped(
+                    "%s",
+                    CurrentDisplay.empty() ? "(None)" : CurrentDisplay.c_str());
+                if (!CurrentValue.empty())
+                {
+                    ImGui::TextDisabled("%s", CurrentValue.c_str());
+                }
+
+                const FString PickButtonId = "Pick##" + Field.Key;
+                const FString ClearButtonId = "Clear##" + Field.Key;
+                const bool bOpenPopup = ImGui::Button(PickButtonId.c_str());
+                ImGui::SameLine();
+                const bool bClearRequested = ImGui::Button(ClearButtonId.c_str());
+                if (bClearRequested && ApplyTextFieldValue(FString()))
+                {
+                    RefreshPayloadBuffers();
+                }
+
+                if (bOpenPopup)
+                {
+                    if (ActiveNotifyAssetPickerPopupId != PopupId)
+                    {
+                        NotifyAssetPickerSearchBuffer.fill('\0');
+                        ActiveNotifyAssetPickerPopupId = PopupId;
+                    }
+                    ImGui::OpenPopup(PopupId.c_str());
+                }
+
+                if (ImGui::BeginPopup(PopupId.c_str()))
+                {
+                    if (bOpenPopup)
+                    {
+                        ImGui::SetKeyboardFocusHere();
+                    }
+
+                    ImGui::InputText(
+                        "Search",
+                        NotifyAssetPickerSearchBuffer.data(),
+                        NotifyAssetPickerSearchBuffer.size());
+                    ImGui::Separator();
+
+                    const FString SearchFilter = NotifyAssetPickerSearchBuffer.data();
+                    ImGui::BeginChild(
+                        ("##NotifyAssetPickerList_" + Field.Key).c_str(),
+                        ImVec2(0.0f, NotifyAssetPickerPopupHeight),
+                        true);
+
+                    bool bHasVisibleEntries = false;
+                    if (ImGui::Selectable("(None)", CurrentValue.empty()))
+                    {
+                        if (ApplyTextFieldValue(FString()))
+                        {
+                            RefreshPayloadBuffers();
+                        }
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    for (const FNotifyAssetPickerEntry& Entry : PickerEntries)
+                    {
+                        if (!MatchesFilter(Entry.DisplayName, SearchFilter) &&
+                            !MatchesFilter(Entry.StoredValue, SearchFilter))
+                        {
+                            continue;
+                        }
+
+                        bHasVisibleEntries = true;
+                        const bool bIsSelected = CurrentValue == Entry.StoredValue;
+                        const FString SelectableLabel =
+                            Entry.DisplayName + "##" + Entry.StoredValue;
+                        if (ImGui::Selectable(SelectableLabel.c_str(), bIsSelected))
+                        {
+                            if (ApplyTextFieldValue(Entry.StoredValue))
+                            {
+                                RefreshPayloadBuffers();
+                            }
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        if (ImGui::IsItemHovered() && Entry.DisplayName != Entry.StoredValue)
+                        {
+                            ImGui::SetTooltip("%s", Entry.StoredValue.c_str());
+                        }
+
+                        if (bIsSelected)
+                        {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+
+                    if (!bHasVisibleEntries && !PickerEntries.empty())
+                    {
+                        AnimationSequenceViewerUi::DrawCompactEmptyState(
+                            "No assets match the current search.");
+                    }
+                    else if (PickerEntries.empty())
+                    {
+                        AnimationSequenceViewerUi::DrawCompactEmptyState(
+                            GetNotifyAssetPickerEmptyMessage(Field.AssetKind));
+                    }
+
+                    ImGui::EndChild();
+                    ImGui::EndPopup();
+                }
+
+                ImGui::TextDisabled("%s", GetNotifyAssetPickerManualFallbackMessage(Field.AssetKind));
+                ImGui::Unindent(NotifyPanelSectionIndent);
+                break;
             }
 
             TArray<FString> PickerOptions;

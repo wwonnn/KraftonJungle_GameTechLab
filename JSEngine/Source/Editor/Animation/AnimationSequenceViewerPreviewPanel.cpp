@@ -144,6 +144,7 @@ void FAnimationSequenceEditorWidget::RenderPreviewPane(
     float PreviewHeight,
     const TArray<FString>& PreviewOverlayLines)
 {
+    bool bBlockViewportInputThisFrame = bSuppressEmbeddedPreviewViewportInput;
     ImVec2 PreviewSize(ImGui::GetContentRegionAvail().x, PreviewHeight);
     PreviewSize.x = std::max(PreviewSize.x, 1.0f);
     PreviewSize.y = std::max(PreviewSize.y, 1.0f);
@@ -185,6 +186,7 @@ void FAnimationSequenceEditorWidget::RenderPreviewPane(
             2.0f);
         if (ImGui::IsItemActive())
         {
+            bBlockViewportInputThisFrame = true;
             PreviewSkeletonTreeWidth = std::clamp(
                 PreviewSkeletonTreeWidth + ImGui::GetIO().MouseDelta.x,
                 180.0f,
@@ -207,7 +209,10 @@ void FAnimationSequenceEditorWidget::RenderPreviewPane(
 
         if (PreviewController && PreviewController->HasValidPreview() && PreviewController->GetPreviewSRV())
         {
-            RenderPreviewImage(ImVec2(ViewportWidth, ViewportContentHeight), PreviewOverlayLines);
+            RenderPreviewImage(
+                ImVec2(ViewportWidth, ViewportContentHeight),
+                PreviewOverlayLines,
+                bBlockViewportInputThisFrame);
         }
         else
         {
@@ -233,7 +238,7 @@ void FAnimationSequenceEditorWidget::RenderPreviewPane(
 
         if (PreviewController && PreviewController->HasValidPreview() && PreviewController->GetPreviewSRV())
         {
-            RenderPreviewImage(PreviewSize, PreviewOverlayLines);
+            RenderPreviewImage(PreviewSize, PreviewOverlayLines, bBlockViewportInputThisFrame);
         }
         else
         {
@@ -257,10 +262,9 @@ void FAnimationSequenceEditorWidget::RenderPreviewViewportToolbar()
 
     FSceneViewport* SceneViewport = PreviewController ? PreviewController->GetSceneViewport() : nullptr;
     FEditorViewportClient* Client = SceneViewport ? SceneViewport->GetClient() : nullptr;
-    FEditorViewportState* ViewportState = SceneViewport ? &SceneViewport->GetState() : nullptr;
     FSkeletalMeshViewportClient* SkeletalViewportClient = Client ? static_cast<FSkeletalMeshViewportClient*>(Client) : nullptr;
 
-    if (!(Client && ViewportState))
+    if (!Client)
     {
         ImGui::TextDisabled("Viewport controls are available after preview initialization.");
         ImGui::EndChild();
@@ -324,43 +328,6 @@ void FAnimationSequenceEditorWidget::RenderPreviewViewportToolbar()
             "%.2fx"))
         {
             FEditorMainPanelViewportToolbarHelpers::SetCameraSpeedMultiplier(Client, SpeedMultiplier);
-        }
-        ImGui::EndPopup();
-    }
-
-    ImGui::SameLine();
-    char ViewModeLabel[96] = {};
-    snprintf(
-        ViewModeLabel,
-        sizeof(ViewModeLabel),
-        "%s v",
-        FEditorMainPanelViewportToolbarHelpers::GetViewModeName(ViewportState->ViewMode));
-    if (ImGui::Button(ViewModeLabel))
-    {
-        ImGui::OpenPopup("##AnimSequencePreviewViewModePopup");
-    }
-    if (ImGui::BeginPopup("##AnimSequencePreviewViewModePopup"))
-    {
-        static constexpr EViewMode ViewModes[] = {
-            EViewMode::Lit_Gouraud,
-            EViewMode::Lit_Lambert,
-            EViewMode::Lit_BlinnPhong,
-            EViewMode::Unlit,
-            EViewMode::Heatmap,
-            EViewMode::Wireframe,
-            EViewMode::Depth,
-            EViewMode::Normal,
-            EViewMode::IdBuffer,
-        };
-        for (EViewMode Mode : ViewModes)
-        {
-            if (ImGui::MenuItem(
-                FEditorMainPanelViewportToolbarHelpers::GetViewModeName(Mode),
-                nullptr,
-                ViewportState->ViewMode == Mode))
-            {
-                ViewportState->ViewMode = Mode;
-            }
         }
         ImGui::EndPopup();
     }
@@ -441,7 +408,8 @@ void FAnimationSequenceEditorWidget::RenderPreviewSkeletonTree(float Height)
 
 void FAnimationSequenceEditorWidget::RenderPreviewImage(
     const ImVec2& PreviewSize,
-    const TArray<FString>& PreviewOverlayLines)
+    const TArray<FString>& PreviewOverlayLines,
+    bool bBlockViewportInputThisFrame)
 {
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
     const ImVec2 Min = ImGui::GetCursorScreenPos();
@@ -464,7 +432,7 @@ void FAnimationSequenceEditorWidget::RenderPreviewImage(
             ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
             ImGui::IsMouseClicked(ImGuiMouseButton_Middle));
 
-    SyncEmbeddedViewportRectAndFocus(Min, Max, bViewportClicked);
+    SyncEmbeddedViewportRectAndFocus(Min, Max, bViewportClicked, bBlockViewportInputThisFrame);
 }
 
 void FAnimationSequenceEditorWidget::RenderPreviewFallback(
@@ -518,7 +486,8 @@ void FAnimationSequenceEditorWidget::RenderPreviewToolbarOverlay(const ImVec2& M
 void FAnimationSequenceEditorWidget::SyncEmbeddedViewportRectAndFocus(
     const ImVec2& Min,
     const ImVec2& Max,
-    bool bViewportClicked)
+    bool bViewportClicked,
+    bool bBlockViewportInputThisFrame)
 {
     if (!PreviewController)
     {
@@ -531,8 +500,14 @@ void FAnimationSequenceEditorWidget::SyncEmbeddedViewportRectAndFocus(
         return;
     }
 
-    const POINT ClientMin = ImGuiScreenToClientPoint(EditorEngine ? EditorEngine->GetWindow() : nullptr, Min);
     FViewportRect NewRect = {};
+    if (bBlockViewportInputThisFrame)
+    {
+        SceneViewport->SetRect(NewRect);
+        return;
+    }
+
+    const POINT ClientMin = ImGuiScreenToClientPoint(EditorEngine ? EditorEngine->GetWindow() : nullptr, Min);
     NewRect.X = static_cast<int32>(ClientMin.x);
     NewRect.Y = static_cast<int32>(ClientMin.y);
     NewRect.Width = static_cast<int32>(Max.x - Min.x);

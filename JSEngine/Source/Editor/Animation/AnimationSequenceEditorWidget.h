@@ -50,9 +50,16 @@ private:
     void RenderPreviewPane(float PreviewHeight, const TArray<FString>& PreviewOverlayLines);
     void RenderPreviewSkeletonTree(float Height);
     void RenderPreviewViewportToolbar();
-    void RenderPreviewImage(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines);
+    void RenderPreviewImage(
+        const ImVec2& PreviewSize,
+        const TArray<FString>& PreviewOverlayLines,
+        bool bBlockViewportInputThisFrame);
     void RenderPreviewFallback(const ImVec2& PreviewSize, const TArray<FString>& PreviewOverlayLines) const;
-    void SyncEmbeddedViewportRectAndFocus(const ImVec2& Min, const ImVec2& Max, bool bViewportClicked);
+    void SyncEmbeddedViewportRectAndFocus(
+        const ImVec2& Min,
+        const ImVec2& Max,
+        bool bViewportClicked,
+        bool bBlockViewportInputThisFrame);
     void RenderPreviewToolbarOverlay(const ImVec2& Min, const ImVec2& Max) const;
     void DrawPreviewSkeletonBoneNode(
         int32 BoneIndex,
@@ -197,9 +204,11 @@ private:
     std::array<char, 256> NotifyDecalEditBuffer = {};
     std::array<char, 256> NotifyCameraShakeEditBuffer = {};
     std::array<char, 512> NotifyPayloadEditBuffer = {};
+    std::array<char, 128> NotifyAssetPickerSearchBuffer = {};
     std::array<char, 128> TrackFilterEditBuffer = {};
     std::array<char, 64> TimelineRangeEditBuffer = {};
     FString ActiveTimelineRangeEditPopupId;
+    FString ActiveNotifyAssetPickerPopupId;
     ENotifyValidationBrowserSeverityFilter ActiveNotifyValidationSeverityFilter =
         ENotifyValidationBrowserSeverityFilter::All;
     float PlaybackSpeedCustomValue = 1.0f;
@@ -209,4 +218,5 @@ private:
     int32 PendingPreviewBoneTreeOpenStateRoot = -1;
     bool bPendingPreviewBoneTreeOpenStateValue = false;
     float PreviewSkeletonTreeWidth = 240.0f;
+    bool bSuppressEmbeddedPreviewViewportInput = false;
 };

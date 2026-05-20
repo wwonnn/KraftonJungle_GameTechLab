@@ -207,7 +207,7 @@ namespace
         return Metrics;
     }
 
-    void HandlePreviewSequencerSplitter(
+    bool HandlePreviewSequencerSplitter(
         FAnimationSequenceEditorState& EditorState,
         float MaxPreviewHeight)
     {
@@ -234,6 +234,7 @@ namespace
                 FAnimationSequenceSequencerLayout::PreviewMinHeight,
                 MaxPreviewHeight);
         }
+        return bSplitterActive;
     }
 
     void HandleDetailsPaneSplitter(
@@ -684,7 +685,7 @@ void FAnimationSequenceEditorWidget::RenderSequencerRegion(float SequencerHeight
 {
     const FSequencerCurvePartitions CurvePartitions = BuildSequencerCurvePartitions(Sequence, EditorState);
 
-    HandlePreviewSequencerSplitter(*EditorState, MaxPreviewHeight);
+    bSuppressEmbeddedPreviewViewportInput = HandlePreviewSequencerSplitter(*EditorState, MaxPreviewHeight);
 
     ImGui::BeginChild("##AnimationSequenceSequencerRegion", ImVec2(0.0f, SequencerHeight), true);
     const FSequencerRegionMetrics RegionMetrics = BuildSequencerRegionMetrics(*EditorState, SequencerHeight);

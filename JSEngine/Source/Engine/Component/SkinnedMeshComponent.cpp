@@ -395,7 +395,26 @@ void USkinnedMeshComponent::EnsureSkinningUpdated()
 
 bool USkinnedMeshComponent::HasSocket(const FName& SocketName) const
 {
-    return SkeletalMesh ? SkeletalMesh->HasSocket(SocketName) : false;
+    if (!(SkeletalMesh && SocketName != FName::None))
+    {
+        return false;
+    }
+
+    if (SkeletalMesh->HasSocket(SocketName))
+    {
+        return true;
+    }
+
+    const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+    for (const FBoneInfo& Bone : Bones)
+    {
+        if (Bone.Name == SocketName)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 FMatrix USkinnedMeshComponent::GetBoneWorldMatrix(int32 BoneIndex) const
@@ -418,6 +437,22 @@ FTransform USkinnedMeshComponent::GetSocketTransform(const FName& SocketName) co
     const FSkeletalMeshSocket* Socket = SkeletalMesh->FindSocket(SocketName);
     if (!Socket)
     {
+        const TArray<FBoneInfo>& Bones = SkeletalMesh->GetBones();
+        for (int32 BoneIndex = 0; BoneIndex < static_cast<int32>(Bones.size()); ++BoneIndex)
+        {
+            if (Bones[BoneIndex].Name != SocketName)
+            {
+                continue;
+            }
+
+            if (BoneIndex >= static_cast<int32>(CurrentGlobalPose.size()))
+            {
+                return GetWorldTransform();
+            }
+
+            return FTransform(CurrentGlobalPose[BoneIndex] * GetWorldMatrix());
+        }
+
         return GetWorldTransform();
     }
 

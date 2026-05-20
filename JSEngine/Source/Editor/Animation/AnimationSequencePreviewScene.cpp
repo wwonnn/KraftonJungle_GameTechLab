@@ -205,6 +205,20 @@ TArray<FString> FAnimationSequencePreviewScene::GetPreviewSocketNames() const
         }
     }
 
+    for (const FBoneInfo& Bone : SkeletalMesh->GetBones())
+    {
+        if (!Bone.Name.IsValid())
+        {
+            continue;
+        }
+
+        const FString BoneName = Bone.Name.ToString();
+        if (!BoneName.empty())
+        {
+            SocketNames.push_back(BoneName);
+        }
+    }
+
     SortAndUniqueNames(SocketNames);
     return SocketNames;
 }
@@ -550,7 +564,10 @@ void FAnimationSequencePreviewScene::ConfigurePreviewCamera()
 
     Camera->SetLookAt(Center);
     Camera->SetLocation(Center + FVector(Distance, Distance * 0.35f, Radius * 0.75f));
-    Camera->SetNearPlane(1.0f);
+    // Keep the embedded animation preview near clip consistent with the
+    // regular skeletal mesh viewer so close-up inspection does not clip away
+    // the front surface and reveal occluded bones/meshes behind it.
+    Camera->SetNearPlane(0.1f);
     Camera->SetFarPlane(std::max(5000.0f, Distance * 8.0f));
     Camera->SetFOV(60.0f * DegreesToRadians);
 }

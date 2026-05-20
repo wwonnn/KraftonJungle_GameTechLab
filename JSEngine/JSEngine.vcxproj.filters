@@ -252,6 +252,9 @@
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Editor\Animation\AnimationSequenceNotifyAssetPickerHelpers.cpp">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Editor\Animation\AnimationSequenceEditorState.cpp">
       <Filter>Source\Editor\Animation</Filter>
     </ClCompile>
@@ -1181,6 +1184,9 @@
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceViewerUiHelpers.h">
+      <Filter>Source\Editor\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Editor\Animation\AnimationSequenceNotifyAssetPickerHelpers.h">
       <Filter>Source\Editor\Animation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Editor\Animation\AnimationSequenceEditorState.h">

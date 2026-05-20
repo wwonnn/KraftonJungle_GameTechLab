@@ -13,6 +13,7 @@ namespace
         const FString& Label,
         EAnimNotifyPayloadFieldType Type,
         EAnimNotifyPayloadFieldEditorHint EditorHint,
+        EAnimNotifyPayloadAssetKind AssetKind,
         bool bRequired,
         const FString& DefaultValue,
         const FString& HelpText)
@@ -24,6 +25,7 @@ namespace
         Field.Label = Label;
         Field.Type = Type;
         Field.EditorHint = EditorHint;
+        Field.AssetKind = AssetKind;
         Field.bRequired = bRequired;
         Field.DefaultValue = DefaultValue;
         Field.HelpText = HelpText;
@@ -47,6 +49,30 @@ namespace
             Label,
             EAnimNotifyPayloadFieldType::String,
             EditorHint,
+            EAnimNotifyPayloadAssetKind::None,
+            bRequired,
+            DefaultValue,
+            HelpText);
+    }
+
+    FAnimNotifyPayloadFieldDefinition MakeAssetPickerStringField(
+        const FString& Key,
+        EAnimNotifySemanticFieldId SemanticId,
+        const TArray<FString>& LegacyKeys,
+        const FString& Label,
+        bool bRequired,
+        const FString& DefaultValue,
+        const FString& HelpText,
+        EAnimNotifyPayloadAssetKind AssetKind)
+    {
+        return MakeField(
+            Key,
+            SemanticId,
+            LegacyKeys,
+            Label,
+            EAnimNotifyPayloadFieldType::String,
+            EAnimNotifyPayloadFieldEditorHint::AssetPicker,
+            AssetKind,
             bRequired,
             DefaultValue,
             HelpText);
@@ -69,6 +95,7 @@ namespace
             Label,
             EAnimNotifyPayloadFieldType::Name,
             EditorHint,
+            EAnimNotifyPayloadAssetKind::None,
             bRequired,
             DefaultValue,
             HelpText);
@@ -90,6 +117,7 @@ namespace
             Label,
             EAnimNotifyPayloadFieldType::Float,
             EAnimNotifyPayloadFieldEditorHint::Default,
+            EAnimNotifyPayloadAssetKind::None,
             bRequired,
             DefaultValue,
             HelpText);
@@ -111,6 +139,7 @@ namespace
             Label,
             EAnimNotifyPayloadFieldType::Int,
             EAnimNotifyPayloadFieldEditorHint::Default,
+            EAnimNotifyPayloadAssetKind::None,
             bRequired,
             DefaultValue,
             HelpText);
@@ -132,6 +161,7 @@ namespace
             Label,
             EAnimNotifyPayloadFieldType::Bool,
             EAnimNotifyPayloadFieldEditorHint::Default,
+            EAnimNotifyPayloadAssetKind::None,
             bRequired,
             DefaultValue,
             HelpText);
@@ -146,7 +176,7 @@ namespace
                 "Audio",
                 "SoundCue=Footstep_Stone;SocketName=foot_l;VolumeMultiplier=0.9;Spatialized=true",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::SoundCueKey(), EAnimNotifySemanticFieldId::SoundCue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey()), "Sound Cue", true, FString(), "Required audio event or asset key."),
+                    MakeAssetPickerStringField(AnimNotifySemanticFieldNames::SoundCueKey(), EAnimNotifySemanticFieldId::SoundCue, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SoundCueKey()), "Sound Cue", true, FString(), "Required audio event or asset key.", EAnimNotifyPayloadAssetKind::SoundCue),
                     MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", false, FString(), "Optional playback socket on the preview mesh.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
                     MakeFloatField(AnimNotifySemanticFieldNames::VolumeMultiplierKey(), EAnimNotifySemanticFieldId::VolumeMultiplier, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::VolumeMultiplierKey()), "Volume Multiplier", false, "1.0", "Optional volume multiplier."),
                     MakeBoolField(AnimNotifySemanticFieldNames::SpatializedKey(), EAnimNotifySemanticFieldId::Spatialized, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SpatializedKey()), "Spatialized", false, "false", "Play in 3D using the socket or mesh location.")
@@ -176,7 +206,7 @@ namespace
                 "Camera Shake",
                 "Shake=HeavyHit;Scale=0.75",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::ShakeKey(), EAnimNotifySemanticFieldId::Shake, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ShakeKey()), "Shake", true, FString(), "Required camera shake key or preset name."),
+                    MakeAssetPickerStringField(AnimNotifySemanticFieldNames::ShakeKey(), EAnimNotifySemanticFieldId::Shake, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ShakeKey()), "Shake", true, FString(), "Required camera shake key or preset name.", EAnimNotifyPayloadAssetKind::CameraShake),
                     MakeFloatField(AnimNotifySemanticFieldNames::ScaleKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ScaleKey()), "Scale", false, "1.0", "Optional camera shake intensity multiplier. The default value of 1.0 uses the authored shake strength.")
                 }
             },
@@ -185,7 +215,7 @@ namespace
                 "VFX",
                 "Effect=SlashArc;SocketName=weapon_tip;Attached=true;Scale=1.0",
                 {
-                    MakeStringField(AnimNotifySemanticFieldNames::EffectKey(), EAnimNotifySemanticFieldId::Effect, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EffectKey()), "Effect", true, FString(), "Required VFX key or preset name."),
+                    MakeAssetPickerStringField(AnimNotifySemanticFieldNames::EffectKey(), EAnimNotifySemanticFieldId::Effect, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::EffectKey()), "Effect", true, FString(), "Required VFX key or preset name.", EAnimNotifyPayloadAssetKind::Vfx),
                     MakeNameField(AnimNotifySemanticFieldNames::SocketNameKey(), EAnimNotifySemanticFieldId::SocketName, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::SocketNameKey()), "Socket Name", false, FString(), "Optional playback socket on the preview mesh. If omitted, the mesh or world location is used instead.", EAnimNotifyPayloadFieldEditorHint::SocketPicker),
                     MakeBoolField(AnimNotifySemanticFieldNames::AttachedKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::AttachedKey()), "Attached", false, "false", "Whether the spawned effect should stay attached to the socket or mesh after it is triggered."),
                     MakeFloatField(AnimNotifySemanticFieldNames::ScaleKey(), EAnimNotifySemanticFieldId::None, AnimNotifySemanticFieldNames::GetLegacyAliases(AnimNotifySemanticFieldNames::ScaleKey()), "Scale", false, "1.0", "Optional VFX scale multiplier. The default value of 1.0 uses the authored effect size.")
