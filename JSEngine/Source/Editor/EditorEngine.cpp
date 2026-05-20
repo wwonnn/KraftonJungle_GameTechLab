@@ -1390,7 +1390,10 @@ void UEditorEngine::HandleActorDestroyed(AActor* Actor)
 {
 	UWorld* World = Actor->GetFocusedWorld();
     const FWorldContext* Ctx = GetWorldContextFromWorld(World);
-    Ctx->SelectionManager->OnActorDestroyed(Actor);
+	if (Ctx && Ctx->SelectionManager)
+	{
+		Ctx->SelectionManager->OnActorDestroyed(Actor);
+	}
 
     MainPanel.GetPropertyWidget().OnActorDestroyed(Actor);
     MainPanel.GetMaterialWidget().OnActorDestroyed(Actor);
