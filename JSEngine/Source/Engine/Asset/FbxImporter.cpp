@@ -6,6 +6,7 @@
 #include "Core/PlatformTime.h"
 #include "Animation/AnimData/AnimDataModel.h"
 #include "Animation/AnimData/AnimSequence.h"
+#include "Animation/Compression/AclCompression.h"
 #include "Object/ObjectFactory.h"
 
 #include <fbxsdk.h>
@@ -1511,6 +1512,36 @@ FImportedSkeletalAsset FFbxImporter::ImportSkeletalAsset(const FString& Path, co
                FPS,
                BakeElapsedSec,
                BakeElapsedSec * 1000.0);
+
+        const double AclCompressStartSec = FPlatformTime::Seconds();
+        const FAclCompressionBuildResult AclResult = FAclCompression::BuildRuntimeDataFromRawSequence(AnimSequence);
+        const double AclCompressElapsedSec = FPlatformTime::Seconds() - AclCompressStartSec;
+        if (!AclResult.bSuccess)
+        {
+            UE_LOG_ERROR("[FbxImporter] Animation ACL Compress Failed | Path=%s | Stack=%s | Tracks=%zu | Frames=%d | Error=%s",
+                         Path.c_str(),
+                         StackName.c_str(),
+                         AnimDataModel->BoneAnimationTracks.size(),
+                         FrameCount,
+                         AclResult.ErrorMessage.c_str());
+            delete AnimSequence;
+            continue;
+        }
+
+        const double AclCompressionRatio = AclResult.RawSizeBytes > 0
+            ? static_cast<double>(AclResult.CompressedSizeBytes) / static_cast<double>(AclResult.RawSizeBytes)
+            : 0.0;
+        UE_LOG("[FbxImporter] Animation ACL Compress | Path=%s | Stack=%s | Tracks=%u | Frames=%u | FPS=%.3f | RawBytes=%u | AclBytes=%u | Ratio=%.3f | Sec=%.6f | Ms=%.3f",
+               Path.c_str(),
+               StackName.c_str(),
+               AclResult.TrackCount,
+               AclResult.SamplesPerTrack,
+               AclResult.SampleRate,
+               AclResult.RawSizeBytes,
+               AclResult.CompressedSizeBytes,
+               AclCompressionRatio,
+               AclCompressElapsedSec,
+               AclCompressElapsedSec * 1000.0);
 
 		// 트랙 2: Curve Reading
         const int32 LayerCount = CurAnimStack->GetMemberCount<FbxAnimLayer>();

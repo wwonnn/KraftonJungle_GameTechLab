@@ -4,6 +4,7 @@
 #include "Animation/AnimNotify.h"
 #include "Animation/AnimInstanceAsset.h"
 #include "Animation/AnimationStateMachine.h"
+#include "Animation/Compression/AclCompression.h"
 #include "Component/SkeletalMeshComponent.h"
 #include "Core/Logging/Log.h"
 #include "Core/Paths.h"
@@ -744,6 +745,29 @@ void UAnimInstance::EvaluatePoseAtTime(const UAnimSequence* Sequence, float Curr
     const float FrameRate = static_cast<float>(Model->FrameRate.AsDecimal());
     if (FrameRate <= 0.0f)
     {
+        return;
+    }
+
+    TArray<FTransform> AclTrackTransforms;
+    if (FAclCompression::DecompressPoseToTrackTransforms(Sequence, CurrentTime, AclTrackTransforms))
+    {
+        for (int32 i = 0; i < static_cast<int32>(Model->BoneAnimationTracks.size()); ++i)
+        {
+            const FBoneAnimationTrack& Track = Model->BoneAnimationTracks[i];
+            int32 BoneIndex = Track.BoneTreeIndex;
+            auto RemapIt = SequenceBoneTrackRemaps.find(Sequence);
+            if (RemapIt != SequenceBoneTrackRemaps.end() && i < static_cast<int32>(RemapIt->second.size()))
+            {
+                BoneIndex = RemapIt->second[i];
+            }
+
+            if (BoneIndex < 0 || BoneIndex >= static_cast<int32>(OutLocalTransforms.size()))
+            {
+                continue;
+            }
+
+            OutLocalTransforms[BoneIndex] = AclTrackTransforms[i];
+        }
         return;
     }
 

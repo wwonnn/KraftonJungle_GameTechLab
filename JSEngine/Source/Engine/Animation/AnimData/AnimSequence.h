@@ -4,15 +4,12 @@
 #include "Animation/AnimData/AnimSequenceBase.h"
 
 class USkeleton;
+class FAclAnimSequenceRuntimeData;
 
 class UAnimSequence : public UAnimSequenceBase
 {
 public:
-    ~UAnimSequence() override
-    {
-        delete DataModel;
-        DataModel = nullptr;
-    }
+    ~UAnimSequence() override;
 
     void SetSkeleton(USkeleton* InSkeleton)
     {
@@ -46,7 +43,14 @@ public:
         return DataModel ? DataModel->NotifyTracks : EmptyTracks;
     }
 
+    bool HasAclRuntimeData() const;
+    const FAclAnimSequenceRuntimeData* GetAclRuntimeData() const;
+    FAclAnimSequenceRuntimeData* GetMutableAclRuntimeData();
+    void SetAclRuntimeData(FAclAnimSequenceRuntimeData* InAclRuntimeData);
+    void ClearAclRuntimeData();
+
     UAnimDataModel* DataModel = nullptr;
+    FAclAnimSequenceRuntimeData* AclRuntimeData = nullptr;
     FString SkeletonAssetPath;
     USkeleton* Skeleton = nullptr;
 };
