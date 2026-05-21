@@ -14,7 +14,14 @@ namespace
             return;
         }
 
-        UObjectManager::Get().DestroyObject(Skeleton);
+        // Skeletal meshes are the primary owner of externally loaded skeleton
+        // objects, but other runtime/editor objects may still keep raw
+        // references. If the skeleton was already destroyed during an earlier
+        // cleanup step, treat the pointer as stale and just clear it.
+        if (UObjectManager::Get().ContainsObject(Skeleton))
+        {
+            UObjectManager::Get().DestroyObject(Skeleton);
+        }
         Skeleton = nullptr;
     }
 }

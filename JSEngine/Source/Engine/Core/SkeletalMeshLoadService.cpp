@@ -19,6 +19,20 @@
 
 namespace
 {
+    void DestroyOwnedSkeleton(USkeleton*& Skeleton)
+    {
+        if (!Skeleton)
+        {
+            return;
+        }
+
+        if (UObjectManager::Get().ContainsObject(Skeleton))
+        {
+            UObjectManager::Get().DestroyObject(Skeleton);
+        }
+        Skeleton = nullptr;
+    }
+
     void DestroyImportedSequence(UAnimSequence*& Sequence)
     {
         if (!Sequence)
@@ -57,11 +71,7 @@ namespace
             return;
         }
 
-        if (MeshData->Skeleton)
-        {
-            UObjectManager::Get().DestroyObject(MeshData->Skeleton);
-            MeshData->Skeleton = nullptr;
-        }
+        DestroyOwnedSkeleton(MeshData->Skeleton);
 
         delete MeshData;
         MeshData = nullptr;
@@ -350,14 +360,14 @@ bool FSkeletalMeshLoadService::LoadExternalSkeletonAsset(
 	{
 		if (LoadedSkeleton)
 		{
-			UObjectManager::Get().DestroyObject(LoadedSkeleton);
+			DestroyOwnedSkeleton(LoadedSkeleton);
 		}
 		return false;
 	}
 
 	if (MeshData->Skeleton && MeshData->Skeleton != LoadedSkeleton)
 	{
-		UObjectManager::Get().DestroyObject(MeshData->Skeleton);
+		DestroyOwnedSkeleton(MeshData->Skeleton);
 	}
 
 	MeshData->Skeleton = LoadedSkeleton;
