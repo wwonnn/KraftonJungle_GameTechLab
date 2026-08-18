@@ -1,0 +1,33 @@
+#pragma once
+#include "Renderer.h"
+#include "AudioSystem.h"
+#include "Timer.h"
+#include "WaveController.h"
+#include <windows.h>
+
+
+class GameApp
+{
+public:
+    GameApp();
+    ~GameApp();
+
+public:
+    bool Initialize(HINSTANCE hInstance);
+    void Run();
+    void Finalize();
+
+private:
+    void LoadDefaultAssets();
+    void ReleaseDefaultAssets();
+
+private:
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+private:
+    HINSTANCE hInst = nullptr;
+    HWND hWnd = nullptr;
+    URenderer* Renderer = nullptr;
+    UTimer* Timer = nullptr;
+};
+
