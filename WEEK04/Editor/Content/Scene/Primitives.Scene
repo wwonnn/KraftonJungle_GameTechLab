@@ -1,0 +1,135 @@
+{
+  "version": 2,
+  "NextUUID": 30,
+  "Primitives": {
+    "0": {
+      "Location": [0.290000, 1.210000, 0.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Sphere"
+    },
+    "1": {
+      "Location": [0.000000, -0.750000, 1.290000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Cube"
+    },
+    "2": {
+      "Location": [-0.850000, 1.070000, 2.460000],
+      "Rotation": [0.000000, -0.910000, 0.000000],
+      "Scale": [3.000000, 3.000000, 3.000000],
+      "Type": "Triangle"
+    },
+    "5": {
+      "Location": [2.400000, 0.500000, 0.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.500000, 1.000000],
+      "Type": "Cone"
+    },
+    "6": {
+      "Location": [-2.400000, 0.500000, 0.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.500000, 1.000000],
+      "Type": "Cylinder"
+    },
+    "7": {
+      "Location": [0.000000, 1.500000, -2.300000],
+      "Rotation": [1.570796, 0.000000, 0.000000],
+      "Scale": [1.500000, 1.500000, 0.300000],
+      "Type": "Ring"
+    },
+    "8": {
+      "Location": [0.000000, 1.000000, -3.500000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [2.000000, 2.000000, 2.000000],
+      "Type": "Quad"
+    },
+    "9": {
+      "ObjStaticMeshAsset": "Data/Cube.obj",
+      "Location": [-0.563450, 0.573828, -0.020000],
+      "Rotation": [0.860000, 0.000000, 5.990000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "StaticMeshComp"
+    },
+    "10": {
+      "ObjStaticMeshAsset": "Data/TeaPot.obj",
+      "Location": [-1.900000, -0.052847, 0.290000],
+      "Rotation": [0.000000, -1.120000, 1.590000],
+      "Scale": [2.520000, 2.930000, 2.390000],
+      "Type": "StaticMeshComp"
+    },
+    "20": {
+      "Location": [3.000000, 0.000000, 1.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Sprite",
+      "texture_path": "/Game/Texture/Panel/sample_panel.png",
+      "billboard": false,
+      "color": [1.0, 1.0, 1.0, 1.0]
+    },
+    "21": {
+      "Location": [5.000000, 0.000000, 1.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Sprite",
+      "texture_path": "/Game/Texture/Panel/sample_panel.png",
+      "billboard": true,
+      "color": [0.8, 0.9, 1.0, 1.0]
+    },
+    "22": {
+      "Location": [0.000000, 2.000000, 4.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Text",
+      "text": "Hello World!",
+      "text_scale": 1.0,
+      "letter_spacing": 0.0,
+      "line_spacing": 0.0,
+      "billboard": false,
+      "billboard_offset": [0.0, 0.0, 0.0],
+      "font_path": "/Game/Font/JetBrainsMono/JetBrainsMono_Medium.Font",
+      "color": [1.0, 1.0, 1.0, 1.0]
+    },
+    "23": {
+      "Location": [0.000000, 2.000000, 5.500000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Text",
+      "text": "Billboard Text",
+      "text_scale": 0.8,
+      "letter_spacing": 0.0,
+      "line_spacing": 0.0,
+      "billboard": true,
+      "billboard_offset": [0.0, 0.0, 0.5],
+      "font_path": "/Game/Font/JetBrainsMono/JetBrainsMono_Medium.Font",
+      "color": [0.9, 0.8, 0.2, 1.0]
+    },
+    "24": {
+      "Location": [-3.000000, 0.000000, 2.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "Effect",
+      "subuv_atlas_path": "/Game/Texture/Effect/sample_effect.json",
+      "billboard": true,
+      "frame_index": 0,
+      "color": [0.8, 0.8, 0.8, 1.0]
+    },
+    "25": {
+      "Location": [-5.000000, 0.000000, 2.000000],
+      "Rotation": [0.000000, 0.000000, 0.000000],
+      "Scale": [1.000000, 1.000000, 1.000000],
+      "Type": "AtlasSprite",
+      "subuv_atlas_path": "/Game/Texture/Character/sample_character.json",
+      "billboard": true,
+      "frame_index": 0,
+      "color": [1.0, 1.0, 1.0, 1.0]
+    }
+  },
+  "PerspectiveCamera": {
+    "Location": [0.000000, 2.000000, -5.000000],
+    "Rotation": [0.100000, 0.000000, 0.000000],
+    "FOV": 60.0,
+    "NearClip": 0.100000,
+    "FarClip": 1000.000000
+  }
+}

@@ -1,0 +1,9 @@
+newmtl M_Red
+Kd 1.000 0.000 0.000
+
+newmtl M_Green
+Kd 0.000 1.000 0.000
+
+newmtl M_Texture
+Kd 1.000 1.000 1.000
+map_Kd checker.png

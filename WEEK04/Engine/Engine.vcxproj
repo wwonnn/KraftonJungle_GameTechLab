@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ViewerRelease|x64">
+      <Configuration>ViewerRelease</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Viewer|x64">
+      <Configuration>Viewer</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\ApplicationCore\GenericPlatform\IApplication.h" />
+    <ClInclude Include="Source\ApplicationCore\GenericPlatform\IApplicationMessageHandler.h" />
+    <ClInclude Include="Source\ApplicationCore\Input\InputContext.h" />
+    <ClInclude Include="Source\ApplicationCore\Input\InputRouter.h" />
+    <ClInclude Include="Source\ApplicationCore\Input\InputState.h" />
+    <ClInclude Include="Source\ApplicationCore\Input\InputSystem.h" />
+    <ClInclude Include="Source\ApplicationCore\Input\InputTypes.h" />
+    <ClInclude Include="Source\ApplicationCore\Windows\WindowsApplication.h" />
+    <ClInclude Include="Source\ApplicationCore\Windows\WindowsWindow.h" />
+    <ClInclude Include="Source\Asset\Builder\AssetBuildReport.h" />
+    <ClInclude Include="Source\Asset\Builder\FontAtlasBuilder.h" />
+    <ClInclude Include="Source\Asset\Builder\MaterialBuilder.h" />
+    <ClInclude Include="Source\Asset\Builder\StaticMeshBuilder.h" />
+    <ClInclude Include="Source\Asset\Builder\SubUVAtlasBuilder.h" />
+    <ClInclude Include="Source\Asset\Builder\TextureBuilder.h" />
+    <ClInclude Include="Source\Asset\Cache\AssetBuildCache.h" />
+    <ClInclude Include="Source\Asset\Cache\AssetCache.h" />
+    <ClInclude Include="Source\Asset\Cache\AssetCacheTraits.h" />
+    <ClInclude Include="Source\Asset\Cache\AssetKey.h" />
+    <ClInclude Include="Source\Asset\Cache\AssetKeyUtils.h" />
+    <ClInclude Include="Source\Asset\Cache\AssetTags.h" />
+    <ClInclude Include="Source\Asset\Cache\BuildSettings.h" />
+    <ClInclude Include="Source\Asset\Cooked\FontAtlasCookedData.h" />
+    <ClInclude Include="Source\Asset\Cooked\MtlCookedData.h" />
+    <ClInclude Include="Source\Asset\Cooked\ObjCookedData.h" />
+    <ClInclude Include="Source\Asset\Cooked\SubUVAtlasCookedData.h" />
+    <ClInclude Include="Source\Asset\Cooked\TextureCookedData.h" />
+    <ClInclude Include="Source\Asset\Core\AssetCommonTypes.h" />
+    <ClInclude Include="Source\Asset\Core\AssetNaming.h" />
+    <ClInclude Include="Source\Asset\Core\FontAtlasTypes.h" />
+    <ClInclude Include="Source\Asset\Core\MaterialTypes.h" />
+    <ClInclude Include="Source\Asset\Core\StaticMeshTypes.h" />
+    <ClInclude Include="Source\Asset\Core\SubUVAtlasTypes.h" />
+    <ClInclude Include="Source\Asset\Core\TextureTypes.h" />
+    <ClInclude Include="Source\Asset\Intermediate\IntermediateFontAtlasData.h" />
+    <ClInclude Include="Source\Asset\Intermediate\IntermediateMtlData.h" />
+    <ClInclude Include="Source\Asset\Intermediate\IntermediateObjData.h" />
+    <ClInclude Include="Source\Asset\Intermediate\IntermediateSubUVAtlasData.h" />
+    <ClInclude Include="Source\Asset\Intermediate\IntermediateTextureData.h" />
+    <ClInclude Include="Source\Asset\Manager\AssetCacheManager.h" />
+    <ClInclude Include="Source\Asset\Runtime\FontAtlasRenderResource.h" />
+    <ClInclude Include="Source\Asset\Runtime\MaterialRenderResource.h" />
+    <ClInclude Include="Source\Asset\Runtime\StaticMeshRenderResource.h" />
+    <ClInclude Include="Source\Asset\Runtime\SubUVAtlasRenderResource.h" />
+    <ClInclude Include="Source\Asset\Runtime\TextureRenderResource.h" />
+    <ClInclude Include="Source\Asset\Serialization\Archive.h" />
+    <ClInclude Include="Source\Asset\Serialization\CookedDataBinaryIO.h" />
+    <ClInclude Include="Source\Asset\Serialization\CookedDataSerialization.h" />
+    <ClInclude Include="Source\Asset\Serialization\WindowsBinArchive.h" />
+    <ClInclude Include="Source\Asset\Source\SourceCache.h" />
+    <ClInclude Include="Source\Asset\Source\SourceHash.h" />
+    <ClInclude Include="Source\Asset\Source\SourceLoader.h" />
+    <ClInclude Include="Source\Asset\Source\SourceRecord.h" />
+    <ClInclude Include="Source\Core\Containers\Array.h" />
+    <ClInclude Include="Source\Core\Containers\LinkedList.h" />
+    <ClInclude Include="Source\Core\Containers\Map.h" />
+    <ClInclude Include="Source\Core\Containers\Pair.h" />
+    <ClInclude Include="Source\Core\Containers\Queue.h" />
+    <ClInclude Include="Source\Core\Containers\Set.h" />
+    <ClInclude Include="Source\Core\Containers\StaticArray.h" />
+    <ClInclude Include="Source\Core\Containers\String.h" />
+    <ClInclude Include="Source\Core\CoreGlobals.h" />
+    <ClInclude Include="Source\Core\CoreMinimal.h" />
+    <ClInclude Include="Source\Core\EngineAPI.h" />
+    <ClInclude Include="Source\Core\Geometry\BoundsUtility.h" />
+    <ClInclude Include="Source\Core\Geometry\Geometry.h" />
+    <ClInclude Include="Source\Core\Geometry\Intersection.h" />
+    <ClInclude Include="Source\Core\Geometry\Primitives\AABB.h" />
+    <ClInclude Include="Source\Core\Geometry\Primitives\AABBUtility.h" />
+    <ClInclude Include="Source\Core\Geometry\Primitives\Ray.h" />
+    <ClInclude Include="Source\Core\Geometry\Primitives\Segment.h" />
+    <ClInclude Include="Source\Core\Geometry\Primitives\Triangle.h" />
+    <ClInclude Include="Source\Core\Geometry\Transform.h" />
+    <ClInclude Include="Source\Core\HAL\PlatformMemory.h" />
+    <ClInclude Include="Source\Core\HAL\PlatformMisc.h" />
+    <ClInclude Include="Source\Core\HAL\PlatformTime.h" />
+    <ClInclude Include="Source\Core\HAL\PlatformTypes.h" />
+    <ClInclude Include="Source\Core\Logging\LogMacros.h" />
+    <ClInclude Include="Source\Core\Logging\LogOutputDevice.h" />
+    <ClInclude Include="Source\Core\Math\Color.h" />
+    <ClInclude Include="Source\Core\Math\MathUtility.h" />
+    <ClInclude Include="Source\Core\Math\Matrix.h" />
+    <ClInclude Include="Source\Core\Math\Quat.h" />
+    <ClInclude Include="Source\Core\Math\Rotator.h" />
+    <ClInclude Include="Source\Core\Math\Vector.h" />
+    <ClInclude Include="Source\Core\Math\Vector2.h" />
+    <ClInclude Include="Source\Core\Math\Vector4.h" />
+    <ClInclude Include="Source\Core\Misc\BitMaskEnum.h" />
+    <ClInclude Include="Source\Core\Misc\Name.h" />
+    <ClInclude Include="Source\Core\Misc\NameSubsystem.h" />
+    <ClInclude Include="Source\Core\Misc\Paths.h" />
+    <ClInclude Include="Source\CoreUObject\Object.h" />
+    <ClInclude Include="Source\CoreUObject\ObjectFactory.h" />
+    <ClInclude Include="Source\CoreUObject\ObjectIterator.h" />
+    <ClInclude Include="Source\Engine\Asset\Asset.h" />
+    <ClInclude Include="Source\Engine\Asset\AssetObjectManager.h" />
+    <ClInclude Include="Source\Engine\Asset\FontAtlas.h" />
+    <ClInclude Include="Source\Engine\Asset\Material.h" />
+    <ClInclude Include="Source\Engine\Asset\StaticMesh.h" />
+    <ClInclude Include="Source\Engine\Asset\SubUVAtlas.h" />
+    <ClInclude Include="Source\Engine\Asset\Texture.h" />
+    <ClInclude Include="Source\Engine\Component\Core\ComponentProperty.h" />
+    <ClInclude Include="Source\Engine\Component\Core\PrimitiveComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Core\SceneComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Core\UnknownComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Mesh\LineBatchComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Mesh\MeshComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Mesh\StaticMeshComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Sprite\AtlasComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Sprite\PaperSpriteComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Sprite\SubUVAnimatedComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Sprite\SubUVComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Text\AtlasTextComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Text\TextRenderComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Text\UUIDComponent.h" />
+    <ClInclude Include="Source\Engine\EngineStatics.h" />
+    <ClInclude Include="Source\Engine\Game\Actor.h" />
+    <ClInclude Include="Source\Engine\Game\AtlasSpriteActor.h" />
+    <ClInclude Include="Source\Engine\Game\ConeActor.h" />
+    <ClInclude Include="Source\Engine\Game\CubeActor.h" />
+    <ClInclude Include="Source\Engine\Game\CylinderActor.h" />
+    <ClInclude Include="Source\Engine\Game\EffectActor.h" />
+    <ClInclude Include="Source\Engine\Game\FlipbookActor.h" />
+    <ClInclude Include="Source\Engine\Game\MeshActor.h" />
+    <ClInclude Include="Source\Engine\Game\QuadActor.h" />
+    <ClInclude Include="Source\Engine\Game\RingActor.h" />
+    <ClInclude Include="Source\Engine\Game\SphereActor.h" />
+    <ClInclude Include="Source\Engine\Game\SpriteActor.h" />
+    <ClInclude Include="Source\Engine\Game\StaticMeshActor.h" />
+    <ClInclude Include="Source\Engine\Game\TextActor.h" />
+    <ClInclude Include="Source\Engine\Game\TriangleActor.h" />
+    <ClInclude Include="Source\Engine\Game\UnknownActor.h" />
+    <ClInclude Include="Source\Engine\Scene\CameraInfo.h" />
+    <ClInclude Include="Source\Engine\Scene\Scene.h" />
+    <ClInclude Include="Source\Engine\Scene\SceneAssetBinder.h" />
+    <ClInclude Include="Source\Engine\Scene\SceneAssetPath.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Common\SceneJsonConverters.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Common\SceneJsonFieldReader.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Core\SceneDeserializer.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Core\SceneSerializer.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Json\SceneJson.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Legacy\SceneLegacySerialization.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Registry\SceneTypeRegistry.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Runtime\SceneActorSerialization.h" />
+    <ClInclude Include="Source\Engine\Scene\Serialization\Runtime\ScenePropertySerialization.h" />
+    <ClInclude Include="Source\Engine\Scene\World.h" />
+    <ClInclude Include="Source\Engine\ViewPort\Viewport.h" />
+    <ClInclude Include="Source\Engine\ViewPort\ViewportClient.h" />
+    <ClInclude Include="Source\Engine\ViewPort\ViewportController.h" />
+    <ClInclude Include="Source\Launch\EngineLoop.h" />
+    <ClInclude Include="Source\Renderer\D3D11\D3D11Common.h" />
+    <ClInclude Include="Source\Renderer\D3D11\D3D11RHI.h" />
+    <ClInclude Include="Source\Renderer\D3D11\GeneralRenderer.h" />
+    <ClInclude Include="Source\Renderer\EditorRenderData.h" />
+    <ClInclude Include="Source\Renderer\Primitive\FMeshData.h" />
+    <ClInclude Include="Source\Renderer\Primitive\UnrealEditorStyledGizmo.h" />
+    <ClInclude Include="Source\Renderer\RenderAsset\FontResource.h" />
+    <ClInclude Include="Source\Renderer\RenderAsset\SubUVAtlasResource.h" />
+    <ClInclude Include="Source\Renderer\RenderAsset\TextureResource.h" />
+    <ClInclude Include="Source\Renderer\RenderCommand.h" />
+    <ClInclude Include="Source\Renderer\RendererModule.h" />
+    <ClInclude Include="Source\Renderer\RenderState\RenderState.h" />
+    <ClInclude Include="Source\Renderer\RenderState\RenderStateManager.h" />
+    <ClInclude Include="Source\Renderer\SceneRenderData.h" />
+    <ClInclude Include="Source\Renderer\SceneView.h" />
+    <ClInclude Include="Source\Renderer\Shader\Shader.h" />
+    <ClInclude Include="Source\Renderer\Shader\ShaderManager.h" />
+    <ClInclude Include="Source\Renderer\Shader\ShaderMap.h" />
+    <ClInclude Include="Source\Renderer\Shader\ShaderResource.h" />
+    <ClInclude Include="Source\Renderer\Shader\ShaderType.h" />
+    <ClInclude Include="Source\Renderer\Types\AxisColors.h" />
+    <ClInclude Include="Source\Renderer\Types\BasicMeshType.h" />
+    <ClInclude Include="Source\Renderer\Types\EditorShowFlags.h" />
+    <ClInclude Include="Source\Renderer\Types\MeshInstanceData.h" />
+    <ClInclude Include="Source\Renderer\Types\ObjectIdRenderItem.h" />
+    <ClInclude Include="Source\Renderer\Types\PickId.h" />
+    <ClInclude Include="Source\Renderer\Types\PickResult.h" />
+    <ClInclude Include="Source\Renderer\Types\RenderDebugColors.h" />
+    <ClInclude Include="Source\Renderer\Types\RenderItem.h" />
+    <ClInclude Include="Source\Renderer\Types\SceneShowFlags.h" />
+    <ClInclude Include="Source\Renderer\Types\ShaderConstants.h" />
+    <ClInclude Include="Source\Renderer\Types\VertexTypes.h" />
+    <ClInclude Include="Source\Renderer\Types\ViewMode.h" />
+    <ClInclude Include="Source\RHI\D3D11\D3D11Buffer.h" />
+    <ClInclude Include="Source\RHI\D3D11\D3D11Common.h" />
+    <ClInclude Include="Source\RHI\D3D11\D3D11DynamicRHI.h" />
+    <ClInclude Include="Source\RHI\D3D11\D3D11Texture.h" />
+    <ClInclude Include="Source\RHI\DynamicRHI.h" />
+    <ClInclude Include="Source\RHI\RHIBuffer.h" />
+    <ClInclude Include="Source\RHI\RHIResource.h" />
+    <ClInclude Include="Source\RHI\RHITexture.h" />
+    <ClInclude Include="Source\RHI\RHITypes.h" />
+    <ClInclude Include="Source\ThirdParty\nlohmann\json.hpp" />
+    <ClInclude Include="Source\ThirdParty\stb\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\ApplicationCore\Input\InputRouter.cpp" />
+    <ClCompile Include="Source\ApplicationCore\Input\InputSystem.cpp" />
+    <ClCompile Include="Source\ApplicationCore\Windows\WindowsApplication.cpp" />
+    <ClCompile Include="Source\ApplicationCore\Windows\WindowsWindow.cpp" />
+    <ClCompile Include="Source\Asset\Builder\FontAtlasBuilder.cpp" />
+    <ClCompile Include="Source\Asset\Builder\MaterialBuilder.cpp" />
+    <ClCompile Include="Source\Asset\Builder\StaticMeshBuilder.cpp" />
+    <ClCompile Include="Source\Asset\Builder\SubUVAtlasBuilder.cpp" />
+    <ClCompile Include="Source\Asset\Builder\TextureBuilder.cpp" />
+    <ClCompile Include="Source\Asset\Core\AssetNaming.cpp" />
+    <ClCompile Include="Source\Asset\Manager\AssetCacheManager.cpp" />
+    <ClCompile Include="Source\Asset\Runtime\FontAtlasRenderResource.cpp" />
+    <ClCompile Include="Source\Asset\Runtime\MaterialRenderResource.cpp" />
+    <ClCompile Include="Source\Asset\Runtime\StaticMeshRenderResource.cpp" />
+    <ClCompile Include="Source\Asset\Runtime\SubUVAtlasRenderResource.cpp" />
+    <ClCompile Include="Source\Asset\Runtime\TextureRenderResource.cpp" />
+    <ClCompile Include="Source\Asset\Serialization\CookedDataBinaryIO.cpp" />
+    <ClCompile Include="Source\Asset\Serialization\CookedDataSerialization.cpp" />
+    <ClCompile Include="Source\Asset\Serialization\WindowsBinArchive.cpp" />
+    <ClCompile Include="Source\Asset\Source\SourceCache.cpp" />
+    <ClCompile Include="Source\Asset\Source\SourceHash.cpp" />
+    <ClCompile Include="Source\Asset\Source\SourceLoader.cpp" />
+    <ClCompile Include="Source\Core\CoreGlobals.cpp" />
+    <ClCompile Include="Source\Core\CoreMinimal.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>Core/CoreMinimal.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Geometry\Transform.cpp" />
+    <ClCompile Include="Source\Core\HAL\PlatformMisc.cpp" />
+    <ClCompile Include="Source\Core\HAL\PlatformTime.cpp" />
+    <ClCompile Include="Source\Core\Math\Color.cpp" />
+    <ClCompile Include="Source\Core\Math\Matrix.cpp" />
+    <ClCompile Include="Source\Core\Math\Quat.cpp" />
+    <ClCompile Include="Source\Core\Math\Rotator.cpp" />
+    <ClCompile Include="Source\Core\Math\Vector.cpp" />
+    <ClCompile Include="Source\Core\Math\Vector2.cpp" />
+    <ClCompile Include="Source\Core\Math\Vector4.cpp" />
+    <ClCompile Include="Source\Core\Misc\Name.cpp" />
+    <ClCompile Include="Source\Core\Misc\NameSubsystem.cpp" />
+    <ClCompile Include="Source\Core\Misc\Paths.cpp" />
+    <ClCompile Include="Source\CoreUObject\Object.cpp" />
+    <ClCompile Include="Source\CoreUObject\ObjectFactory.cpp" />
+    <ClCompile Include="Source\CoreUObject\ObjectIterator.cpp" />
+    <ClCompile Include="Source\Engine\Asset\Asset.cpp" />
+    <ClCompile Include="Source\Engine\Asset\AssetObjectManager.cpp" />
+    <ClCompile Include="Source\Engine\Asset\FontAtlas.cpp" />
+    <ClCompile Include="Source\Engine\Asset\Material.cpp" />
+    <ClCompile Include="Source\Engine\Asset\StaticMesh.cpp" />
+    <ClCompile Include="Source\Engine\Asset\SubUVAtlas.cpp" />
+    <ClCompile Include="Source\Engine\Asset\Texture.cpp" />
+    <ClCompile Include="Source\Engine\Component\Core\PrimitiveComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Core\SceneComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Core\UnknownComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Mesh\LineBatchComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Mesh\MeshComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Mesh\StaticMeshComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Sprite\AtlasComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Sprite\PaperSpriteComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Sprite\SubUVAnimatedComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Sprite\SubUVComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Text\AtlasTextComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Text\TextRenderComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Text\UUIDComponent.cpp" />
+    <ClCompile Include="Source\Engine\EngineStatics.cpp" />
+    <ClCompile Include="Source\Engine\Game\Actor.cpp" />
+    <ClCompile Include="Source\Engine\Game\AtlasSpriteActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\ConeActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\CubeActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\CylinderActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\EffectActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\FlipbookActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\MeshActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\QuadActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\RingActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\SphereActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\SpriteActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\StaticMeshActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\TextActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\TriangleActor.cpp" />
+    <ClCompile Include="Source\Engine\Game\UnknownActor.cpp" />
+    <ClCompile Include="Source\Engine\Scene\CameraInfo.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Scene.cpp" />
+    <ClCompile Include="Source\Engine\Scene\SceneAssetBinder.cpp" />
+    <ClCompile Include="Source\Engine\Scene\SceneAssetPath.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Common\SceneJsonConverters.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Common\SceneJsonFieldReader.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Core\SceneDeserializer.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Core\SceneSerializer.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Json\SceneJson.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Legacy\SceneLegacySerialization.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Registry\SceneTypeRegistry.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Runtime\SceneActorSerialization.cpp" />
+    <ClCompile Include="Source\Engine\Scene\Serialization\Runtime\ScenePropertySerialization.cpp" />
+    <ClCompile Include="Source\Engine\Scene\World.cpp" />
+    <ClCompile Include="Source\Engine\ViewPort\Viewport.cpp" />
+    <ClCompile Include="Source\Renderer\D3D11\D3D11RHI.cpp" />
+    <ClCompile Include="Source\Renderer\D3D11\GeneralRenderer.cpp" />
+    <ClCompile Include="Source\Renderer\Primitive\FMeshData.cpp" />
+    <ClCompile Include="Source\Renderer\Primitive\UnrealEditorStyledGizmo.cpp" />
+    <ClCompile Include="Source\Renderer\RenderCommand.cpp" />
+    <ClCompile Include="Source\Renderer\RendererModule.cpp" />
+    <ClCompile Include="Source\Renderer\RenderState\RenderState.cpp" />
+    <ClCompile Include="Source\Renderer\RenderState\RenderStateManager.cpp" />
+    <ClCompile Include="Source\Renderer\Shader\Shader.cpp" />
+    <ClCompile Include="Source\Renderer\Shader\ShaderManager.cpp" />
+    <ClCompile Include="Source\Renderer\Shader\ShaderMap.cpp" />
+    <ClCompile Include="Source\Renderer\Shader\ShaderResource.cpp" />
+    <ClCompile Include="Source\RHI\D3D11\D3D11Common.cpp" />
+    <ClCompile Include="Source\RHI\D3D11\D3D11DynamicRHI.cpp" />
+    <ClCompile Include="Source\ThirdParty\stb\stb_image_impl.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f44237e2-379f-4018-a189-153730228c6b}</ProjectGuid>
+    <RootNamespace>Engine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Viewer|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ViewerRelease|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Viewer|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ViewerRelease|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
+    <IntDir>Build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Viewer|x64'">
+    <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
+    <IntDir>Build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
+    <IntDir>Build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ViewerRelease|x64'">
+    <OutDir>$(ProjectDir)Bin\$(Configuration)\</OutDir>
+    <IntDir>Build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ENGINECORE_EXPORTS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Core/CoreMinimal.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>Core/CoreMinimal.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <PrecompiledHeaderOutputFile>$(IntDir)CoreMinimal.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Viewer|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ENGINECORE_EXPORTS;NOMINMAX;_DEBUG;IS_OBJ_VIEWER=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Core/CoreMinimal.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>Core/CoreMinimal.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <PrecompiledHeaderOutputFile>$(IntDir)CoreMinimal.pch</PrecompiledHeaderOutputFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ENGINECORE_EXPORTS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Core/CoreMinimal.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>Core/CoreMinimal.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <PrecompiledHeaderOutputFile>$(IntDir)CoreMinimal.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ViewerRelease|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ENGINECORE_EXPORTS;NOMINMAX;NDEBUG;IS_OBJ_VIEWER=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)Source;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Core/CoreMinimal.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>Core/CoreMinimal.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <PrecompiledHeaderOutputFile>$(IntDir)CoreMinimal.pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets" Condition="Exists('..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk_desktop_win10.2025.10.28.2\build\native\directxtk_desktop_win10.targets'))" />
+  </Target>
+</Project>
